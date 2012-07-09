@@ -1,0 +1,10 @@
+0.3 (unreleased):
+* Implement now playing method
+* Split up plugin.py to plugin.py and LastFMDB.py
+
+0.2 (08 Sep 2008):
+* You can now specify and save your LastFM ID
+* You can limit the number of results (plugins.LastFM.#maxResults)
+
+0.1:
+* Initial release

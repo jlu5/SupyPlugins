@@ -1,0 +1,1 @@
+* Use some Scrobbler 2.0 functions (needs a valid license key, though), e.g. now playing, etc.
