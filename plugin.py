@@ -1,6 +1,6 @@
 ###
 # Copyright (c) 2006, Ilya Kuznetsov
-# Copyright (c) 2008, Kevin Funk
+# Copyright (c) 2008,2012 Kevin Funk
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -36,6 +36,7 @@ import supybot.plugins as plugins
 import supybot.ircutils as ircutils
 import supybot.callbacks as callbacks
 import supybot.world as world
+import supybot.log as log
 
 import urllib2
 from xml.dom import minidom
@@ -168,6 +169,39 @@ class LastFM(callbacks.Plugin):
 Country: %s; Tracks played: %s" % ((id,) + profile)).encode("utf8"))
 
     profile = wrap(profile, [optional("something")])
+
+    def compareUsers(self, irc, msg, args, user1, optionalUser2):
+        """user1 [<user2>]
+
+        Compares the taste from two users
+        If <user2> is ommitted, the taste is compared against the ID of the calling user.
+        """
+
+        user2 = (optionalUser2 or self.db.getId(msg.nick) or msg.nick)
+
+        # see http://www.lastfm.de/api/show/tasteometer.compare
+        url = "{0}&method=tasteometer.compare&type1=user&type2=user&value1={1}&value2={2}".format(
+            self.APIURL, user1, user2
+        )
+        try:
+            log.debug("Fetching URL: {0}".format(url))
+            f = urllib2.urlopen(url)
+        except urllib2.HTTPError, e:
+            irc.error("Failure: {0}".format(e))
+            return
+
+        xml = minidom.parse(f)
+        resultNode = xml.getElementsByTagName("result")[0]
+        score = self._parse(resultNode, "score", "N/A")
+        # Note: XPath would be really cool here...
+        artists = [el for el in resultNode.getElementsByTagName("artist")]
+        artistNames = [el.getElementsByTagName("name")[0].firstChild.data for el in artists]
+        irc.reply(("Result of comparison between {0} and {1}: score: {2}, common artists: {3}".format(
+                user1, user2, score, ", ".join(artistNames))
+            ).encode("utf-8")
+        )
+
+    compare = wrap(compareUsers, ["something", optional("something")])
 
     def _parse(self, data, node, exceptMsg="not specified"):
             try:

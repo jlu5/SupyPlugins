@@ -1,5 +1,5 @@
 ###
-# Copyright (c) 2008, Kevin Funk
+# Copyright (c) 2008,2012 Kevin Funk
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -28,6 +28,8 @@
 
 ###
 
+#from __future__ import print_function
+
 from supybot.test import *
 
 class LastFMTestCase(PluginTestCase):
@@ -42,5 +44,9 @@ class LastFMTestCase(PluginTestCase):
         print self.assertNotError("lastfm profile test")
         print self.assertNotError("lastfm set nick") # test db
         print self.assertNotError("lastfm set test") # test db unset
+
+    def testLastfmCompare(self):
+        print self.assertNotError("lastfm compare krf czshadow")
+
 
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:
