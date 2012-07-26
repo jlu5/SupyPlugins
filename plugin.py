@@ -49,7 +49,7 @@ class LastFM(callbacks.Plugin):
     APIURL_1_0 = "http://ws.audioscrobbler.com/1.0/user"
 
     # 2.0 API (see http://www.lastfm.de/api/intro)
-    APIKEY = "b25b959554ed76058ac220b7b2e0a026" # FIXME: Get own key
+    APIKEY = "b7638a70725eea60737f9ad9f56f3099"
     APIURL_2_0 = "http://ws.audioscrobbler.com/2.0/?api_key=%s&" % APIKEY
 
     def __init__(self, irc):
