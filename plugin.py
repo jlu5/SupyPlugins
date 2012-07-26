@@ -195,12 +195,13 @@ Country: %s; Tracks played: %s" % ((id,) + profile)).encode("utf8"))
 
         xml = minidom.parse(f)
         resultNode = xml.getElementsByTagName("result")[0]
-        score = self._parse(resultNode, "score", "N/A")
+        score = float(self._parse(resultNode, "score"))
+        scoreStr = "%s (%s)" % (round(score, 2), self._formatRating(score))
         # Note: XPath would be really cool here...
         artists = [el for el in resultNode.getElementsByTagName("artist")]
         artistNames = [el.getElementsByTagName("name")[0].firstChild.data for el in artists]
         irc.reply(("Result of comparison between %s and %s: score: %s, common artists: %s" \
-                % (user1, user2, score, ", ".join(artistNames))
+                % (user1, user2, scoreStr, ", ".join(artistNames))
             ).encode("utf-8")
         )
 
@@ -222,6 +223,25 @@ Country: %s; Tracks played: %s" % ((id,) + profile)).encode("utf8"))
             return "%i minutes ago" % (t/60)
         if t > 0:
             return "%i seconds ago" % (t)
+
+    def _formatRating(self, score):
+        """Format rating
+
+        @param score Value in the form of [0:1] (float)
+        """
+
+        if score >= 0.9:
+            return "Super"
+        elif score >= 0.7:
+            return "Very High"
+        elif score >= 0.5:
+            return "High"
+        elif score >= 0.3:
+            return "Medium"
+        elif score >= 0.1:
+            return "Low"
+        else:
+            return "Very Low"
 
 dbfilename = conf.supybot.directories.data.dirize("LastFM.db")
 
