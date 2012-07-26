@@ -45,9 +45,12 @@ from time import time
 from LastFMDB import *
 
 class LastFM(callbacks.Plugin):
-    BASEURL = "http://ws.audioscrobbler.com/1.0/user"
+    # 1.0 API (deprecated)
+    APIURL_1_0 = "http://ws.audioscrobbler.com/1.0/user"
+
+    # 2.0 API (see http://www.lastfm.de/api/intro)
     APIKEY = "b25b959554ed76058ac220b7b2e0a026" # FIXME: Get own key
-    APIURL = "http://ws.audioscrobbler.com/2.0/?api_key=%s&" % APIKEY
+    APIURL_2_0 = "http://ws.audioscrobbler.com/2.0/?api_key=%s&" % APIKEY
 
     def __init__(self, irc):
         self.__parent = super(LastFM, self)
@@ -76,7 +79,7 @@ class LastFM(callbacks.Plugin):
         maxResults = self.registryValue("maxResults", channel)
         method = method.lower()
 
-        url = "%s/%s/%s.txt" % (self.BASEURL, id, method)
+        url = "%s/%s/%s.txt" % (self.APIURL_1_0, id, method)
         try:
             f = urllib2.urlopen(url)
         except urllib2.HTTPError:
@@ -105,7 +108,7 @@ class LastFM(callbacks.Plugin):
         id = (optionalId or self.db.getId(msg.nick) or msg.nick)
 
         # see http://www.lastfm.de/api/show/user.getrecenttracks
-        url = "%s&method=user.getrecenttracks&user=%s" % (self.APIURL, id)
+        url = "%s&method=user.getrecenttracks&user=%s" % (self.APIURL_2_0, id)
         try:
             f = urllib2.urlopen(url)
         except urllib2.HTTPError:
@@ -157,8 +160,9 @@ class LastFM(callbacks.Plugin):
 
         id = (optionalId or self.db.getId(msg.nick) or msg.nick)
 
+        url = "%s/%s/profile.xml" % (self.APIURL_1_0, id)
         try:
-            f = urllib2.urlopen("%s/%s/profile.xml" % (self.BASEURL, id))
+            f = urllib2.urlopen(url)
         except urllib2.HTTPError:
             irc.error("Unknown user (%s)" % id)
             return
@@ -182,9 +186,8 @@ Country: %s; Tracks played: %s" % ((id,) + profile)).encode("utf8"))
         user2 = (optionalUser2 or self.db.getId(msg.nick) or msg.nick)
 
         # see http://www.lastfm.de/api/show/tasteometer.compare
-        url = "%s&method=tasteometer.compare&type1=user&type2=user&value1=%s&value2=%s" % (self.APIURL, user1, user2)
+        url = "%s&method=tasteometer.compare&type1=user&type2=user&value1=%s&value2=%s" % (self.APIURL_2_0, user1, user2)
         try:
-            log.debug("Fetching URL: %s" % (url))
             f = urllib2.urlopen(url)
         except urllib2.HTTPError, e:
             irc.error("Failure: %s" % (e))

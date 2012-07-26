@@ -51,6 +51,7 @@ class LastFMTestCase(PluginTestCase):
 
     def testLastfmCompare(self):
         print self.assertNotError("lastfm compare krf czshadow")
+        print self.assertNotError("lastfm compare krf")
 
 
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:
