@@ -207,9 +207,9 @@ Country: %s; Tracks played: %s" % ((id,) + profile)).encode("utf8"))
 
     compare = wrap(compareUsers, ["something", optional("something")])
 
-    def _parse(self, data, node, exceptMsg="not specified"):
+    def _parse(self, node, tagName, exceptMsg="not specified"):
             try:
-                return data.getElementsByTagName(node)[0].firstChild.data
+                return node.getElementsByTagName(tagName)[0].firstChild.data
             except IndexError:
                 return exceptMsg
 
