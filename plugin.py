@@ -76,8 +76,9 @@ class LastFM(callbacks.Plugin):
         maxResults = self.registryValue("maxResults", channel)
         method = method.lower()
 
+        url = "%s/%s/%s.txt" % (self.BASEURL, id, method)
         try:
-            f = urllib2.urlopen("%s/%s/%s.txt" % (self.BASEURL, id, method))
+            f = urllib2.urlopen(url)
         except urllib2.HTTPError:
             irc.error("Unknown ID (%s) or unknown method (%s)"
                     % (msg.nick, method))
@@ -93,7 +94,7 @@ class LastFM(callbacks.Plugin):
 
     lastfm = wrap(lastfm, ["something", optional("something")])
 
-    def np(self, irc, msg, args, optionalId):
+    def nowPlaying(self, irc, msg, args, optionalId):
         """[<id>]
 
         Announces the now playing track of the specified LastFM ID.
@@ -103,9 +104,10 @@ class LastFM(callbacks.Plugin):
 
         id = (optionalId or self.db.getId(msg.nick) or msg.nick)
 
+        # see http://www.lastfm.de/api/show/user.getrecenttracks
+        url = "%s&method=user.getrecenttracks&user=%s" % (self.APIURL, id)
         try:
-            f = urllib2.urlopen("%s&method=user.getrecenttracks&user=%s"
-                    % (self.APIURL, id))
+            f = urllib2.urlopen(url)
         except urllib2.HTTPError:
             irc.error("Unknown ID (%s)" % id)
             return
@@ -130,9 +132,9 @@ class LastFM(callbacks.Plugin):
                     % (user, track, artist, album,
                         self._formatTimeago(time))).encode("utf-8"))
 
-    np = wrap(np, [optional("something")])
+    np = wrap(nowPlaying, [optional("something")])
 
-    def set(self, irc, msg, args, newId):
+    def setUserId(self, irc, msg, args, newId):
         """<id>
 
         Sets the LastFM ID for the caller and saves it in a database.
@@ -143,7 +145,7 @@ class LastFM(callbacks.Plugin):
         irc.reply("LastFM ID changed.")
         self.profile(irc, msg, args)
 
-    set = wrap(set, ["something"])
+    set = wrap(setUserId, ["something"])
 
     def profile(self, irc, msg, args, optionalId):
         """[<id>]
@@ -180,14 +182,12 @@ Country: %s; Tracks played: %s" % ((id,) + profile)).encode("utf8"))
         user2 = (optionalUser2 or self.db.getId(msg.nick) or msg.nick)
 
         # see http://www.lastfm.de/api/show/tasteometer.compare
-        url = "{0}&method=tasteometer.compare&type1=user&type2=user&value1={1}&value2={2}".format(
-            self.APIURL, user1, user2
-        )
+        url = "%s&method=tasteometer.compare&type1=user&type2=user&value1=%s&value2=%s" % (self.APIURL, user1, user2)
         try:
-            log.debug("Fetching URL: {0}".format(url))
+            log.debug("Fetching URL: %s" % (url))
             f = urllib2.urlopen(url)
         except urllib2.HTTPError, e:
-            irc.error("Failure: {0}".format(e))
+            irc.error("Failure: %s" % (e))
             return
 
         xml = minidom.parse(f)
@@ -196,8 +196,8 @@ Country: %s; Tracks played: %s" % ((id,) + profile)).encode("utf8"))
         # Note: XPath would be really cool here...
         artists = [el for el in resultNode.getElementsByTagName("artist")]
         artistNames = [el.getElementsByTagName("name")[0].firstChild.data for el in artists]
-        irc.reply(("Result of comparison between {0} and {1}: score: {2}, common artists: {3}".format(
-                user1, user2, score, ", ".join(artistNames))
+        irc.reply(("Result of comparison between %s and %s: score: %s, common artists: %s" \
+                % (user1, user2, score, ", ".join(artistNames))
             ).encode("utf-8")
         )
 

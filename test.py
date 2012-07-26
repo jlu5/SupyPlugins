@@ -38,12 +38,16 @@ class LastFMTestCase(PluginTestCase):
     def testLastfm(self):
         print self.assertNotError("lastfm recenttracks")
         print self.assertError("lastfm TESTEXCEPTION")
-        print self.assertNotError("lastfm profile czshadow")
         print self.assertNotError("lastfm recenttracks czshadow")
         print self.assertNotError("lastfm np krf")
-        print self.assertNotError("lastfm profile test")
+
+    def testLastfmDB(self):
         print self.assertNotError("lastfm set nick") # test db
         print self.assertNotError("lastfm set test") # test db unset
+
+    def testLastfmProfile(self):
+        print self.assertNotError("lastfm profile czshadow")
+        print self.assertNotError("lastfm profile test")
 
     def testLastfmCompare(self):
         print self.assertNotError("lastfm compare krf czshadow")
