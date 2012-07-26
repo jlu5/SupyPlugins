@@ -1,7 +1,7 @@
 ###
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2008, Kevin Funk
+# Copyright (c) 2008,2012 Kevin Funk
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -39,7 +39,7 @@ import supybot.world as world
 
 # Use this for the version of this plugin.  You may wish to put a CVS keyword
 # in here if you're keeping the plugin in CVS or some similar system.
-__version__ = "0.3rc"
+__version__ = "0.3rc2"
 
 # Replace this with an appropriate author or supybot.Author instance.
 __author__ = supybot.Author("Kevin Funk", "KRF", "krf@electrostorm.net")
@@ -52,7 +52,7 @@ __contributors__ = {
         }
 
 # This is a url where the most recent plugin package can be downloaded.
-__url__ = 'http://supybot.com/Members/krf/LastFM/'
+__url__ = 'https://github.com/krf/supybot-lastfm'
 
 import config
 import plugin
