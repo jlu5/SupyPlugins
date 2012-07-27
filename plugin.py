@@ -185,6 +185,7 @@ Country: %s; Tracks played: %s" % ((id,) + profile)).encode("utf8"))
 
         user2 = (optionalUser2 or self.db.getId(msg.nick) or msg.nick)
 
+        channel = msg.args[0]
         maxResults = self.registryValue("maxResults", channel)
         # see http://www.lastfm.de/api/show/tasteometer.compare
         url = "%s&method=tasteometer.compare&type1=user&type2=user&value1=%s&value2=%s&limit=%s" % (
