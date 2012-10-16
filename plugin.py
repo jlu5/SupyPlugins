@@ -44,6 +44,32 @@ from time import time
 
 from LastFMDB import *
 
+class LastFMParser:
+
+    def parseRecentTracks(self, stream):
+        """
+        @return Tuple with track information of last track
+        """
+
+        xml = minidom.parse(stream).getElementsByTagName("recenttracks")[0]
+        user = xml.getAttribute("user")
+
+        t = xml.getElementsByTagName("track")[0] # most recent track
+        isNowPlaying = (t.getAttribute("nowplaying") == "true")
+        if not isNowPlaying:
+            time = int(t.getElementsByTagName("date")[0].getAttribute("uts"))
+        else:
+            time = None
+
+        artist = t.getElementsByTagName("artist")[0].firstChild.data
+        track = t.getElementsByTagName("name")[0].firstChild.data
+        try:
+            albumNode = t.getElementsByTagName("album")[0].firstChild
+            album = albumNode.data
+        except (IndexError, AttributeError):
+            album = None
+        return (user, isNowPlaying, artist, track, album, time)
+
 class LastFM(callbacks.Plugin):
     # 1.0 API (deprecated)
     APIURL_1_0 = "http://ws.audioscrobbler.com/1.0/user"
@@ -115,22 +141,13 @@ class LastFM(callbacks.Plugin):
             irc.error("Unknown ID (%s)" % id)
             return
 
-        xml = minidom.parse(f).getElementsByTagName("recenttracks")[0]
-        user = xml.getAttribute("user")
-        t = xml.getElementsByTagName("track")[0] # most recent track
-        isNowplaying = (t.getAttribute("nowplaying") == "true")
-        artist = t.getElementsByTagName("artist")[0].firstChild.data
-        track = t.getElementsByTagName("name")[0].firstChild.data
-        try:
-            album = "["+t.getElementsByTagName("album")[0].firstChild.data+"]"
-        except IndexError:
-            album = ""
-
-        if isNowplaying:
+        parser = LastFMParser()
+        (user, isNowPlaying, artist, track, album, time) = parser.parseRecentTracks(f)
+        if isNowPlaying:
+            albumStr = "[" + album + "]" if album else ""
             irc.reply(('%s is listening to "%s" by %s %s'
-                    % (user, track, artist, album)).encode("utf8"))
+                    % (user, track, artist, )).encode("utf8"))
         else:
-            time = int(t.getElementsByTagName("date")[0].getAttribute("uts"))
             irc.reply(('%s listened to "%s" by %s %s more than %s'
                     % (user, track, artist, album,
                         self._formatTimeago(time))).encode("utf-8"))
