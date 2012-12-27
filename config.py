@@ -21,9 +21,10 @@ def configure(advanced):
 
 
 Weather = conf.registerPlugin('Weather')
-# This is where your configuration variables (if any) should go.  For example:
-# conf.registerGlobalValue(Weather, 'someConfigVariableName',
-#     registry.Boolean(False, _("""Help for someConfigVariableName.""")))
+conf.registerGlobalValue(Weather,'apiKey', registry.String('', ("""Your wunderground.com API key."""), private=True))
+conf.registerGlobalValue(Weather,'maxOutput', registry.Integer(4, ("""How many lines by default to output.""")))
+conf.registerChannelValue(Weather,'useImperial', registry.Boolean(True, ("""Use imperial units? Defaults to yes.""")))
+conf.registerChannelValue(Weather,'disableANSI', registry.Boolean(False, """Do not display any ANSI (color/bold) for channel."""))
 
 
-# vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:
+# vim:set shiftwidth=4 tabstop=4 expandtab textwidth=250:
