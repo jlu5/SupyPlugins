@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 ###
 # Copyright (c) 2012, spline
 # All rights reserved.
@@ -25,6 +26,7 @@ from supybot.i18n import PluginInternationalization, internationalizeDocstring
 _ = PluginInternationalization('Weather')
 
 @internationalizeDocstring
+# WeatherDB - to store a users nick, weather code (zip), and metric option
 class WeatherDB(plugins.ChannelUserDB):
     def __init__(self, *args, **kwargs):
         plugins.ChannelUserDB.__init__(self, *args, **kwargs)
@@ -51,7 +53,7 @@ class WeatherDB(plugins.ChannelUserDB):
         
     def setMetric(self, nick, metric):
         try:
-            id = ['x', nick.lower()][0]
+            id = self['x', nick.lower()][0]
         except:
             id = '10121'
         self['x', nick.lower()] = (id, metric,) 
@@ -61,9 +63,6 @@ class Weather(callbacks.Plugin):
     This should describe *how* to use this plugin."""
     threaded = True
 
-    #######################
-    # WeatherDB functions #
-    #######################
     def __init__(self, irc):
         self.__parent = super(Weather, self)
         self.__parent.__init__(irc)
@@ -76,7 +75,21 @@ class Weather(callbacks.Plugin):
             world.flushers.remove(self.db.flush)
         self.db.close()
         self.__parent.die()
+        
+    # FORMATTING
+    def _bold(self, string):
+        return ircutils.bold(string)
+
+    def _blue(self, string):
+        return ircutils.mircColor(string, 'blue')
+
+    def _bu(self, string):
+        return ircutils.underline(ircutils.bold(string))
+
+    def _red(self, string):
+        return ircutils.mircColor(string, 'red')
     
+    # PUBLIC FUNCTIONS TO WORK WITH WEATHERDB.
     def weatherusers(self, irc, msg, args):
         """
         Returns the amount of users we know about.
@@ -155,20 +168,7 @@ class Weather(callbacks.Plugin):
         except KeyError:
             irc.reply('I have no weather ID for %s.' % optnick)
     getweather = wrap(getweather, [optional('somethingWithoutSpaces')])
-    
-    # FORMATTING
-    def _bold(self, string):
-        return ircutils.bold(string)
-
-    def _blue(self, string):
-        return ircutils.mircColor(string, 'blue')
-
-    def _bu(self, string):
-        return ircutils.underline(ircutils.bold(string))
-
-    def _red(self, string):
-        return ircutils.mircColor(string, 'red')
-    
+       
     # CHECK FOR API KEY.  
     def keycheck(self, irc):
         """Check and make sure we have an API key."""
@@ -181,43 +181,101 @@ class Weather(callbacks.Plugin):
     ####################
     # PUBLIC FUNCTIONS #
     ####################
+    
     def wunderground(self, irc, msg, args, optlist, optinput):
         """[--options] [location]
-        Fetch weather for location.
-        It is best to specify a zipcode or specific location with country. Ex: 10152 or Sydney, Australia
-        
-        """
-        
+        Location must be one of: US state/city (CA/San_Francisco), zipcode, country/city (Australia/Sydney), airport code (KJFK) 
+        For options:        
+        """        
         # first, check if we have an API key. Useless w/o this.
         if not self.keycheck(irc):
             return False
+            
+        # urlargs will be used to build the url to query the API.
+        urlArgs = {'features':['conditions'],
+                   'lang':self.registryValue('lang'),
+                   'bestfct':'1',
+                   'pws':'0'
+                  }
+        # now, start our dict for output formatting.
+        args = {'imperial':self.registryValue('useImperial', msg.args[0]),
+                'alerts':self.registryValue('alerts'),
+                'forecast':self.registryValue('forecast'),
+                'forecastDays':self.registryValue('forecastDays'),
+                'almanac':self.registryValue('almanac'),
+                'hourly':self.registryValue('hourly'),
+                'astronomy':self.registryValue('astronomy'),
+                'pressure':self.registryValue('showPressure'),
+                'wind':self.registryValue('showWind'),
+                'uv':False,
+                'visibility':False,
+                'dewpoint':False
+               }
         
-        # now check if we have a location. if no location, use the userdb. 
+        # now check if we have a location. if no location, use the userdb. also set for metric variable.
         if not optinput:
-            try:
+            try: 
                 optinput = self.db.getId(msg.nick)
+                optmetric = self.db.getMetric(msg.nick) # set our imperial units here.
+                if optmetric == "True": 
+                    args['imperial'] = False
+                else:
+                    args['imperial'] = True
             except KeyError:
                 irc.reply("I did not find a preset location for you. Set via: setweather location or specify a location")
                 return
-        
-        # store all of our formatting variables
-        args = {'imperial':self.registryValue('useImperial', msg.args[0]) }
-        
-        # handle optlist (getopts)
+            # autoip.json?geo_ip=38.102.136.138
+                
+        # handle optlist (getopts). this will manipulate output via args dict.
         if optlist:
             for (key, value) in optlist:
                 if key == "metric":
                     args['imperial'] = False
-                    
-        url = 'http://api.wunderground.com/api/%s/conditions/lang:EN/bestfct:1/pws:0/q/%s.json' % (self.APIKEY, optinput)
+                if key == 'alerts':
+                    args['alerts'] = True
+                if key == 'forecast':
+                    args['forecast'] = True
+                if key == 'days':
+                    args['forecastDays'] = value
+                if key == 'almanac':
+                    args['almanac'] = True
+                if key == 'hourly':
+                    args['hourly'] = True
+                if key == 'pressure':
+                    args['pressure'] = True
+                if key == 'wind':
+                    args['wind'] = True
+                if key == 'uv':
+                    args['uv'] = True
+                if key == 'visibility':
+                    args['visibility'] = True
+                if key == 'dewpoint':
+                    args['dewpoint'] = True
+        
+        # build url now. first, apikey. then, iterate over urlArgs and insert.
+        # urlArgs['features'] also manipulated via what's in args.
+        url = 'http://api.wunderground.com/api/%s/' % (self.APIKEY) # first part of url, w/APIKEY
+        # now we need to set certain things for urlArgs based on args.
+        for check in ['alerts','forecast','almanac','hourly']:
+            if args[check]: # if args['value'] is True, either via config or getopts.
+                urlArgs['features'].append(check) # append to dict->key (list)
+        # now, we use urlArgs dict to append to url.
+        for (key, value) in urlArgs.items(): 
+            if key == "features": # will always be at least conditions.
+                url += "".join([item + '/' for item in value]) # listcmp the features/
+            if key == "lang" or key == "bestfct" or key == "pws": # rest added with key:value
+                url += "{0}:{1}/".format(key, value)
+        # finally, attach the q/input.
+        url += 'q/%s.json' % (optinput)
+
         self.log.info(url)
-                    
         # try and query.                        
         try: 
             request = urllib2.Request(url)
             u = urllib2.urlopen(request)
-        except:
-            irc.reply("Failed to load url: %s" % url)
+        except Exception as e:
+            self.log.info("Error loading {0} message {1}".format(url, e))
+            irc.reply("Failed to load wunderground API: %s" % e)
             return
         
         # process the json.
@@ -226,7 +284,7 @@ class Weather(callbacks.Plugin):
         # check if we got errors and return.
         if 'error' in data['response']:
             errortype = data['response']['error']['type']
-            errordesc = data['response']['error']['description']
+            errordesc = data['response']['error'].get('description', 'no description')
             irc.reply("{0} I got an error searching for {1}. ({2}: {3})".format(self._red("ERROR:"), optinput, errortype, errordesc))
             return
 
@@ -237,40 +295,113 @@ class Weather(callbacks.Plugin):
             return
         
         # last sanity check
-        if not data['current_observation']:
+        if not data.has_key('current_observation'):
             irc.reply("{0} something went horribly wrong looking up weather for {1}. Contact the plugin owner.".format(self._red("ERROR:"), optinput))
             return
+        
+        # now, put everything into outdata dict for output later.
+        outdata = {}
 
         # basics for weather output.        
-        data = data['current_observation']
-        weather = data['weather']
-        location = data['display_location']['full']
-        observation = data['observation_time_rfc822']
-        humidity = data['relative_humidity']
-        wind = data['wind_string']
-        uv = data['UV']
+        outdata['weather'] = data['current_observation']['weather']
+        outdata['location'] = data['current_observation']['display_location']['full']
+        outdata['humidity'] = data['current_observation']['relative_humidity']
+        outdata['uv'] = data['current_observation']['UV']
+        
+        # handle wind.
+        if args['imperial']:
+            outdata['wind'] = "{0} at {1}mph. Gusts to {2}mph".format(\
+                data['current_observation']['wind_dir'],data['current_observation']['wind_mph'],data['current_observation']['wind_gust_mph']) 
+        else:
+            outdata['wind'] = "{0} at {1}kph. Gusts to {2}kph".format(\
+                data['current_observation']['wind_dir'],data['current_observation']['wind_kph'],data['current_observation']['wind_gust_kph'])
+            
+        # handle the time. many elements from WunderWeather here.
+        observationTime = data['current_observation'].get('observation_epoch', None)
+        localTime = data['current_observation'].get('local_epoch', None)
+        if not observationTime or not localTime: # if we don't have the epoches from above, default to obs_time
+            outdata['observation'] = data.get('observation_time', 'unknown').lstrip('Last Updated on ')
+        else: # format for relative time.
+            s = int(localTime) - int(observationTime)
+            if s <= 1:
+                outdata['observation'] = 'just now'
+            elif s < 60:
+                outdata['observation'] = '{0} seconds ago'.format(s)
+            elif s < 120:
+                outdata['observation'] = '1 minute ago'
+            elif s < 3600:
+                outdata['observation'] = '{0} minutes ago'.format(s/60)
+            elif s < 7200:
+                outdata['observation'] = '1 hour ago'
+            else:
+                outdata['observation'] = '{0} hours ago'.format(s/3600)
         
         # all conditionals for imperial/metric
         if args['imperial']:
-            temp = data['temp_f']
-            pressure = data['pressure_mb']
-            dewpoint = data['dewpoint_f']
-            heatindex = data['heat_index_f']
-            windchill = data['windchill_f']
-            feelslike = data['feelslike_f']
-            visibility = data['visibility_mi']
+            outdata['temp'] = str(data['current_observation']['temp_f']) + 'F'#+ u'\xb0F'
+            outdata['pressure'] = data['current_observation']['pressure_mb']
+            outdata['dewpoint'] = str(data['current_observation']['dewpoint_f']) + 'F'
+            outdata['heatindex'] = str(data['current_observation']['heat_index_f']) + 'F'
+            outdata['windchill'] = str(data['current_observation']['windchill_f']) + 'F'
+            outdata['feelslike'] = str(data['current_observation']['feelslike_f']) + 'F'
+            outdata['visibility'] = str(data['current_observation']['visibility_mi']) + 'mi'
         else:
-            temp = data['temp_c']
-            pressure = data['pressure_in']
-            dewpoint = data['dewpoint_c']
-            heatindex = data['heat_index_c']
-            windchill = data['windchill_c']
-            feelslike = data['feelslike_c']
-            visibility = data['visibility_km']
+            outdata['temp'] = str(data['current_observation']['temp_c']) + 'C'#+ u'\xb0C'
+            outdata['pressure'] = data['current_observation']['pressure_in']
+            outdata['dewpoint'] = str(data['current_observation']['dewpoint_c']) + 'C'
+            outdata['heatindex'] = str(data['current_observation']['heat_index_c']) + 'C'
+            outdata['windchill'] = str(data['windchill_c']) + 'C'
+            outdata['feelslike'] = str(data['current_observation']['feelslike_c']) + 'C'
+            outdata['visibility'] = str(data['current_observation']['visibility_km']) + 'km'
+        
+        # now, lets output what we have.
+        # Weather for Nashua, NH | Temperature: 27°F / -3°F (Wind Chill: 12°F / -11°C);
+        # Humidity: 64%; Conditions: Light snow mist; Wind: Nw, 24mph / 39kph; Updated: 12 mins, 37 secs ago
+        # Forecast for Sunday: Partly cloudy; High of 28°F / -2°C; Low of 12°F / -11°C
+        # Atlanta, GA (observed 4s ago @ 1050 ft - Sun: 7:42/17:38, Moon: 95%):   Temp: 37.9°F/3.3°C
+        # Windchill: 33°F/0°C   Humidity: 47%   Conditions: Clear   Wind: WNW @        7.0mph/11.3kmh 
+        # (7.0mph/11.3kmh gusts)   Visibility: 10.0mi/16.1km   Record High (1996): 69°F/20.6°C   Record Low (2000): 19°F/-7.2°C
+        output = "Weather for {0} :: {1} (Feels like: {2}) | {3} {4}".format(\
+            self._bold(outdata['location']),outdata['temp'],outdata['feelslike'],self._bold('Conditions:'), outdata['weather'])
+            
+        # windchill/heatindex are conditional on season but test with startswith to see what to include
+        if not outdata['windchill'].startswith("NA"): # conditional for windchill
+            output += " | {0} {1}".format(self._bold('Wind Chill:'), outdata['windchill'])
+        if not outdata['heatindex'].startswith("NA"): # conditional for heatindex
+            output += " | {0} {1}".format(self._bold('Heat Index:'), outdata['heatindex'])
+        
+        # now get into the args dict for what to include (extras)
+        extras = ['wind','visibility','uv','pressure','dewpoint']
+        for (k,v) in args.items():
+            if k in extras: # if key is in extras
+                if v: # if that key's value is True
+                    output += " | {0}: {1}".format(self._bold(k.title()), outdata[k])
+        
+        # finally, add the time and output.
+        output += " | {0} {1}".format(self._bold('Updated:'), outdata['observation'])
+        irc.reply(output.encode('utf-8'))
+        
+        # handle if we're looking for alerts
+        if args['alerts']:
+            if data.has_key('alerts'):
+                alerts = data['alerts']
+            else:
+                alerts = "No alerts."
+            irc.reply("{0} :: {1}".format(self._bu("Alerts:"),alerts))
 
-        irc.reply(temp)
 
-    wunderground = wrap(wunderground, [getopts({'metric':''}), optional('text')])
+    wunderground = wrap(wunderground, [getopts({'alerts':'',
+                                                'almanac':'',
+                                                'astronomy':'',
+                                                'forecast':'',
+                                                'days':('int'),
+                                                'hourly':'',
+                                                'pressure':'',
+                                                'wind':'',
+                                                'uv':'',
+                                                'visibility':'',
+                                                'dewpoint':'',
+                                                'metric':''}), optional('text')])
 
 dbfilename = conf.supybot.directories.data.dirize("Weather.db")
 

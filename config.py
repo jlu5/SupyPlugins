@@ -22,9 +22,17 @@ def configure(advanced):
 
 Weather = conf.registerPlugin('Weather')
 conf.registerGlobalValue(Weather,'apiKey', registry.String('', ("""Your wunderground.com API key."""), private=True))
-conf.registerGlobalValue(Weather,'maxOutput', registry.Integer(4, ("""How many lines by default to output.""")))
 conf.registerChannelValue(Weather,'useImperial', registry.Boolean(True, ("""Use imperial units? Defaults to yes.""")))
 conf.registerChannelValue(Weather,'disableANSI', registry.Boolean(False, """Do not display any ANSI (color/bold) for channel."""))
+conf.registerGlobalValue(Weather,'forecast', registry.Boolean(True, ("""Display forecast in output by default?""")))
+conf.registerGlobalValue(Weather,'forecastDays', registry.Integer(1, ("""How many days of forecast to display. One is good.""")))
+conf.registerGlobalValue(Weather,'alerts', registry.Boolean(False, ("""Display alerts by default?""")))
+conf.registerGlobalValue(Weather,'almanac', registry.Boolean(False, ("""Display almanac by default?""")))
+conf.registerGlobalValue(Weather,'astronomy', registry.Boolean(False, ("""Display astronomy by default?""")))
+conf.registerGlobalValue(Weather,'hourly', registry.Boolean(False, ("""Display hourly by default?""")))
+conf.registerGlobalValue(Weather,'showPressure', registry.Boolean(False, ("""Show pressure in output?""")))
+conf.registerGlobalValue(Weather,'showWind', registry.Boolean(False, ("""Show wind in output?""")))
+conf.registerGlobalValue(Weather,'lang', registry.String('EN', ("""language to use. See docs for available codes.""")))
 
 
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=250:
