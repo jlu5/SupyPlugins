@@ -88,6 +88,30 @@ class Weather(callbacks.Plugin):
 
     def _red(self, string):
         return ircutils.mircColor(string, 'red')
+
+    def _temp(self, x):
+        """Returns a colored string based on the temperature."""
+        if x.endswith('C'):
+            x = x.replace('C','')
+            x = int([x*1.8+32,(x-32)/1.8])
+        else:
+            x = int(x.replace('F',''))
+        if x < 10:
+            return ircutils.mircColor(x,'light blue')    
+        if 10 <= x <= 32:
+            return ircutils.mircColor(x,'blue')    
+        if 32 <= x <= 49:
+            return ircutils.mircColor(x,'teal')
+        if 50 <= x <= 60:
+            return ircutils.mircColor(x,'light green')   
+        if 61 <= x <= 70:
+            return ircutils.mircColor(x,'green')   
+        if 71 <= x <= 80:
+            return ircutils.mircColor(x,'yellow')   
+        if 81 <= x <= 90:
+            return ircutils.mircColor(x,'orange')   
+        if x > 90:
+            return ircutils.mircColor(x,'red')  
     
     # PUBLIC FUNCTIONS TO WORK WITH WEATHERDB.
     def weatherusers(self, irc, msg, args):
@@ -203,7 +227,6 @@ class Weather(callbacks.Plugin):
                 'forecast':self.registryValue('forecast'),
                 'forecastDays':self.registryValue('forecastDays'),
                 'almanac':self.registryValue('almanac'),
-                'hourly':self.registryValue('hourly'),
                 'astronomy':self.registryValue('astronomy'),
                 'pressure':self.registryValue('showPressure'),
                 'wind':self.registryValue('showWind'),
@@ -239,8 +262,6 @@ class Weather(callbacks.Plugin):
                     args['forecastDays'] = value
                 if key == 'almanac':
                     args['almanac'] = True
-                if key == 'hourly':
-                    args['hourly'] = True
                 if key == 'pressure':
                     args['pressure'] = True
                 if key == 'wind':
@@ -256,7 +277,7 @@ class Weather(callbacks.Plugin):
         # urlArgs['features'] also manipulated via what's in args.
         url = 'http://api.wunderground.com/api/%s/' % (self.APIKEY) # first part of url, w/APIKEY
         # now we need to set certain things for urlArgs based on args.
-        for check in ['alerts','forecast','almanac','hourly']:
+        for check in ['alerts','forecast','almanac']:
             if args[check]: # if args['value'] is True, either via config or getopts.
                 urlArgs['features'].append(check) # append to dict->key (list)
         # now, we use urlArgs dict to append to url.
@@ -354,6 +375,18 @@ class Weather(callbacks.Plugin):
             outdata['feelslike'] = str(data['current_observation']['feelslike_c']) + 'C'
             outdata['visibility'] = str(data['current_observation']['visibility_km']) + 'km'
         
+        # handle forecast data part. output will be below.
+        if args['forecast']:
+            forecastdata = {} # dict to store data in.
+            for forecastday in data['forecast']['txt_forecast']['forecastday']:
+                tmpdict = {}
+                tmpdict['day'] = forecastday['title']
+                if args['imperial']: 
+                    tmpdict['text'] = forecastday['fcttext'] fcttext_metric
+                else:
+                    tmpdict['text'] = forecastday['fcttext_metric']
+                forecastdata[int(forecastday['period'])] = tmpdict
+        
         # now, lets output what we have.
         # Weather for Nashua, NH | Temperature: 27°F / -3°F (Wind Chill: 12°F / -11°C);
         # Humidity: 64%; Conditions: Light snow mist; Wind: Nw, 24mph / 39kph; Updated: 12 mins, 37 secs ago
@@ -362,7 +395,8 @@ class Weather(callbacks.Plugin):
         # Windchill: 33°F/0°C   Humidity: 47%   Conditions: Clear   Wind: WNW @        7.0mph/11.3kmh 
         # (7.0mph/11.3kmh gusts)   Visibility: 10.0mi/16.1km   Record High (1996): 69°F/20.6°C   Record Low (2000): 19°F/-7.2°C
         output = "Weather for {0} :: {1} (Feels like: {2}) | {3} {4}".format(\
-            self._bold(outdata['location']),outdata['temp'],outdata['feelslike'],self._bold('Conditions:'), outdata['weather'])
+            self._bold(outdata['location']),self._temp(outdata['temp']),self._temp(outdata['feelslike']),\
+                self._bold('Conditions:'), outdata['weather'])
             
         # windchill/heatindex are conditional on season but test with startswith to see what to include
         if not outdata['windchill'].startswith("NA"): # conditional for windchill
@@ -381,21 +415,43 @@ class Weather(callbacks.Plugin):
         output += " | {0} {1}".format(self._bold('Updated:'), outdata['observation'])
         irc.reply(output.encode('utf-8'))
         
+        # next, handle the extras like alerts, almanac, etc.
         # handle if we're looking for alerts
         if args['alerts']:
             if data.has_key('alerts'):
-                alerts = data['alerts']
-            else:
-                alerts = "No alerts."
-            irc.reply("{0} :: {1}".format(self._bu("Alerts:"),alerts))
+                if data['alerts']:
+                    irc.reply("{0} :: {1}".format(self._bu("Alerts:"),data['alerts']))
+            
 
-
+        # handle almanac
+        if args['almanac']:
+            if data.has_key('almanac'):
+                if args['imperial']: # grab the data in almanac.
+                    temphighnormal = data['almanac']['temp_high']['normal']['F']
+                    temphighrecord = data['almanac']['temp_high']['record']['F']
+                    temphighyear = data['almanac']['temp_high']['recordyear']
+                    templownormal = data['almanac']['temp_low']['normal']['F']
+                    templowrecord = data['almanac']['temp_low']['record']['F']
+                    templowyear = data['almanac']['temp_low']['recordyear']
+                else:
+                    temphighnormal = data['almanac']['temp_high']['normal']['C']
+                    temphighrecord = data['almanac']['temp_high']['record']['C']
+                    temphighyear = data['almanac']['temp_high']['recordyear']
+                    templownormal = data['almanac']['temp_low']['normal']['C']
+                    templowrecord = data['almanac']['temp_low']['record']['C']
+                    templowyear = data['almanac']['temp_low']['recordyear']
+                # now output
+                irc.reply("{0} :: {1} {2} {3} {4} {5} {6}".format(self._bold('Almanac:'),\
+                    temphighnormal,temphighrecord,temphighyear,\
+                        templownormal, templowrecord, templowyear))
+            
+        if args['forecast']:
+            pass            
     wunderground = wrap(wunderground, [getopts({'alerts':'',
                                                 'almanac':'',
                                                 'astronomy':'',
                                                 'forecast':'',
                                                 'days':('int'),
-                                                'hourly':'',
                                                 'pressure':'',
                                                 'wind':'',
                                                 'uv':'',
