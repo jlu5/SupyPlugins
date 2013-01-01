@@ -216,7 +216,7 @@ class Weather(callbacks.Plugin):
             return False
             
         # urlargs will be used to build the url to query the API.
-        urlArgs = {'features':['conditions'],
+        urlArgs = {'features':['conditions','forecast'],
                    'lang':self.registryValue('lang'),
                    'bestfct':'1',
                    'pws':'0'
@@ -224,7 +224,6 @@ class Weather(callbacks.Plugin):
         # now, start our dict for output formatting.
         args = {'imperial':self.registryValue('useImperial', msg.args[0]),
                 'alerts':self.registryValue('alerts'),
-                'forecast':self.registryValue('forecast'),
                 'forecastDays':self.registryValue('forecastDays'),
                 'almanac':self.registryValue('almanac'),
                 'astronomy':self.registryValue('astronomy'),
@@ -256,8 +255,6 @@ class Weather(callbacks.Plugin):
                     args['imperial'] = False
                 if key == 'alerts':
                     args['alerts'] = True
-                if key == 'forecast':
-                    args['forecast'] = True
                 if key == 'days':
                     args['forecastDays'] = value
                 if key == 'almanac':
@@ -277,7 +274,7 @@ class Weather(callbacks.Plugin):
         # urlArgs['features'] also manipulated via what's in args.
         url = 'http://api.wunderground.com/api/%s/' % (self.APIKEY) # first part of url, w/APIKEY
         # now we need to set certain things for urlArgs based on args.
-        for check in ['alerts','forecast','almanac']:
+        for check in ['alerts','almanac']:
             if args[check]: # if args['value'] is True, either via config or getopts.
                 urlArgs['features'].append(check) # append to dict->key (list)
         # now, we use urlArgs dict to append to url.
@@ -329,15 +326,23 @@ class Weather(callbacks.Plugin):
         outdata['humidity'] = data['current_observation']['relative_humidity']
         outdata['uv'] = data['current_observation']['UV']
         
-        # handle wind.
+        # handle wind. check if there is none first.
         if args['imperial']:
-            outdata['wind'] = "{0} at {1}mph. Gusts to {2}mph".format(\
-                data['current_observation']['wind_dir'],data['current_observation']['wind_mph'],data['current_observation']['wind_gust_mph']) 
+            if data['current_observation']['wind_mph'] is 0: # no wind.
+                outdata['wind'] = "No wind."
+            else:
+                outdata['wind'] = "{0} at {1}mph. Gusts to {2}mph".format(\
+                    data['current_observation']['wind_dir'],data['current_observation']['wind_mph'],\
+                        data['current_observation']['wind_gust_mph']) 
         else:
-            outdata['wind'] = "{0} at {1}kph. Gusts to {2}kph".format(\
-                data['current_observation']['wind_dir'],data['current_observation']['wind_kph'],data['current_observation']['wind_gust_kph'])
+            if data['current_observation']['wind_kph'] is 0: # no wind.
+                outdata['wind'] = "No wind."
+            else:
+                outdata['wind'] = "{0} at {1}kph. Gusts to {2}kph".format(\
+                    data['current_observation']['wind_dir'],data['current_observation']['wind_kph'],\
+                        data['current_observation']['wind_gust_kph'])
             
-        # handle the time. many elements from WunderWeather here.
+        # handle the time. concept/method from WunderWeather plugin.
         observationTime = data['current_observation'].get('observation_epoch', None)
         localTime = data['current_observation'].get('local_epoch', None)
         if not observationTime or not localTime: # if we don't have the epoches from above, default to obs_time
@@ -376,24 +381,17 @@ class Weather(callbacks.Plugin):
             outdata['visibility'] = str(data['current_observation']['visibility_km']) + 'km'
         
         # handle forecast data part. output will be below.
-        if args['forecast']:
-            forecastdata = {} # dict to store data in.
-            for forecastday in data['forecast']['txt_forecast']['forecastday']:
-                tmpdict = {}
-                tmpdict['day'] = forecastday['title']
-                if args['imperial']: 
-                    tmpdict['text'] = forecastday['fcttext'] fcttext_metric
-                else:
-                    tmpdict['text'] = forecastday['fcttext_metric']
-                forecastdata[int(forecastday['period'])] = tmpdict
+        forecastdata = {} # dict to store data in.
+        for forecastday in data['forecast']['txt_forecast']['forecastday']:
+            tmpdict = {}
+            tmpdict['day'] = forecastday['title']
+            if args['imperial']: 
+                tmpdict['text'] = forecastday['fcttext']
+            else:
+                tmpdict['text'] = forecastday['fcttext_metric']
+            forecastdata[int(forecastday['period'])] = tmpdict
         
-        # now, lets output what we have.
-        # Weather for Nashua, NH | Temperature: 27°F / -3°F (Wind Chill: 12°F / -11°C);
-        # Humidity: 64%; Conditions: Light snow mist; Wind: Nw, 24mph / 39kph; Updated: 12 mins, 37 secs ago
-        # Forecast for Sunday: Partly cloudy; High of 28°F / -2°C; Low of 12°F / -11°C
-        # Atlanta, GA (observed 4s ago @ 1050 ft - Sun: 7:42/17:38, Moon: 95%):   Temp: 37.9°F/3.3°C
-        # Windchill: 33°F/0°C   Humidity: 47%   Conditions: Clear   Wind: WNW @        7.0mph/11.3kmh 
-        # (7.0mph/11.3kmh gusts)   Visibility: 10.0mi/16.1km   Record High (1996): 69°F/20.6°C   Record Low (2000): 19°F/-7.2°C
+        # now, build output object with what to output.       
         output = "Weather for {0} :: {1} (Feels like: {2}) | {3} {4}".format(\
             self._bold(outdata['location']),self._temp(outdata['temp']),self._temp(outdata['feelslike']),\
                 self._bold('Conditions:'), outdata['weather'])
@@ -410,6 +408,9 @@ class Weather(callbacks.Plugin):
             if k in extras: # if key is in extras
                 if v: # if that key's value is True
                     output += " | {0}: {1}".format(self._bold(k.title()), outdata[k])
+        
+        # add in the first forecast item in conditions.
+        output += " | {0} {1}".format(self._bold(forecastdata[0]['day']),forecastdata[0]['text'])
         
         # finally, add the time and output.
         output += " | {0} {1}".format(self._bold('Updated:'), outdata['observation'])
@@ -444,13 +445,11 @@ class Weather(callbacks.Plugin):
                 irc.reply("{0} :: {1} {2} {3} {4} {5} {6}".format(self._bold('Almanac:'),\
                     temphighnormal,temphighrecord,temphighyear,\
                         templownormal, templowrecord, templowyear))
-            
-        if args['forecast']:
-            pass            
+
+           
     wunderground = wrap(wunderground, [getopts({'alerts':'',
                                                 'almanac':'',
                                                 'astronomy':'',
-                                                'forecast':'',
                                                 'days':('int'),
                                                 'pressure':'',
                                                 'wind':'',
