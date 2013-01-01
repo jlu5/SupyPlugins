@@ -331,16 +331,16 @@ class Weather(callbacks.Plugin):
             if data['current_observation']['wind_mph'] is 0: # no wind.
                 outdata['wind'] = "No wind."
             else:
-                outdata['wind'] = "{0} at {1}mph. Gusts to {2}mph".format(\
-                    data['current_observation']['wind_dir'],data['current_observation']['wind_mph'],\
-                        data['current_observation']['wind_gust_mph']) 
+                outdata['wind'] = "{0} at {1}mph.".format(data['current_observation']['wind_dir'],data['current_observation']['wind_mph'])
+            if data['current_observation']['wind_gust_mph'] is not 0:
+                outdata['wind'] += " Gusts to {0}mph".format(data['current_observation']['wind_gust_mph'])
         else:
             if data['current_observation']['wind_kph'] is 0: # no wind.
                 outdata['wind'] = "No wind."
             else:
-                outdata['wind'] = "{0} at {1}kph. Gusts to {2}kph".format(\
-                    data['current_observation']['wind_dir'],data['current_observation']['wind_kph'],\
-                        data['current_observation']['wind_gust_kph'])
+                outdata['wind'] = "{0} at {1}kph.".format(data['current_observation']['wind_dir'],data['current_observation']['wind_kph'])
+            if data['current_observation']['wind_gust_mph'] is not 0:
+                outdata['wind'] += " Gusts to {0}kph".format(data['current_observation']['wind_gust_kph'])
             
         # handle the time. concept/method from WunderWeather plugin.
         observationTime = data['current_observation'].get('observation_epoch', None)
