@@ -18,7 +18,7 @@ Overview
     
     I suggest adding an alias to this command to make it easier.
     
-    /msg bot Alias add weather wunderground
+        /msg bot Alias add weather wunderground
     
     Another feature that will make you and your users happy is an internal database that can remember your 
     location and setting for metric. I've seen this before with another bot and wanted to implement this.
@@ -55,7 +55,7 @@ Options
     documented here: http://api.wunderground.com/weather/api/d/docs?d=language-support
     If you do not want to use English, you can set this via one of the codes above:
     
-        /msg bot config plugins.Weather.lang EN (replace EN with the 2 letter language code)
+        config plugins.Weather.lang EN (replace EN with the 2 letter language code)
     
     - disableANSI:
     By default, ANSI is on. Color/bold on output makes things a bit easier to read.
@@ -74,13 +74,12 @@ Options
     
         /msg bot config plugins.Weather.forecastDays 4
     
-       
-    
-Supybot plugin for displaying weather and forecast data from Weather Underground (wunderground.com) API
-    # language support http://www.wunderground.com/weather/api/d/docs?d=language-support
-    # https://github.com/davidwilemski/Weather/blob/master/weather.py
-    # https://bitbucket.org/rizon/pypsd/src/8f975a375ab4/modules/internets/api/weather.py
-    # http://ronie.googlecode.com/svn-history/r283/trunk/weather.wunderground/default.py
-    # http://api.wunderground.com/api/fc7cb609a45365fa/conditions/lang:EN/bestfct:1/pws:0/q/03062.json
-    # http://www.wunderground.com/weather/api/
+Documentation
+
+    Some links:
+        - Main documentation: http://www.wunderground.com/weather/api/
+        # https://github.com/davidwilemski/Weather/blob/master/weather.py
+        # https://bitbucket.org/rizon/pypsd/src/8f975a375ab4/modules/internets/api/weather.py
+        # http://ronie.googlecode.com/svn-history/r283/trunk/weather.wunderground/default.py
+        # http://www.wunderground.com/weather/api/
     
