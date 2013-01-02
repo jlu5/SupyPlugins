@@ -26,7 +26,7 @@ conf.registerChannelValue(Weather,'useImperial', registry.Boolean(True, ("""Use 
 conf.registerChannelValue(Weather,'disableANSI', registry.Boolean(False, """Do not display any ANSI (color/bold) for channel."""))
 conf.registerChannelValue(Weather,'disableColoredTemp', registry.Boolean(False, """If disableANSI is True, this will color temperatures based on values."""))
 conf.registerGlobalValue(Weather,'forecast', registry.Boolean(True, ("""Display forecast in output by default?""")))
-conf.registerGlobalValue(Weather,'forecastDays', registry.Integer(1, ("""How many days of forecast to display. One is good.""")))
+conf.registerGlobalValue(Weather,'forecastDays', registry.Integer(4, ("""How many days of forecast to display. One is good.""")))
 conf.registerGlobalValue(Weather,'alerts', registry.Boolean(False, ("""Display alerts by default?""")))
 conf.registerGlobalValue(Weather,'almanac', registry.Boolean(False, ("""Display almanac by default?""")))
 conf.registerGlobalValue(Weather,'astronomy', registry.Boolean(False, ("""Display astronomy by default?""")))
