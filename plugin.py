@@ -10,7 +10,8 @@
 import urllib2
 import json
 import re
-import math
+from math import floor
+from urllib import quote
 
 # extra supybot libs
 import supybot.conf as conf
@@ -96,18 +97,6 @@ class Weather(callbacks.Plugin):
         regex = re.compile("\x1f|\x02|\x12|\x0f|\x16|\x03(?:\d{1,2}(?:,\d{1,2})?)?", re.UNICODE)
         return regex.sub('', string)
     
-    # UNICODE
-    def _unicode(string): # from pywunderground.
-        """Try to convert a string to unicode using different encodings"""
-        for encoding in ['utf-8', 'latin1']:
-            try:
-                result = unicode(string, encoding)
-                return result
-            except UnicodeDecodeError:
-                pass
-        result = unicode(string, 'utf-8', 'replace')
-        return result
-    
     # COLOR TEMPERATURE
     def temptest(self, irc, msg, args, opttemp):
         irc.reply("Temperature: {0}".format(self._temp(opttemp)))
@@ -115,28 +104,33 @@ class Weather(callbacks.Plugin):
 
     def _temp(self, x):
         """Returns a colored string based on the temperature."""
-        if x.endswith('C'): # handle metric/C
-            x = int((str(x).replace('C','')))*1.8+32
+        if x.endswith('C'):
+            x = float(str(x).replace('C',''))*1.8+32
             unit = "C"
         else:
-            x = int(str(x).replace('F',''))
+            x = float(str(x).replace('F',''))
             unit = "F"
         if x < 10:
-            return ircutils.mircColor(str(x)+unit,'light blue')    
+            color = 'light blue'    
         if 10 <= x <= 32:
-            return ircutils.mircColor(str(x)+unit,'blue')
+            color = 'teal'
         if 32 <= x <= 49:
-            return ircutils.mircColor(str(x)+unit,'teal')
+            color = 'blue'
         if 50 <= x <= 60:
-            return ircutils.mircColor(str(x)+unit,'light green')
+            color = 'light green'
         if 61 <= x <= 70:
-            return ircutils.mircColor(str(x)+unit,'green')
+            color = 'green'
         if 71 <= x <= 80:
-            return ircutils.mircColor(str(x)+unit,'yellow')
+            color = 'yellow'
         if 81 <= x <= 90:
-            return ircutils.mircColor(str(x)+unit,'orange')   
+            color = 'orange'   
         if x > 90:
-            return ircutils.mircColor(str(x)+unit,'red')
+            color = 'red'
+        if unit == "F":
+            return ircutils.mircColor("{0:.0f}F".format(x),color)
+        else:
+            return ircutils.mircColor("{0:.1f}C".format((x-32)*0.555556),color)
+        
             
     # DEGREES TO DIRECTION (wind)
     def _wind(self, angle):
@@ -144,7 +138,7 @@ class Weather(callbacks.Plugin):
         direction_names = ["N","NE","E","SE","S","SW","W","NW"]
         directions_num = len(direction_names)
         directions_step = 360./directions_num
-        index = int(round((angle/360. - math.floor(angle/360.)*360.)/directions_step))
+        index = int(round((angle/360. - floor(angle/360.)*360.)/directions_step))
         index %= directions_num
         return direction_names[index]
        
@@ -247,7 +241,6 @@ class Weather(callbacks.Plugin):
         # now, start our dict for output formatting.
         args = {'imperial':self.registryValue('useImperial', msg.args[0]),
                 'alerts':self.registryValue('alerts'),
-                'forecastDays':self.registryValue('forecastDays'),
                 'almanac':self.registryValue('almanac'),
                 'astronomy':self.registryValue('astronomy'),
                 'pressure':self.registryValue('showPressure'),
@@ -311,7 +304,7 @@ class Weather(callbacks.Plugin):
             if key == "lang" or key == "bestfct" or key == "pws": # rest added with key:value
                 url += "{0}:{1}/".format(key, value)
         # finally, attach the q/input. url is now done.
-        url += 'q/%s.json' % (optinput.replace(' ','')) # remove spaces.
+        url += 'q/%s.json' % quote(optinput)
 
         self.log.info(url)
         # try and query.                        
@@ -355,18 +348,18 @@ class Weather(callbacks.Plugin):
         
         # handle wind. check if there is none first.
         if args['imperial']:
-            if data['current_observation']['wind_mph'] > 0: # no wind.
-                outdata['wind'] = "No wind."
+            if data['current_observation']['wind_mph'] < 1: # no wind.
+                outdata['wind'] = "None"
             else:
                 outdata['wind'] = "{0}@{1}mph".format(self._wind(data['current_observation']['wind_degrees']),data['current_observation']['wind_mph'])
-            if data['current_observation']['wind_gust_mph'] is not 0:
+            if data['current_observation']['wind_gust_mph'] > 0:
                 outdata['wind'] += " ({0}mph gusts)".format(data['current_observation']['wind_gust_mph'])
         else:
-            if data['current_observation']['wind_kph'] > 0: # no wind.
-                outdata['wind'] = "No wind."
+            if data['current_observation']['wind_kph'] < 1: # no wind.
+                outdata['wind'] = "None"
             else:
                 outdata['wind'] = "{0}@{1}kph".format(self._wind(data['current_observation']['wind_degrees']),data['current_observation']['wind_mph'])
-            if data['current_observation']['wind_gust_mph'] is not 0:
+            if data['current_observation']['wind_gust_mph'] > 0:
                 outdata['wind'] += " ({0}kph gusts)".format(data['current_observation']['wind_gust_kph'])
             
         # handle the time. concept/method from WunderWeather plugin.
@@ -391,8 +384,8 @@ class Weather(callbacks.Plugin):
         
         # all conditionals for imperial/metric
         if args['imperial']:
-            outdata['temp'] = str(data['current_observation']['temp_f']) + 'F' # + u" \u00B0C"
-            outdata['pressure'] = data['current_observation']['pressure_in']
+            outdata['temp'] = str(data['current_observation']['temp_f']) + 'F'
+            outdata['pressure'] = data['current_observation']['pressure_in'] + 'in'
             outdata['dewpoint'] = str(data['current_observation']['dewpoint_f']) + 'F'
             outdata['heatindex'] = str(data['current_observation']['heat_index_f']) + 'F'
             outdata['windchill'] = str(data['current_observation']['windchill_f']) + 'F'
@@ -400,10 +393,10 @@ class Weather(callbacks.Plugin):
             outdata['visibility'] = str(data['current_observation']['visibility_mi']) + 'mi'
         else:
             outdata['temp'] = str(data['current_observation']['temp_c']) + 'C'
-            outdata['pressure'] = data['current_observation']['pressure_mb']
+            outdata['pressure'] = data['current_observation']['pressure_mb'] + 'mb'
             outdata['dewpoint'] = str(data['current_observation']['dewpoint_c']) + 'C'
             outdata['heatindex'] = str(data['current_observation']['heat_index_c']) + 'C'
-            outdata['windchill'] = str(data['windchill_c']) + 'C'
+            outdata['windchill'] = str(data['current_observation']['windchill_c']) + 'C'
             outdata['feelslike'] = str(data['current_observation']['feelslike_c']) + 'C'
             outdata['visibility'] = str(data['current_observation']['visibility_km']) + 'km'
         
@@ -464,7 +457,7 @@ class Weather(callbacks.Plugin):
                 outdata['alerts'] = "No alerts."
                 
         # OUTPUT
-        # now, build output object with what to output. °
+        # now, build output object with what to output. ° u" \u00B0C"
         if self.registryValue('disableColoredTemp'):
             output = "Weather for {0} :: {1} (Feels like: {2})".format(self._bold(outdata['location']),\
                 outdata['temp'],outdata['feelslike'])        
@@ -489,7 +482,8 @@ class Weather(callbacks.Plugin):
                 if v: # if that key's value is True
                     output += " | {0}: {1}".format(self._bold(k.title()), outdata[k])
         # add in the first forecast item in conditions + updated time.
-        output += " | {0} {1}".format(self._bold(forecastdata[0]['day']),forecastdata[0]['text'])
+        output += " | {0}: {1} {2}: {3}".format(self._bold(forecastdata[0]['day']),\
+            forecastdata[0]['text'],self._bold(forecastdata[1]['day']),forecastdata[1]['text'])
         output += " | {0} {1}".format(self._bold('Updated:'), outdata['observation'])
         # output.
         if self.registryValue('disableANSI', msg.args[0]):
@@ -506,16 +500,20 @@ class Weather(callbacks.Plugin):
                 irc.reply(output)
         # handle almanac
         if args['almanac']:
-            output = "{0} :: {1} {2} {3} {4} {5} {6}".format(self._bold('Almanac:'),\
-                outdata['highnormal'],outdata['highrecord'],outdata['highyear'],\
-                    outdata['lownormal'],outdata['lowrecord'],outdata['lowyear'])
+            if self.registryValue('disableColoredTemp'):
+                output = "{0} :: Normal High: {1} (Record: {2} in {3}) | Normal Low: {4} (Record: {5} in {6})".format(\
+                    self._bu('Almanac:'),outdata['highnormal'],outdata['highrecord'],\
+                        outdata['highyear'],outdata['lownormal'],outdata['lowrecord'],outdata['lowyear'])
+            else:
+                output = "{0} :: Normal High: {1} (Record: {2} in {3}) | Normal Low: {4} (Record: {5} in {6})".format(\
+                    self._bu('Almanac:'),self._temp(outdata['highnormal']),self._temp(outdata['highrecord']),\
+                        outdata['highyear'],self._temp(outdata['lownormal']),self._temp(outdata['lowrecord']),outdata['lowyear'])                
             if self.registryValue('disableANSI', msg.args[0]):
                 irc.reply(self._strip(output))
             else:
-                irc.reply(output)              
-                                    
+                irc.reply(output)  
         # handle main forecast if --forecast is given.
-        if args['forecast']:
+        if args['forecast']:                
             outforecast = [] # prep string for output.
             for (k,v) in fullforecastdata.items(): # iterate through forecast data.
                 if self.registryValue('disableColoredTemp'):
