@@ -115,66 +115,39 @@ class Weather(callbacks.Plugin):
 
     def _temp(self, x):
         """Returns a colored string based on the temperature."""
-        if x.endswith('C'):
+        if x.endswith('C'): # handle metric/C
             x = int((str(x).replace('C','')))*1.8+32
+            unit = "C"
         else:
             x = int(str(x).replace('F',''))
+            unit = "F"
         if x < 10:
-            return ircutils.mircColor(x,'light blue')    
+            return ircutils.mircColor(str(x)+unit,'light blue')    
         if 10 <= x <= 32:
-            return ircutils.mircColor(x,'blue')    
+            return ircutils.mircColor(str(x)+unit,'blue')
         if 32 <= x <= 49:
-            return ircutils.mircColor(x,'teal')
+            return ircutils.mircColor(str(x)+unit,'teal')
         if 50 <= x <= 60:
-            return ircutils.mircColor(x,'light green')   
+            return ircutils.mircColor(str(x)+unit,'light green')
         if 61 <= x <= 70:
-            return ircutils.mircColor(x,'green')   
+            return ircutils.mircColor(str(x)+unit,'green')
         if 71 <= x <= 80:
-            return ircutils.mircColor(x,'yellow')   
+            return ircutils.mircColor(str(x)+unit,'yellow')
         if 81 <= x <= 90:
-            return ircutils.mircColor(x,'orange')   
+            return ircutils.mircColor(str(x)+unit,'orange')   
         if x > 90:
-            return ircutils.mircColor(x,'red')
-
+            return ircutils.mircColor(str(x)+unit,'red')
+            
     # DEGREES TO DIRECTION (wind)
-    def _normalize_angle(self, angle):
-	    """ Takes angle in degrees and returns angle from 0 to 360 degrees """
-	    cycles = angle/360.
-	    normalized_cycles = angle/360. - math.floor(cycles)*360.
-	    return normalized_cycles*360.
-  
     def _wind(self, angle):
-        direction_names = ["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"]
+        #direction_names = ["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"]
+        direction_names = ["N","NE","E","SE","S","SW","W","NW"]
         directions_num = len(direction_names)
         directions_step = 360./directions_num
         index = int(round((angle/360. - math.floor(angle/360.)*360.)/directions_step))
-        #index = int(round( _normalize_angle(angle)/directions_step ))
         index %= directions_num
         return direction_names[index]
-    
-    def _winddir(self, degrees):
-        """ Convert wind degrees to direction """
-        try:
-            degrees = int(degrees)
-        except ValueError:
-            return degrees
-        if degrees < 23 or degrees >= 338:
-            return 'N'
-        elif degrees < 68:
-            return 'NE'
-        elif degrees < 113:
-            return 'E'
-        elif degrees < 158:
-            return 'SE'
-        elif degrees < 203:
-            return 'S'
-        elif degrees < 248:
-            return 'SW'
-        elif degrees < 293:
-            return 'W'
-        elif degrees < 338:
-            return 'NW'
-    
+       
     # PUBLIC FUNCTIONS TO WORK WITH WEATHERDB.
     def weatherusers(self, irc, msg, args):
         """
@@ -243,7 +216,7 @@ class Weather(callbacks.Plugin):
             irc.reply('I have no weather ID for %s.' % optnick)
     getweather = wrap(getweather, [optional('somethingWithoutSpaces')])
        
-    # CHECK FOR API KEY.  
+    # CHECK FOR API KEY. (NOT PUBLIC)
     def keycheck(self, irc):
         """Check and make sure we have an API key."""
         if len(self.APIKEY) < 1 or not self.APIKEY or self.APIKEY == "Not set":
@@ -382,14 +355,14 @@ class Weather(callbacks.Plugin):
         
         # handle wind. check if there is none first.
         if args['imperial']:
-            if data['current_observation']['wind_mph'] is 0: # no wind.
+            if data['current_observation']['wind_mph'] > 0: # no wind.
                 outdata['wind'] = "No wind."
             else:
                 outdata['wind'] = "{0}@{1}mph".format(self._wind(data['current_observation']['wind_degrees']),data['current_observation']['wind_mph'])
             if data['current_observation']['wind_gust_mph'] is not 0:
                 outdata['wind'] += " ({0}mph gusts)".format(data['current_observation']['wind_gust_mph'])
         else:
-            if data['current_observation']['wind_kph'] is 0: # no wind.
+            if data['current_observation']['wind_kph'] > 0: # no wind.
                 outdata['wind'] = "No wind."
             else:
                 outdata['wind'] = "{0}@{1}kph".format(self._wind(data['current_observation']['wind_degrees']),data['current_observation']['wind_mph'])
@@ -418,16 +391,16 @@ class Weather(callbacks.Plugin):
         
         # all conditionals for imperial/metric
         if args['imperial']:
-            outdata['temp'] = str(data['current_observation']['temp_f']) + 'F'#+ u'\xb0F'
-            outdata['pressure'] = data['current_observation']['pressure_mb']
+            outdata['temp'] = str(data['current_observation']['temp_f']) + 'F' # + u" \u00B0C"
+            outdata['pressure'] = data['current_observation']['pressure_in']
             outdata['dewpoint'] = str(data['current_observation']['dewpoint_f']) + 'F'
             outdata['heatindex'] = str(data['current_observation']['heat_index_f']) + 'F'
             outdata['windchill'] = str(data['current_observation']['windchill_f']) + 'F'
             outdata['feelslike'] = str(data['current_observation']['feelslike_f']) + 'F'
             outdata['visibility'] = str(data['current_observation']['visibility_mi']) + 'mi'
         else:
-            outdata['temp'] = str(data['current_observation']['temp_c']) + 'C'#+ u'\xb0C'
-            outdata['pressure'] = data['current_observation']['pressure_in']
+            outdata['temp'] = str(data['current_observation']['temp_c']) + 'C'
+            outdata['pressure'] = data['current_observation']['pressure_mb']
             outdata['dewpoint'] = str(data['current_observation']['dewpoint_c']) + 'C'
             outdata['heatindex'] = str(data['current_observation']['heat_index_c']) + 'C'
             outdata['windchill'] = str(data['windchill_c']) + 'C'
@@ -454,11 +427,11 @@ class Weather(callbacks.Plugin):
                 tmpdict['day'] = forecastday['date']['weekday_short']
                 tmpdict['text'] = forecastday['conditions']
                 if args['imperial']: # check for metric.
-                    tmpdict['high'] = forecastday['high']['fahrenheit'] 
-                    tmpdict['low'] = forecastday['low']['fahrenheit']
+                    tmpdict['high'] = forecastday['high']['fahrenheit'] + "F"
+                    tmpdict['low'] = forecastday['low']['fahrenheit'] + "F"
                 else:
-                    tmpdict['high'] = forecastday['high']['celsius'] 
-                    tmpdict['low'] = forecastday['low']['celsius']                
+                    tmpdict['high'] = forecastday['high']['celsius'] + "C"
+                    tmpdict['low'] = forecastday['low']['celsius'] + "C"            
                 fullforecastdata[int(forecastday['period'])] = tmpdict
 
         # handle almanac
@@ -466,15 +439,15 @@ class Weather(callbacks.Plugin):
             outdata['highyear'] = data['almanac']['temp_high']['recordyear']
             outdata['lowyear'] = data['almanac']['temp_low']['recordyear']
             if args['imperial']:
-                outdata['highnormal'] = data['almanac']['temp_high']['normal']['F']
-                outdata['highrecord'] = data['almanac']['temp_high']['record']['F']
-                outdata['lownormal'] = data['almanac']['temp_low']['normal']['F']
-                outdata['lowrecord'] = data['almanac']['temp_low']['record']['F']
+                outdata['highnormal'] = data['almanac']['temp_high']['normal']['F'] + "F"
+                outdata['highrecord'] = data['almanac']['temp_high']['record']['F'] + "F"
+                outdata['lownormal'] = data['almanac']['temp_low']['normal']['F'] + "F"
+                outdata['lowrecord'] = data['almanac']['temp_low']['record']['F'] + "F"
             else:
-                outdata['highnormal'] = data['almanac']['temp_high']['normal']['C']
-                outdata['highrecord'] = data['almanac']['temp_high']['record']['C']
-                outdata['lownormal'] = data['almanac']['temp_low']['normal']['C']
-                outdata['lowrecord'] = data['almanac']['temp_low']['record']['C']
+                outdata['highnormal'] = data['almanac']['temp_high']['normal']['C'] + "C"
+                outdata['highrecord'] = data['almanac']['temp_high']['record']['C'] + "C"
+                outdata['lownormal'] = data['almanac']['temp_low']['normal']['C'] + "C"
+                outdata['lowrecord'] = data['almanac']['temp_low']['record']['C'] + "C"
 
         # handle astronomy
         if args['astronomy']:
@@ -485,32 +458,40 @@ class Weather(callbacks.Plugin):
         
         # handle alerts
         if args['alerts']:
-            if data.has_key('alerts'):
+            if data['alerts']:
                 outdata['alerts'] = data['alerts'][:300] # alert limit to 300.
             else:
                 outdata['alerts'] = "No alerts."
                 
         # OUTPUT
-        # now, build output object with what to output.       
-        output = "Weather for {0} :: {1}° (Feels like: {2}) | {3} {4}".format(\
-            self._bold(outdata['location']),self._temp(outdata['temp']),self._temp(outdata['feelslike']),\
-                self._bold('Conditions:'), outdata['weather'])
+        # now, build output object with what to output. °
+        if self.registryValue('disableColoredTemp'):
+            output = "Weather for {0} :: {1} (Feels like: {2})".format(self._bold(outdata['location']),\
+                outdata['temp'],outdata['feelslike'])        
+        else:
+            output = "Weather for {0} :: {1} (Feels like: {2})".format(self._bold(outdata['location']),\
+            self._temp(outdata['temp']),self._temp(outdata['feelslike']))
+        output += " | {0} {1}".format(self._bold('Conditions:'), outdata['weather'])
         # windchill/heatindex are conditional on season but test with startswith to see what to include
-        if not outdata['windchill'].startswith("NA"): 
-            output += " | {0} {1}".format(self._bold('Wind Chill:'), outdata['windchill'])
-        if not outdata['heatindex'].startswith("NA"): 
-            output += " | {0} {1}".format(self._bold('Heat Index:'), outdata['heatindex'])
+        if not outdata['windchill'].startswith("NA"):
+            if self.registryValue('disableColoredTemp'):
+                output += " | {0} {1}".format(self._bold('Wind Chill:'), outdata['windchill'])
+            else:
+                output += " | {0} {1}".format(self._bold('Wind Chill:'), self._temp(outdata['windchill']))
+        if not outdata['heatindex'].startswith("NA"):
+            if self.registryValue('disableColoredTemp'):
+                output += " | {0} {1}".format(self._bold('Heat Index:'), outdata['heatindex'])
+            else:
+                output += " | {0} {1}".format(self._bold('Heat Index:'), self._temp(outdata['heatindex']))
         # now get into the args dict for what to include (extras)
-        extras = ['wind','visibility','uv','pressure','dewpoint']
         for (k,v) in args.items():
-            if k in extras: # if key is in extras
+            if k in ['wind','visibility','uv','pressure','dewpoint']: # if key is in extras
                 if v: # if that key's value is True
                     output += " | {0}: {1}".format(self._bold(k.title()), outdata[k])
-        # add in the first forecast item in conditions.
+        # add in the first forecast item in conditions + updated time.
         output += " | {0} {1}".format(self._bold(forecastdata[0]['day']),forecastdata[0]['text'])
-        # finally, add the time and output.
         output += " | {0} {1}".format(self._bold('Updated:'), outdata['observation'])
-        
+        # output.
         if self.registryValue('disableANSI', msg.args[0]):
             irc.reply(self._strip(output))
         else:
@@ -537,7 +518,12 @@ class Weather(callbacks.Plugin):
         if args['forecast']:
             outforecast = [] # prep string for output.
             for (k,v) in fullforecastdata.items(): # iterate through forecast data.
-                outforecast.append("{0}: {1} ({2}/{3})".format(self._bold(v['day']),v['text'],v['high'],v['low']))
+                if self.registryValue('disableColoredTemp'):
+                    outforecast.append("{0}: {1} ({2}/{3})".format(self._bold(v['day']),v['text'],\
+                        v['high'],v['low']))
+                else:
+                    outforecast.append("{0}: {1} ({2}/{3})".format(self._bold(v['day']),v['text'],\
+                        self._temp(v['high']),self._temp(v['low'])))
             output = "{0} :: {1}".format(self._bu('Forecast:'), " | ".join(outforecast)) # string to output
             if self.registryValue('disableANSI', msg.args[0]):
                 irc.reply(self._strip(output))
