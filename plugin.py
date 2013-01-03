@@ -98,40 +98,39 @@ class Weather(callbacks.Plugin):
         return regex.sub('', string)
     
     # COLOR TEMPERATURE
-    def temptest(self, irc, msg, args, opttemp):
-        irc.reply("Temperature: {0}".format(self._temp(opttemp)))
-    temptest = wrap(temptest, [('somethingWithoutSpaces')])
-
     def _temp(self, x):
         """Returns a colored string based on the temperature."""
         if x.endswith('C'):
-            x = float(str(x).replace('C',''))*1.8+32
+            x = float(str(x).replace('C','')) * 9 / 5 + 32
             unit = "C"
         else:
             x = float(str(x).replace('F',''))
             unit = "F"
-        if x < 10:
+        # determine color.
+        if x < 10.0:
             color = 'light blue'    
-        if 10 <= x <= 32:
+        elif 10.0 <= x <= 32.0:
             color = 'teal'
-        if 32 <= x <= 49:
+        elif 32.1 <= x <= 50.0:
             color = 'blue'
-        if 50 <= x <= 60:
+        elif 50.1 <= x <= 60.0:
             color = 'light green'
-        if 61 <= x <= 70:
+        elif 60.1 <= x <= 70.0:
             color = 'green'
-        if 71 <= x <= 80:
+        elif 70.1 <= x <= 80.0:
             color = 'yellow'
-        if 81 <= x <= 90:
+        elif 80.1 <= x <= 90.0:
             color = 'orange'   
-        if x > 90:
+        elif x > 90.0:
             color = 'red'
-        if unit == "F":
-            return ircutils.mircColor("{0:.0f}F".format(x),color)
         else:
-            return ircutils.mircColor("{0:.1f}C".format((x-32)*0.555556),color)
+            color = 'light grey'
+        # return.
+        if unit == "F":
+            return ircutils.mircColor(("{0:.0f}F".format(x)),color)
+        else:
+            return ircutils.mircColor(("{0:.0f}C".format((x - 32) * 5 / 9)),color)
         
-            
     # DEGREES TO DIRECTION (wind)
     def _wind(self, angle):
         #direction_names = ["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"]
