@@ -75,13 +75,6 @@ Options
     
         /msg <bot> config plugins.Weather.disableColorTemp True
     
-    - forecastDays:
-    By default, the plugin is set to display 4 days of forecast with --forecast
-    I do not have the code to show more since forecasts beyond this are unreliable.
-    If you want less, you can configure this between 1 and 4.
-    
-        /msg <bot> config plugins.Weather.forecastDays 4
-    
 Documentation
 
     Some links:
