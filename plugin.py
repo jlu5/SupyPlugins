@@ -305,7 +305,7 @@ class Weather(callbacks.Plugin):
         # finally, attach the q/input. url is now done.
         url += 'q/%s.json' % quote(optinput)
 
-        self.log.info(url)
+        #self.log.info(url)
         # try and query.                        
         try: 
             request = urllib2.Request(url)
@@ -445,8 +445,13 @@ class Weather(callbacks.Plugin):
         if args['astronomy']:
             outdata['moonilluminated'] = data['moon_phase']['percentIlluminated']
             outdata['moonage'] = data['moon_phase']['ageOfMoon']
-            outdata['sunrise'] = "{0}:{1}".format(data['moon_phase']['sunrise']['hour'],data['moon_phase']['sunrise']['minute'])
-            outdata['sunset'] = "{0}:{1}".format(data['moon_phase']['sunset']['hour'],data['moon_phase']['sunset']['minute'])
+            sunriseh = int(data['moon_phase']['sunrise']['hour'])
+            sunrisem = int(data['moon_phase']['sunrise']['minute'])
+            sunseth = int(data['moon_phase']['sunset']['hour'])
+            sunsetm = int(data['moon_phase']['sunset']['minute'])
+            outdata['sunrise'] = "{0}:{1}".format(sunriseh,sunrisem)
+            outdata['sunset'] = "{0}:{1}".format(sunseth,sunsetm)
+            outdata['lengthofday'] = "%dh%dm" % divmod((((sunseth-sunriseh)+float((sunsetm-sunrisem)/60.0))*60),60)
         
         # handle alerts
         if args['alerts']:
@@ -510,7 +515,15 @@ class Weather(callbacks.Plugin):
             if self.registryValue('disableANSI', msg.args[0]):
                 irc.reply(self._strip(output))
             else:
-                irc.reply(output)  
+                irc.reply(output)
+        # handle astronomy
+        if args['astronomy']:
+            output = "{0} Moon illum: {1}%   Moon age: {2}d   Sunrise: {3}  Sunset: {4}  Length of Day: {5}".format(self._bu('Astronomy:'),outdata['moonilluminated'],\
+                outdata['moonage'],outdata['sunrise'],outdata['sunset'], outdata['lengthofday'])
+            if self.registryValue('disableANSI', msg.args[0]):
+                irc.reply(self._strip(output))
+            else:
+                irc.reply(output)
         # handle main forecast if --forecast is given.
         if args['forecast']:                
             outforecast = [] # prep string for output.
