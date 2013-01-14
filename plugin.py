@@ -2,8 +2,6 @@
 ###
 # Copyright (c) 2012, spline
 # All rights reserved.
-#
-#
 ###
 
 # my libs
@@ -29,8 +27,8 @@ from supybot.i18n import PluginInternationalization, internationalizeDocstring
 _ = PluginInternationalization('Weather')
 
 @internationalizeDocstring
-# WeatherDB - to store a users nick, weather code (zip), and metric option
 class WeatherDB(plugins.ChannelUserDB):
+    """WeatherDB class to store our users locations and metric."""
     def __init__(self, *args, **kwargs):
         plugins.ChannelUserDB.__init__(self, *args, **kwargs)
 
@@ -133,7 +131,6 @@ class Weather(callbacks.Plugin):
         
     # DEGREES TO DIRECTION (wind)
     def _wind(self, angle):
-        #direction_names = ["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"]
         direction_names = ["N","NE","E","SE","S","SW","W","NW"]
         directions_num = len(direction_names)
         directions_step = 360./directions_num
@@ -177,9 +174,10 @@ class Weather(callbacks.Plugin):
         Use your zip/postal code to keep it simple. Ex: setweather 03062
         """
         # set the weather id based on nick.
+        optid = optid.replace(' ','')
         self.db.setId(msg.nick, optid)
         irc.reply("I have changed {0}'s weather ID to {1}".format(msg.nick, optid))
-    setweather = wrap(setweather, [('somethingWithoutSpaces')])
+    setweather = wrap(setweather, [('text')])
            
     def getmetric(self, irc, msg, args, optnick):
         """[nick]
