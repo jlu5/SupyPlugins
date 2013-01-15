@@ -272,6 +272,7 @@ class Weather(callbacks.Plugin):
                 'astronomy':self.registryValue('astronomy'),
                 'pressure':self.registryValue('showPressure'),
                 'wind':self.registryValue('showWind'),
+                'updated':self.registryValue('showUpdated'),
                 'forecast':False,
                 'strip':False,
                 'uv':False,
@@ -385,8 +386,8 @@ class Weather(callbacks.Plugin):
             if data['current_observation']['wind_kph'] < 1: # no wind.
                 outdata['wind'] = "None"
             else:
-                outdata['wind'] = "{0}@{1}kph".format(self._wind(data['current_observation']['wind_degrees']),data['current_observation']['wind_mph'])
-            if data['current_observation']['wind_gust_mph'] > 0:
+                outdata['wind'] = "{0}@{1}kph".format(self._wind(data['current_observation']['wind_degrees']),data['current_observation']['wind_kph'])
+            if data['current_observation']['wind_gust_kph'] > 0:
                 outdata['wind'] += " ({0}kph gusts)".format(data['current_observation']['wind_gust_kph'])
 
         # handle the time. concept/method from WunderWeather plugin.
@@ -517,7 +518,9 @@ class Weather(callbacks.Plugin):
         # add in the first forecast item in conditions + updated time.
         output += " | {0}: {1} {2}: {3}".format(self._bold(forecastdata[0]['day']),\
             forecastdata[0]['text'],self._bold(forecastdata[1]['day']),forecastdata[1]['text'])
-        output += " | {0} {1}".format(self._bold('Updated:'), outdata['observation'])
+        # show Updated?
+        if args['updated']:
+            output += " | {0} {1}".format(self._bold('Updated:'), outdata['observation'])
         # output.
         if self.registryValue('disableANSI', msg.args[0]):
             irc.reply(ircutils.stripFormatting(output))
