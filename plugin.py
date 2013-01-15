@@ -68,7 +68,7 @@ class Weather(callbacks.Plugin):
     def __init__(self, irc):
         self.__parent = super(Weather, self)
         self.__parent.__init__(irc)
-        self.db = WeatherDB(dbfilename)
+        self.db = WeatherDB(conf.supybot.directories.data.dirize("Weather.db"))
         self.APIKEY = self.registryValue('apiKey')
         world.flushers.append(self.db.flush)
 
@@ -583,8 +583,6 @@ class Weather(callbacks.Plugin):
                                                 'visibility':'',
                                                 'dewpoint':'',
                                                 'metric':''}), optional('text')])
-
-dbfilename = conf.supybot.directories.data.dirize("Weather.db")
 
 Class = Weather
 
