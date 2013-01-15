@@ -523,7 +523,7 @@ class Weather(callbacks.Plugin):
             output += " | {0} {1}".format(self._bold('Updated:'), outdata['observation'])
         # output.
         if self.registryValue('disableANSI', msg.args[0]):
-            irc.reply(ircutils.stripFormatting(output))
+            irc.reply(self._strip(output))
         else:
             irc.reply(output)
 
