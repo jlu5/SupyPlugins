@@ -91,9 +91,7 @@ class Weather(callbacks.Plugin):
     def _red(self, string):
         return ircutils.mircColor(string, 'red')
 
-    def _strip(self, string): # from http://bit.ly/X0vm6K
-        #regex = re.compile("\x1f|\x02|\x12|\x0f|\x16|\x03(?:\d{1,2}(?:,\d{1,2})?)?", re.UNICODE)
-        #return regex.sub('', string)
+    def _strip(self, string):
         return ircutils.stripFormatting(string)
 
     # WEATHER SYMBOLS
@@ -430,11 +428,11 @@ class Weather(callbacks.Plugin):
 
         # handle forecast data part. output will be below.
         # this is not the --forecast part.
-        forecastdata = {} # dict to store data in.
+        forecastdata = {}
         for forecastday in data['forecast']['txt_forecast']['forecastday']:
             tmpdict = {}
             tmpdict['day'] = forecastday['title']
-            tmpdict['symbol'] = forecastday['icon'] # partlycloudy
+            tmpdict['symbol'] = self._weatherSymbol(forecastday['icon'])
             if args['imperial']:
                 tmpdict['text'] = forecastday['fcttext']
             else:
@@ -447,9 +445,9 @@ class Weather(callbacks.Plugin):
             for forecastday in data['forecast']['simpleforecast']['forecastday']:
                 tmpdict = {}
                 tmpdict['day'] = forecastday['date']['weekday_short']
-                tmpdict['symbol'] = forecastday['icon'] # partlycloudy
+                tmpdict['symbol'] = self._weatherSymbol(forecastday['icon'])
                 tmpdict['text'] = forecastday['conditions']
-                if args['imperial']: # check for metric.
+                if args['imperial']:
                     tmpdict['high'] = forecastday['high']['fahrenheit'] + "F"
                     tmpdict['low'] = forecastday['low']['fahrenheit'] + "F"
                 else:
