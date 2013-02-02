@@ -120,6 +120,27 @@ class Weather(callbacks.Plugin):
         except KeyError:
             return None
 
+    # MOON PHASE
+    def _moonphase(self, phase):
+        """Returns a moon phase based on the %."""
+        if phase < 0.05:
+            symbol = "[ (  ) ] (fullmoon)"
+        elif phase < 0.20:
+            symbol = "[ C   ] (decreasing moon)"
+        elif phase < 0.30:
+            symbol = "[ C   ] (half moon)"
+        elif phase < 0.45:
+            symbol = "[ (   ] (decreasing moon)"
+        elif phase < 0.65:
+            symbol = "[     ] (new moon)"
+        elif phase < 0.80:
+            symbol = "[   ) ] (waxing moon)"
+        elif phase < 0.80:
+            symbol = "[   D ] (half moon)"
+        else:
+            symbol = "[   D ] (waxing moon)"
+        return symbol
+
     # COLOR TEMPERATURE
     def _temp(self, x):
         """Returns a colored string based on the temperature."""
@@ -239,7 +260,7 @@ class Weather(callbacks.Plugin):
     def keycheck(self, irc):
         """Check and make sure we have an API key."""
         if len(self.APIKEY) < 1 or not self.APIKEY or self.APIKEY == "Not set":
-            irc.reply("ERROR: Need an API key. config plugins.Weather.apiKey apiKey .")
+            irc.reply("ERROR: Need a Wunderground API key. Set config plugins.Weather.apiKey.")
             return False
         else:
             return True
