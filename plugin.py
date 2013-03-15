@@ -146,7 +146,7 @@ class LastFM(callbacks.Plugin):
         if isNowPlaying:
             albumStr = "[" + album + "]" if album else ""
             irc.reply(('%s is listening to "%s" by %s %s'
-                    % (user, track, artist, )).encode("utf8"))
+                    % (user, track, artist, albumStr)).encode("utf8"))
         else:
             irc.reply(('%s listened to "%s" by %s %s more than %s'
                     % (user, track, artist, album,
