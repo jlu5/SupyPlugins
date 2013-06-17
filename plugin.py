@@ -319,6 +319,7 @@ class Weather(callbacks.Plugin):
                 'wind':self.registryValue('showWind'),
                 'updated':self.registryValue('showUpdated'),
                 'forecast':False,
+                'humidity':False,
                 'strip':False,
                 'uv':False,
                 'visibility':False,
@@ -336,6 +337,8 @@ class Weather(callbacks.Plugin):
                     args['almanac'] = True
                 if key == 'pressure':
                     args['pressure'] = True
+                if key == 'humidity':
+                    args['humidity'] = True
                 if key == 'wind':
                     args['wind'] = True
                 if key == 'uv':
@@ -531,35 +534,41 @@ class Weather(callbacks.Plugin):
         # handle alerts
         if args['alerts']:  # only look for alerts if there.
             if data['alerts']:  # alerts is a list. it can also be empty.
-                outdata['alerts'] = data['alerts'][:300]  # limit chars to 300.
+                outdata['alerts'] = data['alerts']['message']  # need to do some formatting below.
+                outdata['alerts'] = outdata['alerts'].replace('\n', ' ')[:300]  # \n->' ' and max 300 chars.
+                outdata['alerts'] = utils.str.normalizeWhitespace(outdata['alerts'])  # fix pesky double whitespacing.
             else:  # no alerts found (empty).
                 outdata['alerts'] = "No alerts."
 
         # OUTPUT.
         # we go step-by-step to build the proper string. ° u" \u00B0C"
-        output = "Weather for {0} :: {1}".format(self._bold(outdata['location'].encode('utf-8')), outdata['weather'].encode('utf-8'))
+        output = "{0} :: {1} ::".format(self._bold(outdata['location'].encode('utf-8')), outdata['weather'].encode('utf-8'))
         if args['nocolortemp']:  # don't color temp.
             output += " {0}".format(outdata['temp'])
         else:  # colored temperature.
             output += " {0}".format(self._temp(outdata['temp']))
+        if args['humidity']:  # display humidity?
+            output += " (Humidity: {0}) ".format(outdata['humidity'])
+        else:
+            output += " "
         # windchill/heatindex are conditional on season but test with startswith to see what to include
         if not outdata['windchill'].startswith("NA"):  # windchill.
             if args['nocolortemp']:  # don't color windchill.
-                output += " | {0} {1}".format(self._bold('Wind Chill:'), outdata['windchill'])
+                output += "| {0} {1} ".format(self._bold('Wind Chill:'), outdata['windchill'])
             else:  # color wind chill.
-                output += " | {0} {1}".format(self._bold('Wind Chill:'), self._temp(outdata['windchill']))
+                output += "| {0} {1} ".format(self._bold('Wind Chill:'), self._temp(outdata['windchill']))
         if not outdata['heatindex'].startswith("NA"):  # heatindex.
             if args['nocolortemp']:  # don't color heatindex.
-                output += " | {0} {1}".format(self._bold('Heat Index:'), outdata['heatindex'])
+                output += "| {0} {1} ".format(self._bold('Heat Index:'), outdata['heatindex'])
             else:  # color heat index.
-                output += " | {0} {1}".format(self._bold('Heat Index:'), self._temp(outdata['heatindex']))
+                output += "| {0} {1} ".format(self._bold('Heat Index:'), self._temp(outdata['heatindex']))
         # now get into the args dict for what to include (extras)
         for (k, v) in args.items():
             if k in ['wind', 'visibility', 'uv', 'pressure', 'dewpoint']: # if key is in extras
                 if v: # if that key's value is True, we add it.
-                    output += " | {0}: {1}".format(self._bold(k.title()), outdata[k].encode('utf-8'))
+                    output += "| {0}: {1} ".format(self._bold(k.title()), outdata[k].encode('utf-8'))
         # add in the first two forecast item in conditions + updated time.
-        output += " | {0}: {1}".format(self._bold(forecastdata[0]['day'].encode('utf-8')), forecastdata[0]['text'].encode('utf-8'))
+        output += "| {0}: {1}".format(self._bold(forecastdata[0]['day'].encode('utf-8')), forecastdata[0]['text'].encode('utf-8'))
         output += " {0}: {1}".format(self._bold(forecastdata[1]['day'].encode('utf-8')), forecastdata[1]['text'].encode('utf-8'))
          # show Updated?
         if args['updated']:
@@ -584,7 +593,7 @@ class Weather(callbacks.Plugin):
             irc.reply(output)
         # handle astronomy if --astronomy is given.
         if args['astronomy']:
-            output = "{0} Moon illum: {1}%   Moon age: {2}d   Sunrise: {3}  Sunset: {4}  Length of Day: {5}".format(\
+            output = "{0} :: Moon illum: {1}%   Moon age: {2}d   Sunrise: {3}  Sunset: {4}  Length of Day: {5}".format(\
                 self._bu('Astronomy:'), outdata['moonilluminated'], outdata['moonage'],outdata['sunrise'],\
                 outdata['sunset'], outdata['lengthofday'])
             # irc output now.
@@ -613,6 +622,7 @@ class Weather(callbacks.Plugin):
                                                 'uv':'',
                                                 'visibility':'',
                                                 'dewpoint':'',
+                                                'humidity':'',
                                                 'metric':'',
                                                 'nocolortemp':'',
                                                 'help':''}), optional('text')])
