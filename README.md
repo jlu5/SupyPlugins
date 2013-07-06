@@ -1,6 +1,15 @@
 Supybot-Weather
 ===============
 
+Update
+
+    20130705 - I have updated the user settings system as I've got a ton of requests to go to individual
+    settings.
+
+    setmetric and setcolortemp have been folded into the setuser command.
+
+    Please see the setuser help for all settings, outside of setweather, for a user.
+
 Overview
 
     This is a Supybot plugin for displaying Weather via Weather Underground (http://www.wunderground.com)
@@ -14,9 +23,10 @@ Overview
 
 Instructions
 
-    NOTICE: If you were using the older version of this plugin, you _MUST_ delete the older Weather.db
-    file in the Supybot data directory. Normally, this is at <supybotdir>/data/Weather.db
-    The internal DB is not compatable and must be deleted before. 
+    NOTICE: If you were using the older version of this plugin before June 2013,
+    you _MUST_ delete the older Weather.db file in the Supybot data directory.
+    Normally, this is at <supybotdir>/data/Weather.db
+    The internal DB is not compatable and must be deleted before.
 
     First, you will need to register for a free API key. Signup takes less than a minute at:
 
@@ -47,12 +57,13 @@ Options
 
     Another feature that will make you and your users happy is an internal database that can remember your
     location, setting for metric, and color temperature.
+    
     Basically, instead of having to type wunderground 10152 (or wherever you are), you can just type in
     wunderground. This can be done via setting a location with the setweather command.
 
         /msg <bot> setweather 10152
-        /msg <bot> setmetric False (to use imperial units)
-        /msg <bot> setcolortemp False (or true)
+        /msg <bot> setuser metric False (to use imperial units)
+        /msg <bot> setuser colortemp False (or true)
 
     The bot's db is very simple and only remembers a nick and setting. So, if you change nicks, it will not
     remember you unless you set it on this new nick.

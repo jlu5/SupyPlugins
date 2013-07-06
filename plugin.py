@@ -4,10 +4,11 @@
 # All rights reserved.
 ###
 # my libs
+import os
 import json
 from math import floor  # for wind.
 import sqlite3  # userdb.
-import os
+from itertools import izip  # userdb.
 # extra supybot libs
 import supybot.conf as conf
 import supybot.log as log
@@ -42,8 +43,31 @@ class WeatherDB():
                           nick TEXT PRIMARY KEY,
                           location TEXT NOT NULL,
                           metric INTEGER DEFAULT 0,
-                          colortemp INTEGER DEFAULT 1)""")
-            self._conn.commit()
+                          colortemp INTEGER DEFAULT 1,
+                          alerts INTEGER DEFAULT 0,
+                          almanac INTEGER DEFAULT 0,
+                          astronomy INTEGER DEFAULT 0,
+                          forecast INTEGER DEFAULT 0,
+                          pressure INTEGER DEFAULT 0,
+                          wind INTEGER DEFAULT 0,
+                          uv INTEGER DEFAULT 0,
+                          visibility INTEGER DEFAULT 0,
+                          dewpoint INTEGER DEFAULT 0,
+                          humidity INTEGER DEFAULT 0,
+                          updated INTEGER DEFAULT 0)""")
+            self._conn.commit()  # this fails silently if already there.
+            # next, we see if we need to upgrade the old table structure.
+            cursor = conn.cursor()  # the old table is 4.
+            tablelength = len([l[1] for l in cursor.execute("pragma table_info('users')").fetchall()])
+            if tablelength == 4:  # old table is 4: users, location, metric, colortemp.
+                self.log.info("Table length is 4. We need to upgrade.")
+                columns = ['alerts', 'almanac', 'astronomy', 'forecast', 'pressure', 'wind', 'uv', 'visibility', 'dewpoint', 'humidity', 'updated']
+                for column in columns:
+                    try:
+                        cursor.execute('ALTER TABLE users ADD COLUMN %s INTEGER DEFAULT 0' % column)
+                        self._conn.commit()
+                    except:  # fail silently.
+                        pass
 
     def setweather(self, username, location):
         """Stores or update a user's location. Adds user if not found."""
@@ -55,19 +79,22 @@ class WeatherDB():
                 cursor.execute("""INSERT OR REPLACE INTO users (nick, location) VALUES (?,?)""", (username, location,))
             self._conn.commit()  # commit.
 
-    def setmetric(self, username, metric):
-        """Sets a user's metric value."""
+    def setsetting(self, username, setting, value):
+        """Set one of the user settings."""
+
         with self._conn as conn:
             cursor = conn.cursor()
-            cursor.execute("""UPDATE users SET metric=? WHERE nick=?""", (metric, username,))
+            query = "UPDATE users SET %s=? WHERE nick=?" % setting
+            cursor.execute(query, (value, username,))
             self._conn.commit()
 
-    def setcolortemp(self, username, colortemp):
-        """Sets a user's colortemp value."""
+    def getsettings(self):
+        """Get all 'user' settings that can be set."""
+
         with self._conn as conn:
-            cursor = conn.cursor()
-            cursor.execute("""UPDATE users SET colortemp=? WHERE nick=?""", (colortemp, username))
-            self._conn.commit()
+            cursor = conn.cursor()  # below, we get all column names that are settings (INTEGERS)
+            settings = [str(l[1]) for l in cursor.execute("pragma table_info('users')").fetchall() if l[2] == "INTEGER"]
+            return settings
 
     def getweather(self, user):
         """Return a dict of user's settings."""
@@ -79,7 +106,8 @@ class WeatherDB():
             if not row:  # user does not exist.
                 return None
             else:  # user exists.
-                return row
+                rowdict = dict(izip(row.keys(), row))
+                return rowdict
 
     def getuser(self, user):
         """Returns a boolean if a user exists."""
@@ -229,47 +257,34 @@ class Weather(callbacks.Plugin):
     # PUBLIC FUNCTIONS TO WORK WITH THE DATABASE #
     ##############################################
 
-    def setcolortemp(self, irc, msg, args, opttemp):
-        """<True|False>
-        Sets the user's colortemp setting to True or False.
-        If True, will color temperature. If False, will not color.
+    def setuser(self, irc, msg, args, optset, optbool):
+        """<setting> <True|False>
+
+        Sets a user's <setting> to True or False.
+        Settings: alerts, almanac, astronomy, forecast, pressure, wind, uv, visibility, dewpoint, humidity, updated
+        Ex: metric True or colortemp False
         """
 
-        if opttemp:  # handle opttemp
-            metric = 1
+        # first, lower
+        optset = optset.lower()
+        # grab a list of valid settings.
+        validset = self.db.getsettings()
+        if optset not in validset:
+            irc.reply("ERROR: '{0}' is an invalid setting. Must be one of: {1}".format(optset, " | ".join(sorted([i for i in validset]))))
+            return
+        # setting value True/False
+        if optbool:  # True.
+            value = 1
         else:  # False.
-            metric = 0
-
+            value = 0
         # check user first.
-        if self.db.getuser(msg.nick.lower()):  # user exists
-            # perform op.
-            self.db.setcolortemp(msg.nick.lower(), metric)
-            irc.reply("I have changed {0}'s colortemp setting to {1}".format(msg.nick, metric))
-        else:  # user is NOT In the database.
+        if not self.db.getuser(msg.nick.lower()):  # user exists
             irc.reply("ERROR: You're not in the database. You must setweather first.")
+        else:  # user is valid. perform the op.
+            self.db.setsetting(msg.nick.lower(), optset, value)
+            irc.reply("I have changed {0}'s {1} setting to {2}".format(msg.nick, optset, value))
 
-    setcolortemp = wrap(setcolortemp, [('boolean')])
-
-    def setmetric(self, irc, msg, args, optmetric):
-        """<True|False>
-        Sets the user's use metric setting to True or False.
-        If True, will use netric. If False, will use imperial.
-        """
-
-        if optmetric:  # handle opttemp
-            metric = 1
-        else:  # False.
-            metric = 0
-
-        # check user first.
-        if self.db.getuser(msg.nick.lower()):  # user exists
-            # perform op.
-            self.db.setmetric(msg.nick.lower(), metric)
-            irc.reply("I have changed {0}'s metric setting to {1}".format(msg.nick, metric))
-        else:  # user is NOT In the database.
-            irc.reply("ERROR: You're not in the database. You must setweather first.")
-
-    setmetric = wrap(setmetric, [('boolean')])
+    setuser = wrap(setuser, [('somethingWithoutSpaces'), ('boolean')])
 
     def setweather(self, irc, msg, args, optlocation):
         """<location code>
@@ -358,22 +373,30 @@ class Weather(callbacks.Plugin):
 
         # now check if we have a location. if no location, use the WeatherDB.
         if not optinput:  # no location on input.
-            userloc = self.db.getweather(msg.nick.lower())  # check the db.
-            if userloc:  # found a user so we change args w/info.
-                optinput = userloc['location']  # grab location.
-                # setmetric.
-                if userloc['metric'] == 0:  # 0 = False for metric.
-                    args['imperial'] = True  # so we make sure we're using imperial.
-                elif userloc['metric'] == 1:  # do the inverse.
-                    args['imperial'] = False
-                # setcolortemp.
-                if userloc['colortemp'] == 0:  # 0 = False for colortemp.
-                    args['nocolortemp'] = True  # disable
-                elif userloc['colortemp'] == 1:  # do the inverse.
-                    args['nocolortemp'] = False  # show color temp.
-            else:  # no user NOR optinput found. error msg.
+            usersetting = self.db.getweather(msg.nick.lower())  # check the db.
+            if not usersetting:  # user is NOT set in the db. BAIL.
                 irc.reply("ERROR: I did not find a preset location for you. Set via setweather <location>")
                 return
+            else:  # we do have a user. lets go from here.
+                for (k, v) in usersetting.items():  # iterate over settings dict returned from getweather row.
+                     # set specific settings based on keys that won't 1:1 match.
+                    if k == 'location':  # location
+                        optinput = v
+                    elif k == 'metric':  # metric
+                        if v == 1:  # true.
+                            args['imperial'] = False
+                        else:  # 0 = false.
+                            args['imperial'] = True
+                    elif k == 'colortemp':  # colortemp.
+                        if v == 1:  # true.
+                            args['nocolortemp'] = False
+                        else:  # false. the 'nocolortemp' values are inverse.
+                            args['nocolortemp'] = True
+                    else:  # rest of them are 1:1.
+                        if v == 1:  # if value is 1, or true.
+                            args[k] = True
+                        else:  # argument is 0 or False.
+                            args[k] = False
 
         # build url now. first, apikey. then, iterate over urlArgs and insert.
         url = 'http://api.wunderground.com/api/%s/' % (self.APIKEY) # first part of url, w/APIKEY
