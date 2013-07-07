@@ -339,7 +339,38 @@ class Weather(callbacks.Plugin):
                 'uv':False,
                 'visibility':False,
                 'dewpoint':False }
+
+        # instead of doing optlist, we need to handle the location/options to set initially.
+        # first, check if there is a user so we can grab their settings.
+        usersetting = self.db.getweather(msg.nick.lower())  # check the db.
+        if usersetting:  # user is found. lets grab their location and settings.
+                for (k, v) in usersetting.items():  # iterate over settings dict returned from getweather row.
+                     # set specific settings based on keys that won't 1:1 match.
+                    if k == 'location':  # location
+                        if not optinput:  # we were not specified a location in being called.
+                            optinput = v
+                    elif k == 'metric':  # metric
+                        if v == 1:  # true.
+                            args['imperial'] = False
+                        else:  # 0 = false.
+                            args['imperial'] = True
+                    elif k == 'colortemp':  # colortemp.
+                        if v == 1:  # true.
+                            args['nocolortemp'] = False
+                        else:  # false. the 'nocolortemp' values are inverse.
+                            args['nocolortemp'] = True
+                    else:  # rest of them are 1:1.
+                        if v == 1:  # if value is 1, or true.
+                            args[k] = True
+                        else:  # argument is 0 or False.
+                            args[k] = False
+        else:  # user was not found.
+            if not optinput:  # location was also not specified, so we must bail.
+                irc.reply("ERROR: I did not find a preset location for you. Set via setweather <location>")
+                return
+
         # handle optlist (getopts). this will manipulate output via args dict.
+        # we must do this after the dblookup for users as it would always override.
         if optlist:
             for (key, value) in optlist:
                 if key == "metric":
@@ -371,33 +402,7 @@ class Weather(callbacks.Plugin):
                     irc.reply("WeatherDB options: setweather <location> (set user's location). setmetric True/False (set metric option) setcolortemp True/False (display color temp?")
                     return
 
-        # now check if we have a location. if no location, use the WeatherDB.
-        if not optinput:  # no location on input.
-            usersetting = self.db.getweather(msg.nick.lower())  # check the db.
-            if not usersetting:  # user is NOT set in the db. BAIL.
-                irc.reply("ERROR: I did not find a preset location for you. Set via setweather <location>")
-                return
-            else:  # we do have a user. lets go from here.
-                for (k, v) in usersetting.items():  # iterate over settings dict returned from getweather row.
-                     # set specific settings based on keys that won't 1:1 match.
-                    if k == 'location':  # location
-                        optinput = v
-                    elif k == 'metric':  # metric
-                        if v == 1:  # true.
-                            args['imperial'] = False
-                        else:  # 0 = false.
-                            args['imperial'] = True
-                    elif k == 'colortemp':  # colortemp.
-                        if v == 1:  # true.
-                            args['nocolortemp'] = False
-                        else:  # false. the 'nocolortemp' values are inverse.
-                            args['nocolortemp'] = True
-                    else:  # rest of them are 1:1.
-                        if v == 1:  # if value is 1, or true.
-                            args[k] = True
-                        else:  # argument is 0 or False.
-                            args[k] = False
-
+        # now that we're done with 'input things'
         # build url now. first, apikey. then, iterate over urlArgs and insert.
         url = 'http://api.wunderground.com/api/%s/' % (self.APIKEY) # first part of url, w/APIKEY
         # now we need to set certain things for urlArgs based on args.
