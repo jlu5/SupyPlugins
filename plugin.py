@@ -562,7 +562,7 @@ class Weather(callbacks.Plugin):
         # handle alerts
         if args['alerts']:  # only look for alerts if there.
             if data['alerts']:  # alerts is a list. it can also be empty.
-                outdata['alerts'] = data['alerts']['message']  # need to do some formatting below.
+                outdata['alerts'] = data['alerts'][0]['message']  # need to do some formatting below.
                 outdata['alerts'] = outdata['alerts'].replace('\n', ' ')[:300]  # \n->' ' and max 300 chars.
                 outdata['alerts'] = utils.str.normalizeWhitespace(outdata['alerts'])  # fix pesky double whitespacing.
             else:  # no alerts found (empty).
