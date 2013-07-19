@@ -267,7 +267,6 @@ class Weather(callbacks.Plugin):
             return page
         except utils.web.Error as e:  # something didn't work.
             self.log.error("ERROR: Trying to open {0} message: {1}".format(url, e))
-            irc.reply("ERROR: Failed to load Weather Underground API: {0}".format(e))
             return None
 
     ##############################################
