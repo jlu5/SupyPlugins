@@ -253,6 +253,23 @@ class Weather(callbacks.Plugin):
         # return.
         return direction_names[index]
 
+    def _wunderjson(self, url, location):
+        """Fetch wunderground JSON and return."""
+
+        # first, construct the url properly.
+        if url.endswith('/'):  # cheap way to strip the tailing /
+            url = '%sq/%s.json' % (url, utils.web.urlquote(location))
+        else:
+            url = '%s/q/%s.json' % (url, utils.web.urlquote(location))
+        # now actually fetch the url.
+        try:
+            page = utils.web.getUrl(url)
+            return page
+        except utils.web.Error as e:  # something didn't work.
+            self.log.error("ERROR: Trying to open {0} message: {1}".format(url, e))
+            irc.reply("ERROR: Failed to load Weather Underground API: {0}".format(e))
+            return None
+
     ##############################################
     # PUBLIC FUNCTIONS TO WORK WITH THE DATABASE #
     ##############################################
@@ -415,15 +432,11 @@ class Weather(callbacks.Plugin):
                 url += "".join([item + '/' for item in value]) # listcmp the features/
             if key == "lang" or key == "bestfct" or key == "pws": # rest added with key:value
                 url += "{0}:{1}/".format(key, value)
-        # finally, attach the q/input. url is now done.
-        url += 'q/%s.json' % utils.web.urlquote(optinput)
 
-        # try and query url.
-        try:
-            page = utils.web.getUrl(url)
-        except utils.web.Error as e:
-            self.log.error("ERROR: Trying to open {0} message: {1}".format(url, e))
-            irc.reply("ERROR: Failed to load Weather Underground API: {0}".format(e))
+        # now that we're done, lets finally make our API call.
+        page = self._wunderjson(url, optinput)
+        if not page:
+            irc.reply("ERROR: Failed to load Wunderground API.")
             return
 
         # process json.
@@ -435,15 +448,16 @@ class Weather(callbacks.Plugin):
             errordesc = data['response']['error'].get('description', 'no description')
             irc.reply("ERROR: I got an error searching for {0}. ({1}: {2})".format(optinput, errortype, errordesc))
             return
-        # if there is more than one city matching.
-        if 'results' in data['response']:  # results only comes when location matches more than one.
-            output = [i['city'] + ", " + i['state'] + " (" + i['country_name'] + ")" for i in data['response']['results']]
-            irc.reply("ERROR: More than 1 city matched your query, try being more specific: {0}".format(" | ".join(output)))
-            return
-        # last sanity check
-        if not data.has_key('current_observation'):
-            irc.reply("ERROR: something went horribly wrong looking up weather for {0}. Contact the plugin owner.".format(optinput))
-            return
+        # if there is more than one city matching (Ambiguous Results).  we now go with the first (best?) match.
+        if 'results' in data['response']:  # we grab the first location's "ZMW" which then gets constructed as location.
+            first = 'zmw:%s' % data['response']['results'][0]['zmw']  # grab the "first" location and create the
+            # grab this first location and search again.
+            page = self._wunderjson(url, first)
+            if not page:
+                irc.reply("ERROR: Failed to load Wunderground API.")
+                return
+            # we're here if we got the second search (best?) now lets reload the json and continue.
+            data = json.loads(page.decode('utf-8'))
 
         # no errors so we start the main part of processing.
         outdata = {}
