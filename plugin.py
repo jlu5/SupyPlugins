@@ -143,13 +143,13 @@ class LastFM(callbacks.Plugin):
 
         parser = LastFMParser()
         (user, isNowPlaying, artist, track, album, time) = parser.parseRecentTracks(f)
+        albumStr = "[" + album + "]" if album else ""
         if isNowPlaying:
-            albumStr = "[" + album + "]" if album else ""
             irc.reply(('%s is listening to "%s" by %s %s'
                     % (user, track, artist, albumStr)).encode("utf8"))
         else:
             irc.reply(('%s listened to "%s" by %s %s more than %s'
-                    % (user, track, artist, album,
+                    % (user, track, artist, albumStr,
                         self._formatTimeago(time))).encode("utf-8"))
 
     np = wrap(nowPlaying, [optional("something")])
