@@ -72,12 +72,20 @@ conf.registerChannelValue(LinkRelay, 'hostmasks',
     or parts.""")))
 conf.registerChannelValue(LinkRelay, 'nicks',
     registry.Boolean(True, _("""Determines whether the bot will relay the
-    nick of the person sending a message.""")))
+    nick of the person sending a message (you probably want this turned on).""")))
 conf.registerChannelValue(LinkRelay, 'includeNetwork',
     registry.Boolean(True, _("""Determines whether the bot will include the
     network in Relayed PRIVMSGs; if you're only Relaying between two networks,
     it's somewhat redundant, and you may wish to save the space.""")))
-
+conf.registerChannelValue(LinkRelay, 'nickstoIgnore',
+    registry.String('', _("""Determines a list of nicks for the bot to
+    ignore nicks/modes/joins/parts/quits from.""")))
+conf.registerGroup(LinkRelay, 'sepTags')
+conf.registerChannelValue(LinkRelay.sepTags, 'channels',
+    registry.String('@', _("""Determines the separator string used for the bot for channels (when both nicks and IncludeNetwork are on).""")))
+conf.registerChannelValue(LinkRelay.sepTags, 'nicks',
+    registry.String('/', _("""Determines the separator string used for the bot for nicks (when both nicks and IncludeNetwork are on).""")))
+    
 class ValidNonPrivmsgsHandling(registry.OnlySomeStrings):
     validStrings = ('privmsg', 'notice', 'nothing')
 conf.registerChannelValue(LinkRelay, 'nonPrivmsgs',
@@ -93,10 +101,6 @@ conf.registerGlobalValue(LinkRelay, 'relays',
 conf.registerGlobalValue(LinkRelay, 'substitutes',
     registry.String('', _("""You shouldn't edit this configuration variable
     yourself unless you know what you do. Use @LinkRelay (no)substitute instead.""")))
-    
-conf.registerGlobalValue(LinkRelay, 'nickstoIgnore',
-    registry.String('', _("""Determines a list of nicks for the bot to
-    ignore mode changes/joins/parts/quits from.""")))
 
 conf.registerGroup(LinkRelay, 'colors')
 for name, color in {'info': '02',
