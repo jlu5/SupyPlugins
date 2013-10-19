@@ -178,7 +178,7 @@ class LinkRelay(callbacks.Plugin):
                          relay.sourceNetwork,
                          relay.targetChannel,
                          relay.targetNetwork,
-                         hasIRC))
+                         hasIRC), private=True)
 
     def doPrivmsg(self, irc, msg):
         self.addIRC(irc)
@@ -422,7 +422,7 @@ class LinkRelay(callbacks.Plugin):
                             relay.targetChannel,
                             relay.targetNetwork,
                             utils.str.commaAndify(users))
-                    irc.reply(s)
+                    irc.reply(s, private=True)
         irc.noReply()
     nicks = wrap(nicks, ['Channel'])
 
