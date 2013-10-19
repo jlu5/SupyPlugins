@@ -229,18 +229,22 @@ class LinkRelay(callbacks.Plugin):
     def doJoin(self, irc, msg):
         if msg.nick not in self.registryValue('nickstoIgnore', msg.args[0]):
             self.addIRC(irc)
-            args = {'nick': msg.nick, 'channel': msg.args[0], 'color': '', 'userhost': ''}
+            args = {'nick': msg.nick, 'channel': msg.args[0], 'color': '',
+                    'userhost': ''}
             if self.registryValue('color', msg.args[0]):
                 args['color'] = '\x03%s' % self.registryValue('colors.join', msg.args[0])
             if self.registryValue('hostmasks', msg.args[0]):
                 args['userhost'] = ' (' + msg.user + '@' + msg.host + ')'
-            s = '%(color)s' + _('JOIN: %(nick)s%(sepTagn)s%(network)s%(userhost)s has joined %(channel)s%(sepTagc)s%(network)s')
+            s = '%(color)s' + _('JOIN: %(nick)s%(sepTagn)s%(network)s'
+                    '%(userhost)s has joined %(channel)s%(sepTagc)s'
+                    '%(network)s')
             self.sendToOthers(irc, msg.args[0], s, args)
 
     def doPart(self, irc, msg):
         if msg.nick not in self.registryValue('nickstoIgnore', msg.args[0]):
             self.addIRC(irc)
-            args = {'nick': msg.nick, 'channel': msg.args[0], 'color': '', 'message': '', 'userhost': ''}
+            args = {'nick': msg.nick, 'channel': msg.args[0], 'color': '', 'message': '',
+                    'userhost': ''}
             if self.registryValue('color', msg.args[0]):
 				args['color'] = '\x03%s' % self.registryValue('colors.part', msg.args[0])
             if self.registryValue('hostmasks', msg.args[0]):
@@ -249,7 +253,9 @@ class LinkRelay(callbacks.Plugin):
                 args['message'] = ' (' + msg.args[1] + ')'
             except IndexError:
                 pass
-            s = '%(color)s' + _('PART: %(nick)s%(sepTagn)s%(network)s%(userhost)s has left %(channel)s%(sepTagc)s%(network)s%(message)s')
+            s = '%(color)s' + _('PART: %(nick)s%(sepTagn)s%(network)s'
+                '%(userhost)s has left %(channel)s%(sepTagc)s%(network)s'
+                '%(message)s')
             self.sendToOthers(irc, msg.args[0], s, args)
 
     def doKick(self, irc, msg):
@@ -260,7 +266,8 @@ class LinkRelay(callbacks.Plugin):
             args['color'] = '\x03%s' % self.registryValue('colors.kick',
                     msg.args[0])
         s = '%(color)s' + _('KICK: %(kicked)s has been kicked from '
-                '%(channel)s%(sepTagc)s%(network)s by %(kicker)s (%(message)s)')
+                '%(channel)s%(sepTagc)s%(network)s by %(kicker)s'
+                '(%(message)s)')
         self.sendToOthers(irc, msg.args[0], s, args)
 
     def doNick(self, irc, msg):
@@ -270,8 +277,8 @@ class LinkRelay(callbacks.Plugin):
                     'newnick': msg.args[0], 'color': ''}
             if self.registryValue('color', msg.args[0]):
                 args['color'] = '\x03%s' % self.registryValue('colors.nick', msg.args[0])
-            s = '%(color)s' + _('NICK: %(oldnick)s%(sepTagn)s%(network)s changed nickname to '
-                    '%(newnick)s%(sepTagn)s%(network)s')
+            s = '%(color)s' + _('NICK: %(oldnick)s%(sepTagn)s%(network)s'
+                    ' changed nick to %(newnick)s')
             for (channel, c) in irc.state.channels.iteritems():
                 if msg.args[0] in c.users:
                     self.sendToOthers(irc, channel, s, args)
@@ -284,21 +291,26 @@ class LinkRelay(callbacks.Plugin):
                 args['color'] = '\x03%s' % self.registryValue('colors.quit', msg.args[0])
             if self.registryValue('hostmasks', msg.args[0]):
 			    args['userhost'] = ' (' + msg.user + '@' + msg.host + ')'
-            s = '%(color)s' + _('QUIT: %(nick)s%(sepTagn)s%(network)s%(userhost)s has quit (%(message)s)')
+            s = '%(color)s' + _('QUIT: %(nick)s%(sepTagn)s%(network)s'
+                    '%(userhost)s has quit (%(message)s)')
             self.sendToOthers(irc, None, s, args, msg.nick)
             self.addIRC(irc)
 
     def sendToOthers(self, irc, channel, s, args, nick=None, isPrivmsg=False):
         assert channel is not None or nick is not None
         def format_(relay, s, args):
+        # fill in network and septags if config values are set to do so
             if 'network' not in args:
                 if self.registryValue('includeNetwork', relay.targetChannel):
                     args['network'] = irc.network
                 else:
                     args['network'] = ''
             if 'sepTagc' not in args or 'sepTagn' not in args:
-                if self.registryValue('includeNetwork', relay.targetChannel) == self.registryValue('nicks', relay.targetChannel) == True:
-                    args['sepTagc'], args['sepTagn'] = self.registryValue('sepTags.channels', relay.targetChannel), self.registryValue('sepTags.nicks', relay.targetChannel)
+                if self.registryValue('includeNetwork', relay.targetChannel) \
+                == self.registryValue('nicks', relay.targetChannel) == True:
+                    args['sepTagc'], args['sepTagn'] = \
+                    self.registryValue('sepTags.channels', relay.targetChannel), \
+                    self.registryValue('sepTags.nicks', relay.targetChannel)
                 else:
                     args['sepTagc'] = args['sepTagn'] = ''
             return s % args

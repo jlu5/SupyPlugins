@@ -82,9 +82,11 @@ conf.registerChannelValue(LinkRelay, 'nickstoIgnore',
     ignore nicks/modes/joins/parts/quits from.""")))
 conf.registerGroup(LinkRelay, 'sepTags')
 conf.registerChannelValue(LinkRelay.sepTags, 'channels',
-    registry.String('@', _("""Determines the separator string used for the bot for channels (when both nicks and IncludeNetwork are on).""")))
+    registry.String('@', _("""Determines the separator string used for the
+    bot for channels (when both nicks and IncludeNetwork are on).""")))
 conf.registerChannelValue(LinkRelay.sepTags, 'nicks',
-    registry.String('/', _("""Determines the separator string used for the bot for nicks (when both nicks and IncludeNetwork are on).""")))
+    registry.String('/', _("""Determines the separator string used for the
+    bot for nicks (when both nicks and IncludeNetwork are on).""")))
     
 class ValidNonPrivmsgsHandling(registry.OnlySomeStrings):
     validStrings = ('privmsg', 'notice', 'nothing')
