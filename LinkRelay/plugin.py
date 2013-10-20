@@ -377,7 +377,11 @@ class LinkRelay(callbacks.Plugin):
         for relay in self.relays:
             if relay.sourceChannel == channel and \
                     relay.sourceNetwork == irc.network:
-                if not relay.hasTargetIRC:
+                # Little security function here to prevent spies :P
+                if msg.nick not in irc.state.channels[channel].users:
+                    irc.error(_('You are not in the channel specified.'))
+                    break
+                elif not relay.hasTargetIRC:
                     irc.reply(_('I haven\'t scraped the IRC object for %s '
                               'yet. Try again in a minute or two.') % \
                               relay.targetNetwork)
