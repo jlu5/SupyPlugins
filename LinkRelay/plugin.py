@@ -267,7 +267,7 @@ class LinkRelay(callbacks.Plugin):
                     msg.args[0])
         s = '%(color)s' + _('KICK: %(kicked)s has been kicked from '
                 '%(channel)s%(sepTagc)s%(network)s by %(kicker)s'
-                '(%(message)s)')
+                ' (%(message)s)')
         self.sendToOthers(irc, msg.args[0], s, args)
 
     def doNick(self, irc, msg):
@@ -292,7 +292,7 @@ class LinkRelay(callbacks.Plugin):
             if self.registryValue('hostmasks', msg.args[0]):
 			    args['userhost'] = ' (' + msg.user + '@' + msg.host + ')'
             s = '%(color)s' + _('QUIT: %(nick)s%(sepTagn)s%(network)s'
-                    '%(userhost)s has quit (%(message)s)')
+                    ' has quit (%(message)s)')
             self.sendToOthers(irc, None, s, args, msg.nick)
             self.addIRC(irc)
 
