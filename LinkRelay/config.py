@@ -114,14 +114,14 @@ conf.registerGlobalValue(LinkRelay, 'substitutes',
 conf.registerGroup(LinkRelay, 'colors')
 for name, color in {'info': '02',
                     'truncated': '14',
-                    'mode': '14',
-                    'join': '14',
-                    'part': '14',
-                    'kick': '14',
-                    'nick': '14',
-                    'quit': '14'}.items():
+                    'mode': '06',
+                    'join': '03',
+                    'part': '12',
+                    'kick': '04',
+                    'nick': '10',
+                    'quit': '07'}.items():
     conf.registerChannelValue(LinkRelay.colors, name,
-        ColorNumber(color, _("""Color used for relaying %s.""") % color))
+        ColorNumber(color, _("""Color used for relaying %s messages.""") % name))
 
 
 # vim:set shiftwidth=4 softtabstop=4 expandtab textwidth=79:
