@@ -160,7 +160,9 @@ class LinkRelay(callbacks.Plugin):
         """takes no arguments
 
         Returns all the defined relay links"""
-        if not self.relays:
+        if irc.nested:
+            irc.error('This command cannot be nested.', Raise=True)
+        elif not self.relays:
             irc.reply(_('This is no relay enabled. Use "linkrelay add" to '
                 'add one.'))
             return
@@ -378,6 +380,8 @@ class LinkRelay(callbacks.Plugin):
         Returns the nicks of the people in the linked channels.
         <channel> is only necessary if the message
         isn't sent on the channel itself."""
+        if irc.nested:
+            irc.error('This command cannot be nested.', Raise=True)
         for relay in self.relays:
             if relay.sourceChannel == channel and \
                     relay.sourceNetwork == irc.network:

@@ -81,7 +81,7 @@ conf.registerChannelValue(LinkRelay, 'includeNetwork',
 conf.registerGroup(LinkRelay, 'nickstoIgnore')
 conf.registerChannelValue(LinkRelay.nickstoIgnore, 'nicks',
     registry.SpaceSeparatedListOfStrings('', _("""Determines a list of nicks for the bot to
-    ignore.""")))
+    ignore (takes a space-seperated list).""")))
 conf.registerChannelValue(LinkRelay.nickstoIgnore, 'affectPrivmsgs',
     registry.Boolean(True, _("""Determines whether the bot will ignore PRIVMSGs
     from the nicks listed in nicksToIgnore. If set to False, the bot will only
