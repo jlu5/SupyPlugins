@@ -77,9 +77,16 @@ conf.registerChannelValue(LinkRelay, 'includeNetwork',
     registry.Boolean(True, _("""Determines whether the bot will include the
     network in Relayed PRIVMSGs; if you're only Relaying between two networks,
     it's somewhat redundant, and you may wish to save the space.""")))
-conf.registerChannelValue(LinkRelay, 'nickstoIgnore',
-    registry.String('', _("""Determines a list of nicks for the bot to
-    ignore nicks/modes/joins/parts/quits from.""")))
+
+conf.registerGroup(LinkRelay, 'nickstoIgnore')
+conf.registerChannelValue(LinkRelay.nickstoIgnore, 'nicks',
+    registry.SpaceSeparatedListOfStrings('', _("""Determines a list of nicks for the bot to
+    ignore.""")))
+conf.registerChannelValue(LinkRelay.nickstoIgnore, 'affectPrivmsgs',
+    registry.Boolean(True, _("""Determines whether the bot will ignore PRIVMSGs
+    from the nicks listed in nicksToIgnore. If set to False, the bot will only
+    ignore joins/parts/nicks/modes/quits from those nicks.""")))
+
 conf.registerGroup(LinkRelay, 'sepTags')
 conf.registerChannelValue(LinkRelay.sepTags, 'channels',
     registry.String('@', _("""Determines the separator string used for the
