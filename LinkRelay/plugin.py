@@ -188,9 +188,12 @@ class LinkRelay(callbacks.Plugin):
         s = msg.args[1]
         s, args = self.getPrivmsgData(channel, msg.nick, s,
                                self.registryValue('color', channel))
+        ignoreNicks = [ircutils.toLower(item) for item in \
+            self.registryValue('nickstoIgnore.nicks', msg.args[0])]
         if self.registryValue('nickstoIgnore.affectPrivmsgs', msg.args[0]) \
-            == 1 and msg.nick in \
-            self.registryValue('nickstoIgnore.nicks', msg.args[0]):
+            == 1 and ircutils.toLower(msg.nick) in ignoreNicks:
+                #self.log.debug('LinkRelay: %s in nickstoIgnore...' % ircutils.toLower(msg.nick))
+                #self.log.debug('LinkRelay: List of ignored nicks: %s' % ignoreNicks)
                 return
         elif channel not in irc.state.channels: # in private
             # cuts off the end of commands, so that passwords
@@ -222,7 +225,9 @@ class LinkRelay(callbacks.Plugin):
         self.addIRC(irc)
 
     def doMode(self, irc, msg):
-        if msg.nick not in self.registryValue('nickstoIgnore.nicks', msg.args[0]):
+        ignoreNicks = [ircutils.toLower(item) for item in \
+            self.registryValue('nickstoIgnore.nicks', msg.args[0])]
+        if ircutils.toLower(msg.nick) not in ignoreNicks:
             self.addIRC(irc)
             args = {'nick': msg.nick, 'channel': msg.args[0],
                     'mode': ' '.join(msg.args[1:]), 'color': ''}
@@ -233,7 +238,9 @@ class LinkRelay(callbacks.Plugin):
             self.sendToOthers(irc, msg.args[0], s, args)
 
     def doJoin(self, irc, msg):
-        if msg.nick not in self.registryValue('nickstoIgnore.nicks', msg.args[0]):
+        ignoreNicks = [ircutils.toLower(item) for item in \
+            self.registryValue('nickstoIgnore.nicks', msg.args[0])]
+        if ircutils.toLower(msg.nick) not in ignoreNicks:
             self.addIRC(irc)
             args = {'nick': msg.nick, 'channel': msg.args[0], 'color': '',
                     'userhost': ''}
@@ -247,7 +254,9 @@ class LinkRelay(callbacks.Plugin):
             self.sendToOthers(irc, msg.args[0], s, args)
 
     def doPart(self, irc, msg):
-        if msg.nick not in self.registryValue('nickstoIgnore.nicks', msg.args[0]):
+        ignoreNicks = [ircutils.toLower(item) for item in \
+            self.registryValue('nickstoIgnore.nicks', msg.args[0])]
+        if ircutils.toLower(msg.nick) not in ignoreNicks:
             self.addIRC(irc)
             args = {'nick': msg.nick, 'channel': msg.args[0], 'color': '', 'message': '',
                     'userhost': ''}
@@ -277,7 +286,9 @@ class LinkRelay(callbacks.Plugin):
         self.sendToOthers(irc, msg.args[0], s, args)
 
     def doNick(self, irc, msg):
-        if msg.nick not in self.registryValue('nickstoIgnore.nicks', msg.args[0]):
+        ignoreNicks = [ircutils.toLower(item) for item in \
+            self.registryValue('nickstoIgnore.nicks', msg.args[0])]
+        if ircutils.toLower(msg.nick) not in ignoreNicks:
             self.addIRC(irc)
             args = {'oldnick': msg.nick, 'network': irc.network,
                     'newnick': msg.args[0], 'color': ''}
@@ -290,7 +301,9 @@ class LinkRelay(callbacks.Plugin):
                     self.sendToOthers(irc, channel, s, args)
 
     def doQuit(self, irc, msg):
-        if msg.nick not in self.registryValue('nickstoIgnore.nicks', msg.args[0]):
+        ignoreNicks = [ircutils.toLower(item) for item in \
+            self.registryValue('nickstoIgnore.nicks', msg.args[0])]
+        if ircutils.toLower(msg.nick) not in ignoreNicks:
             args = {'nick': msg.nick, 'network': irc.network,
                     'message': msg.args[0], 'color': '', 'userhost': ''}
             if self.registryValue('color', msg.args[0]):
