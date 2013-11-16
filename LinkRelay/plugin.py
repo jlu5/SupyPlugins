@@ -400,7 +400,10 @@ class LinkRelay(callbacks.Plugin):
                     relay.sourceNetwork == irc.network:
                 # Little security function here to prevent spies :P
                 if msg.nick not in irc.state.channels[channel].users:
-                    irc.error(_('You are not in the channel specified.'))
+                    self.log.warning('LinkRelay: %s on %s attempted to view'
+                        ' nicks in %s without being in it.'
+                        % (msg.nick, irc.network, channel))
+                    irc.error(_('You are not in %s.' % channel))
                     break
                 elif not relay.hasTargetIRC:
                     irc.reply(_('I haven\'t scraped the IRC object for %s '
