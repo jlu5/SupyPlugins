@@ -234,7 +234,7 @@ class LinkRelay(callbacks.Plugin):
             if self.registryValue('color', msg.args[0]):
                 args['color'] = '\x03%s' % self.registryValue('colors.mode', msg.args[0])
             s = '%(color)s' + _('MODE: %(nick)s%(sepTagn)s%(network)s sets mode %(mode)s '
-                    ' on %(channel)s%(sepTagc)s%(network)s' )
+                    ' on %(channel)s%(sepTagc)s%(network)s')
             self.sendToOthers(irc, msg.args[0], s, args)
 
     def doJoin(self, irc, msg):
@@ -247,7 +247,7 @@ class LinkRelay(callbacks.Plugin):
             if self.registryValue('color', msg.args[0]):
                 args['color'] = '\x03%s' % self.registryValue('colors.join', msg.args[0])
             if self.registryValue('hostmasks', msg.args[0]):
-                args['userhost'] = ' (' + msg.user + '@' + msg.host + ')'
+                args['userhost'] = '%s%s%s%s%s' % (' (', msg.user, '@', msg.host, ')')
             s = '%(color)s' + _('JOIN: %(nick)s%(sepTagn)s%(network)s'
                     '%(userhost)s has joined %(channel)s%(sepTagc)s'
                     '%(network)s')
@@ -263,9 +263,9 @@ class LinkRelay(callbacks.Plugin):
             if self.registryValue('color', msg.args[0]):
 				args['color'] = '\x03%s' % self.registryValue('colors.part', msg.args[0])
             if self.registryValue('hostmasks', msg.args[0]):
-			    args['userhost'] = ' (' + msg.user + '@' + msg.host + ')'
+                args['userhost'] = '%s%s%s%s%s' % (' (', msg.user, '@', msg.host, ')')
             try:
-                args['message'] = ' (' + msg.args[1] + ')'
+                args['message'] = '%s%s%s' % (' (', msg.args[1], ')')
             except IndexError:
                 pass
             s = '%(color)s' + _('PART: %(nick)s%(sepTagn)s%(network)s'
@@ -308,8 +308,6 @@ class LinkRelay(callbacks.Plugin):
                     'message': msg.args[0], 'color': '', 'userhost': ''}
             if self.registryValue('color', msg.args[0]):
                 args['color'] = '\x03%s' % self.registryValue('colors.quit', msg.args[0])
-            if self.registryValue('hostmasks', msg.args[0]):
-			    args['userhost'] = ' (' + msg.user + '@' + msg.host + ')'
             s = '%(color)s' + _('QUIT: %(nick)s%(sepTagn)s%(network)s'
                     ' has quit (%(message)s)')
             self.sendToOthers(irc, None, s, args, msg.nick)
