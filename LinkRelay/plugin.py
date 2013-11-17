@@ -140,17 +140,17 @@ class LinkRelay(callbacks.Plugin):
             text = text.strip('\x01')
             text = text[ 7 : ]
             if colored:
-                return ('* {\x03%(color)s%(nick)s/%(network)s\017} %(text)s',
+                return ('* {\x03%(color)s%(nick)s%(sepTagn)s%(network)s\017} %(text)s',
                         {'nick': nick, 'color': color, 'text': text})
             else:
-                return ('* {%(nick)s/%(network)s} %(text)s',
+                return ('* {%(nick)s%(sepTagn)s%(network)s} %(text)s',
                         {'nick': nick, 'text': text})
         else:
             if colored:
-                return ('{\x03%(color)s%(nick)s/%(network)s\017} %(text)s',
+                return ('{\x03%(color)s%(nick)s%(sepTagn)s%(network)s\017} %(text)s',
                         {'color': color, 'nick': nick, 'text': text})
             else:
-                return ('{%(nick)s/%(network)s} %(text)s',
+                return ('{%(nick)s%(sepTagn)s%(network)s} %(text)s',
                         {'nick': nick, 'text': text})
         return s
 
