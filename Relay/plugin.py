@@ -285,9 +285,10 @@ class Relay(callbacks.Plugin):
         color = self.registryValue('color', channel) # Also used further down.
         if color:
             nick = ircutils.IrcString(nick)
-            newnick = ircutils.mircColor(nick, *ircutils.canonicalColor(nick))
+            newnick, newnetwork = ircutils.mircColor(nick, *ircutils.canonicalColor(nick)), \
+                ircutils.mircColor(network, *ircutils.canonicalColor(network))
             colors = ircutils.canonicalColor(nick, shift=4)
-            nick = newnick
+            nick, network = newnick, newnetwork
         if ircmsgs.isAction(msg):
             s = format('* {%s/%s} %s', nick, network, ircmsgs.unAction(msg))
         else:
