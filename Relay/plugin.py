@@ -278,7 +278,7 @@ class Relay(callbacks.Plugin):
     def _formatPrivmsg(self, nick, network, msg):
         channel = msg.args[0]
         if self.registryValue('includeNetwork', channel):
-            network = '@' + network
+            network = network
         else:
             network = ''
         # colorize nicks
@@ -289,19 +289,9 @@ class Relay(callbacks.Plugin):
             colors = ircutils.canonicalColor(nick, shift=4)
             nick = newnick
         if ircmsgs.isAction(msg):
-            if color:
-                t = ircutils.mircColor('*', *colors)
-            else:
-                t = '*'
-            s = format('%s %s%s %s', t, nick, network, ircmsgs.unAction(msg))
+            s = format('* {%s/%s} %s', nick, network, ircmsgs.unAction(msg))
         else:
-            if color:
-                lt = ircutils.mircColor('<', *colors)
-                gt = ircutils.mircColor('>', *colors)
-            else:
-                lt = '<'
-                gt = '>'
-            s = format('%s%s%s%s %s', lt, nick, network, gt, msg.args[1])
+            s = format('{%s/%s} %s', nick, network, msg.args[1])
         return s
 
     def _sendToOthers(self, irc, msg):
@@ -392,7 +382,11 @@ class Relay(callbacks.Plugin):
             hostmask = format(' (%s)', msg.prefix.split('!')[1])
         else:
             hostmask = ''
-        s = format(_('%s%s has joined on %s'), msg.nick, hostmask, network)
+        if self.registryValue('color', channel):
+            prefix = '\x0303JOIN: '
+        else:
+            prefix = 'JOIN: '
+        s = format(_('%s%s%s has joined on %s'), prefix, msg.nick, hostmask, network)
         m = self._msgmaker(channel, s)
         self._sendToOthers(irc, m)
 
@@ -406,11 +400,15 @@ class Relay(callbacks.Plugin):
             hostmask = format(' (%s)', msg.prefix.split('!')[1])
         else:
             hostmask = ''
-        if len(msg.args) > 1:
-            s = format(_('%s%s has left on %s (%s)'),
-                       msg.nick, hostmask, network, msg.args[1])
+        if self.registryValue('color', channel):
+            prefix = '\x0312PART: '
         else:
-            s = format(_('%s%s has left on %s'), msg.nick, hostmask, network)
+            prefix = 'PART: '
+        if len(msg.args) > 1:
+            s = format(_('%s%s%s has left on %s (%s)'),
+                       prefix, msg.nick, hostmask, network, msg.args[1])
+        else:
+            s = format(_('%s%s%s has left on %s'), prefix, msg.nick, hostmask, network)
         m = self._msgmaker(channel, s)
         self._sendToOthers(irc, m)
 
@@ -420,8 +418,12 @@ class Relay(callbacks.Plugin):
         if channel not in self.registryValue('channels'):
             return
         network = self._getIrcName(irc)
-        s = format(_('mode change by %s on %s: %s'),
-                   msg.nick, network, ' '.join(msg.args[1:]))
+        if self.registryValue('color', channel):
+            prefix = '\x0306MODE: '
+        else:
+            prefix = 'MODE: '
+        s = format(_('%s%s/%s set mode %s in %s'),
+                   prefix, msg.nick, network, ' '.join(msg.args[1:]), channel)
         m = self._msgmaker(channel, s)
         self._sendToOthers(irc, m)
 
@@ -431,12 +433,16 @@ class Relay(callbacks.Plugin):
         if channel not in self.registryValue('channels'):
             return
         network = self._getIrcName(irc)
-        if len(msg.args) == 3:
-            s = format(_('%s was kicked by %s on %s (%s)'),
-                       msg.args[1], msg.nick, network, msg.args[2])
+        if self.registryValue('color', channel):
+            prefix = '\x0304KICK: '
         else:
-            s = format(_('%s was kicked by %s on %s'),
-                       msg.args[1], msg.nick, network)
+            prefix = 'KICK: '
+        if len(msg.args) == 3:
+            s = format(_('%s%s was kicked by %s on %s (%s)'),
+                       prefix, msg.args[1], msg.nick, network, msg.args[2])
+        else:
+            s = format(_('%s%s was kicked by %s on %s'),
+                       prefix, msg.args[1], msg.nick, network)
         m = self._msgmaker(channel, s)
         self._sendToOthers(irc, m)
 
@@ -444,7 +450,11 @@ class Relay(callbacks.Plugin):
         irc = self._getRealIrc(irc)
         newNick = msg.args[0]
         network = self._getIrcName(irc)
-        s = format(_('nick change by %s to %s on %s'), msg.nick,newNick,network)
+        if self.registryValue('color', channel):
+            prefix = '\x0310NICK: '
+        else:
+            prefix = 'NICK: '
+        s = format(_('%s%s/%s changed nick to %s on %s'), prefix, msg.nick, network, newNick, network)
         for channel in self.registryValue('channels'):
             if channel in irc.state.channels:
                 if newNick in irc.state.channels[channel].users:
@@ -474,18 +484,26 @@ class Relay(callbacks.Plugin):
                                          'can\'t sync topics.',
                                          channel, otherIrc.network)
         else:
-            s = format(_('topic change by %s on %s: %s'),
-                       msg.nick, network, newTopic)
+            if self.registryValue('color', channel):
+                prefix, cancelcolor = '\x0310TOPIC: ', '\x03'
+            else:
+                prefix, cancelcolor = 'TOPIC: ', ''
+            s = format(_('%s%s/%s set topic on %s to:%s %s'),
+                       prefix, msg.nick, network, network, cancelcolor, newTopic)
             m = self._msgmaker(channel, s)
             self._sendToOthers(irc, m)
 
     def doQuit(self, irc, msg):
         irc = self._getRealIrc(irc)
         network = self._getIrcName(irc)
-        if msg.args:
-            s = format(_('%s has quit %s (%s)'), msg.nick, network, msg.args[0])
+        if self.registryValue('color', channel):
+            prefix = '\x0307QUIT: '
         else:
-            s = format(_('%s has quit %s.'), msg.nick, network)
+            prefix = 'QUIT: '
+        if msg.args:
+            s = format(_('%s/%s has quit (%s)'), msg.nick, network, msg.args[0])
+        else:
+            s = format(_('%s/%s has quit'), msg.nick, network)
         for channel in self.registryValue('channels'):
             if channel in self.ircstates[irc].channels:
                 if msg.nick in self.ircstates[irc].channels[channel].users:
@@ -495,7 +513,11 @@ class Relay(callbacks.Plugin):
     def doError(self, irc, msg):
         irc = self._getRealIrc(irc)
         network = self._getIrcName(irc)
-        s = format(_('disconnected from %s: %s'), network, msg.args[0])
+        if self.registryValue('color', channel):
+            prefix = '\x0305ERROR: '
+        else:
+            prefix = 'ERROR: '
+        s = format(_('%sdisconnected from %s: %s'), prefix, network, msg.args[0])
         for channel in self.registryValue('channels'):
             m = self._msgmaker(channel, s)
             self._sendToOthers(irc, m)
