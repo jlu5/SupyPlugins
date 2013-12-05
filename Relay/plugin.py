@@ -451,7 +451,7 @@ class Relay(callbacks.Plugin):
         irc = self._getRealIrc(irc)
         newNick = msg.args[0]
         network = self._getIrcName(irc)
-        if self.registryValue('color', channel):
+        if self.registryValue('color'):
             prefix = '\x0310NICK: '
         else:
             prefix = 'NICK: '
@@ -497,7 +497,7 @@ class Relay(callbacks.Plugin):
     def doQuit(self, irc, msg):
         irc = self._getRealIrc(irc)
         network = self._getIrcName(irc)
-        if self.registryValue('color', channel):
+        if self.registryValue('color'):
             prefix = '\x0307QUIT: '
         else:
             prefix = 'QUIT: '
