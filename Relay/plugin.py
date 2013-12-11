@@ -502,9 +502,9 @@ class Relay(callbacks.Plugin):
         else:
             prefix = 'QUIT: '
         if msg.args:
-            s = format(_('%s/%s has quit (%s)'), msg.nick, network, msg.args[0])
+            s = format(_('%s%s/%s has quit (%s)'), prefix, msg.nick, network, msg.args[0])
         else:
-            s = format(_('%s/%s has quit'), msg.nick, network)
+            s = format(_('%s%s/%s has quit'), prefix, msg.nick, network)
         for channel in self.registryValue('channels'):
             if channel in self.ircstates[irc].channels:
                 if msg.nick in self.ircstates[irc].channels[channel].users:
