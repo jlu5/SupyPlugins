@@ -46,20 +46,19 @@ def configure(advanced):
     from supybot.questions import expect, anything, something, yn
     conf.registerPlugin('Hostmasks', True)
 
-
 Hostmasks = conf.registerPlugin('Hostmasks')
 
-class BantypeInteger(registry.Integer):
-    """Value must be an integer from 1 to 4."""
-    def setValue(self, v):
-        if v < 1 or v > 4:
-            self.error()
-        registry.Integer.setValue(self, v)
-        
+class BantypeValue(registry.OnlySomeStrings):
+    validStrings = ('1', '2', '3', '4')
 conf.registerGlobalValue(Hostmasks, 'banType',
-    BantypeInteger(1, _("""Chooses the preferred ban type for the
-        banmask command. 1 = *!*@blahip.myisp.net; 2 = *!~ident@blahip.myisp.net;
-         3 = *!*@*.myisp.net; 4 = *!~ident@*.myisp.net""")))
+    BantypeValue('1', _("""Chooses the preferred ban type for the
+        banmask command. 1 = *!*@address.isp.net; 2 = *!~ident@address.isp.net;
+         3 = *!*@*.isp.net; 4 = *!~ident@*.isp.net""")))
+         
+conf.registerGlobalValue(Hostmasks, 'smartBans',
+    registry.Boolean(False, _("""Allow the bot to attempt to detect vHosts and other
+         host cloaks, adjusting its banmask output depending on the hostmask
+         it finds. This overrides the banType setting if such vHost is detected.""")))
 
 # This is where your configuration variables (if any) should go.  For example:
 # conf.registerGlobalValue(Hostmasks, 'someConfigVariableName',

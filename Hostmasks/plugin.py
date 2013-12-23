@@ -34,6 +34,7 @@ import supybot.plugins as plugins
 import supybot.ircutils as ircutils
 import supybot.callbacks as callbacks
 import re
+import socket
 try:
     from supybot.i18n import PluginInternationalization
     _ = PluginInternationalization('Hostmasks')
@@ -48,12 +49,14 @@ class Hostmasks(callbacks.Plugin):
     pass
     
     def _SplitHostmask(self, irc, nick):
-        # Split the hostmask of someone into 3 sections: nick, ident, and host
+        # Split the hostmask into 3 sections: nick, ident, and host.
         try: 
             splithostmask = re.split('[!@]', irc.state.nickToHostmask(nick))
         except KeyError:
             irc.error('There is no such nick \'%s\'%s.' % nick, Raise=True)
         if len(splithostmask) != 3:
+            # This is just here so in case this does happen, the bot doesn't
+            # error out when retrieving parts of the hostmask.
             self.log.warning('Hostmasks: Invalid hostmask length received' 
                 ' for %s on %s. This should not be happening!'
                 % (nick, irc.network))
@@ -86,8 +89,59 @@ class Hostmasks(callbacks.Plugin):
         Returns the nick of the person who called the command.
         """
         irc.reply(msg.nick)
-    me = wrap(me)  
+    me = wrap(me)
     
+    def _isv4IP(self, ipstr):
+        try:
+            socket.inet_aton(ipstr)
+            return True
+        except socket.error:
+            return False
+            
+    def _isv4cloak(self, hostname):
+        # Smart bans: look for charybdis-style IP cloaks, Unreal/InspIRCd
+        # styles will work (hopefully) using the regular wildhost parsing.
+        v4cloak = re.match("^(?:[0-9]{1,3}\.){2}[a-z]{1,3}\.[a-z]{1,3}", hostname)
+        if v4cloak:
+            return True
+        else:
+            return False
+
+    def _isv6IP(self, ipstr):    
+        try:
+            socket.inet_pton(socket.AF_INET6, ipstr)
+            return True
+        except socket.error:
+            return False
+        except AttributeError:
+            # if inet_pton not implemented in the OS used (currently only
+            # works on Unix), use our super-duper lazy regexp instead!
+            v6ip = re.match("([0-9]{1,4}:{1,2}){2,8}", ipstr)
+            if v6ip:
+                return True
+            else:
+                return False         
+            
+    def _isvHost(self, hostname):
+        isvHost = re.search("/", hostname)
+        if isvHost:
+            return True
+        else:
+            return False
+    
+    def _isv6cloak(self, hostname):
+        if re.search(":", hostname):
+            # Look for unreal-style cloaks (1234abcd:2345bcde:3456cdef:IP)
+            v6cloaku = re.match("([0-9A-F]{8}:){3}IP", hostname)
+            # Use our super lazy regexp for charybdis-style v6 cloaks
+            v6cloakc = re.match("([0-9a-z]{1,4}:{1,2}){2,8}", hostname)       
+            if v6cloaku:
+                return 'u'
+            elif v6cloakc:
+                return 'c'
+        else: # doesn't even include a : , why bother checking?
+            return False
+
     def banmask(self, irc, msg, args, nick):
         """[<nick>]
         Returns a nice banmask for <nick>. If <nick> is not given, returns a
@@ -97,26 +151,31 @@ class Hostmasks(callbacks.Plugin):
             nick = msg.nick
         splithostmask = self._SplitHostmask(irc, nick)
         bantype = self.registryValue('banType')
-        # Set banmask per bantype: 1 = *!*@blahip.myisp.net;
-        # 2 = *!~ident@blahip.myisp.net; 3 = *!*@*.myisp.net;
-        # 4 = *!~ident@*.myisp.net
-        if bantype == 1:
+        if bantype == '1':
             banmask = '%s%s' % ('*!*@', splithostmask[2])
-        if bantype == 2:
+        elif bantype == '2':
             banmask = '%s%s%s%s' % ('*!', splithostmask[1], '@', 
                 splithostmask[2])
         else:
-            # Split the host too so you can ban things like *!*@*.isp.net
-            splithost = re.split(r"\.", splithostmask[2])
-            # Attempt to detect 
-            if len(splithost) <= 2: # or re.search("/", splithostmask[2]):
-                wildhost = splithostmask[2]
-            else:
-                wildhost = '%s%s%s%s' % ('*.', splithost[-2], '.', 
-                    splithost[-1])
-            if bantype == 3:
+            splithost = re.split(r"[.:]", splithostmask[2], 2)
+            wildhost = ''
+            if self.registryValue('smartBans'):
+                if self._isv4IP(splithostmask[2]) or self._isv4cloak(splithostmask[2]):
+                    v4cloak = re.split(r"\.", splithostmask[2], 2)
+                    wildhost = v4cloak[0] + '.' + v4cloak[1] + '.*'
+                elif self._isvHost(splithostmask[2]):
+                    wildhost = splithostmask[2]
+                elif self._isv6IP(splithostmask[2]) or self._isv6cloak(splithostmask[2]):
+                    wildhost = splithostmask[2] # TODO: support ipv6 ranges
+            if not wildhost:
+                if len(splithost) <= 2:
+                    wildhost = splithostmask[2] # Hostmask is too short to split
+                else:
+                    wildhost = '%s%s%s%s' % ('*.', splithost[1], '.', 
+                        splithost[2])
+            if bantype == '3':
                 banmask = '%s%s' % ('*!*@', wildhost) 
-            if bantype == 4:
+            if bantype == '4':
                 banmask = '%s%s%s%s' % ('*!', splithostmask[1], '@', wildhost)
         irc.reply(banmask)
     banmask = wrap(banmask, [(additional('nick'))])
