@@ -157,7 +157,7 @@ class Hostmasks(callbacks.Plugin):
             banmask = '%s%s%s%s' % ('*!', splithostmask[1], '@', 
                 splithostmask[2])
         else:
-            splithost = re.split(r"[.:]", splithostmask[2], 2)
+            splithost = re.split(r"[.]", splithostmask[2], 2)
             wildhost = ''
             if self.registryValue('smartBans'):
                 if self._isv4IP(splithostmask[2]) or self._isv4cloak(splithostmask[2]):
