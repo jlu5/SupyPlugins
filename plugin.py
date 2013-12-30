@@ -253,22 +253,6 @@ class Weather(callbacks.Plugin):
         # return.
         return direction_names[index]
 
-    def _wunderjson(self, url, location):
-        """Fetch wunderground JSON and return."""
-
-        # first, construct the url properly.
-        if url.endswith('/'):  # cheap way to strip the tailing /
-            url = '%sq/%s.json' % (url, utils.web.urlquote(location))
-        else:
-            url = '%s/q/%s.json' % (url, utils.web.urlquote(location))
-        # now actually fetch the url.
-        try:
-            page = utils.web.getUrl(url)
-            return page
-        except utils.web.Error as e:  # something didn't work.
-            self.log.error("ERROR: Trying to open {0} message: {1}".format(url, e))
-            return None
-
     ##############################################
     # PUBLIC FUNCTIONS TO WORK WITH THE DATABASE #
     ##############################################
@@ -316,6 +300,47 @@ class Weather(callbacks.Plugin):
 
     setweather = wrap(setweather, [('text')])
 
+    ##########################
+    # WUNDERGROUND API CALLS #
+    ##########################
+
+    def _wuac(self, q):
+        """Internal helper to find a location via Wunderground's autocomplete API."""
+
+        url = 'http://autocomplete.wunderground.com/aq?query=%s' % utils.web.urlquote(q)
+        #self.log.info("WUAC URL: {0}".format(url))
+        # try and fetch.
+        try:
+            page = utils.web.getUrl(url)
+        except Exception as e:  # something didn't work.
+            self.log.error("_wuac: ERROR: Trying to open {0} message: {1}".format(url, e))
+            return None
+        # now process json and return.
+        try:
+            data = json.loads(page.decode('utf-8'))
+            loc = data['RESULTS'][0]['zmw']  # find the first zmw.
+            loc = "zmw:%s" % loc  # return w/zmw: attached.
+            return loc
+        except Exception as e:
+            self.log.error("_wuac: ERROR processing json in {0} :: {1}".format(url, e))
+            return None
+
+    def _wunderjson(self, url, location):
+        """Fetch wunderground JSON and return."""
+
+        # first, construct the url properly.
+        if url.endswith('/'):  # cheap way to strip the tailing /
+            url = '%sq/%s.json' % (url, utils.web.urlquote(location))
+        else:
+            url = '%s/q/%s.json' % (url, utils.web.urlquote(location))
+        # now actually fetch the url.
+        try:
+            page = utils.web.getUrl(url)
+            return page
+        except Exception as e:  # something didn't work.
+            self.log.error("ERROR: Trying to open {0} message: {1}".format(url, e))
+            return None
+
     ####################
     # PUBLIC FUNCTIONS #
     ####################
@@ -341,6 +366,7 @@ class Weather(callbacks.Plugin):
                    'bestfct':'1',
                    'pws':'0' }
         # now, start our dict for output formatting.
+        loc = None
         args = {'imperial':self.registryValue('useImperial', msg.args[0]),
                 'nocolortemp':self.registryValue('disableColoredTemp', msg.args[0]),
                 'alerts':self.registryValue('alerts'),
@@ -364,7 +390,9 @@ class Weather(callbacks.Plugin):
                      # set specific settings based on keys that won't 1:1 match.
                     if k == 'location':  # location
                         if not optinput:  # we were not specified a location in being called.
-                            optinput = v
+                            loc = v
+                        #else:  # user found and they want a different location.
+                        #    loc = optinput
                     elif k == 'metric':  # metric
                         if v == 1:  # true.
                             args['imperial'] = False
@@ -419,6 +447,14 @@ class Weather(callbacks.Plugin):
                     return
 
         # now that we're done with 'input things'
+        # we need to decide on how to call wunderground api with location (autocomplete or not).
+        if not loc:  # there was optinput but not moved to loc yet. user + new location or no known user + any location.
+            #self.log.info("NO LOC. WUAC FOR: {0}".format(optinput))
+            loc = self._wuac(optinput)  # query autocomplete.
+            # make sure we get something back.
+            if not loc:  # we can't proceed. we need a user + known location and wunderground to complete via AC.
+                irc.reply("ERROR: I could not find a valid Weather Underground location for: {0}".format(optinput))
+
         # build url now. first, apikey. then, iterate over urlArgs and insert.
         url = 'http://api.wunderground.com/api/%s/' % (self.APIKEY) # first part of url, w/APIKEY
         # now we need to set certain things for urlArgs based on args.
@@ -433,21 +469,27 @@ class Weather(callbacks.Plugin):
                 url += "{0}:{1}/".format(key, value)
 
         # now that we're done, lets finally make our API call.
-        page = self._wunderjson(url, optinput)
+        page = self._wunderjson(url, loc)
         if not page:
-            irc.reply("ERROR: Failed to load Wunderground API.")
+            irc.reply("ERROR: Failed to load Wunderground API. Check logs.")
             return
 
         # process json.
-        data = json.loads(page.decode('utf-8'))
+        try:
+            data = json.loads(page.decode('utf-8'))
+        except Exception as e:
+            self.log.error("ERROR: could not process JSON from: {0} :: {1}".format(url, e))
+            irc.reply("ERROR: Could not process JSON from Weather Underground. Check the logs.")
+            return
 
         # now, a series of sanity checks before we process.
         if 'error' in data['response']:  # check if there are errors.
             errortype = data['response']['error']['type']  # type. description is below.
             errordesc = data['response']['error'].get('description', 'no description')
-            irc.reply("ERROR: I got an error searching for {0}. ({1}: {2})".format(optinput, errortype, errordesc))
+            irc.reply("ERROR: I got an error searching. ({0}: {1})".format(errortype, errordesc))
             return
         # if there is more than one city matching (Ambiguous Results).  we now go with the first (best?) match.
+        # this should no longer be the case with our autocomplete routine above but we'll keep this anyways.
         if 'results' in data['response']:  # we grab the first location's "ZMW" which then gets constructed as location.
             first = 'zmw:%s' % data['response']['results'][0]['zmw']  # grab the "first" location and create the
             # grab this first location and search again.
