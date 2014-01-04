@@ -390,7 +390,7 @@ class Weather(callbacks.Plugin):
                      # set specific settings based on keys that won't 1:1 match.
                     if k == 'location':  # location
                         if not optinput:  # we were not specified a location in being called.
-                            loc = v
+                            loc = v  # copy over their location from the DB to loc.
                         #else:  # user found and they want a different location.
                         #    loc = optinput
                     elif k == 'metric':  # metric
@@ -447,18 +447,20 @@ class Weather(callbacks.Plugin):
                     return
 
         # now that we're done with 'input things'
-        # we need to decide on how to call wunderground api with location (autocomplete or not).
-        if not loc:  # there was optinput but not moved to loc yet. user + new location or no known user + any location.
-            #self.log.info("NO LOC. WUAC FOR: {0}".format(optinput))
-            loc = self._wuac(optinput)  # query autocomplete.
-            # make sure we get something back.
-            if not loc:  # we can't proceed. we need a user + known location and wunderground to complete via AC.
-                irc.reply("ERROR: I could not find a valid Weather Underground location for: {0}".format(optinput))
+        # we need to decide on if we'll use autocomplete or not.
+        if not loc and optinput:  # loc is not set (not a known user).
+            if optinput.isdigit():  # pure digits. autocomplete fails. just set it w/o searching.
+                loc = optinput
+            else:  # lets search.
+                loc = self._wuac(optinput)  # query autocomplete.
+                # make sure we get something back. if we do, loc = query.
+                if not loc:  # nothing came back. this could be because of a number of reasons but we'll just try to search wunderground anyways.
+                    loc = optinput  # set the loc with optinput.
 
         # build url now. first, apikey. then, iterate over urlArgs and insert.
         url = 'http://api.wunderground.com/api/%s/' % (self.APIKEY) # first part of url, w/APIKEY
         # now we need to set certain things for urlArgs based on args.
-        for check in ['alerts','almanac','astronomy']:
+        for check in ['alerts', 'almanac', 'astronomy']:
             if args[check]: # if args['value'] is True, either via config or getopts.
                 urlArgs['features'].append(check) # append to dict->key (list)
         # now, we use urlArgs dict to append to url.
@@ -486,7 +488,7 @@ class Weather(callbacks.Plugin):
         if 'error' in data['response']:  # check if there are errors.
             errortype = data['response']['error']['type']  # type. description is below.
             errordesc = data['response']['error'].get('description', 'no description')
-            irc.reply("ERROR: I got an error searching. ({0}: {1})".format(errortype, errordesc))
+            irc.reply("ERROR: I got an error searching '{0}'. ({1}: {2})".format(loc, errortype, errordesc))
             return
         # if there is more than one city matching (Ambiguous Results).  we now go with the first (best?) match.
         # this should no longer be the case with our autocomplete routine above but we'll keep this anyways.
