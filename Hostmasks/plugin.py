@@ -1,5 +1,5 @@
 ###
-# Copyright (c) 2013, GLolol (GLolol1@hotmail.com)
+# Copyright (c) 2013-2014, GLolol (GLolol1@hotmail.com)
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -53,7 +53,7 @@ class Hostmasks(callbacks.Plugin):
         try: 
             splithostmask = re.split('[!@]', irc.state.nickToHostmask(nick))
         except KeyError:
-            irc.error('There is no such nick \'%s\'%s.' % nick, Raise=True)
+            irc.error('There is no such nick \'%s\'.' % nick, Raise=True)
         if len(splithostmask) != 3:
             # This is just here so in case this does happen, the bot doesn't
             # error out when retrieving parts of the hostmask.
@@ -116,7 +116,7 @@ class Hostmasks(callbacks.Plugin):
         except AttributeError:
             # if inet_pton not implemented in the OS used (currently only
             # works on Unix), use our super-duper lazy regexp instead!
-            v6ip = re.match("([0-9]{1,4}:{1,2}){2,8}", ipstr)
+            v6ip = re.match("([0-9a-fA-F]{1,4}:{1,2}){2,8}", ipstr)
             if v6ip:
                 return True
             else:
@@ -160,13 +160,23 @@ class Hostmasks(callbacks.Plugin):
             splithost = re.split(r"[.]", splithostmask[2], 2)
             wildhost = ''
             if self.registryValue('smartBans'):
+                v6splithost = re.split(r":", splithostmask[2], 3)
                 if self._isv4IP(splithostmask[2]) or self._isv4cloak(splithostmask[2]):
                     v4cloak = re.split(r"\.", splithostmask[2], 2)
                     wildhost = v4cloak[0] + '.' + v4cloak[1] + '.*'
                 elif self._isvHost(splithostmask[2]):
                     wildhost = splithostmask[2]
-                elif self._isv6IP(splithostmask[2]) or self._isv6cloak(splithostmask[2]):
-                    wildhost = splithostmask[2] # TODO: support ipv6 ranges
+                elif self._isv6IP(splithostmask[2]) or self._isv6cloak(splithostmask[2]) == 'c':
+                    try:
+                        wildhost = v6splithost[0] + ':' + v6splithost[1] + ':' + v6splithost[2] + ':*'
+                    except IndexError:
+                        wildhost = splithostmask[2]
+                elif self._isv6cloak(splithostmask[2]) == 'u':
+                    try:
+                        wildhost = '%s%s%s%s%s' % ('*:', v6splithost[1], ':', 
+                            v6splithost[2], ':IP')
+                    except IndexError:
+                        wildhost = splithostmask[2]
             if not wildhost:
                 if len(splithost) <= 2:
                     wildhost = splithostmask[2] # Hostmask is too short to split
