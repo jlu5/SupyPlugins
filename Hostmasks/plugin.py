@@ -161,14 +161,17 @@ class Hostmasks(callbacks.Plugin):
             wildhost = ''
             if self.registryValue('smartBans'):
                 v6splithost = re.split(r":", splithostmask[2], 3)
-                if self._isv4IP(splithostmask[2]) or self._isv4cloak(splithostmask[2]):
+                if self._isv4IP(splithostmask[2]) or \
+                    self._isv4cloak(splithostmask[2]):
                     v4cloak = re.split(r"\.", splithostmask[2], 2)
-                    wildhost = v4cloak[0] + '.' + v4cloak[1] + '.*'
+                    wildhost = '%s%s%s%s' % (v4cloak[0], '.', v4cloak[1], '.*')
                 elif self._isvHost(splithostmask[2]):
                     wildhost = splithostmask[2]
-                elif self._isv6IP(splithostmask[2]) or self._isv6cloak(splithostmask[2]) == 'c':
+                elif self._isv6IP(splithostmask[2]) or \
+                    self._isv6cloak(splithostmask[2]) == 'c':
                     try:
-                        wildhost = v6splithost[0] + ':' + v6splithost[1] + ':' + v6splithost[2] + ':*'
+                        wildhost = '%s%s%s%s%s' % (v6splithost[0], ':', 
+                            v6splithost[1], ':', v6splithost[2], ':*')
                     except IndexError:
                         wildhost = splithostmask[2]
                 elif self._isv6cloak(splithostmask[2]) == 'u':
