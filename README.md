@@ -11,3 +11,7 @@ Includes forks/mods of existing plugins, etc. All of the modified code in this r
 
 ##### Relay (fork of: [ProgVal/Limnoria](https://github.com/ProgVal/Limnoria/tree/master/plugins/Relay))
 - Forked by request, adds text events similar to those of the LinkRelay mod above.
+
+##### Hostmasks
+- Hostmasks plugin, allows one to fetch idents, hosts, and appropriate banmasks for users.
+
