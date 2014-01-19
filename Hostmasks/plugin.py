@@ -44,8 +44,8 @@ except:
     _ = lambda x:x
 
 class Hostmasks(callbacks.Plugin):
-    """Add the help for "@plugin help Hostmasks" here
-    This should describe *how* to use this plugin."""
+    """The Hostmasks plugin allows one to retrieve idents, hostnames, and 
+    banmasks for users, useful for nested commands."""
     pass
     
     def _SplitHostmask(self, irc, nick):
@@ -55,8 +55,6 @@ class Hostmasks(callbacks.Plugin):
         except KeyError:
             irc.error('There is no such nick \'%s\'.' % nick, Raise=True)
         if len(splithostmask) != 3:
-            # This is just here so in case this does happen, the bot doesn't
-            # error out when retrieving parts of the hostmask.
             self.log.warning('Hostmasks: Invalid hostmask length received' 
                 ' for %s on %s. This should not be happening!'
                 % (nick, irc.network))
@@ -91,6 +89,13 @@ class Hostmasks(callbacks.Plugin):
         irc.reply(msg.nick)
     me = wrap(me)
     
+    def botnick(self, irc, msg, args):
+        """takes no arguments.
+        Returns the nick of the bot.
+        """
+        irc.reply(irc.nick)
+    me = wrap(me)
+    
     def _isv4IP(self, ipstr):
         try:
             socket.inet_aton(ipstr)
@@ -101,7 +106,8 @@ class Hostmasks(callbacks.Plugin):
     def _isv4cloak(self, hostname):
         # Smart bans: look for charybdis-style IP cloaks, Unreal/InspIRCd
         # styles will work (hopefully) using the regular wildhost parsing.
-        v4cloak = re.match("^(?:[0-9]{1,3}\.){2}[a-z]{1,3}\.[a-z]{1,3}", hostname)
+        v4cloak = re.match("^(?:[0-9]{1,3}\.){2}[a-z]{1,3}\.[a-z]{1,3}",
+            hostname)
         if v4cloak:
             return True
         else:
@@ -114,8 +120,8 @@ class Hostmasks(callbacks.Plugin):
         except socket.error:
             return False
         except AttributeError:
-            # if inet_pton not implemented in the OS used (currently only
-            # works on Unix), use our super-duper lazy regexp instead!
+            # if inet_pton is not available, use our super-duper
+            # lazy regexp instead!
             v6ip = re.match("([0-9a-fA-F]{1,4}:{1,2}){2,8}", ipstr)
             if v6ip:
                 return True
@@ -164,7 +170,8 @@ class Hostmasks(callbacks.Plugin):
                 if self._isv4IP(splithostmask[2]) or \
                     self._isv4cloak(splithostmask[2]):
                     v4cloak = re.split(r"\.", splithostmask[2], 2)
-                    wildhost = '%s%s%s%s' % (v4cloak[0], '.', v4cloak[1], '.*')
+                    wildhost = '%s%s%s%s' % (v4cloak[0], '.', v4cloak[1],
+                        '.*')
                 elif self._isvHost(splithostmask[2]):
                     wildhost = splithostmask[2]
                 elif self._isv6IP(splithostmask[2]) or \
@@ -182,7 +189,7 @@ class Hostmasks(callbacks.Plugin):
                         wildhost = splithostmask[2]
             if not wildhost:
                 if len(splithost) <= 2:
-                    wildhost = splithostmask[2] # Hostmask is too short to split
+                    wildhost = splithostmask[2] # Hostmask is too short
                 else:
                     wildhost = '%s%s%s%s' % ('*.', splithost[1], '.', 
                         splithost[2])
