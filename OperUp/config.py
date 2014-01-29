@@ -46,16 +46,18 @@ def configure(advanced):
     from supybot.questions import expect, anything, something, yn
     conf.registerPlugin('OperUp', True)
 
-
 OperUp = conf.registerPlugin('OperUp')
 conf.registerGlobalValue(OperUp, 'operName',
-    registry.String("", _("""Specifies the name of the Oper block the bot will use."""), private=True))
+    registry.String("", _("""Specifies the name of the Oper block the bot will
+        use."""), private=True))
 conf.registerGlobalValue(OperUp, 'operPass',
-    registry.String("", _("""Specifies the password of the Oper block the bot will use."""), private=True))
+    registry.String("", _("""Specifies the password of the Oper block the bot
+        will use."""), private=True))
 conf.registerGlobalValue(OperUp, 'operNets',
-    registry.SpaceSeparatedListOfStrings("", _("""Space separated list of network names to Oper up on (denoted by 005 name)"""), private=True))
+    registry.SpaceSeparatedListOfStrings("", _("""Space separated list of
+        network names to Oper up on (denoted by 005 name)"""), private=True))
 conf.registerGlobalValue(OperUp, 'operModes',
-    registry.SpaceSeparatedListOfStrings("", _("""Specifies the mode(s) the bot will set on itself when it Opers up."""), private=True)) 
-
+    registry.SpaceSeparatedListOfStrings("", _("""Specifies the mode(s) the
+        bot will set on itself when it Opers up."""), private=True)) 
 
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:

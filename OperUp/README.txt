@@ -1,1 +1,1 @@
-Insert a description of your plugin here, with any notes, etc. about using it.
+Simple plugin that allows Supybot to oper up on configured networks, on connect and manually.
