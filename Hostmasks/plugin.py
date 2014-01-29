@@ -46,7 +46,7 @@ except:
 class Hostmasks(callbacks.Plugin):
     """The Hostmasks plugin allows one to retrieve idents, hostnames, and 
     banmasks for users, useful for nested commands."""
-    pass
+    threaded = True
     
     def _SplitHostmask(self, irc, nick):
         # Split the hostmask into 3 sections: nick, ident, and host.
