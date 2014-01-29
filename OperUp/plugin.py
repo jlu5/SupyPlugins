@@ -48,6 +48,8 @@ class OperUp(callbacks.Plugin):
     
     def do005(self, irc, msg):
         """Oper up on connect."""
+        if not self.registryValue('autoOper'):
+            return
         if irc.network in self.registryValue('operNets'):
             if self.registryValue("operName") and \
                 self.registryValue("operPass"):
@@ -55,7 +57,7 @@ class OperUp(callbacks.Plugin):
                     args=[self.registryValue("operName"), 
                     self.registryValue("operPass")]))
             else:
-                self.log.error("OperUp: Bot is set to oper on network %s, but"
+                self.log.warning("OperUp: Bot is set to oper on network %s, but"
                     " operName and/or operPass are not defined!")
     
     def do381(self, irc, msg):
@@ -102,15 +104,15 @@ class OperUp(callbacks.Plugin):
             else:
                 irc.error(_("Either the operName or the operPass "
                     "configuration values were not properly defined. Please "
-                    "check to see these values are correct!"))
+                    "check to see if these values are correct!"))
         else:
-            irc.error(_("This network is not configured for opering up! (see"
+            irc.error(_("This network is not configured for opering! (see"
                 " @config plugins.OperUp.opernets)"))
     operup = wrap(operup, ['owner'])
                
     def deoper(self, irc, msg, args):
         """takes no arguments.
-        Deopers the bot. (set user modes -Oo)
+        Makes the bot deoper by setting user modes -Oo on itself.
         """
         irc.sendMsg(ircmsgs.mode(irc.nick, "-Oo"))
         irc.replySuccess()

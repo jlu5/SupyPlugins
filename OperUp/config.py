@@ -59,5 +59,7 @@ conf.registerGlobalValue(OperUp, 'operNets',
 conf.registerGlobalValue(OperUp, 'operModes',
     registry.SpaceSeparatedListOfStrings("", _("""Specifies the mode(s) the
         bot will set on itself when it Opers up."""), private=True)) 
-
+conf.registerGlobalValue(OperUp, 'autoOper',
+    registry.Boolean(True, _("""Specifies whether the bot should automatically
+        oper up on connect.""")))
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:
