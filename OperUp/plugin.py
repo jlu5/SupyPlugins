@@ -89,7 +89,9 @@ class OperUp(callbacks.Plugin):
             % irc.network)
         
     def operup(self, irc, msg, args):
-        """Oper up."""
+        """takes no arguments.
+        Makes the bot Oper up using the name and password defined in config.
+        """
         if irc.network in self.registryValue('operNets'):
             if self.registryValue("operName") and \
                 self.registryValue("operPass"):
@@ -107,7 +109,9 @@ class OperUp(callbacks.Plugin):
     operup = wrap(operup, ['owner'])
                
     def deoper(self, irc, msg, args):
-        """Deoper."""
+        """takes no arguments.
+        Deopers the bot. (set user modes -Oo)
+        """
         irc.sendMsg(ircmsgs.mode(irc.nick, "-Oo"))
         irc.replySuccess()
     deoper = wrap(deoper, ['owner'])
