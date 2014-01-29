@@ -108,7 +108,7 @@ class OperUp(callbacks.Plugin):
                
     def deoper(self, irc, msg, args):
         """Deoper."""
-        irc.sendMsg(ircmsgs.IrcMsg(command="MODE", args=[irc.nick, "-Oo"]))
+        irc.sendMsg(ircmsgs.mode(irc.nick, "-Oo"))
         irc.replySuccess()
     deoper = wrap(deoper, ['owner'])
 
