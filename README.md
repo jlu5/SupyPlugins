@@ -15,3 +15,5 @@ Includes forks/mods of existing plugins, etc. All of the modified code in this r
 ##### Hostmasks
 - Hostmasks plugin, allows one to fetch idents, hosts, and appropriate banmasks for users.
 
+##### OperUp
+- Simple plugin that allows Supybot to oper up on configured networks, automatically (on connect) and manually.
