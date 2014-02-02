@@ -5,6 +5,7 @@ This repository includes forks/mods of existing Supybot plugins and some that I'
 
 ## List of plugins
 Please note that this list may not always be up to date; your best bet is to actually browse the code for yourself! ;)
+
 Any specific plugin dependancies should also be listed.
 
 ##### LinkRelay (fork: [ElectronIRC/Otaku](https://github.com/ElectronIRC/Otaku), [ProgVal/Supybot-plugins](https://github.com/ProgVal/Supybot-plugins/tree/master/LinkRelay))
