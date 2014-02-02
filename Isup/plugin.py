@@ -74,8 +74,7 @@ class Isup(callbacks.Plugin):
         except: 
             pass
         irc.reply(self._getreply(url))   
-    check = wrap(check, (['something']))
-
+    check = wrap(check, ['something'])
 Class = Isup
 
 # vim:set shiftwidth=4 softtabstop=4 expandtab textwidth=79:
