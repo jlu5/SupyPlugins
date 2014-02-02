@@ -247,7 +247,7 @@ class LinkRelay(callbacks.Plugin):
             if self.registryValue('color', msg.args[0]):
                 args['color'] = '\x03%s' % self.registryValue('colors.join', msg.args[0])
             if self.registryValue('hostmasks', msg.args[0]):
-                args['userhost'] = '%s%s%s%s%s' % (' (', msg.user, '@', msg.host, ')')
+                args['userhost'] = ' (%s@%s)' % (msg.user, msg.host)
             s = '%(color)s' + _('JOIN: %(nick)s%(sepTagn)s%(network)s'
                     '%(userhost)s has joined %(channel)s%(sepTagc)s'
                     '%(network)s')
@@ -263,9 +263,9 @@ class LinkRelay(callbacks.Plugin):
             if self.registryValue('color', msg.args[0]):
 				args['color'] = '\x03%s' % self.registryValue('colors.part', msg.args[0])
             if self.registryValue('hostmasks', msg.args[0]):
-                args['userhost'] = '%s%s%s%s%s' % (' (', msg.user, '@', msg.host, ')')
+                args['userhost'] = ' (%s@%s)' % (msg.user, msg.host)
             try:
-                args['message'] = '%s%s%s' % (' (', msg.args[1], ')')
+                args['message'] = '(%s)' % (msg.args[1])
             except IndexError:
                 pass
             s = '%(color)s' + _('PART: %(nick)s%(sepTagn)s%(network)s'
