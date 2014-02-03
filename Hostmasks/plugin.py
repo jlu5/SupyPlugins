@@ -158,10 +158,9 @@ class Hostmasks(callbacks.Plugin):
         splithostmask = self._SplitHostmask(irc, nick)
         bantype = self.registryValue('banType')
         if bantype == '1':
-            banmask = '%s%s' % ('*!*@', splithostmask[2])
+            banmask = '*!*@%s' % splithostmask[2]
         elif bantype == '2':
-            banmask = '%s%s%s%s' % ('*!', splithostmask[1], '@', 
-                splithostmask[2])
+            banmask = '*!%s@%s' % (splithostmask[1], splithostmask[2])
         else:
             splithost = re.split(r"[.]", splithostmask[2], 2)
             wildhost = ''
@@ -170,33 +169,31 @@ class Hostmasks(callbacks.Plugin):
                 if self._isv4IP(splithostmask[2]) or \
                     self._isv4cloak(splithostmask[2]):
                     v4cloak = re.split(r"\.", splithostmask[2], 2)
-                    wildhost = '%s%s%s%s' % (v4cloak[0], '.', v4cloak[1],
-                        '.*')
+                    wildhost = '%s.%s.*' % (v4cloak[0], v4cloak[1])
                 elif self._isvHost(splithostmask[2]):
                     wildhost = splithostmask[2]
                 elif self._isv6IP(splithostmask[2]) or \
                     self._isv6cloak(splithostmask[2]) == 'c':
                     try:
-                        wildhost = '%s%s%s%s%s' % (v6splithost[0], ':', 
-                            v6splithost[1], ':', v6splithost[2], ':*')
+                        wildhost = '%s:%s:%s:*' % (v6splithost[0],
+                            v6splithost[1], v6splithost[2])
                     except IndexError:
                         wildhost = splithostmask[2]
                 elif self._isv6cloak(splithostmask[2]) == 'u':
                     try:
-                        wildhost = '%s%s%s%s%s' % ('*:', v6splithost[1], ':', 
-                            v6splithost[2], ':IP')
+                        wildhost = '*:%s:%s:IP' % (v6splithost[1], 
+                            v6splithost[2])
                     except IndexError:
                         wildhost = splithostmask[2]
             if not wildhost:
                 if len(splithost) <= 2:
                     wildhost = splithostmask[2] # Hostmask is too short
                 else:
-                    wildhost = '%s%s%s%s' % ('*.', splithost[1], '.', 
-                        splithost[2])
+                    wildhost = '*.%s.%s' % (splithost[1], splithost[2])
             if bantype == '3':
-                banmask = '%s%s' % ('*!*@', wildhost) 
+                banmask = '*!*@%s' % wildhost
             if bantype == '4':
-                banmask = '%s%s%s%s' % ('*!', splithostmask[1], '@', wildhost)
+                banmask = '*!%s@%s' % (splithostmask[1], wildhost)
         irc.reply(banmask)
     banmask = wrap(banmask, [(additional('nick'))])
     
