@@ -1,1 +1,1 @@
-Insert a description of your plugin here, with any notes, etc. about using it.
+Provides a simple command to check whether a website is up or down (using isup.me).

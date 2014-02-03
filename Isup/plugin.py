@@ -42,8 +42,8 @@ except ImportError:
     _ = lambda x:x
 
 class Isup(callbacks.Plugin):
-    """Add the help for "@plugin help Isup" here
-    This should describe *how* to use this plugin."""
+    """Provides a simple command to check whether a website is up
+    or down (using isup.me)."""
     
     def _getreply(self, url):
         data = utils.web.getUrl("http://isup.me/%s" % url)
@@ -64,16 +64,16 @@ class Isup(callbacks.Plugin):
             except TypeError:
                 return self.registryValue("replies.unknown")
         else: 
-            return "An error occurred, please check your URL and try again."      
+            return "An error occurred, please check your URL and try again."
     
-    def check(self, irc, msg, args, url): 
+    def check(self, irc, msg, args, url):
         """<url>
-        Check if a website is up or down using isup.me."""
+        Check whether a website is up or down using isup.me."""
         try: 
             url = url.split("://")[1]
         except: 
             pass
-        irc.reply(self._getreply(url))   
+        irc.reply(self._getreply(url))
     check = wrap(check, ['something'])
 Class = Isup
 
