@@ -19,3 +19,6 @@ Any specific plugin dependancies should also be listed.
 
 ##### OperUp
 - Simple plugin that allows Supybot to oper up on configured networks, automatically (on connect) and manually.
+
+##### Isup
+- Provides a simple command to check whether a website is up or down (using isup.me).
