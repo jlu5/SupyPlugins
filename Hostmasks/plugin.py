@@ -129,14 +129,12 @@ class Hostmasks(callbacks.Plugin):
                 return False         
             
     def _isvHost(self, hostname):
-        isvHost = re.search("/", hostname)
-        if isvHost:
+        if "/" in hostname or hostname.endswith("."):
             return True
-        else:
-            return False
+        return False
     
     def _isv6cloak(self, hostname):
-        if re.search(":", hostname):
+        if ":" in hostname:
             # Look for unreal-style cloaks (1234abcd:2345bcde:3456cdef:IP)
             v6cloaku = re.match("([0-9A-F]{8}:){3}IP", hostname)
             # Use our super lazy regexp for charybdis-style v6 cloaks
@@ -155,45 +153,45 @@ class Hostmasks(callbacks.Plugin):
         """
         if not nick:
             nick = msg.nick
-        splithostmask = self._SplitHostmask(irc, nick)
+        unick, ident, host = self._SplitHostmask(irc, nick)
         bantype = self.registryValue('banType')
         if bantype == '1':
-            banmask = '*!*@%s' % splithostmask[2]
+            banmask = '*!*@%s' % host
         elif bantype == '2':
-            banmask = '*!%s@%s' % (splithostmask[1], splithostmask[2])
+            banmask = '*!%s@%s' % (ident, host)
         else:
-            splithost = splithostmask[2].split('.', 2)
+            splithost = host.split('.', 2)
+            v6splithost = host.split(":", 3)
             wildhost = ''
             if self.registryValue('smartBans'):
-                v6splithost = splithostmask[2].split(":", 3)
-                if self._isv4IP(splithostmask[2]) or \
-                    self._isv4cloak(splithostmask[2]):
-                    v4cloak = splithostmask[2].split(".", 2)
+                if self._isv4IP(host) or \
+                    self._isv4cloak(host):
+                    v4cloak = host.split(".", 2)
                     wildhost = '%s.%s.*' % (v4cloak[0], v4cloak[1])
-                elif self._isvHost(splithostmask[2]):
-                    wildhost = splithostmask[2]
-                elif self._isv6IP(splithostmask[2]) or \
-                    self._isv6cloak(splithostmask[2]) == 'c':
+                elif self._isvHost(host):
+                    wildhost = host
+                elif self._isv6IP(host) or \
+                    self._isv6cloak(host) == 'c':
                     try:
                         wildhost = '%s:%s:%s:*' % (v6splithost[0],
                             v6splithost[1], v6splithost[2])
                     except IndexError:
-                        wildhost = splithostmask[2]
-                elif self._isv6cloak(splithostmask[2]) == 'u':
+                        wildhost = host
+                elif self._isv6cloak(host) == 'u':
                     try:
                         wildhost = '*:%s:%s:IP' % (v6splithost[1], 
                             v6splithost[2])
                     except IndexError:
-                        wildhost = splithostmask[2]
+                        wildhost = host
             if not wildhost:
                 if len(splithost) <= 2:
-                    wildhost = splithostmask[2] # Hostmask is too short
+                    wildhost = host # Hostmask is too short
                 else:
                     wildhost = '*.%s.%s' % (splithost[1], splithost[2])
             if bantype == '3':
                 banmask = '*!*@%s' % wildhost
             if bantype == '4':
-                banmask = '*!%s@%s' % (splithostmask[1], wildhost)
+                banmask = '*!%s@%s' % (ident, wildhost)
         irc.reply(banmask)
     banmask = wrap(banmask, [(additional('nick'))])
     

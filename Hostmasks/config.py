@@ -51,7 +51,7 @@ Hostmasks = conf.registerPlugin('Hostmasks')
 class BantypeValue(registry.OnlySomeStrings):
     validStrings = ('1', '2', '3', '4')
 conf.registerGlobalValue(Hostmasks, 'banType',
-    BantypeValue('1', _("""Chooses the preferred ban type for the
+    BantypeValue('4', _("""Chooses the preferred ban type for the
         banmask command. 1 = *!*@address.isp.net; 2 = *!~ident@address.isp.net;
          3 = *!*@*.isp.net; 4 = *!~ident@*.isp.net""")))
          
