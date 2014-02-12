@@ -48,23 +48,17 @@ class Isup(callbacks.Plugin):
     def _getreply(self, url):
         data = utils.web.getUrl("http://isup.me/%s" % url)
         if "It's just you." in data:
-            # irc.reply("It's just you. %s is up." % url)
-            try:
-                return self.registryValue("replies.up") % url
-            except TypeError:
-                return self.registryValue("replies.up")
+            reply = 'up'
         elif "looks down from here" in data: 
-            try:
-                return self.registryValue("replies.down") % url
-            except TypeError:
-                return self.registryValue("replies.down")
+            reply = 'down'
         elif "doesn't look like a site" in data:
-            try:
-                return self.registryValue("replies.unknown") % url
-            except TypeError:
-                return self.registryValue("replies.unknown")
+            reply = 'unknown'
         else: 
-            return "An error occurred, please check your URL and try again."
+            irc.error("An error occurred, please check your URL and try again.", Raise=True)
+        try:
+            return self.registryValue("replies." + reply) % url
+        except TypeError:
+            return self.registryValue("replies." + reply)
     
     def check(self, irc, msg, args, url):
         """<url>
