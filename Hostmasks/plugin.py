@@ -51,15 +51,9 @@ class Hostmasks(callbacks.Plugin):
     def _SplitHostmask(self, irc, nick):
         # Split the hostmask into 3 sections: nick, ident, and host.
         try: 
-            splithostmask = re.split('[!@]', irc.state.nickToHostmask(nick))
+            splithostmask = ircutils.splitHostmask(irc.state.nickToHostmask(nick))
         except KeyError:
             irc.error('There is no such nick \'%s\'.' % nick, Raise=True)
-        if len(splithostmask) != 3:
-            self.log.warning('Hostmasks: Invalid hostmask length received' 
-                ' for %s on %s. This should not be happening!'
-                % (nick, irc.network))
-            irc.error('Invalid hostmask length received! (this should not '
-                'be happening!)', Raise=True)
         return splithostmask
     
     def gethost(self, irc, msg, args, nick):
