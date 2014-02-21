@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
 ###
-# Copyright (c) 2012-2013, spline
+# Copyright (c) 2012-2014, spline
 # All rights reserved.
 ###
 # my libs
-import os
 import json
 from math import floor  # for wind.
 import sqlite3  # userdb.
@@ -18,10 +17,14 @@ from supybot.commands import *
 import supybot.plugins as plugins
 import supybot.ircutils as ircutils
 import supybot.callbacks as callbacks
-from supybot.i18n import PluginInternationalization, internationalizeDocstring
+try:
+    from supybot.i18n import PluginInternationalization
+    _ = PluginInternationalization('Weather')
+except ImportError:
+    # Placeholder that allows to run the plugin on a bot
+    # without the i18n module
+    _ = lambda x:x
 
-_ = PluginInternationalization('Weather')
-# @internationalizeDocstring
 
 class WeatherDB():
     """WeatherDB class to store our users and their settings."""
@@ -206,37 +209,53 @@ class Weather(callbacks.Plugin):
     def _temp(self, x):
         """Returns a colored string based on the temperature."""
 
-        # first, convert into F so we only have one table.
-        if x.endswith('C'):  # c.
-            x = float(str(x).replace('C', '')) * 9 / 5 + 32  # remove C + math into float(F).
-            unit = "C"
-        else:  # f.
-            x = float(str(x).replace('F', ''))  # remove F. str->float.
-            unit = "F"
-        # determine color.
-        if x < 10.0:
-            color = 'light blue'
-        elif 10.0 <= x <= 32.0:
-            color = 'teal'
-        elif 32.1 <= x <= 50.0:
-            color = 'blue'
-        elif 50.1 <= x <= 60.0:
-            color = 'light green'
-        elif 60.1 <= x <= 70.0:
-            color = 'green'
-        elif 70.1 <= x <= 80.0:
-            color = 'yellow'
-        elif 80.1 <= x <= 90.0:
-            color = 'orange'
-        elif x > 90.0:
-            color = 'red'
+        # lets be safe and wrap in a try/except because we can't always trust data purity.
+        try:
+            # first, convert into F so we only have one table.
+            if x.endswith('C'):  # c.
+                x = float(str(x).replace('C', '')) * 9 / 5 + 32  # remove C + math into float(F).
+                unit = "C"
+            else:  # f.
+                x = float(str(x).replace('F', ''))  # remove F. str->float.
+                unit = "F"
+            # determine color.
+            if x < 10.0:
+                color = 'light blue'
+            elif 10.0 <= x <= 32.0:
+                color = 'teal'
+            elif 32.1 <= x <= 50.0:
+                color = 'blue'
+            elif 50.1 <= x <= 60.0:
+                color = 'light green'
+            elif 60.1 <= x <= 70.0:
+                color = 'green'
+            elif 70.1 <= x <= 80.0:
+                color = 'yellow'
+            elif 80.1 <= x <= 90.0:
+                color = 'orange'
+            elif x > 90.0:
+                color = 'red'
+            else:
+                color = 'light grey'
+            # return.
+            if unit == "F":  # no need to convert back.
+                return ircutils.mircColor(("{0:.0f}F".format(x)), color)
+            else:  # temp is in F and we need to go back to C.
+                return ircutils.mircColor(("{0:.0f}C".format((x - 32) * 5 / 9)),color)
+        except Exception, e:  # rutroh. something went wrong.
+            self.log.info("_temp: ERROR trying to convert temp: {0} message: {1}".format(x, e))
+            return x
+    
+    def _tw(self, bol, x):
+        """This is a convenience handle that wraps _temp."""
+        
+        # make sure we have 'bol', which should come in from args['nocolortemp'].
+        # since the option is a negation, we assume NO.
+        if not bol:  # COLOR IT.
+            x = self._temp(x)
+            return x
         else:
-            color = 'light grey'
-        # return.
-        if unit == "F":  # no need to convert back.
-            return ircutils.mircColor(("{0:.0f}F".format(x)), color)
-        else:  # temp is in F and we need to go back to C.
-            return ircutils.mircColor(("{0:.0f}C".format((x - 32) * 5 / 9)),color)
+            return x
 
     def _wind(self, angle, useSymbols=False):
         """Converts degrees to direction for wind. Can optionally return a symbol."""
@@ -375,6 +394,7 @@ class Weather(callbacks.Plugin):
                 'pressure':self.registryValue('showPressure'),
                 'wind':self.registryValue('showWind'),
                 'updated':self.registryValue('showUpdated'),
+                'showImperialAndMetric':self.registryValue('showImperialAndMetric', msg.args[0]),
                 'forecast':False,
                 'humidity':False,
                 'strip':False,
@@ -543,24 +563,61 @@ class Weather(callbacks.Plugin):
             else:
                 outdata['observation'] = '{0}hrs ago'.format(s/3600)
 
-        # handle basics like temp/pressure/dewpoint.
-        if args['imperial']:  # assigns the symbol based on metric.
-            outdata['temp'] = str(data['current_observation']['temp_f']) + 'F'
-            outdata['pressure'] = data['current_observation']['pressure_in'] + 'in'
-            outdata['dewpoint'] = str(data['current_observation']['dewpoint_f']) + 'F'
-            outdata['heatindex'] = str(data['current_observation']['heat_index_f']) + 'F'
-            outdata['windchill'] = str(data['current_observation']['windchill_f']) + 'F'
-            outdata['feelslike'] = str(data['current_observation']['feelslike_f']) + 'F'
-            outdata['visibility'] = str(data['current_observation']['visibility_mi']) + 'mi'
-        else:  # metric.
-            outdata['temp'] = str(data['current_observation']['temp_c']) + 'C'
-            outdata['pressure'] = data['current_observation']['pressure_mb'] + 'mb'
-            outdata['dewpoint'] = str(data['current_observation']['dewpoint_c']) + 'C'
-            outdata['heatindex'] = str(data['current_observation']['heat_index_c']) + 'C'
-            outdata['windchill'] = str(data['current_observation']['windchill_c']) + 'C'
-            outdata['feelslike'] = str(data['current_observation']['feelslike_c']) + 'C'
-            outdata['visibility'] = str(data['current_observation']['visibility_km']) + 'km'
-
+        # handle basics like temp/pressure/dewpoint. big conditional here
+        # as we can display Imperial + Metric, or one or the other.
+        if args['showImperialAndMetric']:
+            # lets put C and F into strings to make it easier.
+            tf = str(data['current_observation']['temp_f']) + 'F'
+            tc = str(data['current_observation']['temp_c']) + 'C'
+            # we now can handle args['nocolortemp'] with our helper.
+            outdata['temp'] = "{0}/{1}".format(self._tw(args['nocolortemp'], tf), self._tw(args['nocolortemp'], tc))
+            # now lets do pressure.
+            pin = str(data['current_observation']['pressure_in']) + 'in'
+            pmb = str(data['current_observation']['pressure_mb']) + 'mb'
+            # don't need to color these so we can just add.
+            outdata['pressure'] = "{0}/{1}".format(pin, pmb)
+            # dewpoint.
+            dpf = str(data['current_observation']['dewpoint_f']) + 'F'
+            dpc = str(data['current_observation']['dewpoint_c']) + 'C'
+            # now handle colored temp.
+            outdata['dewpoint'] = "{0}/{1}".format(self._tw(args['nocolortemp'], dpf), self._tw(args['nocolortemp'], dpc))
+            # heatindex.
+            hif = str(data['current_observation']['heat_index_f']) + 'F'
+            hic = str(data['current_observation']['heat_index_c']) + 'C'
+            # now handle colored temp.
+            outdata['heatindex'] = "{0}/{1}".format(self._tw(args['nocolortemp'], hif), self._tw(args['nocolortemp'], hic))
+            # windchill.
+            wcf = str(data['current_observation']['windchill_f']) + 'F'
+            wcc = str(data['current_observation']['windchill_c']) + 'C'
+            # now handle colored temp.
+            outdata['windchill'] = "{0}/{1}".format(self._tw(args['nocolortemp'], wcf), self._tw(args['nocolortemp'], wcc))
+            # feels like
+            flf = str(data['current_observation']['feelslike_f']) + 'F'
+            flc = str(data['current_observation']['feelslike_c']) + 'C'
+            # now handle colored temp.
+            outdata['feelslike'] = "{0}/{1}".format(self._tw(args['nocolortemp'], flf), self._tw(args['nocolortemp'], flc))
+            # visibility.
+            vmi = str(data['current_observation']['visibility_mi']) + 'mi'
+            vkm = str(data['current_observation']['visibility_km']) + 'km'
+            outdata['visibility'] = "{0}/{1}".format(vmi, vkm)
+        else:  # don't display both (default)
+            if args['imperial']:  # assigns the symbol based on metric.
+                outdata['temp'] = self._tw(args['nocolortemp'], str(data['current_observation']['temp_f']) + 'F')
+                outdata['pressure'] = self._tw(args['nocolortemp'], str(data['current_observation']['pressure_in']) + 'in')
+                outdata['dewpoint'] = self._tw(args['nocolortemp'], str(data['current_observation']['dewpoint_f']) + 'F')
+                outdata['heatindex'] = self._tw(args['nocolortemp'], str(data['current_observation']['heat_index_f']) + 'F')
+                outdata['windchill'] = self._tw(args['nocolortemp'], str(data['current_observation']['windchill_f']) + 'F')
+                outdata['feelslike'] = self._tw(args['nocolortemp'], str(data['current_observation']['feelslike_f']) + 'F')
+                outdata['visibility'] = self._tw(args['nocolortemp'], str(data['current_observation']['visibility_mi']) + 'mi')
+            else:  # metric.
+                outdata['temp'] = self._tw(args['nocolortemp'], str(data['current_observation']['temp_c']) + 'C')
+                outdata['pressure'] = self._tw(args['nocolortemp'], str(data['current_observation']['pressure_mb']) + 'mb')
+                outdata['dewpoint'] = self._tw(args['nocolortemp'], str(data['current_observation']['dewpoint_c']) + 'C')
+                outdata['heatindex'] = self._tw(args['nocolortemp'], str(data['current_observation']['heat_index_c']) + 'C')
+                outdata['windchill'] = self._tw(args['nocolortemp'], str(data['current_observation']['windchill_c']) + 'C')
+                outdata['feelslike'] = self._tw(args['nocolortemp'], str(data['current_observation']['feelslike_c']) + 'C')
+                outdata['visibility'] = self._tw(args['nocolortemp'], str(data['current_observation']['visibility_km']) + 'km')
+            
         # handle forecast data part. output will be below. (not --forecast)
         forecastdata = {}  # key = int(day), value = forecast dict.
         for forecastday in data['forecast']['txt_forecast']['forecastday']:
@@ -628,25 +685,18 @@ class Weather(callbacks.Plugin):
         # OUTPUT.
         # we go step-by-step to build the proper string. ° u" \u00B0C"
         output = "{0} :: {1} ::".format(self._bold(outdata['location'].encode('utf-8')), outdata['weather'].encode('utf-8'))
-        if args['nocolortemp']:  # don't color temp.
-            output += " {0}".format(outdata['temp'])
-        else:  # colored temperature.
-            output += " {0}".format(self._temp(outdata['temp']))
+        # add in temperature.
+        output += " {0}".format(outdata['temp'])
+        # humidity.
         if args['humidity']:  # display humidity?
             output += " (Humidity: {0}) ".format(outdata['humidity'])
         else:
             output += " "
         # windchill/heatindex are conditional on season but test with startswith to see what to include
         if not outdata['windchill'].startswith("NA"):  # windchill.
-            if args['nocolortemp']:  # don't color windchill.
-                output += "| {0} {1} ".format(self._bold('Wind Chill:'), outdata['windchill'])
-            else:  # color wind chill.
-                output += "| {0} {1} ".format(self._bold('Wind Chill:'), self._temp(outdata['windchill']))
+            output += "| {0} {1} ".format(self._bold('Wind Chill:'), outdata['windchill'])
         if not outdata['heatindex'].startswith("NA"):  # heatindex.
-            if args['nocolortemp']:  # don't color heatindex.
-                output += "| {0} {1} ".format(self._bold('Heat Index:'), outdata['heatindex'])
-            else:  # color heat index.
-                output += "| {0} {1} ".format(self._bold('Heat Index:'), self._temp(outdata['heatindex']))
+            output += "| {0} {1} ".format(self._bold('Heat Index:'), outdata['heatindex'])
         # now get into the args dict for what to include (extras)
         for (k, v) in args.items():
             if k in ['wind', 'visibility', 'uv', 'pressure', 'dewpoint']: # if key is in extras
