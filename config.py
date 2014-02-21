@@ -1,5 +1,5 @@
 ###
-# Copyright (c) 2012-2013, spline
+# Copyright (c) 2012-2014, spline
 # All rights reserved.
 ###
 
@@ -30,6 +30,7 @@ conf.registerGlobalValue(Weather,'astronomy', registry.Boolean(False, ("""Displa
 conf.registerGlobalValue(Weather,'showPressure', registry.Boolean(False, ("""Show pressure in output?""")))
 conf.registerGlobalValue(Weather,'showWind', registry.Boolean(False, ("""Show wind in output?""")))
 conf.registerGlobalValue(Weather,'showUpdated', registry.Boolean(False, ("""Show updated in output?""")))
+conf.registerChannelValue(Weather,'showImperialAndMetric', registry.Boolean(False, ("""In channel, display output with Imperial and Metric?""")))
 conf.registerGlobalValue(Weather,'lang', registry.String('EN', ("""language to use. See docs for available codes.""")))
 
 
