@@ -33,6 +33,7 @@ from supybot.commands import *
 import supybot.plugins as plugins
 import supybot.ircutils as ircutils
 import supybot.callbacks as callbacks
+import supybot.world as world
 try:
     from supybot.i18n import PluginInternationalization
     _ = PluginInternationalization('GeneralOvd')
@@ -46,6 +47,17 @@ class GeneralOvd(callbacks.Plugin):
     This should describe *how* to use this plugin."""
     threaded = True
 
+    def words(self, irc, msg, args, text):
+        """<text>
+        Returns the amount of words in <text> (separated by spaces)."""
+        irc.reply(len(text.split()))
+    words = wrap(words, ['something'])
+    
+    def netcount(self, irc, msg, args):
+        """takes no arguments.
+        Counts the amount of networks the bot is on."""
+        irc.reply(len(world.ircs))
+    netcount = wrap(netcount)
 
 Class = GeneralOvd
 
