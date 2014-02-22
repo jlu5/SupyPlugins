@@ -4,7 +4,7 @@
 # All rights reserved.
 ###
 # my libs
-import json
+import json  # json.
 from math import floor  # for wind.
 import sqlite3  # userdb.
 from itertools import izip  # userdb.
@@ -175,13 +175,12 @@ class Weather(callbacks.Plugin):
                  'chancerain':'?☔',
                  'chancesleet':'?❄',
                  'chancesnow':'?❄',
-                 'chancetstorms':'?☔',
-                 'unknown':'unknown'}
+                 'chancetstorms':'?☔' }
         # return symbol from table.
         try:
             return table[code]
         except KeyError:
-            return None
+            return "unknown"
 
     def _moonphase(self, phase):
         """Returns a moon phase based on the %."""
@@ -332,7 +331,7 @@ class Weather(callbacks.Plugin):
         try:
             page = utils.web.getUrl(url)
         except Exception as e:  # something didn't work.
-            self.log.error("_wuac: ERROR: Trying to open {0} message: {1}".format(url, e))
+            self.log.info("_wuac: ERROR: Trying to open {0} message: {1}".format(url, e))
             return None
         # now process json and return.
         try:
@@ -341,7 +340,7 @@ class Weather(callbacks.Plugin):
             loc = "zmw:%s" % loc  # return w/zmw: attached.
             return loc
         except Exception as e:
-            self.log.error("_wuac: ERROR processing json in {0} :: {1}".format(url, e))
+            self.log.info("_wuac: ERROR processing json in {0} :: {1}".format(url, e))
             return None
 
     def _wunderjson(self, url, location):
@@ -357,7 +356,7 @@ class Weather(callbacks.Plugin):
             page = utils.web.getUrl(url)
             return page
         except Exception as e:  # something didn't work.
-            self.log.error("ERROR: Trying to open {0} message: {1}".format(url, e))
+            self.log.info("_wunderjson: ERROR Trying to open {0} message: {1}".format(url, e))
             return None
 
     ####################
@@ -380,11 +379,14 @@ class Weather(callbacks.Plugin):
             return
 
         # urlargs will be used to build the url to query the API.
+        # besides lang, these are unmutable values that should not be changed.
         urlArgs = {'features':['conditions', 'forecast'],
                    'lang':self.registryValue('lang'),
                    'bestfct':'1',
                    'pws':'0' }
-        # now, start our dict for output formatting.
+        # now, figure out the rest of the options for fetching and displaying weather.
+        # some of these are for the query and the others are for output.
+        # the order will always go global->channel (supybot config) -> user.
         loc = None
         args = {'imperial':self.registryValue('useImperial', msg.args[0]),
                 'nocolortemp':self.registryValue('disableColoredTemp', msg.args[0]),
@@ -569,32 +571,26 @@ class Weather(callbacks.Plugin):
             # lets put C and F into strings to make it easier.
             tf = str(data['current_observation']['temp_f']) + 'F'
             tc = str(data['current_observation']['temp_c']) + 'C'
-            # we now can handle args['nocolortemp'] with our helper.
             outdata['temp'] = "{0}/{1}".format(self._tw(args['nocolortemp'], tf), self._tw(args['nocolortemp'], tc))
             # now lets do pressure.
             pin = str(data['current_observation']['pressure_in']) + 'in'
             pmb = str(data['current_observation']['pressure_mb']) + 'mb'
-            # don't need to color these so we can just add.
             outdata['pressure'] = "{0}/{1}".format(pin, pmb)
             # dewpoint.
             dpf = str(data['current_observation']['dewpoint_f']) + 'F'
             dpc = str(data['current_observation']['dewpoint_c']) + 'C'
-            # now handle colored temp.
             outdata['dewpoint'] = "{0}/{1}".format(self._tw(args['nocolortemp'], dpf), self._tw(args['nocolortemp'], dpc))
             # heatindex.
             hif = str(data['current_observation']['heat_index_f']) + 'F'
             hic = str(data['current_observation']['heat_index_c']) + 'C'
-            # now handle colored temp.
             outdata['heatindex'] = "{0}/{1}".format(self._tw(args['nocolortemp'], hif), self._tw(args['nocolortemp'], hic))
             # windchill.
             wcf = str(data['current_observation']['windchill_f']) + 'F'
             wcc = str(data['current_observation']['windchill_c']) + 'C'
-            # now handle colored temp.
             outdata['windchill'] = "{0}/{1}".format(self._tw(args['nocolortemp'], wcf), self._tw(args['nocolortemp'], wcc))
             # feels like
             flf = str(data['current_observation']['feelslike_f']) + 'F'
             flc = str(data['current_observation']['feelslike_c']) + 'C'
-            # now handle colored temp.
             outdata['feelslike'] = "{0}/{1}".format(self._tw(args['nocolortemp'], flf), self._tw(args['nocolortemp'], flc))
             # visibility.
             vmi = str(data['current_observation']['visibility_mi']) + 'mi'
@@ -603,20 +599,20 @@ class Weather(callbacks.Plugin):
         else:  # don't display both (default)
             if args['imperial']:  # assigns the symbol based on metric.
                 outdata['temp'] = self._tw(args['nocolortemp'], str(data['current_observation']['temp_f']) + 'F')
-                outdata['pressure'] = self._tw(args['nocolortemp'], str(data['current_observation']['pressure_in']) + 'in')
+                outdata['pressure'] = str(data['current_observation']['pressure_in']) + 'in'
                 outdata['dewpoint'] = self._tw(args['nocolortemp'], str(data['current_observation']['dewpoint_f']) + 'F')
                 outdata['heatindex'] = self._tw(args['nocolortemp'], str(data['current_observation']['heat_index_f']) + 'F')
                 outdata['windchill'] = self._tw(args['nocolortemp'], str(data['current_observation']['windchill_f']) + 'F')
                 outdata['feelslike'] = self._tw(args['nocolortemp'], str(data['current_observation']['feelslike_f']) + 'F')
-                outdata['visibility'] = self._tw(args['nocolortemp'], str(data['current_observation']['visibility_mi']) + 'mi')
+                outdata['visibility'] = str(data['current_observation']['visibility_mi']) + 'mi'
             else:  # metric.
                 outdata['temp'] = self._tw(args['nocolortemp'], str(data['current_observation']['temp_c']) + 'C')
-                outdata['pressure'] = self._tw(args['nocolortemp'], str(data['current_observation']['pressure_mb']) + 'mb')
+                outdata['pressure'] = str(data['current_observation']['pressure_mb']) + 'mb'
                 outdata['dewpoint'] = self._tw(args['nocolortemp'], str(data['current_observation']['dewpoint_c']) + 'C')
                 outdata['heatindex'] = self._tw(args['nocolortemp'], str(data['current_observation']['heat_index_c']) + 'C')
                 outdata['windchill'] = self._tw(args['nocolortemp'], str(data['current_observation']['windchill_c']) + 'C')
                 outdata['feelslike'] = self._tw(args['nocolortemp'], str(data['current_observation']['feelslike_c']) + 'C')
-                outdata['visibility'] = self._tw(args['nocolortemp'], str(data['current_observation']['visibility_km']) + 'km')
+                outdata['visibility'] = str(data['current_observation']['visibility_km']) + 'km'
             
         # handle forecast data part. output will be below. (not --forecast)
         forecastdata = {}  # key = int(day), value = forecast dict.
