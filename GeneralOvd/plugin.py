@@ -49,15 +49,21 @@ class GeneralOvd(callbacks.Plugin):
 
     def words(self, irc, msg, args, text):
         """<text>
-        Returns the amount of words in <text> (separated by spaces)."""
+        Returns the amount of words in <text> (separated by spaces). """
         irc.reply(len(text.split()))
     words = wrap(words, ['something'])
     
     def netcount(self, irc, msg, args):
         """takes no arguments.
-        Counts the amount of networks the bot is on."""
+        Counts the amount of networks the bot is on. """
         irc.reply(len(world.ircs))
     netcount = wrap(netcount)
+    
+    def supyplugins(self, irc, msg, args):
+        """takes no arguments.
+        Returns a URL for the source of this plugin. """
+        irc.reply("SupyPlugins source is available at: https://github.com/GLolol/SupyPlugins")
+    supyplugins = wrap(supyplugins)
 
 Class = GeneralOvd
 
