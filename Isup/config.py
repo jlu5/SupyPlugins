@@ -58,6 +58,6 @@ conf.registerGlobalValue(Isup.replies, 'up',
 conf.registerGlobalValue(Isup.replies, 'down',
     registry.String("It's not just you. %s appears to be down.", _("""Determines the reply used when the site entered is down. Use '%s' in the value to substitute the URL given.""")))
 conf.registerGlobalValue(Isup.replies, 'unknown',
-    registry.String("Invalid URL: %s". Are you sure this is a valid URL?, _("""Determines the reply to give when the site entered is unknown or invalid.""")))
+    registry.String("Invalid URL: %s. Are you sure this is a valid URL?", _("""Determines the reply to give when the site entered is unknown or invalid.""")))
 
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:

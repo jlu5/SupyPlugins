@@ -45,7 +45,7 @@ class Isup(callbacks.Plugin):
     """Provides a simple command to check whether a website is up
     or down (using isup.me)."""
     
-    def _getreply(self,url):
+    def _getreply(self, url):
         data = utils.web.getUrl("http://isup.me/%s" % url)
         if "It's just you." in data:
             reply = 'up'
