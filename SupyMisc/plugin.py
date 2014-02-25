@@ -65,6 +65,12 @@ class SupyMisc(callbacks.Plugin):
         irc.reply("SupyPlugins source is available at: https://github.com/GLolol/SupyPlugins")
     supyplugins = wrap(supyplugins)
 
+    def chancount(self, irc, msg, args):
+        """takes no arguments.
+        Counts the amount of channels the bot is on. """
+        irc.reply(len(irc.state.channels.keys()))
+    chancount = wrap(chancount)
+        
 Class = SupyMisc
 
 
