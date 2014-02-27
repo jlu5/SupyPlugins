@@ -330,7 +330,7 @@ class Weather(callbacks.Plugin):
         # try and fetch.
         try:
             page = utils.web.getUrl(url)
-        except Exception as e:  # something didn't work.
+        except Exception, e:  # something didn't work.
             self.log.info("_wuac: ERROR: Trying to open {0} message: {1}".format(url, e))
             return None
         # now process json and return.
@@ -339,7 +339,7 @@ class Weather(callbacks.Plugin):
             loc = data['RESULTS'][0]['zmw']  # find the first zmw.
             loc = "zmw:%s" % loc  # return w/zmw: attached.
             return loc
-        except Exception as e:
+        except Exception, e:
             self.log.info("_wuac: ERROR processing json in {0} :: {1}".format(url, e))
             return None
 
@@ -353,9 +353,10 @@ class Weather(callbacks.Plugin):
             url = '%s/q/%s.json' % (url, utils.web.urlquote(location))
         # now actually fetch the url.
         try:
+            self.log.info("URL: {0}".format(url))
             page = utils.web.getUrl(url)
             return page
-        except Exception as e:  # something didn't work.
+        except Exception, e:  # something didn't work.
             self.log.info("_wunderjson: ERROR Trying to open {0} message: {1}".format(url, e))
             return None
 
@@ -410,11 +411,8 @@ class Weather(callbacks.Plugin):
         if usersetting:  # user is found. lets grab their location and settings.
                 for (k, v) in usersetting.items():  # iterate over settings dict returned from getweather row.
                      # set specific settings based on keys that won't 1:1 match.
-                    if k == 'location':  # location
-                        if not optinput:  # we were not specified a location in being called.
-                            loc = v  # copy over their location from the DB to loc.
-                        #else:  # user found and they want a different location.
-                        #    loc = optinput
+                    if k == 'location':  # location. look down below this for how the logic is handled.
+                        loc = v  # copy over their location from the DB to loc.
                     elif k == 'metric':  # metric
                         if v == 1:  # true.
                             args['imperial'] = False
@@ -469,15 +467,20 @@ class Weather(callbacks.Plugin):
                     return
 
         # now that we're done with 'input things'
-        # we need to decide on if we'll use autocomplete or not.
-        if not loc and optinput:  # loc is not set (not a known user).
-            if optinput.isdigit():  # pure digits. autocomplete fails. just set it w/o searching.
-                loc = optinput
-            else:  # lets search.
-                loc = self._wuac(optinput)  # query autocomplete.
-                # make sure we get something back. if we do, loc = query.
-                if not loc:  # nothing came back. this could be because of a number of reasons but we'll just try to search wunderground anyways.
-                    loc = optinput  # set the loc with optinput.
+        # we need to decide on how to handle the location.
+        # optinput = user specified location, regardless if they're known or not.
+        # loc = the location that can come back if a user is known and this is set.
+        # both of these might not be valid locations. however, if a user specifies a location, we should look it up.
+        if optinput:  # if we have optinput, regardless if the user is known or not, autocomplete it.
+            wloc = self._wuac(optinput)
+            if not wloc:  # error looking up the location.
+                irc.reply("ERROR: Sorry, I can not find a valid location for: {0}".format(optinput))
+                return
+        elif loc and not optinput:  # user is known. location is set. no optinput.
+            wloc = loc   # set wloc as their location. worst case, the user gets an error for setting it wrong.
+        else:  # no optinput. no location. error out. this should happen above but lets be redundant.
+            irc.reply("ERROR: Sorry, you specify a city to search for weather.")
+            return
 
         # build url now. first, apikey. then, iterate over urlArgs and insert.
         url = 'http://api.wunderground.com/api/%s/' % (self.APIKEY) # first part of url, w/APIKEY
@@ -493,7 +496,7 @@ class Weather(callbacks.Plugin):
                 url += "{0}:{1}/".format(key, value)
 
         # now that we're done, lets finally make our API call.
-        page = self._wunderjson(url, loc)
+        page = self._wunderjson(url, wloc)
         if not page:
             irc.reply("ERROR: Failed to load Wunderground API. Check logs.")
             return
@@ -619,7 +622,7 @@ class Weather(callbacks.Plugin):
         for forecastday in data['forecast']['txt_forecast']['forecastday']:
             tmpdict = {}
             tmpdict['day'] = forecastday['title']
-            tmpdict['symbol'] = self._weatherSymbol(forecastday['icon'])
+            # tmpdict['symbol'] = self._weatherSymbol(forecastday['icon'])
             if args['imperial']:   # imperial.
                 tmpdict['text'] = forecastday['fcttext']
             else:  # metric.
