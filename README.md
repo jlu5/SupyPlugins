@@ -22,3 +22,6 @@ Any specific plugin dependancies should also be listed.
 
 ##### Isup
 - Provides a simple command to check whether a website is up or down (using isup.me).
+
+##### SupyMisc
+- Some assorted commands that don't seem to fit anywhere else.
