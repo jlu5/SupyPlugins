@@ -76,20 +76,6 @@ class Hostmasks(callbacks.Plugin):
         irc.reply(self._SplitHostmask(irc, nick)[1])
     getident = wrap(getident, [(additional('nick'))])
     
-    def me(self, irc, msg, args):
-        """takes no arguments.
-        Returns the nick of the person who called the command.
-        """
-        irc.reply(msg.nick)
-    me = wrap(me)
-    
-    def botnick(self, irc, msg, args):
-        """takes no arguments.
-        Returns the nick of the bot.
-        """
-        irc.reply(irc.nick)
-    me = wrap(me)
-    
     def _isv4IP(self, ipstr):
         try:
             socket.inet_aton(ipstr)

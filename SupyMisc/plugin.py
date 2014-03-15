@@ -70,7 +70,32 @@ class SupyMisc(callbacks.Plugin):
         Counts the amount of channels the bot is on. """
         irc.reply(len(irc.state.channels.keys()))
     chancount = wrap(chancount)
+
+    def getchan(self, irc, msg, args):
+        """takes no arguments.
+        Returns the name of the current channel. """
+        channel = msg.args[0]
+        if ircutils.isChannel(channel):
+             irc.reply(channel)
+        else:
+             irc.reply(None)
+    getchan = wrap(getchan)
         
+    def me(self, irc, msg, args):
+        """takes no arguments.
+        Returns the nick of the person who called the command.
+        """
+        irc.reply(msg.nick)
+    me = wrap(me)
+
+    def botnick(self, irc, msg, args):
+        """takes no arguments.
+        Returns the nick of the bot.
+        """
+        irc.reply(irc.nick)
+    botnick = wrap(botnick)
+
+
 Class = SupyMisc
 
 
