@@ -8,7 +8,7 @@ Please note that this list may not always be up to date; your best bet is to act
 
 Any specific plugin dependencies *should* also be listed.
 
-##### Hostmasks (deprecated)
+##### Hostmasks *(deprecated)*
 - Hostmasks plugin, allows one to fetch idents, hosts, and appropriate banmasks for users.
 
 ##### Isup
@@ -20,7 +20,7 @@ Any specific plugin dependencies *should* also be listed.
 ##### OperUp
 - Simple plugin that allows Supybot to oper up on configured networks, automatically (on connect) and manually.
 
-##### Relay (deprecated)
+##### Relay *(deprecated)*
 - Forked by request, adds text events similar to those of the LinkRelay mod above.
 
 ##### SupyMisc
