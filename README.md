@@ -8,20 +8,20 @@ Please note that this list may not always be up to date; your best bet is to act
 
 Any specific plugin dependencies *should* also be listed.
 
-##### LinkRelay (fork: [ElectronIRC/Otaku](https://github.com/ElectronIRC/Otaku), [ProgVal/Supybot-plugins](https://github.com/ProgVal/Supybot-plugins/tree/master/LinkRelay))
-- Mod of the LinkRelay plugin, originally designed for use with [OVERdrive-IRC](http://overdrive.pw/) *(now [replaced](https://github.com/somasonic/ruby-relay))*, with a few extra features such as a configurable list of nicks for the relayer to ignore.
-
-##### Relay (deprecated)
-- Forked by request, adds text events similar to those of the LinkRelay mod above.
-
 ##### Hostmasks (deprecated)
 - Hostmasks plugin, allows one to fetch idents, hosts, and appropriate banmasks for users.
+
+##### Isup
+- Provides a simple command to check whether a website is up or down (using isup.me).
+
+##### LinkRelay
+- Mod of the [LinkRelay](https://github.com/ProgVal/Supybot-plugins/tree/master/LinkRelay) plugin, originally designed for use with [OVERdrive-IRC](http://overdrive.pw/) *(now [replaced](https://github.com/somasonic/ruby-relay))*, with a few extra features such as a configurable list of nicks for the relayer to ignore.
 
 ##### OperUp
 - Simple plugin that allows Supybot to oper up on configured networks, automatically (on connect) and manually.
 
-##### Isup
-- Provides a simple command to check whether a website is up or down (using isup.me).
+##### Relay (deprecated)
+- Forked by request, adds text events similar to those of the LinkRelay mod above.
 
 ##### SupyMisc
 - Some assorted commands that don't seem to fit anywhere else.
