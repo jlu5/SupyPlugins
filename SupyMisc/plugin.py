@@ -95,8 +95,26 @@ class SupyMisc(callbacks.Plugin):
         irc.reply(irc.nick)
     botnick = wrap(botnick)
 
+    def getident(self, irc, msg, args, nick):
+        """[<nick>]
+        Returns the ident of <nick>. If <nick> is not given, returns the host
+        of the person who called the command.
+        """
+        if not nick:
+            nick = msg.nick
+        irc.reply(ircutils.userFromHostmask(irc.state.nickToHostmask(nick)))
+    getident = wrap(getident, [(additional('nick'))])
+
+    def gethost(self, irc, msg, args, nick):
+        """[<nick>]
+        Returns the host of <nick>. If <nick> is not given, return the host
+        of the person who called the command.
+        """
+        if not nick:
+            nick = msg.nick
+        irc.reply(ircutils.hostFromHostmask(irc.state.nickToHostmask(nick)))
+    gethost = wrap(gethost, [(additional('nick'))])
 
 Class = SupyMisc
-
 
 # vim:set shiftwidth=4 softtabstop=4 expandtab textwidth=79:

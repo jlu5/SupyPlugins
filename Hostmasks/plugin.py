@@ -56,26 +56,6 @@ class Hostmasks(callbacks.Plugin):
             irc.error('There is no such nick \'%s\'.' % nick, Raise=True)
         return splithostmask
     
-    def gethost(self, irc, msg, args, nick):
-        """[<nick>]
-        Returns the host of <nick>. If <nick> is not given, returns the host
-        of the person who called the command.
-        """
-        if not nick:
-            nick = msg.nick
-        irc.reply(self._SplitHostmask(irc, nick)[2])
-    gethost = wrap(gethost, [(additional('nick'))])
-    
-    def getident(self, irc, msg, args, nick):
-        """[<nick>]
-        Returns the ident of <nick>. If <nick> is not given, returns the host
-        of the person who called the command.
-        """
-        if not nick:
-            nick = msg.nick
-        irc.reply(self._SplitHostmask(irc, nick)[1])
-    getident = wrap(getident, [(additional('nick'))])
-    
     def _isv4IP(self, ipstr):
         try:
             socket.inet_aton(ipstr)
