@@ -1,0 +1,1 @@
+This plugin provides an alternative to Supybot's built in dns command, using a 'host' binary (such as /usr/bin/host) available on the bot's host system.
