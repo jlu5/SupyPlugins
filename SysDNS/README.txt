@@ -1,1 +1,2 @@
-This plugin provides an alternative to Supybot's built in dns command, using a 'host' binary (such as /usr/bin/host) available on the bot's host system.
+An alternative to Supybot's built-in DNS function, using DNS lookup utilities (such as host or dig) available on the host machine.
+

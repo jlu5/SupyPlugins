@@ -25,3 +25,6 @@ Any specific plugin dependencies *should* also be listed.
 
 ##### SupyMisc
 - Some assorted commands that don't seem to fit anywhere else.
+
+##### SysDNS
+- An alternative to Supybot's built-in DNS function, using DNS lookup utilities (such as host or dig) available on the host machine.

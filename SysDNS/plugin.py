@@ -44,8 +44,9 @@ except ImportError:
     _ = lambda x:x
 
 class SysDNS(callbacks.Plugin):
-    """Provides an alternative to the built in dns command by looking up hostnames 
-       using the host binary available on the system."""
+    """An alternative to Supybot's built-in DNS function, using DNS lookup utilities
+    (such as host or dig) available on the host machine.
+    """
     threaded = True
     def dns(self, irc, msg, args, text):
         """<host>
