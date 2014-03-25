@@ -1,2 +1,1 @@
-The Hostmasks plugin allows one to retrieve idents, hostnames, and 
-banmasks for users, useful for nested commands.
+The Hostmasks plugin allows one to retrieve banmasks for users, useful for nested commands. No longer in active development.

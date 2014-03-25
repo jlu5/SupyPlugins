@@ -9,19 +9,19 @@ Please note that this list may not always be up to date; your best bet is to act
 Any specific plugin dependencies *should* also be listed.
 
 ##### Hostmasks *(deprecated)*
-- Hostmasks plugin, allows one to fetch idents, hosts, and appropriate banmasks for users.
-
+- Hostmasks plugin, allows one to fetch appropriate banmasks for users. Now deprecated due to a silly design flaw that made the plugin less efficient than it should've been.
+  
 ##### Isup
 - Provides a simple command to check whether a website is up or down (using isup.me).
 
 ##### LinkRelay
-- Mod of the [LinkRelay](https://github.com/ProgVal/Supybot-plugins/tree/master/LinkRelay) plugin, originally designed for use with [OVERdrive-IRC](http://overdrive.pw/) *(now [replaced](https://github.com/somasonic/ruby-relay))*, with a few extra features such as a configurable list of nicks for the relayer to ignore.
+- Mod of the [LinkRelay](https://github.com/ProgVal/Supybot-plugins/tree/master/LinkRelay) plugin, originally designed for use with [OVERdrive-IRC](http://overdrive.pw/) *(now [replaced](https://github.com/somasonic/ruby-relay))*, with a few extra features such as a configurable list of nicks for the relayer to ignore. No longer in active development.
 
 ##### OperUp
 - Simple plugin that allows Supybot to oper up on configured networks, automatically (on connect) and manually.
 
 ##### Relay *(deprecated)*
-- Forked by request, adds text events similar to those of the LinkRelay mod above.
+- Forked by request, adds text events similar to those of the LinkRelay mod above. No longer in active development.
 
 ##### SupyMisc
 - Some assorted commands that don't seem to fit anywhere else.
