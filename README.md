@@ -3,6 +3,11 @@
 
 This repository includes forks/mods of existing Supybot plugins and some that I've written myself. All of the code in this repository is considered **experimental** and **not** ready for production use. It may glitch, break, or spontaneously combust at any time. You have been warned!
 
+## Support
+If you have any questions, concerns, or feature requests, please feel free to submit an issue. 
+
+Or, you can find me on IRC at: ``irc.overdrive.pw #dev`` ([webchat](http://webchat.overdrive.pw/?channels=dev))
+
 ## List of plugins
 Please note that this list may not always be up to date; your best bet is to actually browse the code for yourself!
 
