@@ -47,12 +47,27 @@ class SupyMisc(callbacks.Plugin):
     This should describe *how* to use this plugin."""
     threaded = True
 
+    ### Some semi-useful utilities
     def words(self, irc, msg, args, text):
         """<text>
         Returns the amount of words in <text> (separated by spaces). """
         irc.reply(len(text.split()))
-    words = wrap(words, ['something'])
+    words = wrap(words, ['text'])
     
+    def repeat(self, irc, msg, args, num, text):
+        """<num> <text>
+        Returns <text> repeated <num> times. <num> must be a positive integer. 
+        To keep leading and trailing spaces, it is recommended to quote the <text>
+        argument "like this". """
+        max = self.registryValue("repeat.max")
+        if num <= max:
+            irc.reply(text * num)
+        else:
+            irc.error("The <num> value given is too large. Current "
+                "maximum: {}".format(max))
+    repeat = wrap(repeat, ['positiveInt', 'text'])
+    
+    ### Generic informational commands (ident fetcher, channel counter, etc.)
     def netcount(self, irc, msg, args):
         """takes no arguments.
         Counts the amount of networks the bot is on. """

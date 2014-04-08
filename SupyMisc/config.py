@@ -52,5 +52,9 @@ SupyMisc = conf.registerPlugin('SupyMisc')
 # conf.registerGlobalValue(SupyMisc, 'someConfigVariableName',
 #     registry.Boolean(False, _("""Help for someConfigVariableName.""")))
 
+conf.registerGroup(SupyMisc, 'repeat')
+conf.registerGlobalValue(SupyMisc.repeat, 'max',
+     registry.PositiveInteger(100, _("""The maximum value <num> someone can use with the repeat command.""")))
+
 
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:
