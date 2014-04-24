@@ -36,7 +36,7 @@ import supybot.world as world
 
 # Use this for the version of this plugin.  You may wish to put a CVS keyword
 # in here if you're keeping the plugin in CVS or some similar system.
-__version__ = "0.1+OVERdriveRelay1.0"
+__version__ = "0.1+OVERdriveRelay1.1"
 
 __author__ = supybot.Author('quantumlemur', 'quantumlemur',
         'quantumlemur@users.sourceforge.net')
@@ -49,7 +49,12 @@ if not hasattr(supybot.authors, 'progval'):
 __contributors__ = {supybot.authors.progval: ['enhance configurability',
                                               'many bug fixes',
                                               'code enhancement',
-                                              'optional colors']}
+                                              'optional colors'],
+                    supybot.Author('James Lu', 'GLolol',
+                        'GLolol@overdrive.pw'):
+                        ['more config options/bugfixes',
+                        'custom text events',
+                        'ignore nicks feature']}
 
 __url__ = ""
 
