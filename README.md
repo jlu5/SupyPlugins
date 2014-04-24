@@ -25,6 +25,9 @@ Any specific plugin dependencies *should* also be listed.
 ##### OperUp
 - Simple plugin that allows Supybot to oper up on configured networks, automatically (on connect) and manually.
 
+##### PassGen
+- Generates passwords on the fly!
+
 ##### Relay *(deprecated)*
 - Forked by request, adds text events similar to those of the LinkRelay mod above. No longer in active development.
 
