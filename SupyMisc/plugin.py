@@ -129,43 +129,6 @@ class SupyMisc(callbacks.Plugin):
             nick = msg.nick
         irc.reply(ircutils.hostFromHostmask(irc.state.nickToHostmask(nick)))
     gethost = wrap(gethost, [(additional('nick'))])
-    
-    ### Access to python built-in functions
-    def int2bin(self, irc, msg, args, num):
-        """<int>
-        Returns the binary representation of <int>.
-        """
-        out = bin(int(num))
-        irc.reply(out)
-    int2bin = wrap(int2bin, ['int'])
-    
-    def int2hex(self, irc, msg, args, num):
-        """<int>
-        Returns the hexadecimal representation of <int>.
-        """
-        out = hex(int(num))
-        irc.reply(out)
-    int2hex = wrap(int2hex, ['int'])
-    
-    def bin2int(self, irc, msg, args, num):
-        """<binary>
-        Returns the decimal representation of <binary>.
-        """
-        try:
-            irc.reply(int(num, base=2))
-        except ValueError:
-            irc.error("Invalid input: {}.".format(num))
-    bin2int = wrap(bin2int, ['somethingWithoutSpaces'])
-    
-    def hex2int(self, irc, msg, args, num):
-        """<hex>
-        Returns the decimal representation of <hex>.
-        """
-        try:
-            irc.reply(int(num, base=16))
-        except ValueError:
-            irc.error("Invalid input: {}.".format(num))
-    hex2int = wrap(hex2int, ['somethingWithoutSpaces'])
 
 Class = SupyMisc
 
