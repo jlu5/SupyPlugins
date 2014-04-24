@@ -58,13 +58,13 @@ class SupyMisc(callbacks.Plugin):
         """<num> <text>
         Returns <text> repeated <num> times. <num> must be a positive integer. 
         To keep leading and trailing spaces, it is recommended to quote the <text>
-        argument "like this". """
+        argument " like this ". """
         max = self.registryValue("repeat.max")
         if num <= max:
             irc.reply(text * num)
         else:
             irc.error("The <num> value given is too large. Current "
-                "maximum: {}".format(max))
+                "maximum: {}".format(max), Raise=True)
     repeat = wrap(repeat, ['positiveInt', 'text'])
     
     ### Generic informational commands (ident fetcher, channel counter, etc.)
