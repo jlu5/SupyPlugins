@@ -37,46 +37,39 @@ import supybot.callbacks as callbacks
 import supybot.ircmsgs as ircmsgs
 try:
     from supybot.i18n import PluginInternationalization
-    _ = PluginInternationalization('NoTriggerOtherBots')
+    _ = PluginInternationalization('NoTrigger')
 except ImportError:
     # Placeholder that allows to run the plugin on a bot
     # without the i18n module
     _ = lambda x:x
 
-class NoTriggerOtherBots(callbacks.Plugin):
+class NoTrigger(callbacks.Plugin):
     """Mods outFilter to prevent the bot from triggering other bots."""
     def outFilter(self, irc, msg):
-        if msg.command in ['PRIVMSG', 'NOTICE'] and \
+        if msg.command == 'PRIVMSG' and \
             (self.registryValue('enable', msg.args[0]) or not \
             ircutils.isChannel(msg.args[0])):
             s = msg.args[1]
             prefixes = ["+", "$", ";", ".", "%", "!", "`", "\\", "@", "&", 
                         "*", "~", ":", "^", "(", ")", "-", "=", ">", "<", ","]
-            suffixes = ["moo"]
-            noinclude = ["\007"]
+            # suffixes = ["moo"]
+            rpairs = {"\007":"",
+                      "moo":"m\003oo"}
             if self.registryValue('spaceBeforeNicks', msg.args[0]):
                 # If the last character of the first word ends with a ',' or ':',
                 # prepend a space.
                 if s.split()[0][-1] in [",", ":"]:
                     s = " " + s
-            for item in noinclude:
-                if item in s:
-                    s = s.replace(item, "")
             for item in prefixes:
                 if s.startswith(item):
                     s = " " + s
-            for item in suffixes:
-                if s.endswith(item):
-                    s = s + "."
-            # This part is a bit messy atm, something I'll look into fixing.
-            if msg.command == 'PRIVMSG':
-                msg = ircmsgs.privmsg(msg.args[0], s, msg=msg)
-            if msg.command == 'NOTICE':
-                msg = ircmsgs.notice(msg.args[0], s, msg=msg)
+            for k, v in rpairs.iteritems():
+                s = s.replace(k, v)
+            msg = ircmsgs.privmsg(msg.args[0], s, msg=msg)
         return msg
 
 
-Class = NoTriggerOtherBots
+Class = NoTrigger
 
 
 # vim:set shiftwidth=4 softtabstop=4 expandtab textwidth=79:

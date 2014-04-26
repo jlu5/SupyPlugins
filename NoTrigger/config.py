@@ -32,7 +32,7 @@ import supybot.conf as conf
 import supybot.registry as registry
 try:
     from supybot.i18n import PluginInternationalization
-    _ = PluginInternationalization('NoTriggerOtherBots')
+    _ = PluginInternationalization('NoTrigger')
 except:
     # Placeholder that allows to run the plugin on a bot
     # without the i18n module
@@ -44,13 +44,13 @@ def configure(advanced):
     # user or not.  You should effect your configuration by manipulating the
     # registry as appropriate.
     from supybot.questions import expect, anything, something, yn
-    conf.registerPlugin('NoTriggerOtherBots', True)
+    conf.registerPlugin('NoTrigger', True)
 
 
-NoTriggerOtherBots = conf.registerPlugin('NoTriggerOtherBots')
-conf.registerChannelValue(NoTriggerOtherBots, 'enable',
+NoTrigger = conf.registerPlugin('NoTrigger')
+conf.registerChannelValue(NoTrigger, 'enable',
     registry.Boolean(True, _("""Enable protection against triggering other bots.""")))
-conf.registerChannelValue(NoTriggerOtherBots, 'spaceBeforeNicks',
+conf.registerChannelValue(NoTrigger, 'spaceBeforeNicks',
     registry.Boolean(False, _("""Add a space before messages beginning with 
         "blah: " or "blah, ", preventing the bot from triggering other bots that
         respond to nick. This can cause some weird spacings with error messages and

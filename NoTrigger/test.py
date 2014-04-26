@@ -30,8 +30,8 @@
 
 from supybot.test import *
 
-class NoTriggerOtherBotsTestCase(PluginTestCase):
-    plugins = ('NoTriggerOtherBots',)
+class NoTriggerTestCase(PluginTestCase):
+    plugins = ('NoTrigger',)
 
 
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:
