@@ -22,6 +22,9 @@ Any specific plugin dependencies *should* also be listed.
 ##### LinkRelay
 - Mod of the [LinkRelay](https://github.com/ProgVal/Supybot-plugins/tree/master/LinkRelay) plugin. Originally designed for use with [OVERdrive-IRC](http://overdrive.pw/), with a few extra features such as a configurable list of nicks for the relayer to ignore. No longer in active development.
 
+##### NoTrigger
+- Anti-abuse script; modifies outFilter to prevent triggering other bots.
+
 ##### OperUp
 - Simple plugin that allows Supybot to oper up on configured networks, automatically (on connect) and manually.
 
