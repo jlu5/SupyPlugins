@@ -45,26 +45,43 @@ except ImportError:
 
 class NoTrigger(callbacks.Plugin):
     """Mods outFilter to prevent the bot from triggering other bots."""
+    
+    def isChanStripColor(self, irc, channel):
+        c = irc.state.channels[channel]
+        if 'S' in c.modes or 'c' in c.modes:
+            return True
+        return False
+    
     def outFilter(self, irc, msg):
         if msg.command == 'PRIVMSG' and \
             (self.registryValue('enable', msg.args[0]) or not \
             ircutils.isChannel(msg.args[0])):
             s = msg.args[1]
             prefixes = ["+", "$", ";", ".", "%", "!", "`", "\\", "@", "&", 
-                        "*", "~", ":", "^", "(", ")", "-", "=", ">", "<", ","]
+                        "*", "~", ":", "^", "(", ")", "-", "=", ">", "<",
+                        # 003 = Colour, 002 = Bold, 017 = Reset Formatting, 
+                        # 037 = Underline
+                        ",", "\003", "\002", "\017", "\037"]
             # suffixes = ["moo"]
             rpairs = {"\007":"",
-                      "moo":"m\003oo"}
+                     }
+            if self.isChanStripColor(irc, msg.args[0]):
+                rpairs['moo'] = 'm#oo'
+            else:
+                rpairs['moo'] = 'm\003oo'
             if self.registryValue('spaceBeforeNicks', msg.args[0]):
                 # If the last character of the first word ends with a ',' or ':',
                 # prepend a space.
                 if s.split()[0][-1] in [",", ":"]:
                     s = " " + s
+            # Handle actions properly but destroy any other \001 (CTCP) messages
+            if s.startswith("\001") and not s.startswith("\001ACTION"):
+                s = s[1:-1]
+            for k, v in rpairs.iteritems():
+                s = s.replace(k, v)
             for item in prefixes:
                 if s.startswith(item):
                     s = " " + s
-            for k, v in rpairs.iteritems():
-                s = s.replace(k, v)
             msg = ircmsgs.privmsg(msg.args[0], s, msg=msg)
         return msg
 
