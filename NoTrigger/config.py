@@ -56,5 +56,13 @@ conf.registerChannelValue(NoTrigger, 'spaceBeforeNicks',
         respond to nick. This can cause some weird spacings with error messages and
         other command replies, so I wouldn't recommend enabling it unless absolutely
         necessary.""")))
+conf.registerChannelValue(NoTrigger, 'colorAware',
+    registry.Boolean(True, _("""Toggles whether the bot should be aware of colour-stripping
+        modes. (+c or +S on most IRCds)""")))
+conf.registerGroup(NoTrigger, 'colorAware')
+conf.registerChannelValue(NoTrigger.colorAware, 'modes',
+    registry.SpaceSeparatedListOfStrings("c S", _("""Determines a list of modes that should
+        be treated as colour-blocking modes. This is usually +c (block) and +S (stripcolour) on
+        UnrealIRCd/InspIRCd, and just +c (stripcolour) on charybdis-based daemons.""")))
 
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:

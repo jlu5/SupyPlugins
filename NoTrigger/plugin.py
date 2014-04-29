@@ -48,8 +48,9 @@ class NoTrigger(callbacks.Plugin):
     
     def isChanStripColor(self, irc, channel):
         c = irc.state.channels[channel]
-        if 'S' in c.modes or 'c' in c.modes:
-            return True
+        for item in self.registryValue('colorAware.modes'):
+            if item in c.modes:
+                return True
         return False
     
     def outFilter(self, irc, msg):
@@ -58,20 +59,21 @@ class NoTrigger(callbacks.Plugin):
             ircutils.isChannel(msg.args[0])):
             s = msg.args[1]
             prefixes = ["+", "$", ";", ".", "%", "!", "`", "\\", "@", "&", 
-                        "*", "~", ":", "^", "(", ")", "-", "=", ">", "<",
-                        # 003 = Colour, 002 = Bold, 017 = Reset Formatting, 
-                        # 037 = Underline
-                        ",", "\003", "\002", "\017", "\037"]
-            # suffixes = ["moo"]
+                        "*", "~", ":", "^", "(", ")", "-", "=", ">", "<", ","]
             rpairs = {"\007":"",
                      }
-            if self.isChanStripColor(irc, msg.args[0]):
+            if self.registryValue('colorAware') and \
+                self.isChanStripColor(irc, msg.args[0]):
                 rpairs['moo'] = 'm#oo'
+                # \003 = Colour (Ctrl+K), \002 = Bold (Ctrl+B), \017 =
+                # Reset Formatting (Ctrl+O), \037 = Underline,
+                # \026 = Italic/Reverse video
+                prefixes += ["\003", "\002", "\017", "\037", "\026"]
             else:
                 rpairs['moo'] = 'm\003oo'
             if self.registryValue('spaceBeforeNicks', msg.args[0]):
-                # If the last character of the first word ends with a ',' or ':',
-                # prepend a space.
+                # If the last character of the first word ends with a ',' or
+                # ':', prepend a space.
                 if s.split()[0][-1] in [",", ":"]:
                     s = " " + s
             # Handle actions properly but destroy any other \001 (CTCP) messages
