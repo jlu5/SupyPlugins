@@ -27,6 +27,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 ###
+import random
 
 import supybot.utils as utils
 from supybot.commands import *
@@ -53,6 +54,18 @@ class SupyMisc(callbacks.Plugin):
         Returns the amount of words in <text> (separated by spaces). """
         irc.reply(len(text.split()))
     words = wrap(words, ['text'])
+    
+    def scramble(self, irc, msg, args, text):
+        """<text>
+        An alternative to Supybot's Filter scramble command, but without keeping the first and last letters of each word. """
+        L = []
+        for word in text.split():
+            word = list(word)
+            random.shuffle(word)
+            word = ''.join(word)
+            L.append(word)
+        irc.reply(' '.join(L))
+    scramble = wrap(scramble, ['text'])
     
     def repeat(self, irc, msg, args, num, text):
         """<num> <text>
