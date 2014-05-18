@@ -29,6 +29,7 @@
 ###
 import random
 
+import supybot.conf as conf
 import supybot.utils as utils
 from supybot.commands import *
 import supybot.plugins as plugins
@@ -81,6 +82,19 @@ class SupyMisc(callbacks.Plugin):
     repeat = wrap(repeat, ['positiveInt', 'text'])
     
     ### Generic informational commands (ident fetcher, channel counter, etc.)
+
+    def serverlist(self, irc, msg, args):
+        """A command similar to the !networks command, but showing configured servers instead 
+        of the connected one."""
+        L = []
+        for ircd in world.ircs:
+            # fetch a list of tuples in the format (server, port)
+            for server in conf.supybot.networks.get(ircd.network).servers():
+                # list every server configured for every network connected
+                L.append("%s: %s" % (ircd.network, server[0]))
+        irc.reply(', '.join(L)) # finally, join them up in a comma-separated list
+    serverlist = wrap(serverlist)
+
     def netcount(self, irc, msg, args):
         """takes no arguments.
         Counts the amount of networks the bot is on. """
