@@ -60,7 +60,7 @@ class SysDNS(callbacks.Plugin):
         else:
             try:
                 args = [cmd, '-t', dict(optlist)['type'], text]
-            except IndexError:
+            except KeyError:
                 args = [cmd, text]
             try:
                 with open(os.devnull) as null:
