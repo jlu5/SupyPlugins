@@ -44,20 +44,24 @@ except ImportError:
     _ = lambda x:x
 
 class SysDNS(callbacks.Plugin):
-    """An alternative to Supybot's built-in DNS function, using DNS lookup utilities
-    (such as host or dig) available on the host machine.
+    """An alternative to Supybot's built-in DNS function, using the host DNS lookup
+    utility available on the host machine.
     """
     threaded = True
-    def dns(self, irc, msg, args, text):
-        """<host>
-        Looks up a DNS hostname using the host binary available on the system.
+    def dns(self, irc, msg, args, optlist, text):
+        """[--type type] <host>
+        Looks up a DNS hostname using the host binary available on the system. --type
+        controls the type of record to look for. (A, AAAA, etc.)
         """
         cmd = self.registryValue('command')
         if not cmd:
-            irc.error('This command is not correctly configured. Please '
+            irc.error('This plugin is not correctly configured. Please configure'
                       'supybot.plugins.SysDNS.command appropriately.', Raise=True)
         else:
-            args = [cmd, text]
+            try:
+                args = [cmd, '-t', dict(optlist)['type'], text]
+            except IndexError:
+                args = [cmd, text]
             try:
                 with open(os.devnull) as null:
                     inst = subprocess.Popen(args,
@@ -74,7 +78,7 @@ class SysDNS(callbacks.Plugin):
                 response = result[0].decode('utf8').splitlines()
                 response = [l for l in response if l]
                 irc.replies(response)
-    dns = thread(wrap(dns, ["text"]))
+    dns = thread(wrap(dns, [getopts({'type':'something'}), 'text']))
 
 
 Class = SysDNS
