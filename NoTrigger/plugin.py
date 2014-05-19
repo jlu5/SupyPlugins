@@ -55,8 +55,8 @@ class NoTrigger(callbacks.Plugin):
     
     def outFilter(self, irc, msg):
         if msg.command == 'PRIVMSG' and \
-            (self.registryValue('enable', msg.args[0]) or not \
-            ircutils.isChannel(msg.args[0])):
+            ircutils(isChannel(msg.args[0]) and \
+            self.registryValue('enable', msg.args[0]):
             s = msg.args[1]
             prefixes = ["+", "$", ";", ".", "%", "!", "`", "\\", "@", "&", 
                         "*", "~", ":", "^", "(", ")", "-", "=", ">", "<", ","]
