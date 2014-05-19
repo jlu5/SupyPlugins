@@ -64,5 +64,9 @@ conf.registerChannelValue(NoTrigger.colorAware, 'modes',
     registry.SpaceSeparatedListOfStrings("c S", _("""Determines a list of modes that should
         be treated as colour-blocking modes. This is usually +c (block) and +S (stripcolour) on
         UnrealIRCd/InspIRCd, and just +c (stripcolour) on charybdis-based daemons.""")))
+conf.registerChannelValue(NoTrigger, 'blockCtcp',
+    registry.Boolean(False, _("""Determines whether the bot should block all CTCPs (\001 codes)
+        except CTCP actions. If you are using the Ctcp plugin, you will want to turn this off.""")))
+
 
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:

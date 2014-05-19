@@ -55,7 +55,7 @@ class NoTrigger(callbacks.Plugin):
     
     def outFilter(self, irc, msg):
         if msg.command == 'PRIVMSG' and \
-            ircutils(isChannel(msg.args[0]) and \
+            ircutils.isChannel(msg.args[0]) and \
             self.registryValue('enable', msg.args[0]):
             s = msg.args[1]
             prefixes = ["+", "$", ";", ".", "%", "!", "`", "\\", "@", "&", 
@@ -77,7 +77,8 @@ class NoTrigger(callbacks.Plugin):
                 if s.split()[0][-1] in [",", ":"]:
                     s = " " + s
             # Handle actions properly but destroy any other \001 (CTCP) messages
-            if s.startswith("\001") and not s.startswith("\001ACTION"):
+            if self.registryValue('blockCtcp', msg.args[0]) and \
+                s.startswith("\001") and not s.startswith("\001ACTION"):
                 s = s[1:-1]
             for k, v in rpairs.iteritems():
                 s = s.replace(k, v)
