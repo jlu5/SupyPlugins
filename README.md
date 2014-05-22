@@ -39,3 +39,6 @@ Any specific plugin dependencies *should* also be listed.
 
 ##### SysDNS
 - An alternative to Supybot's built-in DNS function, using DNS lookup utilities (such as host or dig) available on the host machine.
+
+##### TLDInfo
+- Fetches TLD information using IANA's database (http://www.iana.org/domains/root/db/).
