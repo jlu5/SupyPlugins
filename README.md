@@ -33,9 +33,6 @@ Any specific plugin dependencies *should* also be listed.
 ##### PassGen
 - Generates passwords on the fly!
 
-##### Relay *(deprecated)*
-- Forked by request, adds text events similar to those of the LinkRelay mod above. No longer in active development.
-
 ##### SupyMisc
 - Some assorted commands that don't seem to fit anywhere else.
 
