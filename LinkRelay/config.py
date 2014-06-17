@@ -111,6 +111,9 @@ conf.registerGlobalValue(LinkRelay, 'substitutes',
     registry.String('', _("""You shouldn't edit this configuration variable
     yourself unless you know what you do. Use @LinkRelay (no)substitute instead.""")))
 
+conf.registerGlobalValue(LinkRelay, 'logFailedChanges',
+    registry.Boolean(False, _("""Determines whether the bot should log failed config changes.""")))
+
 conf.registerGroup(LinkRelay, 'colors')
 for name, color in {'info': '02',
                     'truncated': '14',

@@ -551,6 +551,8 @@ class LinkRelay(callbacks.Plugin):
             if not self._writeToConfig(c[0], c[1],
                                    optlist['regexp'], True):
                 failedWrites += 1
+                if self.registryValue('logFailedChanges'):
+                    self.log.warning("LinkRelay: failed to batch add relay: {} -> {}".format(c[0],c[1]))
             writes += 1
         if failedWrites == 0:
             irc.replySuccess()
@@ -579,6 +581,8 @@ class LinkRelay(callbacks.Plugin):
             if not self._writeToConfig(c[0], c[1],
                                    optlist['regexp'], False):
                 failedWrites += 1
+                if self.registryValue('logFailedChanges'):
+                    self.log.warning("LinkRelay: failed to batch remove relay: {} -> {}".format(c[0],c[1]))
             writes += 1
         if failedWrites == 0:
             irc.replySuccess()
