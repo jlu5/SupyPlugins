@@ -33,6 +33,7 @@ import re
 import time
 import copy
 import string
+import itertools
 import supybot.log as log
 import supybot.conf as conf
 import supybot.utils as utils
@@ -265,7 +266,7 @@ class LinkRelay(callbacks.Plugin):
             if self.registryValue('hostmasks', msg.args[0]):
                 args['userhost'] = ' (%s@%s)' % (msg.user, msg.host)
             try:
-                args['message'] = '(%s)' % (msg.args[1])
+                args['message'] = ' (%s)' % (msg.args[1])
             except IndexError:
                 pass
             s = '%(color)s' + _('PART: %(nick)s%(sepTagn)s%(network)s'
@@ -478,28 +479,29 @@ class LinkRelay(callbacks.Plugin):
             self.setRegistryValue('relays', value=' || '.join(newConfig))
         return True
 
-    def _parseOptlist(self, irc, msg, tupleOptlist):
+    def _parseOptlist(self, irc, msg, tupleOptlist, batchadd=False):
         optlist = {}
         for key, value in tupleOptlist:
             optlist.update({key: value})
-        if 'from' not in optlist and 'to' not in optlist:
-            irc.error(_('You must give at least --from or --to.'))
-            return
-        for name in ('from', 'to'):
-            if name not in optlist:
-                optlist.update({name: '%s@%s' % (msg.args[0], irc.network)})
+        if not batchadd:
+            if 'from' not in optlist and 'to' not in optlist:
+                irc.error(_('You must give at least --from or --to.'))
+                return
+            for name in ('from', 'to'):
+                if name not in optlist:
+                    optlist.update({name: '%s@%s' % (msg.args[0], irc.network)})
+            if 'reciprocal' in optlist:
+                optlist.update({'reciprocal': True})
+            else:
+                optlist.update({'reciprocal': False})
+            if not len(optlist['from'].split('@')) == 2:
+                irc.error(_('--from should be like "--from #channel@network"'))
+                return
+            if not len(optlist['to'].split('@')) == 2:
+                irc.error(_('--to should be like "--to #channel@network"'))
+                return
         if 'regexp' not in optlist:
             optlist.update({'regexp': ''})
-        if 'reciprocal' in optlist:
-            optlist.update({'reciprocal': True})
-        else:
-            optlist.update({'reciprocal': False})
-        if not len(optlist['from'].split('@')) == 2:
-            irc.error(_('--from should be like "--from #channel@network"'))
-            return
-        if not len(optlist['to'].split('@')) == 2:
-            irc.error(_('--to should be like "--to #channel@network"'))
-            return
         return optlist
 
     @internationalizeDocstring
@@ -523,7 +525,7 @@ class LinkRelay(callbacks.Plugin):
         if optlist['reciprocal']:
             if not self._writeToConfig(optlist['to'], optlist['from'],
                                        optlist['regexp'], True):
-                failedWrites +=1
+                failedWrites += 1
 
         self._loadFromConfig()
         if failedWrites == 0:
@@ -536,6 +538,64 @@ class LinkRelay(callbacks.Plugin):
                               'to': 'something',
                               'regexp': 'something',
                               'reciprocal': ''})])
+
+    def addall(self, irc, msg, args, optlist, channels):
+        """[--regexp <regexp>] <channel1@network1> <channel2@network2> [<channel3@network3>] ...
+        
+        Adds all the reciprocal relays for a defined list of channels. Useful if you are
+        relaying to more than 2 networks with one bot, as a large amount of reciprocals
+        easily becomes a mess."""
+        optlist = self._parseOptlist(irc, msg, optlist, batchadd=True)
+        channels = channels.split()
+        if len(channels) < 2:
+            irc.error('Not enough channels specified to relay! (needs at least 2)', Raise=True)
+        if len(channels) > self.registryValue('addall.max'):
+            irc.error('Too many channels specified, aborting. (see config plugins.LinkRelay.addall.max)', Raise=True)
+        for ch in channels:
+            if len(ch.split("@")) != 2: 
+                irc.error("Channels must be specified in the format #channel@network")
+        failedWrites = writes = 0
+        # Get all the channel combinations and try to add them one by one
+        p = itertools.permutations(channels, 2)
+        for c in p:
+            if not self._writeToConfig(c[0], c[1],
+                                   optlist['regexp'], True):
+                failedWrites += 1
+            writes += 1
+        if failedWrites == 0:
+            irc.replySuccess()
+        else:
+            irc.reply('Finished, though {} out of {} relays failed to be added.'.format(failedWrites, writes))
+    addall = wrap(addall, [('checkCapability', 'admin'),
+                     getopts({'regexp': 'something'}), 'text'])
+                     
+    def removeall(self, irc, msg, args, optlist, channels):
+        """[--regexp <regexp>] <channel1@network1> <channel2@network2> [<channel3@network3>] ...
+        
+        Batch removes relays like addall adds them."""
+        optlist = self._parseOptlist(irc, msg, optlist, batchadd=True)
+        channels = channels.split()
+        if len(channels) < 2:
+            irc.error('Not enough channels specified to relay! (needs at least 2)', Raise=True)
+        if len(channels) > self.registryValue('addall.max'):
+            irc.error('Too many channels specified, aborting. (see config plugins.LinkRelay.addall.max)', Raise=True)
+        for ch in channels:
+            if len(ch.split("@")) != 2: 
+                irc.error("Channels must be specified in the format #channel@network")
+        failedWrites = writes = 0
+        # Get all the channel combinations and try to remove them one by one
+        p = itertools.permutations(channels, 2)
+        for c in p:
+            if not self._writeToConfig(c[0], c[1],
+                                   optlist['regexp'], False):
+                failedWrites += 1
+            writes += 1
+        if failedWrites == 0:
+            irc.replySuccess()
+        else:
+            irc.reply('Finished, though {} out of {} relays failed to be removed.'.format(failedWrites, writes))
+    removeall = wrap(removeall, [('checkCapability', 'admin'),
+                     getopts({'regexp': 'something'}), 'text'])
 
     @internationalizeDocstring
     def remove(self, irc, msg, args, optlist):

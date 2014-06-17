@@ -122,6 +122,11 @@ for name, color in {'info': '02',
                     'quit': '07'}.items():
     conf.registerChannelValue(LinkRelay.colors, name,
         ColorNumber(color, _("""Color used for relaying %s messages.""") % name))
-
+        
+conf.registerGroup(LinkRelay, 'addall')
+conf.registerGlobalValue(LinkRelay.addall, 'max',
+    registry.NonNegativeInteger(20, _("""Defines the maximum number of channels addall/removeall
+    will try to process at once. Setting this below 1 will effectively disable the command.
+    A value too high can freeze the bot, so be careful!""")))
 
 # vim:set shiftwidth=4 softtabstop=4 expandtab textwidth=79:
