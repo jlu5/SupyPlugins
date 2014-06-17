@@ -72,7 +72,6 @@ class LinkRelay(callbacks.Plugin):
             self.hasTargetIRC = False
             self.hasSourceIRCChannels = False
 
-
     def __init__(self, irc):
         self.__parent = super(LinkRelay, self)
         self.__parent.__init__(irc)
@@ -119,8 +118,6 @@ class LinkRelay(callbacks.Plugin):
                 continue
             self.nickSubstitutions[substitute[0]] = substitute[1]
 
-
-
     def simpleHash(self, s):
         colors = ["\x0305", "\x0304", "\x0303", "\x0309", "\x0302", "\x0312",
                   "\x0306",   "\x0313", "\x0310", "\x0311", "\x0307"]
@@ -129,7 +126,6 @@ class LinkRelay(callbacks.Plugin):
             num += ord(i)
         num = num % 11
         return colors[num]
-
 
     def getPrivmsgData(self, channel, nick, text, colored):
         color = self.simpleHash(nick)
@@ -154,7 +150,6 @@ class LinkRelay(callbacks.Plugin):
                 return ('{%(nick)s%(sepTagn)s%(network)s} %(text)s',
                         {'nick': nick, 'text': text})
         return s
-
 
     @internationalizeDocstring
     def list(self, irc, msg, args):
@@ -211,7 +206,6 @@ class LinkRelay(callbacks.Plugin):
             s = '(via PM) %s' % s
         self.sendToOthers(irc, channel, s, args, isPrivmsg=True)
 
-
     def outFilter(self, irc, msg):
         if msg.command == 'PRIVMSG':
             if not msg.relayedMsg:
@@ -220,7 +214,6 @@ class LinkRelay(callbacks.Plugin):
                                     self.registryValue('color', msg.args[0]))
                     self.sendToOthers(irc, msg.args[0], s, args, isPrivmsg=True)
         return msg
-
 
     def doPing(self, irc, msg):
         self.addIRC(irc)
@@ -373,7 +366,6 @@ class LinkRelay(callbacks.Plugin):
                         relay.messageRegex.search(new_s):
                     send(new_s)
 
-
     def addIRC(self, irc):
         match = False
         for relay in self.relays:
@@ -383,7 +375,6 @@ class LinkRelay(callbacks.Plugin):
             if relay.targetNetwork == irc.network and not relay.hasTargetIRC:
                 relay.targetIRC = irc
                 relay.hasTargetIRC = True
-
 
     @internationalizeDocstring
     def nicks(self, irc, msg, args, channel):
@@ -453,8 +444,7 @@ class LinkRelay(callbacks.Plugin):
         irc.noReply()
     nicks = wrap(nicks, ['Channel'])
 
-
-    # The fellowing functions handle configuration
+    # The following functions handle configuration
     def _writeToConfig(self, from_, to, regexp, add):
         from_, to = from_.split('@'), to.split('@')
         args = from_
@@ -654,7 +644,6 @@ class LinkRelay(callbacks.Plugin):
 
         self.setRegistryValue('substitutes', value=substitutes)
 
-
     @internationalizeDocstring
     def substitute(self, irc, msg, args, regexp, to):
         """<regexp> <replacement>
@@ -690,8 +679,6 @@ class LinkRelay(callbacks.Plugin):
         irc.replySuccess()
     nosubstitute = wrap(nosubstitute, [('checkCapability', 'admin'),
                                        'something'])
-
-
 
 Class = LinkRelay
 
