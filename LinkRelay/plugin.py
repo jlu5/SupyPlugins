@@ -554,6 +554,7 @@ class LinkRelay(callbacks.Plugin):
                 if self.registryValue('logFailedChanges'):
                     self.log.warning("LinkRelay: failed to batch add relay: {} -> {}".format(c[0],c[1]))
             writes += 1
+        self._loadFromConfig()
         if failedWrites == 0:
             irc.replySuccess()
         else:
@@ -584,6 +585,7 @@ class LinkRelay(callbacks.Plugin):
                 if self.registryValue('logFailedChanges'):
                     self.log.warning("LinkRelay: failed to batch remove relay: {} -> {}".format(c[0],c[1]))
             writes += 1
+        self._loadFromConfig()
         if failedWrites == 0:
             irc.replySuccess()
         else:
