@@ -155,7 +155,7 @@ class LinkRelay(callbacks.Plugin):
     def list(self, irc, msg, args):
         """takes no arguments
 
-        Returns all the defined relay links"""
+        Returns all the defined relay links."""
         if irc.nested:
             irc.error('This command cannot be nested.', Raise=True)
         elif not self.relays:
@@ -532,9 +532,11 @@ class LinkRelay(callbacks.Plugin):
     def addall(self, irc, msg, args, optlist, channels):
         """[--regexp <regexp>] <channel1@network1> <channel2@network2> [<channel3@network3>] ...
         
-        Adds all the reciprocal relays for a defined list of channels. Useful if you are
-        relaying to more than 2 networks with one bot, as a large amount of reciprocals
-        easily becomes a mess."""
+        Batch adds all the relays/reciprocals between the channels defined. Useful if you are
+        relaying to more than 2 networks/channels with one bot, as a large amount of
+        reciprocals easily becomes a mess.
+        Only messages matching <regexp> will be relayed; if <regexp> is not
+        given, everything is relayed."""
         optlist = self._parseOptlist(irc, msg, optlist, batchadd=True)
         channels = channels.split()
         if len(channels) < 2:
@@ -543,7 +545,7 @@ class LinkRelay(callbacks.Plugin):
             irc.error('Too many channels specified, aborting. (see config plugins.LinkRelay.addall.max)', Raise=True)
         for ch in channels:
             if len(ch.split("@")) != 2: 
-                irc.error("Channels must be specified in the format #channel@network")
+                irc.error("Channels must be specified in the format #channel@network", Raise=True)
         failedWrites = writes = 0
         # Get all the channel combinations and try to add them one by one
         p = itertools.permutations(channels, 2)
@@ -563,28 +565,52 @@ class LinkRelay(callbacks.Plugin):
                      getopts({'regexp': 'something'}), 'text'])
                      
     def removeall(self, irc, msg, args, optlist, channels):
-        """[--regexp <regexp>] <channel1@network1> <channel2@network2> [<channel3@network3>] ...
+        """[--regexp <regexp>] <channel1@network1> [<channel2@network2>] [<channel3@network3>] ...
         
-        Batch removes relays like addall adds them."""
+        Batch removes relays. If only one channel@network is given, removes all
+        relays going to and from the channel.
+        Otherwise, removes all relays going between the channels defined (similar to addall)."""
         optlist = self._parseOptlist(irc, msg, optlist, batchadd=True)
         channels = channels.split()
-        if len(channels) < 2:
-            irc.error('Not enough channels specified to relay! (needs at least 2)', Raise=True)
         if len(channels) > self.registryValue('addall.max'):
             irc.error('Too many channels specified, aborting. (see config plugins.LinkRelay.addall.max)', Raise=True)
+        failedWrites = writes = 0
         for ch in channels:
             if len(ch.split("@")) != 2: 
-                irc.error("Channels must be specified in the format #channel@network")
-        failedWrites = writes = 0
-        # Get all the channel combinations and try to remove them one by one
-        p = itertools.permutations(channels, 2)
-        for c in p:
-            if not self._writeToConfig(c[0], c[1],
-                                   optlist['regexp'], False):
-                failedWrites += 1
-                if self.registryValue('logFailedChanges'):
-                    self.log.warning("LinkRelay: failed to batch remove relay: {} -> {}".format(c[0],c[1]))
-            writes += 1
+                irc.error("Channels must be specified in the format #channel@network", Raise=True)
+        if len(channels) == 1:
+            c = tuple(channels[0].split('@'))
+            for relay in self.relays:
+                # semi-hack channel matching; not sure if there's a better way to do this
+                if c[0] == relay.sourceChannel and c[1] == relay.sourceNetwork:
+                    s = "%s@%s" % (relay.targetChannel, relay.targetNetwork)
+                    if not self._writeToConfig(channels[0], s,
+                        optlist['regexp'], False):
+                        # This shouldn't really ever error, but we'll keep it just in case
+                        failedWrites += 1
+                        if self.registryValue('logFailedChanges'):
+                            self.log.warning("LinkRelay: failed to batch remove relay: {} -> {}".format(c[0],c[1]))
+                    writes += 1
+                elif c[0] == relay.targetChannel and c[1] == relay.targetNetwork:
+                    s = "%s@%s" % (relay.sourceChannel, relay.sourceNetwork)
+                    if not self._writeToConfig(s, channels[0],
+                        optlist['regexp'], False):
+                        failedWrites += 1
+                        if self.registryValue('logFailedChanges'):
+                            self.log.warning("LinkRelay: failed to batch remove relay: {} -> {}".format(c[0],c[1]))
+                    writes += 1
+            if writes == 0:
+                irc.error("No matching relays for %s found." % channels[0], Raise=True)
+        elif len(channels) >= 2:
+            # Get all the channel combinations and try to remove them one by one
+            p = itertools.permutations(channels, 2)
+            for c in p:
+                if not self._writeToConfig(c[0], c[1],
+                                       optlist['regexp'], False):
+                    failedWrites += 1
+                    if self.registryValue('logFailedChanges'):
+                        self.log.warning("LinkRelay: failed to batch remove relay: {} -> {}".format(c[0],c[1]))
+                writes += 1
         self._loadFromConfig()
         if failedWrites == 0:
             irc.replySuccess()
