@@ -381,12 +381,13 @@ class RelayLink(callbacks.Plugin):
                 relay.hasTargetIRC = True
 
     @internationalizeDocstring
-    def nicks(self, irc, msg, args, channel):
+    def nicks(self, irc, msg, args, channel, optlist):
         """[<channel>]
 
         Returns the nicks of the people in the linked channels.
         <channel> is only necessary if the message
         isn't sent on the channel itself."""
+        keys = [option for (option, arg) in optlist]
         if irc.nested and 'count' not in keys:
             irc.error('This command cannot be nested.', Raise=True)
         # Include the local channel for nicks output
@@ -409,7 +410,7 @@ class RelayLink(callbacks.Plugin):
         s = _('%d users in %s on %s:  %s') % (totalUsers,
             channel, irc.network,
             utils.str.commaAndify(users))
-        irc.reply(s, private=True)
+        if 'count' not in keys: irc.reply(s, private=True)
         for relay in self.relays:
             if relay.sourceChannel == channel and \
                     relay.sourceNetwork == irc.network:
@@ -467,11 +468,15 @@ class RelayLink(callbacks.Plugin):
                             relay.targetChannel,
                             relay.targetNetwork,
                             utils.str.commaAndify(users))
-                    irc.reply(s, private=True)
-                    irc.reply("Total users across %d channels: %d. " % \
-                        (totalChans, totalUsers), private=True)
+                    if 'count' not in keys: 
+                        irc.reply(s, private=True)
+                        irc.reply("Total users across %d channels: %d. " % \
+                            (totalChans, totalUsers), private=True)
+                    else:
+                        irc.reply("Total users across %d channels: %d. " % \
+                            (totalChans, totalUsers))
         irc.noReply()
-    nicks = wrap(nicks, ['Channel'])
+    nicks = wrap(nicks, ['Channel', getopts({'count':''})])
 
     # The following functions handle configuration
     def _writeToConfig(self, from_, to, regexp, add):
