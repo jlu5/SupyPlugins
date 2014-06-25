@@ -409,7 +409,7 @@ class RelayLink(callbacks.Plugin):
         s = _('%d users in %s on %s:  %s') % (totalUsers,
             channel, irc.network,
             utils.str.commaAndify(users))
-        irc.reply(s)
+        irc.reply(s, private=True)
         for relay in self.relays:
             if relay.sourceChannel == channel and \
                     relay.sourceNetwork == irc.network:
