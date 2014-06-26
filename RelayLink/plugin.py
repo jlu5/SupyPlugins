@@ -382,14 +382,20 @@ class RelayLink(callbacks.Plugin):
 
     @internationalizeDocstring
     def nicks(self, irc, msg, args, channel, optlist):
-        """[<channel>]
+        """[<channel>] [--count]
 
         Returns the nicks of the people in the linked channels.
         <channel> is only necessary if the message
-        isn't sent on the channel itself."""
+        isn't sent on the channel itself.
+        If --count is specified, only the amount of """
         keys = [option for (option, arg) in optlist]
         if irc.nested and 'count' not in keys:
             irc.error('This command cannot be nested.', Raise=True)
+        if msg.nick not in irc.state.channels[channel].users:
+            self.log.warning('RelayLink: %s on %s attempted to view'
+                ' nicks in %s without being in it.'
+                % (msg.nick, irc.network, channel))
+            irc.error(('You are not in %s.' % channel), Raise=True)
         # Include the local channel for nicks output
         c = irc.state.channels[channel]
         totalUsers = len(c.users)
@@ -414,15 +420,8 @@ class RelayLink(callbacks.Plugin):
         for relay in self.relays:
             if relay.sourceChannel == channel and \
                     relay.sourceNetwork == irc.network:
-                # Little security function here to prevent spies :P
                 totalChans += 1
-                if msg.nick not in irc.state.channels[channel].users:
-                    self.log.warning('RelayLink: %s on %s attempted to view'
-                        ' nicks in %s without being in it.'
-                        % (msg.nick, irc.network, channel))
-                    irc.error(_('You are not in %s.' % channel))
-                    break
-                elif not relay.hasTargetIRC:
+                if not relay.hasTargetIRC:
                     irc.reply(_('I haven\'t scraped the IRC object for %s '
                               'yet. Try again in a minute or two.') % \
                               relay.targetNetwork)
