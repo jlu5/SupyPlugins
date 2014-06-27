@@ -237,17 +237,23 @@ class RelayLink(callbacks.Plugin):
             self.sendToOthers(irc, msg.args[0], s, args)
 
     def doJoin(self, irc, msg):
+        args = {'nick': msg.nick, 'channel': msg.args[0], 'userhost': ''}
         ignoreNicks = [ircutils.toLower(item) for item in \
             self.registryValue('ignore.nicks', msg.args[0])]
-        if ircutils.toLower(msg.nick) not in ignoreNicks:
-            self.addIRC(irc)
-            args = {'nick': msg.nick, 'channel': msg.args[0], 'userhost': ''}
+        if irc.nick == msg.nick:
+            if self.registryValue('color'):
+                s = '%(network)s\x0309*** Relay joined to %(channel)s'
+            else:
+                s = '%(network)s*** Relay joined to %(channel)s'
+        elif ircutils.toLower(msg.nick) not in ignoreNicks:
             if self.registryValue('color', msg.args[0]):
                 args['nick'] = '\x03%s%s\x03' % (self.simpleHash(msg.nick), msg.nick)
             if self.registryValue('hostmasks', msg.args[0]):
                 args['userhost'] = ' (%s@%s)' % (msg.user, msg.host)
             s = '%(network)s%(nick)s%(userhost)s has joined %(channel)s'
-            self.sendToOthers(irc, msg.args[0], s, args)
+        else: return
+        self.addIRC(irc)
+        self.sendToOthers(irc, msg.args[0], s, args)
 
     def doPart(self, irc, msg):
         ignoreNicks = [ircutils.toLower(item) for item in \
