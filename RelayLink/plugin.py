@@ -229,7 +229,8 @@ class RelayLink(callbacks.Plugin):
             if self.registryValue('color', msg.args[0]):
                 # args['color'] = '\x03%s' % self.registryValue('colors.mode', msg.args[0])
                 args['nick'] = '\x03%s%s\x03' % (self.simpleHash(msg.nick), msg.nick)
-            if self.registryValue('hostmasks', msg.args[0]):
+            if self.registryValue('hostmasks', msg.args[0]) and "." not in \
+                msg.nick:
                 args['userhost'] = ' (%s@%s)' % (msg.user, msg.host)
             s = ('%(network)s%(nick)s%(userhost)s set mode %(mode)s on'
                  ' %(channel)s')
