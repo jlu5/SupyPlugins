@@ -190,7 +190,7 @@ class RelayLink(callbacks.Plugin):
                                self.registryValue('color', channel))
         ignoreNicks = [ircutils.toLower(item) for item in \
             self.registryValue('ignore.nicks', msg.args[0])]
-        if self.registryValue('nickstoIgnore.affectPrivmsgs', msg.args[0]) \
+        if self.registryValue('ignore.affectPrivmsgs', msg.args[0]) \
             == 1 and ircutils.toLower(msg.nick) in ignoreNicks:
                 return
         elif channel not in irc.state.channels: # in private
@@ -299,13 +299,20 @@ class RelayLink(callbacks.Plugin):
     def doQuit(self, irc, msg):
         ignoreNicks = [ircutils.toLower(item) for item in \
             self.registryValue('ignore.nicks')]
-        if ircutils.toLower(msg.nick) not in ignoreNicks:
-            args = {'nick': msg.nick, 'message': msg.args[0]}
+        args = {'nick': msg.nick, 'message': msg.args[0]}
+        if msg.nick == irc.nick: # It's us.
+            if self.registryValue('color'):
+                s = '%(network)s\x0304*** ERROR: Relay disconnected...'
+            else:
+                s = '%(network)s*** ERROR: Relay disconnected...'
+        elif ircutils.toLower(msg.nick) not in ignoreNicks:
             if self.registryValue('color'):
                 args['nick'] = '\x03%s%s\x03' % (self.simpleHash(msg.nick), msg.nick)
             s = '%(network)s%(nick)s has quit (%(message)s)'
-            self.sendToOthers(irc, None, s, args, msg.nick)
-            self.addIRC(irc)
+        else:
+            return
+        self.sendToOthers(irc, None, s, args, msg.nick)
+        self.addIRC(irc)
 
     def sendToOthers(self, irc, channel, s, args, nick=None, isPrivmsg=False):
         assert channel is not None or nick is not None
