@@ -481,13 +481,12 @@ class RelayLink(callbacks.Plugin):
                             relay.targetChannel,
                             relay.targetNetwork,
                             utils.str.commaAndify(users))
-                    if 'count' not in keys: 
-                        irc.reply(s, private=True)
-                        irc.reply("Total users across %d channels: %d. " % \
-                            (totalChans, totalUsers), private=True)
-                    else:
-                        irc.reply("Total users across %d channels: %d. " % \
-                            (totalChans, totalUsers))
+                    if 'count' not in keys: irc.reply(s, private=True)
+        if not irc.nested: 
+            irc.reply("Total users across %d channels: %d. " % \
+                (totalChans, totalUsers), private=False if 'count' in keys else True)
+        else:
+            irc.reply(totalUsers)
         irc.noReply()
     nicks = wrap(nicks, ['Channel', getopts({'count':''})])
 
