@@ -22,7 +22,7 @@ Any specific plugin dependencies *should* also be listed.
 - Provides a simple command to check whether a website is up or down (using [isup.me](http://isup.me)).
 
 ##### LinkRelay
-- Mod of the [LinkRelay](https://github.com/ProgVal/Supybot-plugins/tree/master/LinkRelay) plugin. Originally designed for use with [OVERdrive-IRC](http://overdrive.pw/), with a few extra features such as a configurable list of nicks for the relayer to ignore. No longer in active development.
+- Mod of the [LinkRelay](https://github.com/ProgVal/Supybot-plugins/tree/master/LinkRelay) plugin. Originally designed for use with [OVERdrive-IRC](http://overdrive.pw/), with a few extra features such as a configurable list of nicks for the relayer to ignore. ~~No longer in active development~~. Development has shifted mostly to the RelayLink plugin in this repository; new users please use that instead!
 
 ##### NoTrigger
 - Anti-abuse script; modifies outFilter to prevent triggering other bots.
@@ -32,6 +32,9 @@ Any specific plugin dependencies *should* also be listed.
 
 ##### PassGen
 - Generates passwords on the fly!
+
+##### RelayLink
+- LinkRelay forked into a different name. See RelayLink/README.md for more details.
 
 ##### SupyMisc
 - Some assorted commands that don't seem to fit anywhere else.
