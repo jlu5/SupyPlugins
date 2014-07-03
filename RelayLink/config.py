@@ -85,14 +85,43 @@ conf.registerChannelValue(RelayLink.ignore, 'affectPrivmsgs',
     from the nicks listed in ignore. If set to False, the bot will only
     ignore joins/parts/nicks/modes/quits (not kicks) from those nicks.""")))
 
-# conf.registerGroup(RelayLink, 'sepTags')
-# conf.registerChannelValue(RelayLink.sepTags, 'channels',
-    # registry.String('@', _("""Determines the separator string used for the
-    # bot for channels (when both nicks and IncludeNetwork are on).""")))
-# conf.registerChannelValue(RelayLink.sepTags, 'nicks',
-    # registry.String('/', _("""Determines the separator string used for the
-    # bot for nicks (when both nicks and IncludeNetwork are on).""")))
-    
+# class FloodPreventionConfigHandler(registry.String):
+    # """Invalid input. This value should be given in the form 'positiveInt:positiveInt'
+    # (amount:seconds)"""
+    # def setValue(self, v):
+        # try:
+            # i = [int(n) for n in v.split(":")]
+        # except ValueError:
+            # self.error()
+            # return
+        # if len(i) < 2 or i[0] < 0 or i[1] < 0:
+            # self.error()
+            # return
+        # else:
+            # registry.String.setValue(self, v)
+
+conf.registerGroup(RelayLink, 'antiflood')
+conf.registerGlobalValue(RelayLink.antiflood, 'enable',
+    registry.Boolean(False, _("""Determines whether flood protection should
+    be used by the relayer.""")))
+conf.registerGlobalValue(RelayLink.antiflood, 'privmsgs',
+    registry.NonNegativeInteger(0, _("""Determines how many PRIVMSGs the bot will allow
+    before flood protection is triggered. This setting should be set based on how much
+    traffic a channel gets, so a default is not included. Setting this' to 0
+    effectively disables flood prevention.""")))
+conf.registerGlobalValue(RelayLink.antiflood, 'nonPrivmsgs',
+    registry.NonNegativeInteger(0, _("""Determines how many non-PRIVMSG
+    events (joins, parts, nicks, etc.) the bot will allow before flood
+    protection is triggered. This setting should be set based on how much
+    traffic a channel gets, so a default is not included. Setting this to
+    0 effectively disables flood prevention.""")))
+conf.registerGlobalValue(RelayLink.antiflood, 'seconds',
+    registry.PositiveInteger(30, _("""Determines how many seconds the bot
+    should wait before relaying if flood prevention is triggered.""")))
+conf.registerGlobalValue(RelayLink.antiflood, 'announce',
+    registry.Boolean(True, _("""Determines whether the bot should announce
+    flood alerts to the channel.""")))
+
 class ValidNonPrivmsgsHandling(registry.OnlySomeStrings):
     validStrings = ('privmsg', 'notice', 'nothing')
 conf.registerChannelValue(RelayLink, 'nonPrivmsgs',
@@ -123,7 +152,7 @@ conf.registerGlobalValue(RelayLink, 'logFailedChanges',
                     # 'quit': '07'}.items():
     # conf.registerChannelValue(RelayLink.colors, name,
         # ColorNumber(color, _("""Color used for relaying %s messages.""") % name))
-        
+
 conf.registerGroup(RelayLink, 'addall')
 conf.registerGlobalValue(RelayLink.addall, 'max',
     registry.NonNegativeInteger(20, _("""Defines the maximum number of channels addall/removeall
