@@ -451,7 +451,9 @@ class RelayLink(callbacks.Plugin):
                     channels = relay.targetIRC.state.channels
                     found = False
                     for key, channel_ in channels.items():
-                        if re.match(relay.targetChannel, key):
+                        #if re.match(relay.targetChannel, key):
+                        if ircutils.toLower(relay.targetChannel) \
+                            == ircutils.toLower(key):
                             found = True
                             break
                     if not found:
