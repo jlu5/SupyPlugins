@@ -84,7 +84,6 @@ class RelayLink(callbacks.Plugin):
         self.nonPrivmsgCounter = TimeoutQueue(floodProtectTimeout)
         self.privmsgCounter = TimeoutQueue(floodProtectTimeout)
         self.floodActivated = False
-        # self.nonPrivmsgsCounter = self.privmsgsCounter = 0
         try:
             conf.supybot.plugins.RelayLink.substitutes.addCallback(
                     self._loadFromConfig)
@@ -280,13 +279,13 @@ class RelayLink(callbacks.Plugin):
         args = {'nick': msg.nick, 'channel': msg.args[0], 'userhost': ''}
         ignoreNicks = [ircutils.toLower(item) for item in \
             self.registryValue('ignore.nicks', msg.args[0])]
+        self.nonPrivmsgCounter.enqueue([0])
         if irc.nick == msg.nick:
             if self.registryValue('color'):
                 s = '%(network)s\x0309*** Relay joined to %(channel)s'
             else:
                 s = '%(network)s*** Relay joined to %(channel)s'
-        self.nonPrivmsgCounter.enqueue([0])
-        if self.registryValue("antiflood.enable") and \
+        elif self.registryValue("antiflood.enable") and \
             self.registryValue("antiflood.nonprivmsgs") > 0 and \
             (len(self.nonPrivmsgCounter) > self.registryValue("antiflood.nonprivmsgs")):
             s = self.floodDetect()
@@ -300,7 +299,6 @@ class RelayLink(callbacks.Plugin):
             if self.registryValue('hostmasks', msg.args[0]):
                 args['userhost'] = ' (%s@%s)' % (msg.user, msg.host)
             s = '%(network)s%(nick)s%(userhost)s has joined %(channel)s'
-        else: return
         self.addIRC(irc)
         self.sendToOthers(irc, msg.args[0], s, args)
 
@@ -417,14 +415,6 @@ class RelayLink(callbacks.Plugin):
                         args['network'] = args['network'][:-2]
                 else:
                     args['network'] = ''
-            # if 'sepTagc' not in args or 'sepTagn' not in args:
-                # if self.registryValue('includeNetwork', relay.targetChannel) \
-                # == self.registryValue('nicks', relay.targetChannel) == True:
-                    # args['sepTagc'], args['sepTagn'] = \
-                    # self.registryValue('sepTags.channels', relay.targetChannel), \
-                    # self.registryValue('sepTags.nicks', relay.targetChannel)
-                # else:
-                    # args['sepTagc'] = args['sepTagn'] = ''
             return s % args
         def send(s):
             if not relay.hasTargetIRC:
