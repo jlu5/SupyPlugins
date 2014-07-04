@@ -382,17 +382,24 @@ class RelayLink(callbacks.Plugin):
         ignoreNicks = [ircutils.toLower(item) for item in \
             self.registryValue('ignore.nicks')]
         args = {'nick': msg.nick, 'message': msg.args[0]}
+        self.nonPrivmsgCounter.enqueue([0])
         if msg.nick == irc.nick: # It's us.
             if self.registryValue('color'):
                 s = '%(network)s\x0304*** ERROR: Relay disconnected...'
             else:
                 s = '%(network)s*** ERROR: Relay disconnected...'
+        elif self.registryValue("antiflood.enable") and \
+            self.registryValue("antiflood.nonprivmsgs") > 0 and \
+            (len(self.nonPrivmsgCounter) > self.registryValue("antiflood.nonprivmsgs")):
+            s = self.floodDetect()
+            if s:
+                self.sendToOthers(irc, msg.args[0], s, args)
+            else: return
         elif ircutils.toLower(msg.nick) not in ignoreNicks:
             if self.registryValue('color'):
                 args['nick'] = '\x03%s%s\x03' % (self.simpleHash(msg.nick), msg.nick)
             s = '%(network)s%(nick)s has quit (%(message)s)'
-        else:
-            return
+        self.floodActivated = False
         self.sendToOthers(irc, None, s, args, msg.nick)
         self.addIRC(irc)
 
