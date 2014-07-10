@@ -262,6 +262,7 @@ class RelayLink(callbacks.Plugin):
             s = self.floodDetect()
             if s:
                 self.sendToOthers(irc, msg.args[0], s, args)
+                self.floodActivated = True
             else: return
         elif ircutils.toLower(msg.nick) not in ignoreNicks:
             self.floodActivated = False
@@ -291,6 +292,7 @@ class RelayLink(callbacks.Plugin):
             s = self.floodDetect()
             if s:
                 self.sendToOthers(irc, msg.args[0], s, args)
+                self.floodActivated = True
             else: return
         elif ircutils.toLower(msg.nick) not in ignoreNicks:
             self.floodActivated = False
@@ -311,9 +313,10 @@ class RelayLink(callbacks.Plugin):
         if self.registryValue("antiflood.enable") and \
             self.registryValue("antiflood.nonprivmsgs") > 0 and \
             (len(self.nonPrivmsgCounter) > self.registryValue("antiflood.nonprivmsgs")):
-            s = self.floodDetect()
+            self.floodActivated = True
             if s:
                 self.sendToOthers(irc, msg.args[0], s, args)
+                s = self.floodDetect()
             else: return
         elif ircutils.toLower(msg.nick) not in ignoreNicks:
             self.addIRC(irc)
@@ -340,6 +343,7 @@ class RelayLink(callbacks.Plugin):
             s = self.floodDetect()
             if s:
                 self.sendToOthers(irc, msg.args[0], s, args)
+                self.floodActivated = True
             else: return
         self.floodActivated = False
         if self.registryValue('color', msg.args[0]):
@@ -365,6 +369,7 @@ class RelayLink(callbacks.Plugin):
             s = self.floodDetect()
             if s:
                 self.sendToOthers(irc, msg.args[0], s, args)
+                self.floodActivated = True
             else: return
         self.floodActivated = False
         if ircutils.toLower(msg.nick) not in ignoreNicks:
@@ -389,9 +394,10 @@ class RelayLink(callbacks.Plugin):
         elif self.registryValue("antiflood.enable") and \
             self.registryValue("antiflood.nonprivmsgs") > 0 and \
             (len(self.nonPrivmsgCounter) > self.registryValue("antiflood.nonprivmsgs")):
-            s = self.floodDetect()
+            self.floodActivated = True
             if s:
                 self.sendToOthers(irc, msg.args[0], s, args)
+                s = self.floodDetect()
             else: return
         elif ircutils.toLower(msg.nick) not in ignoreNicks:
             if self.registryValue('color'):
