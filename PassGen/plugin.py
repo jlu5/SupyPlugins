@@ -51,7 +51,8 @@ class PassGen(callbacks.Plugin):
         """[<len>]
         
         Makes a randomly generated password, [<len>] characters long if
-        specified."""
+        specified. Otherwise, uses the bot's configured default length.
+        (see config plugins.PassGen.defaultLen)"""
         if not len:
             len = self.registryValue('defaultLen')
         maxlen = self.registryValue('maxLength')

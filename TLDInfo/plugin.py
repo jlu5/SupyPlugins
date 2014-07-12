@@ -46,7 +46,10 @@ class TLDInfo(callbacks.Plugin):
     threaded = True
 
     def tld(self, irc, msg, args, text):
-        """Fetches TLD information from IANA's database (http://www.iana.org/domains/root/db/)."""
+        """<tld>
+
+        Fetches TLD information about <tld> from IANA's database
+        (http://www.iana.org/domains/root/db/)."""
         db = "http://www.iana.org/domains/root/db/"
         text = text.split(".")[-1] # IANA's DB doesn't care about second level domains
         # Encode everything in IDN in order to support international TLDs
