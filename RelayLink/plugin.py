@@ -344,7 +344,7 @@ class RelayLink(callbacks.Plugin):
             if s:
                 self.sendToOthers(irc, msg.args[0], s, args)
                 self.floodActivated = True
-            else: return
+            return
         self.floodActivated = False
         if self.registryValue('color', msg.args[0]):
             args['kicked'] = '\x03%s%s\x03' % (self.simpleHash(msg.args[1]), msg.args[1])
@@ -371,12 +371,12 @@ class RelayLink(callbacks.Plugin):
                 self.sendToOthers(irc, msg.args[0], s, args)
                 self.floodActivated = True
             else: return
-        self.floodActivated = False
-        if ircutils.toLower(msg.nick) not in ignoreNicks:
+        elif ircutils.toLower(msg.nick) not in ignoreNicks:
             if self.registryValue('color'):
                 args['oldnick'] = '\x03%s%s\x03' % (self.simpleHash(msg.nick), msg.nick)
                 args['newnick'] = '\x03%s%s\x03' % (self.simpleHash(msg.args[0]), msg.args[0])
             s = '%(network)s%(oldnick)s is now known as %(newnick)s'
+            self.floodActivated = False
             for (channel, c) in irc.state.channels.iteritems():
                 if msg.args[0] in c.users:
                     self.sendToOthers(irc, channel, s, args)
@@ -403,7 +403,7 @@ class RelayLink(callbacks.Plugin):
             if self.registryValue('color'):
                 args['nick'] = '\x03%s%s\x03' % (self.simpleHash(msg.nick), msg.nick)
             s = '%(network)s%(nick)s has quit (%(message)s)'
-        self.floodActivated = False
+            self.floodActivated = False
         self.sendToOthers(irc, None, s, args, msg.nick)
         self.addIRC(irc)
 
