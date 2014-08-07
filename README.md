@@ -33,6 +33,10 @@ Any specific plugin dependencies *should* also be listed.
 ##### PassGen
 - Generates passwords on the fly!
 
+##### Randomness
+- Random commands for my own personal use; you probably don't want this 
+loaded!
+
 ##### RelayLink
 - LinkRelay forked into a different name. See RelayLink/README.md for more details.
 
