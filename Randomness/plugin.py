@@ -67,6 +67,7 @@ class Randomness(callbacks.Plugin):
         self.__parent = super(Randomness, self)
         self.__parent.__init__(irc)
         self.dotCounter = TimeoutQueue(10)
+        self.votes = {}
     ##
     # SHHHHHHHHHHH DON'T SPOIL THE JOKES DOWN HERE
     ##
@@ -83,7 +84,7 @@ class Randomness(callbacks.Plugin):
             exclaim = (("!" * random.randint(1,5)) + ("1" * random.randint(0,2))) * \
                 random.randint(1,2) + ("!" * random.randint(-1,5))
             gemotes = ["xD", "=']", "\\o/", ":"+"3"*random.randint(1,4), "^_^"]
-            bemotes = ["-_-", ":|", ":\\"]
+            bemotes = ["-_-", ":|", ":\\", ":/"]
             if irc.network.lower() == "overdrive-irc":
                 if "wow" in irc.state.channels[msg.args[0]].ops and \
                     ircutils.stripFormatting(msg.args[1].lower()).startswith("wow"):
@@ -96,14 +97,16 @@ class Randomness(callbacks.Plugin):
                                     "ffs i'm trying to work",
                                     "WHAT DO YOU WANT",
                                     "leave me alone "+random.choice(bemotes),
-                                    "ugh",
-                                    "pls",
-                                    "stop" + dots,
-                                    "stop it!",
+                                    "hello, you've reached the user 'wow'. "
+                                        "for peoplehat actually need to talk to me, "
+                                        "press 1. for everybody else, PISS OFF!"
+                                    "stop highlighting me" + dots,
                                     "reproted to fbi for harrassment" + dots,
                                     "-_-",
                                     msg.nick + " pls",
-                                    "i cry",
+                                    "need something?"
+                                    "r u mad"
+                                    "ur made"
                                     "fml",
                                     "?",
                                     ".",
@@ -137,7 +140,7 @@ class Randomness(callbacks.Plugin):
                             irc.queueMsg(ircmsgs.privmsg(msg.args[0], random.choice(dotresponses)))
                     else: self.dotCounter.enqueue([0])
                 elif ircutils.stripFormatting(msg.args[1]) == "ok":
-                    okresponses = ["not ok", "ok", "ko", "not ok"+unichr(2122), "no spam", "^why does everyone say that ._."]
+                    okresponses = ["not ok", "ok", "ko", "okay*", "O.K.", "^why does everyone say that ._."]
                     r = random.randint(1, 23)
                     if r >= 17:
                         irc.queueMsg(ircmsgs.action(msg.args[0], random.choice(volatile)+msg.nick))
@@ -151,6 +154,27 @@ class Randomness(callbacks.Plugin):
                 if msg.args[1].lower().startswith("&topic") and "hackinbot" in msg.args[1].lower() \
                     and r >= 0.3:
                     irc.queueMsg(ircmsgs.privmsg(msg.args[0], "OH, hackinbot! " + random.choice(gemotes)))
+
+    def _lazyhostmask(self, host):
+        return "*!"+host.split("!",1)[1]
+
+    def vote(self, irc, msg, args, action):
+        """<thing>
+
+        Votes for something. It doesn't actually perform any actions directly,
+        but could be an interesting way to get user feedback."""
+        self.log.warning(action)
+        try:
+            if self._lazyhostmask(msg.prefix) in self.votes[action][1]:
+                irc.reply("You have already voted to %s." % action)
+                return
+        except KeyError:
+            self.votes[action] = [0, []]
+        self.votes[action][0] += 1
+        a, b = action.split(" ",1)
+        irc.reply("%s voted to \x02%s\x02 %s. (Votes: \x02%s\x02)" % (msg.nick, a, b, self.votes[action][0]))
+        self.votes[action][1].append(self._lazyhostmask(msg.prefix))
+    vote = wrap(vote, ['text'])
 
 Class = Randomness
 
