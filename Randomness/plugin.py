@@ -49,7 +49,9 @@ import supybot.ircutils as ircutils
 import supybot.ircmsgs as ircmsgs
 import supybot.ircdb as ircdb
 import supybot.callbacks as callbacks
+import supybot.conf as conf
 import random
+import json
 from base64 import b64decode
 from supybot.utils.structures import TimeoutQueue
 try:
@@ -67,7 +69,29 @@ class Randomness(callbacks.Plugin):
         self.__parent = super(Randomness, self)
         self.__parent.__init__(irc)
         self.dotCounter = TimeoutQueue(10)
-        self.votes = {}
+        self.vfilename = conf.supybot.directories.data.dirize(irc.network+".votes")
+        try:
+            with open(self.vfilename, "r") as f:
+                self.votes = json.load(f)
+        except IOError:
+            self.votes = {}
+
+    def loadVoteDB(self):
+        with open(self.vfilename, "r") as f:
+            self.votes = json.load(f)
+            
+    def exportVoteDB(self):
+        with open(self.vfilename, 'w') as f:
+            json.dump(self.votes, f)
+            f.write("\n")
+            
+    def die(self):
+        self.__parent.die()
+        try:
+            self.exportVoteDB()
+        except IOError as e:
+            self.log.error("Failed to export Votes DB: " + str(e))
+
     ##
     # SHHHHHHHHHHH DON'T SPOIL THE JOKES DOWN HERE
     ##
@@ -171,10 +195,46 @@ class Randomness(callbacks.Plugin):
         except KeyError:
             self.votes[action] = [0, []]
         self.votes[action][0] += 1
-        a, b = action.split(" ",1)
+        try:
+            a, b = action.split(" ",1)
+        except ValueError:
+            irc.error("Not enough arguments.", Raise=True)
         irc.reply("%s voted to \x02%s\x02 %s. (Votes: \x02%s\x02)" % (msg.nick, a, b, self.votes[action][0]))
         self.votes[action][1].append(self._lazyhostmask(msg.prefix))
     vote = wrap(vote, ['text'])
+    
+    def voteexport(self, irc, msg, args):
+        """takes no arguments.
+        
+        Exports votes stored in memory to file: data/%s(network).votes
+        This is done automatically when the plugin is unloaded or reloaded."""
+        try:
+            self.exportVoteDB()
+        except IOError as e:
+            irc.error("IOError caught exporting DB: "+str(e))
+        else:
+            irc.replySuccess()
+    voteexport = wrap(voteexport, ['admin'])
+
+    def voteimport(self, irc, msg, args):
+        """takes no arguments.
+        
+        Imports the vote database for the current network."""
+        try:
+            self.loadVoteDB()
+        except IOError as e:
+            irc.error("IOError caught importing DB: "+str(e))
+        else:
+            irc.replySuccess()
+    voteimport = wrap(voteimport, ['admin'])
+    
+    def voteclear(self, irc, msg, args):
+        """takes no arguments.
+        
+        Clears all votes stored in memory. Use with caution!"""
+        self.votes = {}
+        irc.replySuccess()
+    voteclear = wrap(voteclear, ['admin'])
 
 Class = Randomness
 
