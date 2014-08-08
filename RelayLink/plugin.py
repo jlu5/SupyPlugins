@@ -57,7 +57,7 @@ except:
 
 @internationalizeDocstring
 class RelayLink(callbacks.Plugin):
-    noIgnore = True
+    # noIgnore = True
     threaded = True
 
     class Relay():
@@ -218,12 +218,7 @@ class RelayLink(callbacks.Plugin):
         s = msg.args[1]
         s, args = self.getPrivmsgData(channel, msg.nick, s,
                                self.registryValue('color', channel))
-        ignoreNicks = [ircutils.toLower(item) for item in \
-            self.registryValue('ignore.nicks', msg.args[0])]
-        if self.registryValue('ignore.affectPrivmsgs', msg.args[0]) \
-            and ircutils.toLower(msg.nick) in ignoreNicks:
-                return
-        elif channel not in irc.state.channels: # in private
+        if channel not in irc.state.channels: # in private
             # cuts off the end of commands, so that passwords
             # won't be revealed in relayed PM's
             if callbacks.addressed(irc.nick, msg):
@@ -250,8 +245,6 @@ class RelayLink(callbacks.Plugin):
         self.addIRC(irc)
 
     def doMode(self, irc, msg):
-        ignoreNicks = [ircutils.toLower(item) for item in \
-            self.registryValue('ignore.nicks', msg.args[0])]
         self.addIRC(irc)
         self.nonPrivmsgCounter.enqueue([0])
         args = {'nick': msg.nick, 'channel': msg.args[0],
@@ -264,7 +257,7 @@ class RelayLink(callbacks.Plugin):
                 self.sendToOthers(irc, msg.args[0], s, args)
                 self.floodActivated = True
             else: return
-        elif ircutils.toLower(msg.nick) not in ignoreNicks:
+        else:
             self.floodActivated = False
             if self.registryValue('color', msg.args[0]):
                 # args['color'] = '\x03%s' % self.registryValue('colors.mode', msg.args[0])
@@ -278,8 +271,6 @@ class RelayLink(callbacks.Plugin):
 
     def doJoin(self, irc, msg):
         args = {'nick': msg.nick, 'channel': msg.args[0], 'userhost': ''}
-        ignoreNicks = [ircutils.toLower(item) for item in \
-            self.registryValue('ignore.nicks', msg.args[0])]
         self.nonPrivmsgCounter.enqueue([0])
         if irc.nick == msg.nick:
             if self.registryValue('color'):
@@ -294,7 +285,7 @@ class RelayLink(callbacks.Plugin):
                 self.sendToOthers(irc, msg.args[0], s, args)
                 self.floodActivated = True
             else: return
-        elif ircutils.toLower(msg.nick) not in ignoreNicks:
+        else:
             self.floodActivated = False
             if self.registryValue('color', msg.args[0]):
                 args['nick'] = '\x03%s%s\x03' % (self.simpleHash(msg.nick), msg.nick)
@@ -305,8 +296,6 @@ class RelayLink(callbacks.Plugin):
         self.sendToOthers(irc, msg.args[0], s, args)
 
     def doPart(self, irc, msg):
-        ignoreNicks = [ircutils.toLower(item) for item in \
-            self.registryValue('ignore.nicks', msg.args[0])]
         self.nonPrivmsgCounter.enqueue([0])
         args = {'nick': msg.nick, 'channel': msg.args[0], 'message': '',
                 'userhost': ''}
@@ -318,7 +307,7 @@ class RelayLink(callbacks.Plugin):
                 self.sendToOthers(irc, msg.args[0], s, args)
                 self.floodActivated = True
             else: return
-        elif ircutils.toLower(msg.nick) not in ignoreNicks:
+        else:
             self.addIRC(irc)
             self.floodActivated = False
             if self.registryValue('color', msg.args[0]):
@@ -358,8 +347,6 @@ class RelayLink(callbacks.Plugin):
         self.sendToOthers(irc, msg.args[0], s, args)
 
     def doNick(self, irc, msg):
-        ignoreNicks = [ircutils.toLower(item) for item in \
-            self.registryValue('ignore.nicks')]
         self.addIRC(irc)
         args = {'oldnick': msg.nick, 'newnick': msg.args[0]}
         self.nonPrivmsgCounter.enqueue([0])
@@ -370,8 +357,7 @@ class RelayLink(callbacks.Plugin):
             if s:
                 self.sendToOthers(irc, msg.args[0], s, args)
                 self.floodActivated = True
-            else: return
-        elif ircutils.toLower(msg.nick) not in ignoreNicks:
+        else:
             if self.registryValue('color'):
                 args['oldnick'] = '\x03%s%s\x03' % (self.simpleHash(msg.nick), msg.nick)
                 args['newnick'] = '\x03%s%s\x03' % (self.simpleHash(msg.args[0]), msg.args[0])
@@ -382,8 +368,6 @@ class RelayLink(callbacks.Plugin):
                     self.sendToOthers(irc, channel, s, args)
 
     def doQuit(self, irc, msg):
-        ignoreNicks = [ircutils.toLower(item) for item in \
-            self.registryValue('ignore.nicks')]
         args = {'nick': msg.nick, 'message': msg.args[0]}
         self.nonPrivmsgCounter.enqueue([0])
         if msg.nick == irc.nick: # It's us.
@@ -398,8 +382,7 @@ class RelayLink(callbacks.Plugin):
             if s:
                 self.sendToOthers(irc, msg.args[0], s, args)
                 self.floodActivated = True
-            else: return
-        elif ircutils.toLower(msg.nick) not in ignoreNicks:
+        else:
             if self.registryValue('color'):
                 args['nick'] = '\x03%s%s\x03' % (self.simpleHash(msg.nick), msg.nick)
             s = '%(network)s%(nick)s has quit (%(message)s)'

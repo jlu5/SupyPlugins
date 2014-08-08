@@ -76,30 +76,6 @@ conf.registerChannelValue(RelayLink, 'includeNetwork',
     network in relayed PRIVMSGs; if you're only relaying between two networks,
     it's somewhat redundant, and you may wish to save the space.""")))
 
-conf.registerGroup(RelayLink, 'ignore')
-conf.registerChannelValue(RelayLink.ignore, 'nicks',
-    registry.SpaceSeparatedListOfStrings('', _("""Determines a list of nicks for the bot to
-    ignore (takes a space-seperated list).""")))
-conf.registerChannelValue(RelayLink.ignore, 'affectPrivmsgs',
-    registry.Boolean(True, _("""Determines whether the bot will ignore PRIVMSGs
-    from the nicks listed in ignore. If set to False, the bot will only
-    ignore joins/parts/nicks/modes/quits (not kicks) from those nicks.""")))
-
-# class FloodPreventionConfigHandler(registry.String):
-    # """Invalid input. This value should be given in the form 'positiveInt:positiveInt'
-    # (amount:seconds)"""
-    # def setValue(self, v):
-        # try:
-            # i = [int(n) for n in v.split(":")]
-        # except ValueError:
-            # self.error()
-            # return
-        # if len(i) < 2 or i[0] < 0 or i[1] < 0:
-            # self.error()
-            # return
-        # else:
-            # registry.String.setValue(self, v)
-
 conf.registerGroup(RelayLink, 'antiflood')
 conf.registerGlobalValue(RelayLink.antiflood, 'enable',
     registry.Boolean(False, _("""Determines whether flood protection should
@@ -140,18 +116,6 @@ conf.registerGlobalValue(RelayLink, 'substitutes',
 
 conf.registerGlobalValue(RelayLink, 'logFailedChanges',
     registry.Boolean(False, _("""Determines whether the bot should log failed config changes.""")))
-
-# conf.registerGroup(RelayLink, 'colors')
-# for name, color in {'info': '02',
-                    # 'truncated': '14',
-                    # 'mode': '06',
-                    # 'join': '03',
-                    # 'part': '12',
-                    # 'kick': '04',
-                    # 'nick': '10',
-                    # 'quit': '07'}.items():
-    # conf.registerChannelValue(RelayLink.colors, name,
-        # ColorNumber(color, _("""Color used for relaying %s messages.""") % name))
 
 conf.registerGroup(RelayLink, 'addall')
 conf.registerGlobalValue(RelayLink.addall, 'max',
