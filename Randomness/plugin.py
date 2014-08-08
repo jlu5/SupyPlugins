@@ -131,7 +131,7 @@ class Randomness(callbacks.Plugin):
                             irc.queueMsg(ircmsgs.kick(msg.args[0], msg.nick, "nothx"))
                 elif ircutils.stripFormatting(msg.args[1]) == ".":
                     dotresponses = ["r u mad?", "lol r u mad", "mmm dots", ",", "no spam pls" + dots, ":D", "ok"]
-                    if len(self.dotCounter) >= 4:
+                    if len(self.dotCounter) >= 2:
                         r = random.random()
                         if r >= 0.5:
                             irc.queueMsg(ircmsgs.privmsg(msg.args[0], random.choice(dotresponses)))
