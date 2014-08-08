@@ -39,6 +39,8 @@
 #/_/ /_/ |_|\____/_____/_____/   /____/\____/_/ |_/___/_/     /_/
 #
 # Use at your own risk!
+##
+# But seriously though, this is supposed to be a joke, please don't be offended!
 
 import supybot.utils as utils
 from supybot.commands import *
@@ -48,6 +50,7 @@ import supybot.ircmsgs as ircmsgs
 import supybot.ircdb as ircdb
 import supybot.callbacks as callbacks
 import random
+from base64 import b64decode
 from supybot.utils.structures import TimeoutQueue
 try:
     from supybot.i18n import PluginInternationalization
@@ -111,16 +114,13 @@ class Randomness(callbacks.Plugin):
                                     "stop highlighting me!",
                                     "\x02%s\x02 added to ignore list." % msg.nick,
                                     "!votekline " + msg.nick]
-                    # brenden = ["stfu blossom", "stfu brenda", "~~brenda blossom~~"]
                     n = random.randint(-5, 101)
-                    #if n >= 96 and msg.nick.lower().startswith("brend"):
-                    #    irc.queueMsg(ircmsgs.privmsg("BotServ", "say {} {}".format(msg.args[0],random.choice(brenden))))
                     if n >= 42:
                         irc.queueMsg(ircmsgs.privmsg("BotServ", "say {} {}".format(msg.args[0],random.choice(wowResponses1))))
                     elif n >= 21:
                         irc.queueMsg(ircmsgs.privmsg("BotServ", "act {} {}".format(msg.args[0],random.choice(volatile)+msg.nick)))
                 elif msg.nick.lower().startswith("brend"):
-                    bad = ["chink", "dog fried", "nigr", "nigger", "chinq"]
+                    bad = ["chink", "nigr", "nigger", "chinq"] # Seriously though, racism *sucks*.
                     for w in bad:
                         if w in ircutils.stripFormatting(msg.args[1].lower()):
                             irc.queueMsg(ircmsgs.kick(msg.args[0], msg.nick, "RACIST"))
@@ -144,16 +144,13 @@ class Randomness(callbacks.Plugin):
                     elif r >= 6:
                         irc.queueMsg(ircmsgs.privmsg(msg.args[0], random.choice(okresponses)))
             if irc.network.lower() in ["overdrive-irc", "stripechat"] and \
-                "brendi hitler blossom" in ircutils.stripFormatting(msg.args[1].lower()):
+                b64decode('aGl0bGVyIGJsb3Nzb20=') in ircutils.stripFormatting(msg.args[1].lower()):
                 irc.queueMsg(ircmsgs.privmsg(msg.args[0], msg.nick + ": the entire topic changes" + exclaim))
             if irc.network.lower() == "stripechat":
                 r = random.random()
                 if msg.args[1].lower().startswith("&topic") and "hackinbot" in msg.args[1].lower() \
                     and r >= 0.3:
                     irc.queueMsg(ircmsgs.privmsg(msg.args[0], "OH, hackinbot! " + random.choice(gemotes)))
-                    
-                    
-
 
 Class = Randomness
 
