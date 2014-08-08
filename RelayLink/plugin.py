@@ -821,6 +821,36 @@ class RelayLink(callbacks.Plugin):
         irc.replySuccess()
     nosubstitute = wrap(nosubstitute, [('checkCapability', 'admin'),
                                        'something'])
+    def rpm(self, irc, msg, args, remoteuser, otherIrc, text):
+        """<remoteUser> <network> <text>
+
+        Sends a private message to a user on a remote network."""
+        found = found2 = False
+        if not self.registryValue("remotepm.enable"):
+            irc.error("This command is not enabled; please set 'config plugins.relaylink.remotepm.enable' "
+                "to True.", Raise=True)
+        for relay in self.relays:
+            channels = otherIrc.state.channels
+            for key, channel_ in channels.items():
+                if ircutils.toLower(relay.targetChannel) \
+                    == ircutils.toLower(key) and remoteuser in channel_.users:
+                    found = True
+                    break
+            for ch in irc.state.channels:
+                if ircutils.toLower(relay.sourceChannel) == \
+                    ircutils.toLower(ch) and msg.nick in irc.state.channels[ch].users:
+                    found2 = True
+                    break
+        if found and found2:
+            prefix = msg.prefix if self.registryValue("remotepm.useHostmasks") else msg.nick
+            if self.registryValue("remotepm.useNotice"):
+                otherIrc.queueMsg(ircmsgs.notice(remoteuser, "Message from %s on %s: %s" % (prefix, irc.network, text)))
+            else:
+                otherIrc.queueMsg(ircmsgs.privmsg(remoteuser, "Message from %s on %s: %s" % (prefix, irc.network, text)))
+        else:
+            irc.error("User '%s' does not exist on %s or you are not sharing "
+                "a channel with them." % (remoteuser, otherIrc.network), Raise=True)
+    rpm = wrap(rpm, ['nick', ('networkIrc', True), 'text'])
 
 Class = RelayLink
 

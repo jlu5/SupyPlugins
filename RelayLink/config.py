@@ -76,6 +76,17 @@ conf.registerChannelValue(RelayLink, 'includeNetwork',
     network in relayed PRIVMSGs; if you're only relaying between two networks,
     it's somewhat redundant, and you may wish to save the space.""")))
 
+conf.registerGroup(RelayLink, 'remotepm')
+conf.registerChannelValue(RelayLink.remotepm, 'enable',
+    registry.Boolean(False, _("""Determines whether cross-network PMs through the
+    bot will be allowed.""")))
+conf.registerChannelValue(RelayLink.remotepm, 'useNotice',
+    registry.Boolean(True, _("""Determines whether cross-network PMs should use notices
+    instead of PRIVMSGs.""")))
+conf.registerChannelValue(RelayLink.remotepm, 'useHostmasks',
+    registry.Boolean(True, _("""Determines whether cross-network PMs should show hostnames
+    instead of just the user's nick.""")))
+
 conf.registerGroup(RelayLink, 'antiflood')
 conf.registerGlobalValue(RelayLink.antiflood, 'enable',
     registry.Boolean(False, _("""Determines whether flood protection should
