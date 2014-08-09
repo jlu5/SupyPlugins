@@ -122,15 +122,15 @@ class Randomness(callbacks.Plugin):
                                     "WHAT DO YOU WANT",
                                     "leave me alone "+random.choice(bemotes),
                                     "hello, you've reached the user 'wow'. "
-                                        "for peoplehat actually need to talk to me, "
-                                        "press 1. for everybody else, PISS OFF!"
+                                        "for people that actually need to talk to me, "
+                                        "press 1. for everybody else, PISS OFF!",
                                     "stop highlighting me" + dots,
-                                    "reproted to fbi for harrassment" + dots,
+                                    "reproted to fbi for harassment" + dots,
                                     "-_-",
                                     msg.nick + " pls",
-                                    "need something?"
-                                    "r u mad"
-                                    "ur made"
+                                    "need something?",
+                                    "r u mad",
+                                    "ur made",
                                     "fml",
                                     "?",
                                     ".",
