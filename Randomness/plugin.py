@@ -52,7 +52,6 @@ import supybot.callbacks as callbacks
 import supybot.conf as conf
 import random
 import json
-from base64 import b64decode
 from supybot.utils.structures import TimeoutQueue
 try:
     from supybot.i18n import PluginInternationalization
@@ -141,21 +140,21 @@ class Randomness(callbacks.Plugin):
                                     "stop highlighting me!",
                                     "\x02%s\x02 added to ignore list." % msg.nick,
                                     "!votekline " + msg.nick]
-                    n = random.randint(-5, 101)
-                    if n >= 42:
+                    n = random.randint(0, 91)
+                    if n >= 60:
                         irc.queueMsg(ircmsgs.privmsg("BotServ", "say {} {}".format(msg.args[0],random.choice(wowResponses1))))
-                    elif n >= 21:
+                    elif n >= 50:
                         irc.queueMsg(ircmsgs.privmsg("BotServ", "act {} {}".format(msg.args[0],random.choice(volatile)+msg.nick)))
-                elif msg.nick.lower().startswith("brend"):
-                    bad = ["chink", "nigr", "nigger", "chinq"] # Seriously though, racism *sucks*.
-                    for w in bad:
-                        if w in ircutils.stripFormatting(msg.args[1].lower()):
-                            irc.queueMsg(ircmsgs.kick(msg.args[0], msg.nick, "RACIST"))
-                        return
-                    alsobad = ["veggie tales", 'whore', 'wh0re']
-                    for w in alsobad:
-                        if w in ircutils.stripFormatting(msg.args[1].lower()):
-                            irc.queueMsg(ircmsgs.kick(msg.args[0], msg.nick, "nothx"))
+#                elif msg.nick.lower().startswith("brend"):
+#                    bad = ["chink", "nigr", "nigger", "chinq"] # Seriously though, racism *sucks*.
+#                    for w in bad:
+#                        if w in ircutils.stripFormatting(msg.args[1].lower()):
+#                            irc.queueMsg(ircmsgs.kick(msg.args[0], msg.nick, "RACIST"))
+#                        return
+#                    alsobad = ["veggie tales", 'whore', 'wh0re']
+#                    for w in alsobad:
+#                        if w in ircutils.stripFormatting(msg.args[1].lower()):
+#                            irc.queueMsg(ircmsgs.kick(msg.args[0], msg.nick, "nothx"))
                 elif ircutils.stripFormatting(msg.args[1]) == ".":
                     dotresponses = ["r u mad?", "lol r u mad", "mmm dots", ",", "no spam pls" + dots, ":D", "ok"]
                     if len(self.dotCounter) >= 2:
@@ -166,18 +165,18 @@ class Randomness(callbacks.Plugin):
                 elif ircutils.stripFormatting(msg.args[1]) == "ok":
                     okresponses = ["not ok", "ok", "ko", "okay*", "O.K.", "^why does everyone say that ._."]
                     r = random.randint(1, 23)
-                    if r >= 17:
+                    if r >= 19:
                         irc.queueMsg(ircmsgs.action(msg.args[0], random.choice(volatile)+msg.nick))
-                    elif r >= 6:
+                    elif r >= 8:
                         irc.queueMsg(ircmsgs.privmsg(msg.args[0], random.choice(okresponses)))
-            if irc.network.lower() in ["overdrive-irc", "stripechat"] and \
-                b64decode('aGl0bGVyIGJsb3Nzb20=') in ircutils.stripFormatting(msg.args[1].lower()):
-                irc.queueMsg(ircmsgs.privmsg(msg.args[0], msg.nick + ": the entire topic changes" + exclaim))
-            if irc.network.lower() == "stripechat":
-                r = random.random()
-                if msg.args[1].lower().startswith("&topic") and "hackinbot" in msg.args[1].lower() \
-                    and r >= 0.3:
-                    irc.queueMsg(ircmsgs.privmsg(msg.args[0], "OH, hackinbot! " + random.choice(gemotes)))
+ #           if irc.network.lower() in ["overdrive-irc", "stripechat"] and \
+ #               b64decode('aGl0bGVyIGJsb3Nzb20=') in ircutils.stripFormatting(msg.args[1].lower()):
+ #               irc.queueMsg(ircmsgs.privmsg(msg.args[0], msg.nick + ": the entire topic changes" + exclaim))
+ #           if irc.network.lower() == "stripechat":
+ #               r = random.random()
+ #               if msg.args[1].lower().startswith("&topic") and "hackinbot" in msg.args[1].lower() \
+ #                   and r >= 0.3:
+ #                   irc.queueMsg(ircmsgs.privmsg(msg.args[0], "OH, hackinbot! " + random.choice(gemotes)))
 
     def _lazyhostmask(self, host):
         return "*!"+host.split("!",1)[1]
@@ -187,7 +186,6 @@ class Randomness(callbacks.Plugin):
 
         Votes for something. It doesn't actually perform any actions directly,
         but could be an interesting way to get user feedback."""
-        self.log.warning(action)
         try:
             if self._lazyhostmask(msg.prefix) in self.votes[action][1]:
                 irc.reply("You have already voted to %s." % action)
