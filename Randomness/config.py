@@ -48,8 +48,8 @@ def configure(advanced):
 
 
 Randomness = conf.registerPlugin('Randomness')
-conf.registerGlobalValue(Randomness, 'enable',
-     registry.Boolean(False, _("""Turns this plugin on or off.""")))
+conf.registerChannelValue(Randomness, 'enable',
+     registry.Boolean(False, _("""Turns this plugin's auto-responses on or off.""")))
 
 
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:

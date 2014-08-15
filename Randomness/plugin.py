@@ -101,7 +101,7 @@ class Randomness(callbacks.Plugin):
     # ..why are you still here? >_>
     ##
     def doPrivmsg(self, irc, msg):
-        if self.registryValue("enable"):
+        if ircutils.isChannel(msg.args[0]) and self.registryValue("enable", msg.args[0]):
             dots = "." * random.randint(0,10) # added emphasis...............
             volatile = ["kicks ", "stabs ", "fites ", "bans ", "ddas ", "packets ", "beats "]
             exclaim = (("!" * random.randint(1,5)) + ("1" * random.randint(0,2))) * \
@@ -110,13 +110,14 @@ class Randomness(callbacks.Plugin):
             bemotes = ["-_-", ":|", ":\\", ":/"]
             if irc.network.lower() == "overdrive-irc":
                 if "wow" in irc.state.channels[msg.args[0]].ops and \
+                    ircutils.isChannel(msg.args[0]) and \
                     ircutils.stripFormatting(msg.args[1].lower()).startswith("wow"):
                     wowResponses1 = ["what is it",
                                     "hi %s%s" % (msg.nick, dots),
                                     "o/",
                                     "HI %s%s" % (msg.nick.upper(), dots),
                                     "go away "+random.choice(bemotes),
-                                    "FFS"+random.choice(bemotes),
+                                    "FFS "+random.choice(bemotes),
                                     "ffs i'm trying to work",
                                     "WHAT DO YOU WANT",
                                     "leave me alone "+random.choice(bemotes),
@@ -169,9 +170,9 @@ class Randomness(callbacks.Plugin):
                         irc.queueMsg(ircmsgs.action(msg.args[0], random.choice(volatile)+msg.nick))
                     elif r >= 8:
                         irc.queueMsg(ircmsgs.privmsg(msg.args[0], random.choice(okresponses)))
- #           if irc.network.lower() in ["overdrive-irc", "stripechat"] and \
- #               b64decode('aGl0bGVyIGJsb3Nzb20=') in ircutils.stripFormatting(msg.args[1].lower()):
- #               irc.queueMsg(ircmsgs.privmsg(msg.args[0], msg.nick + ": the entire topic changes" + exclaim))
+            if irc.network.lower() in ["overdrive-irc", "stripechat"] and \
+                ('aXRsZXIgYmxvc3NvbQ==').decode('base64') in ircutils.stripFormatting(msg.args[1].lower()):
+                irc.queueMsg(ircmsgs.privmsg(msg.args[0], msg.nick + ": the entire topic changes" + exclaim))
  #           if irc.network.lower() == "stripechat":
  #               r = random.random()
  #               if msg.args[1].lower().startswith("&topic") and "hackinbot" in msg.args[1].lower() \
