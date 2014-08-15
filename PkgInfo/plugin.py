@@ -44,12 +44,11 @@ except ImportError:
     _ = lambda x:x
 
 class PkgInfo(callbacks.Plugin):
-    """Add the help for "@plugin help PkgInfo" here
-    This should describe *how* to use this plugin."""
+    """Fetches package information from Debian and Ubuntu's websites."""
     threaded = True
     
     class DebPkgParse(HTMLParser):
-    # Debian/Ubuntu are nice and give us meta tags in the beginning of the page
+    # Debian and Ubuntu are nice and give us meta tags in the beginning of the page!
         def handle_starttag(self, tag, attrs):
             if tag == "meta":
                 attrs = dict(attrs)
@@ -64,13 +63,14 @@ class PkgInfo(callbacks.Plugin):
             HTMLParser.feed(self, data)
             return self.tags
             
-    def DebianParse(self, dist, pkg, distro=None):
+    def DebianParse(self, irc, dist, pkg, distro=None):
         parser = PkgInfo.DebPkgParse()
-        if distro in ("debian", None) and dist.startswith(("oldstable","squeeze","wheezy","stable",
+        if distro == "debian" or dist.startswith(("oldstable","squeeze","wheezy","stable",
             "jessie","testing","sid","unstable")):
             baseurl = "http://packages.debian.org/"
-        else: # Ubuntu has a lot of versions possible, so let's just default to it
+        elif distro == "ubuntu":
             baseurl = "http://packages.ubuntu.com/"
+        self.baseurl = baseurl
         self.url = baseurl + "{}/{}".format(dist, pkg)
         self.fd = utils.web.getUrl(self.url)
         return parser.feed(self.fd)
@@ -78,12 +78,14 @@ class PkgInfo(callbacks.Plugin):
     def package(self, irc, msg, args, dist, pkg):
         """[<distribution>/]<codename> <package>
         
-        Fetches package information for Linux distributions using their respective websites.
-        If distribution is not given, the bot will try to guess it from the codename."""
+        Fetches information for <package> from Debian or Ubuntu's websites.
+        If <distribution> ("debian" or "ubuntu") is not given,
+        the bot will try to guess it from the codename (such as 'trusty'
+        or 'wheezy')."""
         try: distro,dist = dist.split("/")
         except ValueError: distro = None
         else: distro = distro.lower()
-        p = self.DebianParse(dist.lower(),pkg.lower(),distro)
+        p = self.DebianParse(irc, dist.lower(),pkg.lower(),distro)
         if "Error</title>" in self.fd:
             err = re.findall("""<div class\="perror">\s*<p>(.*?)</p>$""", self.fd, re.M)
             if "two or more packages specified" in err[0]:
@@ -93,11 +95,35 @@ class PkgInfo(callbacks.Plugin):
         try:
             c = ' '.join(p[2].split("-"))
         except: c = p[2]
-        # This will return a list in the form [package description, distro, release/codename, 
-        # language (will always be 'en'), component, section, package-version]
+        # This <s>will</s>should return a list in the form [package description, distro,
+        # release/codename, language (will always be 'en'), component, section, package-version]
         irc.reply("Package: \x02{} ({})\x02 in {} {} - {}; View more at: {}".format(pkg, p[-1], p[1], 
         c, p[0], self.url))
     package = wrap(package, ['somethingWithoutSpaces', 'somethingWithoutSpaces'])
+
+    def vlist(self, irc, msg, args, distro, pkg):
+        """<distribution> <package>
+
+        Fetches all available version of <package> in <distribution>, if such package exists."""
+        versions = {}
+        if distro.lower() == "ubuntu":
+            suites = ['lucid', 'lucid-updates', 'lucid-backports', 'precise', 'precise-updates', 'precise-backports', 'raring', 'raring-updates', 'raring-backports', 'saucy', 'saucy-updates', 'saucy-backports', 'trusty', 'trusty-updates', 'trusty-backports', 'utopic']
+        elif distro.lower() == "debian":
+            suites = ['squeeze', 'squeeze-updates', 'squeeze-backports', 'squeeze-backports-sloppy', 'wheezy', 'wheezy-updates', 'wheezy-backports', 'jessie', 'sid', 'experimental']
+        else: irc.error("Unknown distribution/release.", Raise=True)
+        for su in suites:
+            p = self.DebianParse(irc, su, pkg.lower(), distro.lower())
+            if "Error</title>" not in self.fd:
+                # make a dict in the form {suite:version}
+                versions[p[2]] = p[-1]
+        if not versions:
+            irc.error("No results found.", Raise=True)
+        s = "Found {} results:".format(len(versions))
+        for v in versions.keys():
+            s += " {} \x02({})\x02,".format(v, versions[v])
+        s += " View more at: {}search?keywords={}".format(self.baseurl, pkg)
+        irc.reply(s)
+    vlist = wrap(vlist, ['somethingWithoutSpaces', 'somethingWithoutSpaces'])
 
 
 Class = PkgInfo
