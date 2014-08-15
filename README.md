@@ -31,7 +31,10 @@ Any specific plugin dependencies *should* also be listed.
 - Simple plugin that allows Supybot to oper up on configured networks, automatically (on connect) and manually.
 
 ##### PassGen
-- Generates passwords on the fly!
+- Generates random passwords on the fly!
+
+##### PkgList
+- Fetches package information from Debian and Ubuntu's websites.
 
 ##### Randomness
 - Random commands for my own personal use; you probably don't want this 
