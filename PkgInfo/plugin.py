@@ -68,24 +68,23 @@ class PkgInfo(callbacks.Plugin):
         if distro == "debian" or dist.startswith(("oldstable","squeeze","wheezy","stable",
             "jessie","testing","sid","unstable")):
             baseurl = "http://packages.debian.org/"
-        elif distro == "ubuntu":
+        else:
             baseurl = "http://packages.ubuntu.com/"
         self.baseurl = baseurl
         self.url = baseurl + "{}/{}".format(dist, pkg)
-        self.fd = utils.web.getUrl(self.url)
+        try:
+            self.fd = utils.web.getUrl(self.url) 
+        except Exception as e:
+            irc.error(str(e), Raise=True)
         return parser.feed(self.fd)
         
     def package(self, irc, msg, args, dist, pkg):
-        """[<distribution>/]<codename> <package>
+        """<distribution> <package>
         
         Fetches information for <package> from Debian or Ubuntu's websites.
-        If <distribution> ("debian" or "ubuntu") is not given,
-        the bot will try to guess it from the codename (such as 'trusty'
-        or 'wheezy')."""
-        try: distro,dist = dist.split("/")
-        except ValueError: distro = None
-        else: distro = distro.lower()
-        p = self.DebianParse(irc, dist.lower(),pkg.lower(),distro)
+        <distribution> is the codename/release name (e.g. 'trusty', 'squeeze');
+        the bot will automatically guess the distribution accordingly."""
+        p = self.DebianParse(irc, dist.lower(),pkg.lower())
         if "Error</title>" in self.fd:
             err = re.findall("""<div class\="perror">\s*<p>(.*?)</p>$""", self.fd, re.M)
             if "two or more packages specified" in err[0]:
