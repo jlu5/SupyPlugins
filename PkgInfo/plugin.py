@@ -118,7 +118,7 @@ class PkgInfo(callbacks.Plugin):
         if not versions:
             irc.error("No results found.", Raise=True)
         s = "Found {} results:".format(len(versions))
-        for v in versions.keys():
+        for v in sorted(versions, key=versions.get):
             s += " {} \x02({})\x02,".format(v, versions[v])
         s += " View more at: {}search?keywords={}".format(self.baseurl, pkg)
         irc.reply(s)
