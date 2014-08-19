@@ -33,6 +33,7 @@ from supybot.commands import *
 import supybot.plugins as plugins
 import supybot.ircutils as ircutils
 import supybot.callbacks as callbacks
+from collections import OrderedDict
 from HTMLParser import HTMLParser
 import re
 try:
@@ -104,7 +105,7 @@ class PkgInfo(callbacks.Plugin):
         """<distribution> <package>
 
         Fetches all available version of <package> in <distribution>, if such package exists."""
-        versions = {}
+        versions = OrderedDict()
         if distro.lower() == "ubuntu":
             suites = ['lucid', 'lucid-updates', 'lucid-backports', 'precise', 'precise-updates', 'precise-backports', 'raring', 'raring-updates', 'raring-backports', 'saucy', 'saucy-updates', 'saucy-backports', 'trusty', 'trusty-updates', 'trusty-backports', 'utopic']
         elif distro.lower() == "debian":
@@ -118,7 +119,7 @@ class PkgInfo(callbacks.Plugin):
         if not versions:
             irc.error("No results found.", Raise=True)
         s = "Found {} results:".format(len(versions))
-        for v in sorted(versions, key=versions.get):
+        for v in versions:
             s += " {} \x02({})\x02,".format(v, versions[v])
         s += " View more at: {}search?keywords={}".format(self.baseurl, pkg)
         irc.reply(s)
