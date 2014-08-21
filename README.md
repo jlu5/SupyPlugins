@@ -8,7 +8,7 @@ This repository includes forks/mods of existing Supybot plugins and some that I'
 ## Support
 If you have any questions, concerns, or feature requests, please feel free to submit an issue. 
 
-Or, you can find me on IRC at: ``irc.overdrive.pw #dev`` ([webchat](http://webchat.overdrive.pw/?channels=dev))
+Or, you can find me on IRC at: `irc.overdrive.pw #dev` ([webchat](http://webchat.overdrive.pw/?channels=dev))
 
 ## List of plugins
 Please note that this list may not always be up to date; your best bet is to actually browse the code for yourself!
@@ -48,6 +48,7 @@ loaded!
 
 ##### SysDNS
 - An alternative to Supybot's built-in DNS function, using DNS lookup utilities (such as host or dig) available on the host machine.
+    * ***Requires:*** a DNS lookup binary such as `host` (as in `/usr/bin/host`) or something similar (installable in Debian/Ubuntu via `apt-get install bind9-host`)
 
 ##### TLDInfo
 - Fetches TLD information using IANA's database (http://www.iana.org/domains/root/db/).

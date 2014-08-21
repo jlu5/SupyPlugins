@@ -49,12 +49,11 @@ def configure(advanced):
 
 
 SysDNS = conf.registerPlugin('SysDNS')
-# This is where your configuration variables (if any) should go.  For example:
-# conf.registerGlobalValue(SysDNS, 'someConfigVariableName',
-#     registry.Boolean(False, _("""Help for someConfigVariableName.""")))
 conf.registerGlobalValue(SysDNS, 'command',
     registry.String(utils.findBinaryInPath('host') or '', _("""Determines
-    what command will be called by the dns command.""")))
+    what command will be called by the dns command. This should usually be 
+    the location of the 'host' binary (or similar tool), such as 
+    '/usr/bin/host'.""")))
 
 
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:

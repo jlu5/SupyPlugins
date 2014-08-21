@@ -55,7 +55,7 @@ class SysDNS(callbacks.Plugin):
         """
         cmd = self.registryValue('command')
         if not cmd:
-            irc.error('This plugin is not correctly configured. Please configure'
+            irc.error('This plugin is not correctly configured. Please configure '
                       'supybot.plugins.SysDNS.command appropriately.', Raise=True)
         else:
             try:
