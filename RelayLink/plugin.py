@@ -30,9 +30,7 @@
 ###
 
 import re
-import time
 import copy
-import string
 import itertools
 import supybot.log as log
 import supybot.conf as conf
