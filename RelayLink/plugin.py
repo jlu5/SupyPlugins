@@ -142,19 +142,6 @@ class RelayLink(callbacks.Plugin):
             return
 
     def getPrivmsgData(self, channel, nick, text, colored):
-        if self.registryValue("antiflood.enable") and \
-            self.registryValue("antiflood.privmsgs") > 0 and \
-            (len(self.privmsgCounter) > self.registryValue("antiflood.privmsgs")):
-            if self.registryValue("antiflood.announce") and not self.floodActivated:
-                msgs = self.registryValue("antiflood.privmsgs")
-                secs = self.registryValue("antiflood.seconds")
-                s = ("%(network)s*** Flood detected ({msgs} messages in {secs} seconds). Not relaying messages"
-                    " for {secs} seconds!".format(secs=secs, msgs=msgs)), {}
-                self.floodActivated = True
-                return s
-            else:
-                return
-        self.floodActivated = False
         color = self.simpleHash(nick)
         nickprefix = ''
         if nick in self.nickSubstitutions:
@@ -211,7 +198,6 @@ class RelayLink(callbacks.Plugin):
 
     def doPrivmsg(self, irc, msg):
         self.addIRC(irc)
-        self.privmsgCounter.enqueue([0])
         channel = msg.args[0]
         s = msg.args[1]
         s, args = self.getPrivmsgData(channel, msg.nick, s,
@@ -244,50 +230,29 @@ class RelayLink(callbacks.Plugin):
 
     def doMode(self, irc, msg):
         self.addIRC(irc)
-        self.nonPrivmsgCounter.enqueue([0])
         args = {'nick': msg.nick, 'channel': msg.args[0],
                 'mode': ' '.join(msg.args[1:]), 'userhost': ''}
         if self.registryValue("noHighlight", msg.args[0]):
             args['nick'] = '-'+msg.nick
-        if self.registryValue("antiflood.enable") and \
-            self.registryValue("antiflood.nonprivmsgs") > 0 and \
-            (len(self.nonPrivmsgCounter) > self.registryValue("antiflood.nonprivmsgs")):
-            s = self.floodDetect()
-            if s:
-                self.sendToOthers(irc, msg.args[0], s, args)
-                self.floodActivated = True
-            else: return
-        else:
-            self.floodActivated = False
-            if self.registryValue('color', msg.args[0]):
-                args['nick'] = '\x03%s%s\x03' % (self.simpleHash(msg.nick), args['nick'])
-            if self.registryValue('hostmasks', msg.args[0]) and "." not in \
-                msg.nick:
-                args['userhost'] = ' (%s@%s)' % (msg.user, msg.host)
-            s = ('%(network)s%(nick)s%(userhost)s set mode %(mode)s on'
-                 ' %(channel)s')
-            self.sendToOthers(irc, msg.args[0], s, args)
+        if self.registryValue('color', msg.args[0]):
+            args['nick'] = '\x03%s%s\x03' % (self.simpleHash(msg.nick), args['nick'])
+        if self.registryValue('hostmasks', msg.args[0]) and "." not in \
+            msg.nick:
+            args['userhost'] = ' (%s@%s)' % (msg.user, msg.host)
+        s = ('%(network)s%(nick)s%(userhost)s set mode %(mode)s on'
+             ' %(channel)s')
+        self.sendToOthers(irc, msg.args[0], s, args)
 
     def doJoin(self, irc, msg):
         args = {'nick': msg.nick, 'channel': msg.args[0], 'userhost': ''}
         if self.registryValue("noHighlight", msg.args[0]):
             args['nick'] = '-'+msg.nick
-        self.nonPrivmsgCounter.enqueue([0])
         if irc.nick == msg.nick:
             if self.registryValue('color'):
                 s = '%(network)s\x0309*** Relay joined to %(channel)s'
             else:
                 s = '%(network)s*** Relay joined to %(channel)s'
-        elif self.registryValue("antiflood.enable") and \
-            self.registryValue("antiflood.nonprivmsgs") > 0 and \
-            (len(self.nonPrivmsgCounter) > self.registryValue("antiflood.nonprivmsgs")):
-            s = self.floodDetect()
-            if s:
-                self.sendToOthers(irc, msg.args[0], s, args)
-                self.floodActivated = True
-            else: return
         else:
-            self.floodActivated = False
             if self.registryValue('color', msg.args[0]):
                 args['nick'] = '\x03%s%s\x03' % (self.simpleHash(msg.nick), args['nick'])
             if self.registryValue('hostmasks', msg.args[0]):
@@ -297,47 +262,25 @@ class RelayLink(callbacks.Plugin):
         self.sendToOthers(irc, msg.args[0], s, args)
 
     def doPart(self, irc, msg):
-        self.nonPrivmsgCounter.enqueue([0])
         args = {'nick': msg.nick, 'channel': msg.args[0], 'message': '',
                 'userhost': ''}
         if self.registryValue("noHighlight", msg.args[0]):
             args['nick'] = '-'+msg.nick
-        if self.registryValue("antiflood.enable") and \
-            self.registryValue("antiflood.nonprivmsgs") > 0 and \
-            (len(self.nonPrivmsgCounter) > self.registryValue("antiflood.nonprivmsgs")):
-            s = self.floodDetect()
-            if s:
-                self.sendToOthers(irc, msg.args[0], s, args)
-                self.floodActivated = True
-            else: return
-        else:
-            self.addIRC(irc)
-            self.floodActivated = False
-            if self.registryValue('color', msg.args[0]):
-                args['nick'] = '\x03%s%s\x03' % (self.simpleHash(msg.nick), args['nick'])
-            if self.registryValue('hostmasks', msg.args[0]):
-                args['userhost'] = ' (%s@%s)' % (msg.user, msg.host)
-            try:
-                args['message'] = ' (%s)' % (msg.args[1])
-            except IndexError:
-                pass
-            s = '%(network)s%(nick)s%(userhost)s has parted %(channel)s%(message)s'
-            self.sendToOthers(irc, msg.args[0], s, args)
+        self.addIRC(irc)
+        if self.registryValue('color', msg.args[0]):
+            args['nick'] = '\x03%s%s\x03' % (self.simpleHash(msg.nick), args['nick'])
+        if self.registryValue('hostmasks', msg.args[0]):
+            args['userhost'] = ' (%s@%s)' % (msg.user, msg.host)
+        try:
+            args['message'] = ' (%s)' % (msg.args[1])
+        except IndexError: pass
+        s = '%(network)s%(nick)s%(userhost)s has parted %(channel)s%(message)s'
+        self.sendToOthers(irc, msg.args[0], s, args)
 
     def doKick(self, irc, msg):
         self.addIRC(irc)
         args = {'kicked': msg.args[1], 'channel': msg.args[0],
                 'kicker': msg.nick, 'message': msg.args[2], 'userhost': ''}
-        self.nonPrivmsgCounter.enqueue([0])
-        if self.registryValue("antiflood.enable") and \
-            self.registryValue("antiflood.nonprivmsgs") > 0 and \
-            (len(self.nonPrivmsgCounter) > self.registryValue("antiflood.nonprivmsgs")):
-            s = self.floodDetect()
-            if s:
-                self.sendToOthers(irc, msg.args[0], s, args)
-                self.floodActivated = True
-            return
-        self.floodActivated = False
         if self.registryValue('color', msg.args[0]):
             args['kicked'] = '\x03%s%s\x03' % (self.simpleHash(msg.args[1]), args['kicked'])
         if self.registryValue('hostmasks', msg.args[0]):
@@ -356,45 +299,26 @@ class RelayLink(callbacks.Plugin):
             args = {'oldnick': '-'+msg.nick, 'newnick': '-'+msg.args[0]}
         else:
             args = {'oldnick': msg.nick, 'newnick': msg.args[0]}
-        self.nonPrivmsgCounter.enqueue([0])
-        if self.registryValue("antiflood.enable") and \
-            self.registryValue("antiflood.nonprivmsgs") > 0 and \
-            (len(self.nonPrivmsgCounter) > self.registryValue("antiflood.nonprivmsgs")):
-            s = self.floodDetect()
-            if s:
-                self.sendToOthers(irc, msg.args[0], s, args)
-                self.floodActivated = True
-        else:
-            if self.registryValue('color'):
-                args['oldnick'] = '\x03%s%s\x03' % (self.simpleHash(msg.nick), args['oldnick'])
-                args['newnick'] = '\x03%s%s\x03' % (self.simpleHash(msg.args[0]), args['newnick'])
-            s = '%(network)s%(oldnick)s is now known as %(newnick)s'
-            self.floodActivated = False
-            for (channel, c) in irc.state.channels.iteritems():
-                if msg.args[0] in c.users:
-                    self.sendToOthers(irc, channel, s, args)
+        if self.registryValue('color'):
+            args['oldnick'] = '\x03%s%s\x03' % (self.simpleHash(msg.nick), args['oldnick'])
+            args['newnick'] = '\x03%s%s\x03' % (self.simpleHash(msg.args[0]), args['newnick'])
+        s = '%(network)s%(oldnick)s is now known as %(newnick)s'
+        for (channel, c) in irc.state.channels.iteritems():
+            if msg.args[0] in c.users:
+                self.sendToOthers(irc, channel, s, args)
 
     def doQuit(self, irc, msg):
         args = {'nick': msg.nick, 'message': msg.args[0]}
         if self.registryValue("noHighlight"): args['nick'] = '-' + msg.nick
-        self.nonPrivmsgCounter.enqueue([0])
         if msg.nick == irc.nick: # It's us.
             if self.registryValue('color'):
                 s = '%(network)s\x0304*** ERROR: Relay disconnected...'
             else:
                 s = '%(network)s*** ERROR: Relay disconnected...'
-        elif self.registryValue("antiflood.enable") and \
-            self.registryValue("antiflood.nonprivmsgs") > 0 and \
-            (len(self.nonPrivmsgCounter) > self.registryValue("antiflood.nonprivmsgs")):
-            s = self.floodDetect()
-            if s:
-                self.sendToOthers(irc, msg.args[0], s, args)
-                self.floodActivated = True
         else:
             if self.registryValue('color'):
                 args['nick'] = '\x03%s%s\x03' % (self.simpleHash(msg.nick), args['nick'])
             s = '%(network)s%(nick)s has quit (%(message)s)'
-            self.floodActivated = False
         self.sendToOthers(irc, None, s, args, msg.nick)
         self.addIRC(irc)
 
@@ -434,7 +358,21 @@ class RelayLink(callbacks.Plugin):
                     return
                 msg.tag('relayedMsg')
                 relay.targetIRC.sendMsg(msg)
-
+        
+        if self.registryValue("antiflood.enable") and (len(self.nonPrivmsgCounter) \
+            > self.registryValue("antiflood.nonprivmsgs") or \
+            len(self.privmsgCounter) > self.registryValue("antiflood.privmsgs")):
+            s = self.floodDetect()
+            if s: 
+                for relay in self.relays:
+                    new_s = format_(relay, s, args)
+                    if relay.channelRegex.match(channel) and \
+                        relay.networkRegex.match(irc.network) and \
+                        relay.messageRegex.search(new_s):
+                        send(new_s)
+            return
+        else: self.floodActivated = False
+        
         if channel is None:
             for relay in self.relays:
                 if not relay.hasSourceIRCChannels:
@@ -445,13 +383,17 @@ class RelayLink(callbacks.Plugin):
                             relay.channelRegex.match(channel) and \
                             relay.networkRegex.match(irc.network)and \
                             relay.messageRegex.search(new_s):
+                        if nick != irc.nick: self.nonPrivmsgCounter.enqueue([0])
                         send(new_s)
         else:
             for relay in self.relays:
                 new_s = format_(relay, s, args)
                 if relay.channelRegex.match(channel) and \
-                        relay.networkRegex.match(irc.network)and \
+                        relay.networkRegex.match(irc.network) and \
                         relay.messageRegex.search(new_s):
+                    if nick != irc.nick:
+                        if isPrivmsg: self.privmsgCounter.enqueue([0])
+                        else: self.nonPrivmsgCounter.enqueue([0])
                     send(new_s)
 
     def addIRC(self, irc):
