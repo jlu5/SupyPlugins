@@ -130,17 +130,6 @@ class RelayLink(callbacks.Plugin):
         num = num % 11
         return colors[num]
 
-    def floodDetect(self):
-        if self.registryValue("antiflood.announce") and not self.floodActivated:
-            msgs = self.registryValue("antiflood.nonPrivmsgs")
-            secs = self.registryValue("antiflood.seconds")
-            s = ("%(network)s*** Flood detected ({msgs} non-PRIVMSG messages in {secs} seconds). Not relaying messages"
-                " for {secs} seconds!".format(secs=secs, msgs=msgs))
-            self.floodActivated = True
-            return s
-        else:
-            return
-
     def getPrivmsgData(self, channel, nick, text, colored):
         color = self.simpleHash(nick)
         nickprefix = ''
@@ -362,8 +351,15 @@ class RelayLink(callbacks.Plugin):
         if self.registryValue("antiflood.enable") and (len(self.nonPrivmsgCounter) \
             > self.registryValue("antiflood.nonprivmsgs") or \
             len(self.privmsgCounter) > self.registryValue("antiflood.privmsgs")):
-            s = self.floodDetect()
-            if s: 
+            if not self.floodActivated:
+                msgs = self.registryValue("antiflood.privmsgs") if \
+                    isPrivmsg else self.registryValue("antiflood.nonPrivmsgs")
+                secs = self.registryValue("antiflood.seconds")
+                pr = "" if isPrivmsg else "non-"
+                limit = "({} {}PRIVMSG messages in {} seconds)".format(msgs,pr,secs)
+                self.log.info("RelayLink: flood protection triggered on {} {}".format(irc.network,limit))
+                s = ("%(network)s*** Flood detected {}. Not relaying messages for {} seconds!".format(limit, secs))
+                self.floodActivated = True
                 for relay in self.relays:
                     new_s = format_(relay, s, args)
                     if relay.channelRegex.match(channel) and \
@@ -383,7 +379,7 @@ class RelayLink(callbacks.Plugin):
                             relay.channelRegex.match(channel) and \
                             relay.networkRegex.match(irc.network)and \
                             relay.messageRegex.search(new_s):
-                        if nick != irc.nick: self.nonPrivmsgCounter.enqueue([0])
+                        if nick != irc.nick: self.nonPrivmsgCounter.enqueue(0)
                         send(new_s)
         else:
             for relay in self.relays:
@@ -392,8 +388,8 @@ class RelayLink(callbacks.Plugin):
                         relay.networkRegex.match(irc.network) and \
                         relay.messageRegex.search(new_s):
                     if nick != irc.nick:
-                        if isPrivmsg: self.privmsgCounter.enqueue([0])
-                        else: self.nonPrivmsgCounter.enqueue([0])
+                        if isPrivmsg: self.privmsgCounter.enqueue(0)
+                        else: self.nonPrivmsgCounter.enqueue(0)
                     send(new_s)
 
     def addIRC(self, irc):
