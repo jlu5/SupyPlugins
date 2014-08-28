@@ -40,7 +40,8 @@
 #
 # Use at your own risk!
 ##
-# But seriously though, this is supposed to be a joke, please don't be offended!
+# But seriously though, the references in this script are mostly mere jokes,
+# please don't be offended if you see anything strange.
 
 import supybot.utils as utils
 from supybot.commands import *
@@ -52,6 +53,8 @@ import supybot.callbacks as callbacks
 import supybot.conf as conf
 import random
 import json
+import re
+from time import sleep
 from supybot.utils.structures import TimeoutQueue
 try:
     from supybot.i18n import PluginInternationalization
@@ -91,26 +94,65 @@ class Randomness(callbacks.Plugin):
         except IOError as e:
             self.log.error("Failed to export Votes DB: " + str(e))
 
-    ##
-    # SHHHHHHHHHHH DON'T SPOIL THE JOKES DOWN HERE
-    ##
-    # OR I WILL BE VERY MAD AND FIND YOU
-    ##
-    # *insert ridiculous amount of code here*
-    ##
-    # ..why are you still here? >_>
-    ##
+    # The code below contains automatic replies then turned on. Since this
+    # is a mostly personal plugin, they will only activate on certain
+    # predefined networks.
+    def _attack(self, target):
+        bde = "%sasE%s4"%('B','6')
+        throws = ['poorly written code', 'knives', 
+            "Te"+"chman", 'various objects',
+            "Techm"+"ango", 'grenades',
+            "j4j"+"ackj", 'netsplits']
+        spells = ['fire', 'ice', 'death', '\x02DEATH\x02', 
+            'poison', 'stupid']
+        attacks = throws + spells + ['bricks', 'knives', 
+            "idiots from #freenode", "her army of trolls",
+            "her ~~godly~~ oper powers",
+            'confusingly bad english', 
+            "gbyers' immaturity",
+            "YnJlbmRpIGhpdGxlciBibG9zc29t".decode(bde)]
+        n = random.random()
+        if n >= 0.82:
+            return 'casts %s at %s'%(random.choice(spells), target)
+        elif n >= 0.76:
+            return 'drops the bass on %s'%target
+        elif n >= 0.72:
+            return 'fites %s'%target
+        elif n >= 0.48:
+            return 'attacks %s with %s'%(target, random.choice(attacks))
+        else:
+            return 'throws %s at %s'%(random.choice(throws),target)
+
     def doPrivmsg(self, irc, msg):
         if ircutils.isChannel(msg.args[0]) and self.registryValue("enable", msg.args[0]):
             dots = "." * random.randint(0,10) # added emphasis...............
-            volatile = ["kicks ", "stabs ", "fites ", "bans ", "ddas ", "packets ", "beats "]
+            ow = "ow"+("w"*random.randint(0,4))
+            volatile = ("kicks ", "stabs ", "fites ", "bans ", "ddas ", "packets ", "beats ")
             exclaim = (("!" * random.randint(1,5)) + ("1" * random.randint(0,2))) * \
                 random.randint(1,2) + ("!" * random.randint(-1,5))
             gemotes = ["xD", "=']", "\\o/", ":"+"3"*random.randint(1,4), "^_^"]
-            bemotes = ["-_-", ":|", ":\\", ":/"]
+            bemotes = ("-_-", ":|", ":\\", ":/", ":(")
+            semotes = (":<", ";_;", ";-;", "D:", ">:", "x(")
             if irc.network.lower() == "overdrive-irc":
-                if "wow" in irc.state.channels[msg.args[0]].ops and \
-                    ircutils.isChannel(msg.args[0]) and \
+                # if msg.nick.lower() == 'gbyers' and msg.args[1].lower() == 'hi lily':
+                    # irc.queueMsg(ircmsgs.kick(msg.args[0], msg.nick, "stfu"))
+                if "fishbot" in irc.state.channels[msg.args[0]].users:
+                    hurtresponses = [ow, ";_;", ow+" :(", "RIP", "i cry",
+                        "ouch", "what was that for "+random.choice(semotes),
+                        "!voteban "+msg.nick, "PLS", "rood", "owowowowow", 
+                        "omg "+random.choice(semotes), 
+                        "bots have feelings too!", "wtf", "watch it!"]
+                    if re.match(r"^\x01ACTION ((attacks|stabs) {n} with |"
+                        r"(drops|throws|casts|thwacks) (.*? (at|on|with) "
+                        r"{n}|{n} (at|on|with) .*?)|fites {n}).*?\x01$".\
+                        format(n=irc.nick), msg.args[1].lower(), re.I):
+                        sleep(0.4)
+                        n = random.random()
+                        if n >= 0.58:
+                            irc.queueMsg(ircmsgs.action(msg.args[0], self._attack(msg.nick)))
+                        elif n >= 0.4:
+                            irc.queueMsg(ircmsgs.privmsg(msg.args[0], random.choice(hurtresponses)))
+                elif "wow" in irc.state.channels[msg.args[0]].ops and \
                     ircutils.stripFormatting(msg.args[1].lower()).startswith("wow"):
                     wowResponses1 = ["what is it",
                                     "hi %s%s" % (msg.nick, dots),
@@ -121,9 +163,9 @@ class Randomness(callbacks.Plugin):
                                     "ffs i'm trying to work",
                                     "WHAT DO YOU WANT",
                                     "leave me alone "+random.choice(bemotes),
-                                    "hello, you've reached the user 'wow'. "
-                                        "for people that actually need to talk to me, "
-                                        "press 1. for everybody else, PISS OFF!",
+                                    "hello, you've reached 'wow'. "
+                                        "If you actually need to talk to me, "
+                                        "press 1. if not, PISS OFF!",
                                     "stop highlighting me" + dots,
                                     "reproted to fbi for harassment" + dots,
                                     "-_-",
@@ -164,14 +206,19 @@ class Randomness(callbacks.Plugin):
                             irc.queueMsg(ircmsgs.privmsg(msg.args[0], random.choice(dotresponses)))
                     else: self.dotCounter.enqueue([0])
                 elif ircutils.stripFormatting(msg.args[1]) == "ok":
-                    okresponses = ["not ok", "ok", "ko", "okay*", "O.K.", "^why does everyone say that ._."]
+                    okresponses = ["not ok", "ok", "ko",
+                        "okay*", "O.K.", "^why does everyone say that ._.",
+                        "\x01ACTION ok's %s\x01" % msg.nick,
+                        "no", "Objection! \x02Not\x02 okay!", "meh",
+                        "yeah ok w/e man.", "\x01ACTION sighs\x01",
+                        "you're pretty ok.", "hmph", "I AGREE WITH YOU, "+msg.nick+dots]
                     r = random.randint(1, 23)
                     if r >= 19:
                         irc.queueMsg(ircmsgs.action(msg.args[0], random.choice(volatile)+msg.nick))
                     elif r >= 8:
                         irc.queueMsg(ircmsgs.privmsg(msg.args[0], random.choice(okresponses)))
-            if irc.network.lower() in ["overdrive-irc", "stripechat"] and \
-                ('aXRsZXIgYmxvc3NvbQ==').decode('base64') in ircutils.stripFormatting(msg.args[1].lower()):
+            if irc.network.lower() in ("overdrive-irc", "stripechat") and \
+                ('aXRsZXIgYmxvc3NvbQ==').decode('base'+'64') in ircutils.stripFormatting(msg.args[1].lower()):
                 irc.queueMsg(ircmsgs.privmsg(msg.args[0], msg.nick + ": the entire topic changes" + exclaim))
  #           if irc.network.lower() == "stripechat":
  #               r = random.random()
