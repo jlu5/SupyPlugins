@@ -91,17 +91,11 @@ conf.registerGroup(RelayLink, 'antiflood')
 conf.registerGlobalValue(RelayLink.antiflood, 'enable',
     registry.Boolean(False, _("""Determines whether flood protection should
     be used by the relayer.""")))
-conf.registerGlobalValue(RelayLink.antiflood, 'privmsgs',
-    registry.NonNegativeInteger(0, _("""Determines how many PRIVMSGs the bot will allow
+conf.registerGlobalValue(RelayLink.antiflood, 'messages',
+    registry.NonNegativeInteger(0, _("""Determines how many messages the bot will allow
     before flood protection is triggered. This setting should be set based on how much
     traffic a channel gets, so a default is not included. Setting this' to 0
     effectively disables flood prevention.""")))
-conf.registerGlobalValue(RelayLink.antiflood, 'nonPrivmsgs',
-    registry.NonNegativeInteger(0, _("""Determines how many non-PRIVMSG
-    events (joins, parts, nicks, etc.) the bot will allow before flood
-    protection is triggered. This setting should be set based on how much
-    traffic a channel gets, so a default is not included. Setting this to
-    0 effectively disables flood prevention.""")))
 conf.registerGlobalValue(RelayLink.antiflood, 'seconds',
     registry.PositiveInteger(30, _("""Determines how many seconds the bot
     should wait before relaying if flood prevention is triggered.""")))

@@ -79,8 +79,7 @@ class RelayLink(callbacks.Plugin):
         for IRC in world.ircs:
             self.addIRC(IRC)
         floodProtectTimeout = conf.supybot.plugins.RelayLink.antiflood.seconds
-        self.nonPrivmsgCounter = TimeoutQueue(floodProtectTimeout)
-        self.privmsgCounter = TimeoutQueue(floodProtectTimeout)
+        self.floodCounter = TimeoutQueue(floodProtectTimeout)
         self.floodActivated = False
         try:
             conf.supybot.plugins.RelayLink.substitutes.addCallback(
@@ -348,24 +347,24 @@ class RelayLink(callbacks.Plugin):
                 msg.tag('relayedMsg')
                 relay.targetIRC.sendMsg(msg)
         
-#        if self.registryValue("antiflood.enable") and (len(self.floodCounter) \
-#            > self.registryValue("antiflood.messages"):
-#            if not self.floodActivated:
-#                msgs = self.registryValue("antiflood.privms
-#                secs = self.registryValue("antiflood.seconds")
-#                pr = "" if isPrivmsg else "non-"
-#                limit = "({} {}PRIVMSG messages in {} seconds)".format(msgs,pr,secs)
-#                self.log.info("RelayLink: flood protection triggered on {} {}".format(irc.network,limit))
-#                s = ("%(network)s*** Flood detected {}. Not relaying messages for {} seconds!".format(limit, secs))
-#                self.floodActivated = True
-#                for relay in self.relays:
-#                    new_s = format_(relay, s, args)
-#                    if relay.channelRegex.match(channel) and \
-#                        relay.networkRegex.match(irc.network) and \
-#                        relay.messageRegex.search(new_s):
-#                        send(new_s)
-#            return
-#        else: self.floodActivated = False
+        msgs = self.registryValue("antiflood.messages")
+        if self.registryValue("antiflood.enable") and msgs and \
+            len(self.floodCounter) > msgs:
+            if not self.floodActivated:
+                secs = self.registryValue("antiflood.seconds")
+                limit = "({} messages in {} seconds)".format(msgs,secs)
+                self.log.info("RelayLink: flood protection triggered on {} {}".format(irc.network,limit))
+                s = ("%(network)s*** Flood detected {}. Not relaying messages for {} seconds!".format(limit, secs))
+                self.floodActivated = True
+                if self.registryValue('antiflood.announce'):
+                    for relay in self.relays:
+                        new_s = format_(relay, s, args)
+                        if relay.channelRegex.match(channel) and \
+                            relay.networkRegex.match(irc.network) and \
+                            relay.messageRegex.search(new_s):
+                            send(new_s)
+            return
+        else: self.floodActivated = False
         
         if channel is None:
             for relay in self.relays:
@@ -377,7 +376,7 @@ class RelayLink(callbacks.Plugin):
                             relay.channelRegex.match(channel) and \
                             relay.networkRegex.match(irc.network)and \
                             relay.messageRegex.search(new_s):
-                        if nick != irc.nick: self.nonPrivmsgCounter.enqueue(0)
+                        if nick != irc.nick: self.floodCounter.enqueue(0)
                         send(new_s)
         else:
             for relay in self.relays:
@@ -386,8 +385,8 @@ class RelayLink(callbacks.Plugin):
                         relay.networkRegex.match(irc.network) and \
                         relay.messageRegex.search(new_s):
                     if nick != irc.nick:
-                        if isPrivmsg: self.privmsgCounter.enqueue(0)
-                        else: self.nonPrivmsgCounter.enqueue(0)
+                        if isPrivmsg: self.floodCounter.enqueue(0)
+                        else: self.floodCounter.enqueue(0)
                     send(new_s)
 
     def addIRC(self, irc):
