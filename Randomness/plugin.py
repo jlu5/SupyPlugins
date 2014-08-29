@@ -152,7 +152,7 @@ class Randomness(callbacks.Plugin):
                             irc.queueMsg(ircmsgs.action(msg.args[0], self._attack(msg.nick)))
                         elif n >= 0.4:
                             irc.queueMsg(ircmsgs.privmsg(msg.args[0], random.choice(hurtresponses)))
-                elif "wow" in irc.state.channels[msg.args[0]].ops and \
+                if "wow" in irc.state.channels[msg.args[0]].ops and \
                     ircutils.stripFormatting(msg.args[1].lower()).startswith("wow"):
                     wowResponses1 = ["what is it",
                                     "hi %s%s" % (msg.nick, dots),
@@ -198,7 +198,7 @@ class Randomness(callbacks.Plugin):
 #                    for w in alsobad:
 #                        if w in ircutils.stripFormatting(msg.args[1].lower()):
 #                            irc.queueMsg(ircmsgs.kick(msg.args[0], msg.nick, "nothx"))
-                elif ircutils.stripFormatting(msg.args[1]) == ".":
+                if ircutils.stripFormatting(msg.args[1]) == ".":
                     dotresponses = ["r u mad?", "lol r u mad", "mmm dots", ",", "no spam pls" + dots, ":D", "ok"]
                     if len(self.dotCounter) >= 2:
                         r = random.random()
