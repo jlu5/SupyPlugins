@@ -149,9 +149,9 @@ class Randomness(callbacks.Plugin):
                         format(n=irc.nick), msg.args[1].lower(), re.I):
                         sleep(0.4)
                         n = random.random()
-                        if n >= 0.58:
+                        if n >= 0.45:
                             irc.queueMsg(ircmsgs.action(msg.args[0], self._attack(msg.nick)))
-                        elif n >= 0.4:
+                        else:
                             irc.queueMsg(ircmsgs.privmsg(msg.args[0], random.choice(hurtresponses)))
                 if "wow" in irc.state.channels[msg.args[0]].ops and \
                     ircutils.stripFormatting(msg.args[1].lower()).startswith("wow"):
