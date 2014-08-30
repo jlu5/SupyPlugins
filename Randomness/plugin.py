@@ -131,7 +131,8 @@ class Randomness(callbacks.Plugin):
             exclaim = (("!" * random.randint(1,5)) + ("1" * random.randint(0,2))) * \
                 random.randint(1,2) + ("!" * random.randint(-1,5))
             gemotes = ["xD", "=']", "\\o/", ":"+"3"*random.randint(1,4), "^_^"]
-            bemotes = ("-_-", ":|", ":\\", ":/", ":(")
+            meh = (";/", ":\\", ":/")
+            bemotes = meh + (":(", ":|", '-_-')
             semotes = (":<", ";_;", ";-;", "D:", ">:", "x(")
             if irc.network.lower() == "overdrive-irc":
                 # if msg.nick.lower() == 'gbyers' and msg.args[1].lower() == 'hi lily':
@@ -176,6 +177,7 @@ class Randomness(callbacks.Plugin):
                                     "fml",
                                     "?",
                                     ".",
+                                    "meh "+random.choice(meh),
                                     "/join 0",
                                     "/part SCREW U GUYS IM LEAVING AND NEVER COMING "
                                         "BACK AGAIN!! IT'S ALL %s'S FAULT I FKN HATE "
@@ -209,13 +211,13 @@ class Randomness(callbacks.Plugin):
                     okresponses = ["not ok", "ok", "ko",
                         "okay*", "O.K.", "^why does everyone say that ._.",
                         "\x01ACTION ok's %s\x01" % msg.nick,
-                        "no", "Objection! \x02Not\x02 okay!", "meh",
+                        "no", "Objection! \x02Not\x02 okay!", "meh "+random.choice(meh),
                         "yeah ok w/e man.", "\x01ACTION sighs\x01",
                         "you're pretty ok.", "hmph", "I AGREE WITH YOU, "+msg.nick+dots]
                     r = random.randint(1, 23)
                     if r >= 19:
                         irc.queueMsg(ircmsgs.action(msg.args[0], random.choice(volatile)+msg.nick))
-                    elif r >= 8:
+                    elif r >= 7:
                         irc.queueMsg(ircmsgs.privmsg(msg.args[0], random.choice(okresponses)))
             if irc.network.lower() in ("overdrive-irc", "stripechat") and \
                 ('aXRsZXIgYmxvc3NvbQ==').decode('base'+'64') in ircutils.stripFormatting(msg.args[1].lower()):
