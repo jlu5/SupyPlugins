@@ -209,7 +209,7 @@ class Randomness(callbacks.Plugin):
                     okresponses = ["not ok", "ok", "ko",
                         "okay*", "O.K.", "^why does everyone say that ._.",
                         "\x01ACTION ok's %s\x01" % msg.nick,
-                        "no", "Objection! \x02Not\x02 okay!", "meh",
+                        "no", "Objection! \x02Not\x02 okay!", "meh :/",
                         "yeah ok w/e man.", "\x01ACTION sighs\x01",
                         "you're pretty ok.", "hmph", "I AGREE WITH YOU, "+msg.nick+dots]
                     r = random.randint(1, 23)
