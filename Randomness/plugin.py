@@ -100,17 +100,24 @@ class Randomness(callbacks.Plugin):
     def _attack(self, target):
         bde = "%sasE%s4"%('B','6')
         throws = ['poorly written code', 'knives', 
-            "Te"+"chman", 'various objects',
-            "Techm"+"ango", 'grenades',
-            "j4j"+"ackj", 'netsplits']
+            "Te"+"chman", 'various objects', 'rocks',
+            "Techm"+"ango", 'grenades', "IE6", 'axes', 'evil things',
+            'hammers', 'Unicode', 'spears', 'spikes', 'sharp things', 
+            'whips', 'moldy bread', "j4j"+"ackj", 'netsplits',
+            "mojibake", "floppy disks"]
         spells = ['fire', 'ice', 'death', '\x02DEATH\x02', 
             'poison', 'stupid']
         attacks = throws + spells + ['bricks', 'knives', 
             "idiots from #freenode", "her army of trolls",
-            "her ~~godly~~ oper powers",
-            'confusingly bad english', 
-            "gbyers' immaturity",
-            "YnJlbmRpIGhpdGxlciBibG9zc29t".decode(bde)]
+            "her ~~godly~~ oper powers", "GNOME 3",
+            'confusingly bad english', "Windows Me",
+            "gbyers' immaturity", "Quicktime for Windows",
+            "\x0309,01-Oblivi\x020\x02n Script by mIRCsKripterz-\x03",
+            "YnJlbmRpIGhpdGxlciBibG9zc29t".decode(bde),
+            "segmentation faults", "???", "relentless spyware",
+            "nsa technology"]
+        throws += ['nails', 'planets', 'thorns', 'skulls',
+            "a fresh, unboxed copy of Windows Me"]
         n = random.random()
         if n >= 0.82:
             return 'casts %s at %s'%(random.choice(spells), target)
@@ -138,11 +145,13 @@ class Randomness(callbacks.Plugin):
                 # if msg.nick.lower() == 'gbyers' and msg.args[1].lower() == 'hi lily':
                     # irc.queueMsg(ircmsgs.kick(msg.args[0], msg.nick, "stfu"))
                 if "fishbot" in irc.state.channels[msg.args[0]].users:
-                    hurtresponses = [ow, ";_;", ow+" :(", "RIP", "i cry",
+                    hurtresponses = [ow, random.choice(semotes), 
+                        ow+random.choice(semotes), "RIP", "i cry",
                         "ouch", "what was that for "+random.choice(semotes),
                         "!voteban "+msg.nick, "PLS", "rood", "owowowowow", 
                         "omg "+random.choice(semotes), 
-                        "bots have feelings too!", "wtf", "watch it!"]
+                        "hey, bots have feelings too!"+random.choice(semotes),
+                        "wtf", "watch it!", "wow"]
                     if re.match(r"^\x01ACTION ((attacks|stabs) {n} with |"
                         r"(drops|throws|casts|thwacks) (.*? (at|on|with) "
                         r"{n}|{n} (at|on|with) .*?)|fites {n}).*?\x01$".\
