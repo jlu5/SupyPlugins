@@ -292,6 +292,13 @@ class Randomness(callbacks.Plugin):
         self.votes = {}
         irc.replySuccess()
     voteclear = wrap(voteclear, ['admin'])
+    
+    def attack(self, irc, msg, args, user):
+        """<nick>
+        
+        Attacks <nick>."""
+        irc.reply(self._attack(user), action=True)
+    attack = wrap(attack, ['something'])
 
 Class = Randomness
 
