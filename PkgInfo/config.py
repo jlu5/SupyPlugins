@@ -51,10 +51,10 @@ PkgInfo = conf.registerPlugin('PkgInfo')
 conf.registerGlobalValue(PkgInfo, 'archs',
      registry.CommaSeparatedListOfStrings(['i386','amd64','source','all'],
      _("""Defines what architectures the bot will look for.""")))
-conf.registerGlobalValue(PkgInfo, 'showArchs',
+conf.registerGlobalValue(PkgInfo, 'verbose',
      registry.Boolean(True,
-     _("""Determines whether the bot should show architectures
-     in the final output.""")))
+     _("""Determines whether verbose output will be used (show architectures,
+     package IDs, etc.).""")))
 
 
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:

@@ -33,8 +33,9 @@ from supybot.commands import *
 import supybot.plugins as plugins
 import supybot.ircutils as ircutils
 import supybot.callbacks as callbacks
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 import urllib
+import json
 try:
     from supybot.i18n import PluginInternationalization
     _ = PluginInternationalization('PkgInfo')
@@ -44,7 +45,8 @@ except ImportError:
     _ = lambda x:x
 
 class PkgInfo(callbacks.Plugin):
-    """Fetches package information from Debian and Ubuntu's repositories."""
+    """Fetches package information from the repositories of 
+    Debian, Arch Linux, and Ubuntu."""
     threaded = True
 
     def __init__(self, irc):
@@ -63,7 +65,7 @@ class PkgInfo(callbacks.Plugin):
             L = line.split("|")
             d[L[2].strip()] = (L[1].strip(),L[3].strip())
         if d:
-            if self.registryValue("showArchs"):
+            if self.registryValue("verbose"):
                 return 'Found %s results: ' % len(d) + ', '.join("{!s} " \
                 "\x02({!s} [{!s}])\x02".format(k,v[0],v[1]) for (k,v) in \
                 d.items())
@@ -74,11 +76,12 @@ class PkgInfo(callbacks.Plugin):
         """<suite> <package>
         
         Fetches information for <package> from Debian or Ubuntu's repositories.
-        <suite> is the codename/release name (e.g. 'trusty', 'squeeze')."""
+        <suite> is the codename/release name (e.g. 'trusty', 'squeeze').
+        For Arch Linux packages, please use 'archpkg' and 'archaur' instead."""
         d = self.MadisonParse(pkg, 'all', suite=suite)
-        if not d: irc.error("No results found.")
+        if not d: irc.error("No results found.",Raise=True)
         try:
-            d += " View more at: http://qa.debian.org/madison.php?{}".format(self.arg)
+            d += " View more at: {}search?keywords={}".format(self.addrs['distro'], pkg)
         except KeyError: pass
         irc.reply(d)
     package = wrap(package, ['somethingWithoutSpaces', 'somethingWithoutSpaces'])
@@ -91,12 +94,62 @@ class PkgInfo(callbacks.Plugin):
         include: 'debian', 'ubuntu', 'derivatives', and 'all'."""
         distro = distro.lower()
         d = self.MadisonParse(pkg, distro)
-        if not d: irc.error("No results found.")
+        if not d: irc.error("No results found.",Raise=True)
         try:
             d += " View more at: {}search?keywords={}".format(self.addrs['distro'], pkg)
         except KeyError: pass
         irc.reply(d)
     vlist = wrap(vlist, ['somethingWithoutSpaces', 'somethingWithoutSpaces'])
+    
+    def archpkg(self, irc, msg, args, pkg, opts):
+        """<package> [--glob]
+        
+        Looks up <package> in the Arch Linux package repositories.
+        If --glob is given, the bot will search for <package> as a glob 
+        instead of the exact package name. However, this often has the
+        problem of giving many irrelevant results (e.g. 'git' will also
+        match 'di git al'."""
+        baseurl = 'http://www.archlinux.org/packages/search/json/?'
+        if 'glob' in dict(opts):
+            fd = utils.web.getUrlFd(baseurl + urllib.urlencode({'q':pkg}))
+        else:
+            fd = utils.web.getUrlFd(baseurl + urllib.urlencode({'name':pkg}))
+        data = json.load(fd)
+        if data['valid'] and data['results']:
+            f = set()
+            archs = defaultdict(list)
+            for x in data['results']:
+                s = "{} - {} \x02({})\x02".format(x['pkgname'],x['pkgdesc'],x['pkgver'])
+                f.add(s)
+                archs[s].append(x['arch'])
+            if self.registryValue("verbose"):
+                irc.reply('Found %s results: ' % len(f)+', ' \
+                .join("{} \x02[{!s}]\x02".format(s, ', '.join(archs[s])) for s in f))
+            else:
+                irc.reply('Found {} results: {}'.format(len(f),', '.join(f)))
+        else: irc.error("No results found.",Raise=True)
+    archpkg = wrap(archpkg, ['somethingWithoutSpaces', getopts({'glob':''})])
+    
+    def archaur(self, irc, msg, args, pkg):
+        """<package>
+        
+        Looks up <package> in the Arch Linux AUR."""
+        baseurl = 'https://aur.archlinux.org/rpc.php?type=search&'
+        fd = utils.web.getUrlFd(baseurl + urllib.urlencode({'arg':pkg}))
+        data = json.load(fd)
+        if data["type"] == "error":
+            irc.error(data["results"], Raise=True)
+        if data['resultcount']:
+            s = "Found {} result{}: ".format(data["resultcount"], 
+                's' if data["resultcount"] != 1 else '')
+            for x in data['results']:
+                verboseInfo = ''
+                if self.registryValue("verbose"):
+                    verboseInfo = " [ID:{} Votes:{}]".format(x['ID'], x['NumVotes'])
+                s += "{} - {} \x02({}{})\x02, ".format(x['Name'],x['Description'],x['Version'], verboseInfo)
+            irc.reply(s[:-2])
+        else: irc.error("No results found.",Raise=True)
+    archaur = wrap(archaur, ['somethingWithoutSpaces'])
 
 
 Class = PkgInfo

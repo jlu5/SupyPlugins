@@ -33,8 +33,8 @@ Any specific plugin dependencies *should* also be listed.
 ##### PassGen
 - Generates random passwords on the fly!
 
-##### PkgList
-- Fetches package information from Debian and Ubuntu's repositories, using the publicly accessible [Madison API](http://qa.debian.org/madison.php).
+##### PkgInfo
+- Fetches package information from the websites of Debian, Ubuntu, and Arch Linux's repositories.
 
 ##### Randomness
 - Random commands for my own personal use; you probably don't want this 
