@@ -48,9 +48,13 @@ def configure(advanced):
 
 
 PkgInfo = conf.registerPlugin('PkgInfo')
-# This is where your configuration variables (if any) should go.  For example:
-# conf.registerGlobalValue(PkgInfo, 'someConfigVariableName',
-#     registry.Boolean(False, _("""Help for someConfigVariableName.""")))
+conf.registerGlobalValue(PkgInfo, 'archs',
+     registry.CommaSeparatedListOfStrings(['i386','amd64','source','all'],
+     _("""Defines what architectures the bot will look for.""")))
+conf.registerGlobalValue(PkgInfo, 'showArchs',
+     registry.Boolean(True,
+     _("""Determines whether the bot should show architectures
+     in the final output.""")))
 
 
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:
