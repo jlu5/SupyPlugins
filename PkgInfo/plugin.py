@@ -65,10 +65,10 @@ class PkgInfo(callbacks.Plugin):
         if d:
             if self.registryValue("showArchs"):
                 return 'Found %s results: ' % len(d) + ', '.join("{!s} " \
-                "\x02({!s} [{!s}]\x02)".format(k,v[0],v[1]) for (k,v) in \
+                "\x02({!s} [{!s}])\x02".format(k,v[0],v[1]) for (k,v) in \
                 d.items())
             return 'Found %s results: ' % len(d) + ', '.join("{!s} " \
-            "\x02({!s}\x02)".format(k,v[0]) for (k,v) in d.items())
+            "\x02({!s})\x02".format(k,v[0]) for (k,v) in d.items())
         
     def package(self, irc, msg, args, suite, pkg):
         """<suite> <package>
