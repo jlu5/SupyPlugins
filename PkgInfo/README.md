@@ -1,2 +1,1 @@
-Fetches package information from Debian and Ubuntu's websites. More distributions may be supported in 
-the future.
+Fetches package information from Debian and Ubuntu's repositories, using the publicly accessible [Madison API](http://qa.debian.org/madison.php).

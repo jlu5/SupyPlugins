@@ -1,1 +1,1 @@
-Insert a description of your plugin here, with any notes, etc. about using it.
+Random commands for my own personal use, including a silly voting mechanism amongst other things.

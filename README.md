@@ -34,7 +34,7 @@ Any specific plugin dependencies *should* also be listed.
 - Generates random passwords on the fly!
 
 ##### PkgList
-- Fetches package information from Debian and Ubuntu's websites.
+- Fetches package information from Debian and Ubuntu's repositories, using the publicly accessible [Madison API](http://qa.debian.org/madison.php).
 
 ##### Randomness
 - Random commands for my own personal use; you probably don't want this 
