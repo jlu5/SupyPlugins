@@ -36,6 +36,8 @@ import supybot.callbacks as callbacks
 from collections import OrderedDict, defaultdict
 import urllib
 import json
+import re
+from HTMLParser import HTMLParser
 try:
     from supybot.i18n import PluginInternationalization
     _ = PluginInternationalization('PkgInfo')
@@ -54,6 +56,30 @@ class PkgInfo(callbacks.Plugin):
         self.__parent.__init__(irc)
         self.addrs = {'ubuntu':'http://packages.ubuntu.com/',
                       'debian':"http://packages.debian.org/"}
+
+    class DebPkgParse(HTMLParser):
+        def handle_starttag(self, tag, attrs):
+            if tag == "meta":
+                attrs = dict(attrs)
+                try:
+                    if attrs['name'] == "Description":
+                        self.tags.append(attrs['content'])
+                    elif attrs['name'] == "Keywords":
+                        self.tags.extend(attrs['content'].replace(",","").split())
+                except KeyError: pass
+        def feed(self, data):
+            self.tags = []
+            HTMLParser.feed(self, data)
+            return self.tags
+
+    def DebianParse(self, irc, suite, pkg, distro):
+        parser = PkgInfo.DebPkgParse()
+        self.url = self.addrs[distro] + "{}/{}".format(suite, pkg)
+        try:
+            self.fd = utils.web.getUrl(self.url)
+        except Exception as e:
+            irc.error(str(e), Raise=True)
+        return parser.feed(self.fd)
 
     def MadisonParse(self, pkg, dist, codenames='', suite=''):
         arch = ','.join(self.registryValue("archs"))
@@ -78,12 +104,25 @@ class PkgInfo(callbacks.Plugin):
         Fetches information for <package> from Debian or Ubuntu's repositories.
         <suite> is the codename/release name (e.g. 'trusty', 'squeeze').
         For Arch Linux packages, please use 'archpkg' and 'archaur' instead."""
-        d = self.MadisonParse(pkg, 'all', suite=suite)
-        if not d: irc.error("No results found.",Raise=True)
+        # Guess the distro from the suite name
+        if suite.startswith(("oldstable","squeeze","wheezy","stable",
+            "jessie","testing","sid","unstable")):
+            distro = "debian"
+        else: distro = "ubuntu"
+        p = self.DebianParse(irc, suite.lower(), pkg.lower(), distro)
+        if "Error</title>" in self.fd:
+            err = re.findall("""<div class\="perror">\s*<p>(.*?)</p>$""", self.fd, re.M)
+            if "two or more packages specified" in err[0]:
+                irc.error("Unknown distribution/release.", Raise=True)
+            irc.reply(err[0])
+            return
         try:
-            d += " View more at: {}search?keywords={}".format(self.addrs['distro'], pkg)
-        except KeyError: pass
-        irc.reply(d)
+            c = ' '.join(p[2].split("-"))
+        except: c = p[2]
+        # This returns a list in the form [package description, distro,
+        # release/codename, language (will always be 'en'), component, section, package-version]
+        irc.reply("Package: \x02{} ({})\x02 in {} {} - {}; View more at: {}".format(pkg, p[-1], p[1],
+        c, p[0], self.url))
     package = wrap(package, ['somethingWithoutSpaces', 'somethingWithoutSpaces'])
 
     def vlist(self, irc, msg, args, distro, pkg):
@@ -96,7 +135,7 @@ class PkgInfo(callbacks.Plugin):
         d = self.MadisonParse(pkg, distro)
         if not d: irc.error("No results found.",Raise=True)
         try:
-            d += " View more at: {}search?keywords={}".format(self.addrs['distro'], pkg)
+            d += " View more at: {}search?keywords={}".format(self.addrs[distro], pkg)
         except KeyError: pass
         irc.reply(d)
     vlist = wrap(vlist, ['somethingWithoutSpaces', 'somethingWithoutSpaces'])
