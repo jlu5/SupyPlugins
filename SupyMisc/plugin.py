@@ -45,8 +45,9 @@ except ImportError:
     _ = lambda x:x
 
 class SupyMisc(callbacks.Plugin):
-    """Add the help for "@plugin help SupyMisc" here
-    This should describe *how* to use this plugin."""
+    """This plugin provides commands and basic interfaces that aren't
+    available in stock Supybot (e.g. access to Python's random.uniform(),
+    etc.)"""
     threaded = True
 
     ### Some semi-useful utilities
@@ -73,14 +74,29 @@ class SupyMisc(callbacks.Plugin):
         Returns <text> repeated <num> times. <num> must be a positive integer. 
         To keep leading and trailing spaces, it is recommended to quote the <text>
         argument " like this ". """
-        max = self.registryValue("repeat.max")
-        if num <= max:
+        maxN = self.registryValue("repeat.max")
+        if num <= maxN:
             irc.reply(text * num)
         else:
             irc.error("The <num> value given is too large. Current "
-                "maximum: {}".format(max), Raise=True)
+                "maximum: {}".format(maxN), Raise=True)
     repeat = wrap(repeat, ['positiveInt', 'text'])
     
+    def uniform(self, irc, msg, args, a, b):
+        """<a> <b>
+        Return a random floating point number N such that a <= N <= b for a <= b and b <= N 
+        <= a for b < a. A frontend to Python's random.uniform() command."""
+        irc.reply(random.uniform(a,b))
+    uniform = wrap(uniform, ['float', 'float'])
+
+    def randrange(self, irc, msg, args, start, stop, step):
+        """<start> <stop> [<step>]
+        Returns a random integer between <start> and <stop>, with optional [<step>]
+        between them."""
+        if not step: step = 1
+        irc.reply(random.randrange(start, stop, step))
+    randrange = wrap(randrange, ['int', 'int', additional('int')])
+
     ### Generic informational commands (ident fetcher, channel counter, etc.)
 
     def serverlist(self, irc, msg, args):
