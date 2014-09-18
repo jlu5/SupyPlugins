@@ -63,8 +63,8 @@ except ImportError:
     _ = lambda x:x
 
 class Randomness(callbacks.Plugin):
-    """Add the help for "@plugin help Randomness" here
-    This should describe *how* to use this plugin."""
+    """Random commands for my own personal use, including a silly
+    voting mechanism amongst other things."""
     threaded = True
     
     def __init__(self, irc):
@@ -76,13 +76,17 @@ class Randomness(callbacks.Plugin):
             with open(self.vfilename, "r") as f:
                 self.votes = json.load(f)
         except IOError:
+            self.log.debug("Randomness: failed to load vote database %s"
+                ", creating a new one..." % self.vfilename)
             self.votes = {}
 
     def loadVoteDB(self):
+        self.log.debug("Randomness: loading votes database "+self.vfilename)
         with open(self.vfilename, "r") as f:
             self.votes = json.load(f)
             
     def exportVoteDB(self):
+        self.log.debug("Randomness: exporting votes database "+self.vfilename)
         with open(self.vfilename, 'w') as f:
             json.dump(self.votes, f)
             f.write("\n")
@@ -92,7 +96,7 @@ class Randomness(callbacks.Plugin):
         try:
             self.exportVoteDB()
         except IOError as e:
-            self.log.error("Failed to export Votes DB: " + str(e))
+            self.log.error("Failed to export votes database: " + str(e))
 
     # The code below contains automatic replies then turned on. Since this
     # is a mostly personal plugin, they will only activate on certain
@@ -239,12 +243,23 @@ class Randomness(callbacks.Plugin):
 
     def _lazyhostmask(self, host):
         return "*!"+host.split("!",1)[1]
+        
+    def _formatAction(self, action):
+        a = action.split()
+        try: n = self.votes[action][0]
+        except KeyError: n = 0
+        if len(a) >= 2:
+            return "\x02%s\x02 %s. (Votes: \x02%s\x02)" % \
+                (a[0], ''.join(a[1:]), n)
+        return "\x02%s\x02. (Votes: \x02%s\x02)" % \
+            (action, n)
 
     def vote(self, irc, msg, args, action):
-        """<thing>
+        """<something>
 
         Votes for something. It doesn't actually perform any actions directly,
         but could be an interesting way to get user feedback."""
+        action = action.lower()
         try:
             if self._lazyhostmask(msg.prefix) in self.votes[action][1]:
                 irc.reply("You have already voted to %s." % action)
@@ -252,11 +267,7 @@ class Randomness(callbacks.Plugin):
         except KeyError:
             self.votes[action] = [0, []]
         self.votes[action][0] += 1
-        try:
-            a, b = action.split(" ",1)
-        except ValueError:
-            irc.error("Not enough arguments.", Raise=True)
-        irc.reply("%s voted to \x02%s\x02 %s. (Votes: \x02%s\x02)" % (msg.nick, a, b, self.votes[action][0]))
+        irc.reply("%s voted to %s" % (msg.nick,self._formatAction(action)))
         self.votes[action][1].append(self._lazyhostmask(msg.prefix))
     vote = wrap(vote, ['text'])
     
@@ -293,12 +304,38 @@ class Randomness(callbacks.Plugin):
         irc.replySuccess()
     voteclear = wrap(voteclear, ['admin'])
     
+    def numvotes(self, irc, msg, args, action):
+        """<action>
+        
+        Returns the amount of people that have voted for <action>."""
+        try:
+            n = self.votes[action.lower()][0]
+        except KeyError:
+            n = 0
+        if irc.nested:
+            irc.reply(n)
+        else:
+            irc.reply('\x02%s\x02 people have voted to %s' % 
+            (n, self._formatAction(action)))
+    numvotes = wrap(numvotes, ['text'])
+    
     def attack(self, irc, msg, args, user):
         """<nick>
         
         Attacks <nick>."""
         irc.reply(self._attack(user), action=True)
     attack = wrap(attack, ['something'])
+    
+    def cheat(self, irc, msg, args, num, action):
+        """<number of votes> <action>
+        
+        Sets the number of votes for <action> to a certain amount,
+        perfect for rigged elections!
+        This will also reset the list of hosts that have voted for
+        <action>, allowing everyone to vote again."""
+        self.votes[action.lower()] = [num, []]
+        irc.replySuccess()
+    cheat = wrap(cheat, ['admin', 'int', 'text'])
 
 Class = Randomness
 
