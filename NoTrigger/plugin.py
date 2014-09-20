@@ -80,7 +80,7 @@ class NoTrigger(callbacks.Plugin):
             if self.registryValue('blockCtcp', msg.args[0]) and \
                 s.startswith("\001") and not s.startswith("\001ACTION"):
                 s = s[1:-1]
-            for k, v in rpairs.iteritems():
+            for k, v in rpairs.items():
                 s = s.replace(k, v)
             for item in prefixes:
                 if s.startswith(item):
