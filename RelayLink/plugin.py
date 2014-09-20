@@ -252,33 +252,45 @@ class RelayLink(callbacks.Plugin):
     def doPart(self, irc, msg):
         args = {'nick': msg.nick, 'channel': msg.args[0], 'message': '',
                 'userhost': ''}
-        if self.registryValue("noHighlight", msg.args[0]):
-            args['nick'] = '-'+msg.nick
-        self.addIRC(irc)
-        if self.registryValue('color', msg.args[0]):
-            args['nick'] = '\x03%s%s\x03' % (self.simpleHash(msg.nick), args['nick'])
-        if self.registryValue('hostmasks', msg.args[0]):
-            args['userhost'] = ' (%s@%s)' % (msg.user, msg.host)
-        try:
-            args['message'] = ' (%s)' % (msg.args[1])
-        except IndexError: pass
-        s = '%(network)s%(nick)s%(userhost)s has parted %(channel)s%(message)s'
+        if msg.nick == irc.nick:
+            if self.registryValue('color'):
+                s = '%(network)s\x0308*** Relay parted from %(channel)s'
+            else:
+                s = '%(network)s*** Relay parted from %(channel)s'
+        else:
+            if self.registryValue("noHighlight", msg.args[0]):
+                args['nick'] = '-'+msg.nick
+            self.addIRC(irc)
+            if self.registryValue('color', msg.args[0]):
+                args['nick'] = '\x03%s%s\x03' % (self.simpleHash(msg.nick), args['nick'])
+            if self.registryValue('hostmasks', msg.args[0]):
+                args['userhost'] = ' (%s@%s)' % (msg.user, msg.host)
+            try:
+                args['message'] = ' (%s)' % (msg.args[1])
+            except IndexError: pass
+            s = '%(network)s%(nick)s%(userhost)s has parted %(channel)s%(message)s'
         self.sendToOthers(irc, msg.args[0], s, args)
 
     def doKick(self, irc, msg):
         self.addIRC(irc)
         args = {'kicked': msg.args[1], 'channel': msg.args[0],
                 'kicker': msg.nick, 'message': msg.args[2], 'userhost': ''}
-        if self.registryValue('color', msg.args[0]):
-            args['kicked'] = '\x03%s%s\x03' % (self.simpleHash(msg.args[1]), args['kicked'])
-        if self.registryValue('hostmasks', msg.args[0]):
-            # The IRC protocol only sends the hostmask of the kicker, so we'll need
-            # to use an alternate method to fetch the host of the person being
-            # kicked. (in this case, using ircutils)
-            h = ircutils.splitHostmask(irc.state.nickToHostmask(msg.args[1]))
-            args['userhost'] = ' (%s@%s)' % (h[1], h[2])
-        s = ('%(network)s%(kicked)s%(userhost)s has been kicked from '
-             '%(channel)s by %(kicker)s (%(message)s)')
+        if args['kicked'] == irc.nick:
+            if self.registryValue('color', msg.args[0]):
+                s = '%(network)s\x0308*** Relay kicked from %(channel)s'
+            else:
+                s = '%(network)s*** Relay kicked from %(channel)s'
+        else:
+            if self.registryValue('color', msg.args[0]):
+                args['kicked'] = '\x03%s%s\x03' % (self.simpleHash(msg.args[1]), args['kicked'])
+            if self.registryValue('hostmasks', msg.args[0]):
+                # The IRC protocol only sends the hostmask of the kicker, so we'll need
+                # to use an alternate method to fetch the host of the person being
+                # kicked. (in this case, using ircutils)
+                h = ircutils.splitHostmask(irc.state.nickToHostmask(msg.args[1]))
+                args['userhost'] = ' (%s@%s)' % (h[1], h[2])
+            s = ('%(network)s%(kicked)s%(userhost)s has been kicked from '
+                 '%(channel)s by %(kicker)s (%(message)s)')
         self.sendToOthers(irc, msg.args[0], s, args)
 
     def doNick(self, irc, msg):
