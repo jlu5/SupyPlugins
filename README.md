@@ -3,7 +3,7 @@
 
 This repository includes forks/mods of existing Supybot plugins and some that I've written myself. All of the code in this repository is considered **experimental** and **not** ready for production use. It may glitch, break, or spontaneously combust at any time. You have been warned!
 
-*Note:* This repository is currently being written for Python 2.7, and has *not* been tested for compatibility with other Python versions (that includes Python 3.x). I cannot guarantee that these plugins will work!
+*Note:* This repository is currently being written for Python 2.7, and has *not* been tested for compatibility with other Python versions (that includes Python 3.x). Python 3 support will most likely be introduced in the future.
 
 ## Support
 If you have any questions, concerns, or feature requests, please feel free to submit an issue. 
@@ -15,14 +15,8 @@ Please note that this list may not always be up to date; your best bet is to act
 
 Any specific plugin dependencies *should* also be listed.
 
-##### Hostmasks *(deprecated)*
-- Hostmasks plugin, allows one to fetch appropriate banmasks for users. Now deprecated due to a silly design flaw that made the plugin less efficient than it should've been.
-  
 ##### Isup
 - Provides a simple command to check whether a website is up or down (using [isup.me](http://isup.me)).
-
-##### LinkRelay
-- Mod of the [LinkRelay](https://github.com/ProgVal/Supybot-plugins/tree/master/LinkRelay) plugin. Originally designed for use with [OVERdrive-IRC](http://overdrive.pw/), with a few extra features such as a configurable list of nicks for the relayer to ignore. ~~No longer in active development~~. Development has shifted mostly to the RelayLink plugin in this repository; new users please use that instead!
 
 ##### NoTrigger
 - Anti-abuse script; modifies outFilter to prevent triggering other bots.
@@ -41,7 +35,7 @@ Any specific plugin dependencies *should* also be listed.
 loaded!
 
 ##### RelayLink
-- LinkRelay forked into a different name. See RelayLink/README.md for more details.
+- [LinkRelay](https://github.com/ProgVal/Supybot-plugins/tree/master/LinkRelay) forked into a different name. See RelayLink/README.md for more details.
 
 ##### SupyMisc
 - Some assorted commands that don't seem to fit anywhere else.
