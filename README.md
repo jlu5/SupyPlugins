@@ -45,4 +45,4 @@ loaded!
     * ***Requires:*** a DNS lookup binary such as `host` (as in `/usr/bin/host`) or something similar (installable in Debian/Ubuntu via `apt-get install bind9-host`)
 
 ##### TLDInfo
-- Fetches TLD information using IANA's database (http://www.iana.org/domains/root/db/).
+- Fetches TLD information from IANA's database (http://www.iana.org/domains/root/db/).
