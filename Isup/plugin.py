@@ -46,7 +46,7 @@ class Isup(callbacks.Plugin):
     or down (using isup.me)."""
     
     def _getreply(self, url):
-        data = utils.web.getUrl("http://isup.me/%s" % url)
+        data = utils.web.getUrl("http://isup.me/%s" % url).decode("utf-8")
         if "It's just you." in data:
             reply = 'up'
         elif "looks down from here" in data: 
