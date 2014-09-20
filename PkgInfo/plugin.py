@@ -34,10 +34,16 @@ import supybot.plugins as plugins
 import supybot.ircutils as ircutils
 import supybot.callbacks as callbacks
 from collections import OrderedDict, defaultdict
-import urllib
+try:
+	from urllib.parse import urlencode
+except ImportError:
+	from urllib import urlencode
 import json
 import re
-from HTMLParser import HTMLParser
+try:
+    from HTMLParser import HTMLParser
+except ImportError:
+	from html.parser import HTMLParser
 try:
     from supybot.i18n import PluginInternationalization
     _ = PluginInternationalization('PkgInfo')
@@ -76,19 +82,19 @@ class PkgInfo(callbacks.Plugin):
         parser = PkgInfo.DebPkgParse()
         self.url = self.addrs[distro] + "{}/{}".format(suite, pkg)
         try:
-            self.fd = utils.web.getUrl(self.url)
+            self.fd = utils.web.getUrl(self.url).decode("utf-8")
         except Exception as e:
             irc.error(str(e), Raise=True)
         return parser.feed(self.fd)
 
     def MadisonParse(self, pkg, dist, codenames='', suite=''):
         arch = ','.join(self.registryValue("archs"))
-        self.arg = urllib.urlencode({'package':pkg,'table':dist,'a':arch,'c':codenames,'s':suite})
+        self.arg = urlencode({'package':pkg,'table':dist,'a':arch,'c':codenames,'s':suite})
         url = 'http://qa.debian.org/madison.php?text=on&' + self.arg
         d = OrderedDict()
         fd = utils.web.getUrlFd(url)
         for line in fd.readlines():
-            L = line.split("|")
+            L = line.decode("utf-8").split("|")
             d[L[2].strip()] = (L[1].strip(),L[3].strip())
         if d:
             if self.registryValue("verbose"):
@@ -150,10 +156,10 @@ class PkgInfo(callbacks.Plugin):
         match 'di git al'."""
         baseurl = 'http://www.archlinux.org/packages/search/json/?'
         if 'glob' in dict(opts):
-            fd = utils.web.getUrlFd(baseurl + urllib.urlencode({'q':pkg}))
+            fd = utils.web.getUrl(baseurl + urlencode({'q':pkg}))
         else:
-            fd = utils.web.getUrlFd(baseurl + urllib.urlencode({'name':pkg}))
-        data = json.load(fd)
+            fd = utils.web.getUrl(baseurl + urlencode({'name':pkg}))
+        data = json.loads(fd.decode("utf-8"))
         if data['valid'] and data['results']:
             f = set()
             archs = defaultdict(list)
@@ -174,8 +180,8 @@ class PkgInfo(callbacks.Plugin):
         
         Looks up <package> in the Arch Linux AUR."""
         baseurl = 'https://aur.archlinux.org/rpc.php?type=search&'
-        fd = utils.web.getUrlFd(baseurl + urllib.urlencode({'arg':pkg}))
-        data = json.load(fd)
+        fd = utils.web.getUrl(baseurl + urlencode({'arg':pkg}))
+        data = json.loads(fd.decode("utf-8"))
         if data["type"] == "error":
             irc.error(data["results"], Raise=True)
         if data['resultcount']:
