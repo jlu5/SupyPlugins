@@ -51,12 +51,6 @@ class SupyMisc(callbacks.Plugin):
     threaded = True
 
     ### Some semi-useful utilities
-    def words(self, irc, msg, args, text):
-        """<text>
-        Returns the amount of words in <text> (separated by spaces). """
-        irc.reply(len(text.split()))
-    words = wrap(words, ['text'])
-    
     def scramble(self, irc, msg, args, text):
         """<text>
         An alternative to Supybot's Filter scramble command, but without keeping the first and last letters of each word. """

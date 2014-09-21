@@ -52,9 +52,9 @@ __contributors__ = {supybot.authors.progval: ['enhance configurability',
                                               'optional colors'],
                     supybot.Author('James Lu', 'GLolol',
                         'GLolol@overdrive.pw'):
-                        ['more config options/bugfixes',
-                        'custom text events',
-                        'ignore nicks feature']}
+                        ['more configurability/bugfixes',
+                        'custom text events/colour scheme',
+                        'addall/removeall functions']}
 
 __url__ = ""
 

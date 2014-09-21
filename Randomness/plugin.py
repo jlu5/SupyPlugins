@@ -250,7 +250,7 @@ class Randomness(callbacks.Plugin):
         except KeyError: n = 0
         if len(a) >= 2:
             return "\x02%s\x02 %s. (Votes: \x02%s\x02)" % \
-                (a[0], ''.join(a[1:]), n)
+                (a[0], ' '.join(a[1:]), n)
         return "\x02%s\x02. (Votes: \x02%s\x02)" % \
             (action, n)
 
