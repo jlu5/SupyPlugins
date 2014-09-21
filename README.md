@@ -3,7 +3,7 @@
 
 This repository includes forks/mods of existing Supybot plugins and some that I've written myself. All of the code in this repository is considered **experimental** and **not** ready for production use. It may glitch, break, or spontaneously combust at any time. You have been warned!
 
-*Note:* This repository is currently being written for Python 2.7, and has *not* been tested for compatibility with other Python versions (that includes Python 3.x). Python 3 support will most likely be introduced in the future.
+*Note:* This repository is currently being written for Python 2.7, and has *not* been tested for compatibility with other Python versions. Python 3 support will be added soon.
 
 ## Support
 If you have any questions, concerns, or feature requests, please feel free to submit an issue. 
