@@ -303,7 +303,11 @@ class RelayLink(callbacks.Plugin):
             args['oldnick'] = '\x03%s%s\x03' % (self.simpleHash(msg.nick), args['oldnick'])
             args['newnick'] = '\x03%s%s\x03' % (self.simpleHash(msg.args[0]), args['newnick'])
         s = '%(network)s%(oldnick)s is now known as %(newnick)s'
-        for (channel, c) in irc.state.channels.iteritems():
+        try:
+            chandict = irc.state.channels.iteritems()
+        except AttributeError: # Python 3 compatibility
+             chandict = irc.state.channels.items()
+        for (channel, c) in chandict:
             if msg.args[0] in c.users:
                 self.sendToOthers(irc, channel, s, args)
 

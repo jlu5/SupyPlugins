@@ -34,16 +34,15 @@ import supybot.plugins as plugins
 import supybot.ircutils as ircutils
 import supybot.callbacks as callbacks
 from collections import OrderedDict, defaultdict
-try:
-	from urllib.parse import urlencode
-except ImportError:
-	from urllib import urlencode
+try: # Python 3 
+    from urllib.parse import urlencode
+    from html.parser import HTMLParser
+except ImportError: # Python 2
+    from urllib import urlencode
+    from HTMLParser import HTMLParser
 import json
 import re
-try:
-    from HTMLParser import HTMLParser
-except ImportError:
-	from html.parser import HTMLParser
+
 try:
     from supybot.i18n import PluginInternationalization
     _ = PluginInternationalization('PkgInfo')

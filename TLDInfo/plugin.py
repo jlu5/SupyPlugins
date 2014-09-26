@@ -53,7 +53,10 @@ class TLDInfo(callbacks.Plugin):
         db = "http://www.iana.org/domains/root/db/"
         text = text.split(".")[-1] # IANA's DB doesn't care about second level domains
         # Encode everything in IDN in order to support international TLDs
-        s = text.decode("utf8").encode("idna")
+        try: # Python 2
+            s = text.decode("utf8").encode("idna")
+        except AttributeError: # Python 3
+            s = text.encode("idna").decode()
         try:
             data = utils.web.getUrl(db + s)
         except utils.web.Error as e:
