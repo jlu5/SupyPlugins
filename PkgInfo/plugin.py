@@ -146,18 +146,16 @@ class PkgInfo(callbacks.Plugin):
     vlist = wrap(vlist, ['somethingWithoutSpaces', 'somethingWithoutSpaces'])
     
     def archpkg(self, irc, msg, args, pkg, opts):
-        """<package> [--glob]
+        """<package> [--exact]
         
         Looks up <package> in the Arch Linux package repositories.
-        If --glob is given, the bot will search for <package> as a glob 
-        instead of the exact package name. However, this often has the
-        problem of giving many irrelevant results (e.g. 'git' will also
-        match 'di git al'."""
+        If --exact is given, will output only exact matches.
+        """
         baseurl = 'http://www.archlinux.org/packages/search/json/?'
-        if 'glob' in dict(opts):
-            fd = utils.web.getUrl(baseurl + urlencode({'q':pkg}))
-        else:
+        if 'exact' in dict(opts):
             fd = utils.web.getUrl(baseurl + urlencode({'name':pkg}))
+        else:
+            fd = utils.web.getUrl(baseurl + urlencode({'q':pkg}))
         data = json.loads(fd.decode("utf-8"))
         if data['valid'] and data['results']:
             f = set()
@@ -172,7 +170,7 @@ class PkgInfo(callbacks.Plugin):
             else:
                 irc.reply('Found {} results: {}'.format(len(f),', '.join(f)))
         else: irc.error("No results found.",Raise=True)
-    archpkg = wrap(archpkg, ['somethingWithoutSpaces', getopts({'glob':''})])
+    archpkg = wrap(archpkg, ['somethingWithoutSpaces', getopts({'exact':''})])
     
     def archaur(self, irc, msg, args, pkg):
         """<package>
