@@ -53,6 +53,7 @@ import supybot.callbacks as callbacks
 import supybot.conf as conf
 import random
 import json
+from base64 import b64decode
 import re
 from time import sleep
 from supybot.utils.structures import TimeoutQueue
@@ -102,7 +103,6 @@ class Randomness(callbacks.Plugin):
     # is a mostly personal plugin, they will only activate on certain
     # predefined networks.
     def _attack(self, target):
-        bde = "%sasE%s4"%('B','6')
         throws = ['poorly written code', 'knives', 
             "Te"+"chman", 'various objects', 'rocks',
             "Techm"+"ango", 'grenades', "IE6", 'axes', 'evil things',
@@ -117,7 +117,7 @@ class Randomness(callbacks.Plugin):
             'confusingly bad english', "Windows Me",
             "gbyers' immaturity", "Quicktime for Windows",
             "\x0309,01-Oblivi\x020\x02n Script by mIRCsKripterz-\x03",
-            "YnJlbmRpIGhpdGxlciBibG9zc29t".decode(bde),
+            "brendi hi"+"tler blossom",
             "segmentation faults", "???", "relentless spyware",
             "nsa technology"]
         throws += ['nails', 'planets', 'thorns', 'skulls',
@@ -233,7 +233,7 @@ class Randomness(callbacks.Plugin):
                     elif r >= 7:
                         irc.queueMsg(ircmsgs.privmsg(msg.args[0], random.choice(okresponses)))
             if irc.network.lower() in ("overdrive-irc", "stripechat") and \
-                ('aXRsZXIgYmxvc3NvbQ==').decode('base'+'64') in ircutils.stripFormatting(msg.args[1].lower()):
+                "hitl"+"er blossom" in ircutils.stripFormatting(msg.args[1].lower()):
                 irc.queueMsg(ircmsgs.privmsg(msg.args[0], msg.nick + ": the entire topic changes" + exclaim))
  #           if irc.network.lower() == "stripechat":
  #               r = random.random()
