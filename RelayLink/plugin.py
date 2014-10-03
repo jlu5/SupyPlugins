@@ -103,7 +103,7 @@ class RelayLink(callbacks.Plugin):
                                           relay[2],
                                           relay[3],
                                           re.compile('^%s$' % relay[0], re.I),
-                                          re.compile('^%s$' % relay[1]),
+                                          re.compile('^%s$' % relay[1], re.I),
                                           re.compile(relay[4])))
             except:
                 log.error('Failed adding relay: %r' % relay)
@@ -432,7 +432,7 @@ class RelayLink(callbacks.Plugin):
         if 'count' not in keys: irc.reply(s, private=True)
         for relay in self.relays:
             if relay.sourceChannel == channel and \
-                    relay.sourceNetwork == irc.network:
+                    relay.sourceNetwork.lower() == irc.network.lower():
                 totalChans += 1
                 if not world.getIrc(relay.targetNetwork):
                     irc.reply(_('Not connected to network %s.') %
@@ -499,7 +499,7 @@ class RelayLink(callbacks.Plugin):
         s = ' | '.join(args)
 
         currentConfig = self.registryValue('relays')
-        if add == True:
+        if add:
             if s in currentConfig.split(' || '):
                 return False
             if currentConfig == '':
