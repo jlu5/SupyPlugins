@@ -33,5 +33,9 @@ from supybot.test import *
 class IsupTestCase(PluginTestCase):
     plugins = ('Isup',)
 
+    def testBasics(self):
+        self.assertRegexp('check google.com', "It's just you")
+        self.assertRegexp('check dhjeheiaoij', "invalid|url|error", re.I)
+        self.assertRegexp('check dhjeheiao.invalid', "invalid|url|error", re.I)
 
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:

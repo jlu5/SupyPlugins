@@ -30,8 +30,21 @@
 
 from supybot.test import *
 
-class NoTriggerTestCase(PluginTestCase):
-    plugins = ('NoTrigger',)
+class NoTriggerTestCase(ChannelPluginTestCase):
+    plugins = ('NoTrigger','Utilities', 'Reply')
+    config = {'supybot.plugins.notrigger.enable': True,
+        'supybot.plugins.notrigger.spaceBeforeNicks': True,
+        'supybot.plugins.notrigger.blockCtcp': True}
 
+    def testSpaceBeforePrefixes(self):
+        self.assertResponse('echo !test', ' !test')
+
+    def testSpaceBeforeNicks(self):
+        self.assertResponse('echo example: hello', ' example: hello')
+        self.assertResponse('echo user1, hello', ' user1, hello')
+
+    def testCTCPBlocking(self):
+        self.assertResponse('echo \x01PING abcd\x01', 'PING abcd')
+        self.assertAction('reply action jumps around', 'jumps around')
 
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:

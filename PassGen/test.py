@@ -32,6 +32,12 @@ from supybot.test import *
 
 class PassGenTestCase(PluginTestCase):
     plugins = ('PassGen',)
+    config = {'supybot.plugins.passgen.maxLength': 30}
 
+    def testmaxLen(self):
+        self.assertError('mkpasswd 70')
+
+    def testBasics(self):
+        self.assertNotError('mkpasswd 20')
 
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:
