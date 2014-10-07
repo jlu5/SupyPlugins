@@ -68,7 +68,6 @@ class RelayLink(callbacks.Plugin):
             self.channelRegex = channelRegex
             self.networkRegex = networkRegex
             self.messageRegex = messageRegex
-            self.hasTargetIRC = False
             self.hasSourceIRCChannels = False
 
     def __init__(self, irc):
@@ -76,8 +75,6 @@ class RelayLink(callbacks.Plugin):
         self.__parent.__init__(irc)
         self._loadFromConfig()
         self.ircstates = {}
-        for IRC in world.ircs:
-            self.addIRC(IRC)
         floodProtectTimeout = conf.supybot.plugins.RelayLink.antiflood.seconds
         self.floodCounter = TimeoutQueue(floodProtectTimeout)
         self.floodActivated = False
@@ -106,7 +103,7 @@ class RelayLink(callbacks.Plugin):
                                           relay[2],
                                           relay[3],
                                           re.compile('^%s$' % relay[0], re.I),
-                                          re.compile('^%s$' % relay[1]),
+                                          re.compile('^%s$' % relay[1], re.I),
                                           re.compile(relay[4])))
             except:
                 log.error('Failed adding relay: %r' % relay)
@@ -170,10 +167,10 @@ class RelayLink(callbacks.Plugin):
                 ' addall" to add one.'))
             return
         for relay in self.relays:
-            if relay.hasTargetIRC:
+            if world.getIrc(relay.targetNetwork):
                 hasIRC = 'Link healthy!'
             else:
-                hasIRC = '\x0302IRC object not scraped yet.\017'
+                hasIRC = '\x03%sNot connected to network.\017'
             s ='\x02%s\x02 on \x02%s\x02 ==> \x02%s\x02 on \x02%s\x02.  %s'
             if not self.registryValue('color', msg.args[0]):
                 s = s.replace('\x02', '')
@@ -185,7 +182,6 @@ class RelayLink(callbacks.Plugin):
                          hasIRC), private=True)
 
     def doPrivmsg(self, irc, msg):
-        self.addIRC(irc)
         channel = msg.args[0]
         s = msg.args[1]
         s, args = self.getPrivmsgData(channel, msg.nick, s,
@@ -213,11 +209,7 @@ class RelayLink(callbacks.Plugin):
                     self.sendToOthers(irc, msg.args[0], s, args, isPrivmsg=True)
         return msg
 
-    def doPing(self, irc, msg):
-        self.addIRC(irc)
-
     def doMode(self, irc, msg):
-        self.addIRC(irc)
         args = {'nick': msg.nick, 'channel': msg.args[0],
                 'mode': ' '.join(msg.args[1:]), 'userhost': ''}
         if self.registryValue("noHighlight", msg.args[0]):
@@ -246,7 +238,6 @@ class RelayLink(callbacks.Plugin):
             if self.registryValue('hostmasks', msg.args[0]):
                 args['userhost'] = ' (%s@%s)' % (msg.user, msg.host)
             s = '%(network)s%(nick)s%(userhost)s has joined %(channel)s'
-        self.addIRC(irc)
         self.sendToOthers(irc, msg.args[0], s, args)
 
     def doPart(self, irc, msg):
@@ -260,7 +251,6 @@ class RelayLink(callbacks.Plugin):
         else:
             if self.registryValue("noHighlight", msg.args[0]):
                 args['nick'] = '-'+msg.nick
-            self.addIRC(irc)
             if self.registryValue('color', msg.args[0]):
                 args['nick'] = '\x03%s%s\x03' % (self.simpleHash(msg.nick), args['nick'])
             if self.registryValue('hostmasks', msg.args[0]):
@@ -272,7 +262,6 @@ class RelayLink(callbacks.Plugin):
         self.sendToOthers(irc, msg.args[0], s, args)
 
     def doKick(self, irc, msg):
-        self.addIRC(irc)
         args = {'kicked': msg.args[1], 'channel': msg.args[0],
                 'kicker': msg.nick, 'message': msg.args[2], 'userhost': ''}
         if args['kicked'] == irc.nick:
@@ -294,7 +283,6 @@ class RelayLink(callbacks.Plugin):
         self.sendToOthers(irc, msg.args[0], s, args)
 
     def doNick(self, irc, msg):
-        self.addIRC(irc)
         if self.registryValue("noHighlight"):
             args = {'oldnick': '-'+msg.nick, 'newnick': '-'+msg.args[0]}
         else:
@@ -324,7 +312,6 @@ class RelayLink(callbacks.Plugin):
                 args['nick'] = '\x03%s%s\x03' % (self.simpleHash(msg.nick), args['nick'])
             s = '%(network)s%(nick)s has quit (%(message)s)'
         self.sendToOthers(irc, None, s, args, msg.nick)
-        self.addIRC(irc)
 
     def sendToOthers(self, irc, channel, s, args, nick=None, isPrivmsg=False):
         assert channel is not None or nick is not None
@@ -342,14 +329,15 @@ class RelayLink(callbacks.Plugin):
                     args['network'] = ''
             return s % args
         def send(s):
-            if not relay.hasTargetIRC:
-                self.log.info('RelayLink:  IRC %s not yet scraped.' %
+            targetIRC = world.getIrc(relay.targetNetwork)
+            if not targetIRC:
+                self.log.info('RelayLink:  Not connected to network %s.' %
                               relay.targetNetwork)
-            elif relay.targetIRC.zombie:
+            elif targetIRC.zombie:
                 self.log.info('RelayLink:  IRC %s appears to be a zombie'%
                               relay.targetNetwork)
             elif irc.isChannel(relay.targetChannel) and \
-                    relay.targetChannel not in relay.targetIRC.state.channels:
+                    relay.targetChannel not in targetIRC.state.channels:
                 self.log.info('RelayLink:  I\'m not in in %s on %s' %
                               (relay.targetChannel, relay.targetNetwork))
             else:
@@ -361,7 +349,7 @@ class RelayLink(callbacks.Plugin):
                 else:
                     return
                 msg.tag('relayedMsg')
-                relay.targetIRC.sendMsg(msg)
+                targetIRC.sendMsg(msg)
         
         msgs = self.registryValue("antiflood.messages")
         if self.registryValue("antiflood.enable") and msgs and \
@@ -405,16 +393,6 @@ class RelayLink(callbacks.Plugin):
                         else: self.floodCounter.enqueue(0)
                     send(new_s)
 
-    def addIRC(self, irc):
-        match = False
-        for relay in self.relays:
-            if relay.sourceNetwork == irc.network:
-                relay.sourceIRCChannels = copy.deepcopy(irc.state.channels)
-                relay.hasSourceIRCChannels = True
-            if relay.targetNetwork == irc.network and not relay.hasTargetIRC:
-                relay.targetIRC = irc
-                relay.hasTargetIRC = True
-
     @internationalizeDocstring
     def nicks(self, irc, msg, args, channel, optlist):
         """[<channel>] [--count]
@@ -454,11 +432,10 @@ class RelayLink(callbacks.Plugin):
         if 'count' not in keys: irc.reply(s, private=True)
         for relay in self.relays:
             if relay.sourceChannel == channel and \
-                    relay.sourceNetwork == irc.network:
+                    relay.sourceNetwork.lower() == irc.network.lower():
                 totalChans += 1
-                if not relay.hasTargetIRC:
-                    irc.reply(_('I haven\'t scraped the IRC object for %s '
-                              'yet. Try again in a minute or two.') % \
+                if not world.getIrc(relay.targetNetwork):
+                    irc.reply(_('Not connected to network %s.') %
                               relay.targetNetwork)
                 else:
                     users = []
@@ -469,7 +446,7 @@ class RelayLink(callbacks.Plugin):
                     numUsers = 0
                     target = relay.targetChannel
 
-                    channels = relay.targetIRC.state.channels
+                    channels = world.getIrc(relay.targetNetwork).state.channels
                     found = False
                     for key, channel_ in channels.items():
                         #if re.match(relay.targetChannel, key):
@@ -522,20 +499,20 @@ class RelayLink(callbacks.Plugin):
         s = ' | '.join(args)
 
         currentConfig = self.registryValue('relays')
-        if add == True:
-            if s in currentConfig.split(' || '):
+        config = list(map(ircutils.IrcString, currentConfig.split(' || ')))
+        if add:
+            if s in config:
                 return False
             if currentConfig == '':
                 self.setRegistryValue('relays', value=s)
             else:
                 self.setRegistryValue('relays',
-                                      value=' || '.join((currentConfig,s)))
+                                      value=' || '.join((currentConfig, s)))
         else:
-            newConfig = currentConfig.split(' || ')
-            if s not in newConfig:
+            if s not in config:
                 return False
-            newConfig.remove(s)
-            self.setRegistryValue('relays', value=' || '.join(newConfig))
+            config.remove(s)
+            self.setRegistryValue('relays', value=' || '.join(config))
         return True
 
     def _parseOptlist(self, irc, msg, tupleOptlist, batchadd=False):

@@ -48,7 +48,7 @@ class TLDInfo(callbacks.Plugin):
     def tld(self, irc, msg, args, text):
         """<tld>
 
-        Fetches TLD information about <tld> from IANA's database
+        Checks whether <tld> is a valid TLD using IANA's database
         (http://www.iana.org/domains/root/db/)."""
         db = "http://www.iana.org/domains/root/db/"
         text = text.split(".")[-1] # IANA's DB doesn't care about second level domains
@@ -61,11 +61,11 @@ class TLDInfo(callbacks.Plugin):
             data = utils.web.getUrl(db + s)
         except utils.web.Error as e:
             if "HTTP Error 404:" in str(e):
-                irc.error("No results found for TLD {} (using "
-                    "http://www.iana.org/domains/root/db)".format("."+text), Raise=True)
+                irc.reply("No results found for TLD {} (using "
+                    "http://www.iana.org/domains/root/db)".format("."+text))
             else:
-                irc.error("An unknown error occurred while contacting IANA's "
-                    "DB.", Raise=True)
+                irc.error("An error occurred while contacting IANA's "
+                    "TLD Database.", Raise=True)
         else:
             irc.reply("{} appears to be a valid TLD, see {}".format(("."+text), (db+s)))
     tld = wrap(tld, ['something'])

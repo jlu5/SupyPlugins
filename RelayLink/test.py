@@ -31,7 +31,7 @@
 
 from supybot.test import *
 
-class TelayLinkTestCase(ChannelPluginTestCase):
+class RelayLinkTestCase(ChannelPluginTestCase):
     plugins = ('RelayLink','Config', 'User')
 
     def testAdd(self):
@@ -56,6 +56,9 @@ class TelayLinkTestCase(ChannelPluginTestCase):
         self.assertNotError('relaylink add --to #foo@bar')
         self.assertResponse('config supybot.plugins.relaylink.relays',
                             '#test | test | #foo | bar | ')
+
+        self.assertRegexp('relaylink add --to #foo@bar', 'already exists')
+        self.assertRegexp('relaylink add --to #FOO@bar', 'already exists')
 
     def testRemove(self):
         self.assertNotError('config supybot.plugins.relaylink.relays '
