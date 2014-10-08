@@ -28,6 +28,7 @@
 
 ###
 
+from __future__ import unicode_literals
 import supybot.utils as utils
 from supybot.commands import *
 import supybot.plugins as plugins
