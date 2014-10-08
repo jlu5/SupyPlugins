@@ -32,6 +32,7 @@ Any specific plugin dependencies *should* also be listed.
 
 ##### PkgInfo
 - Fetches package information from the websites of Debian, Ubuntu, and Arch Linux's repositories.
+    * ***Requires:*** Beautiful Soup 4 - installable via `pip install beautifulsoup4` (Python 2/3), `apt-get install python-bs4` (Python 2), or `apt-get install python3-bs4` (Python 3)
 
 ##### Randomness
 - Random commands for my own personal use; you probably don't want this loaded!

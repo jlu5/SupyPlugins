@@ -36,13 +36,20 @@ import supybot.ircutils as ircutils
 import supybot.callbacks as callbacks
 from collections import OrderedDict, defaultdict
 try: # Python 3 
-    from urllib.parse import urlencode
-    from html.parser import HTMLParser
+    from urllib.parse import urlencode, quote
 except ImportError: # Python 2
-    from urllib import urlencode
-    from HTMLParser import HTMLParser
+    from urllib import urlencode, quote
 import json
-import re
+
+# I don't want to be too dependant on BeautifulSoup at this time;
+# not all use it, but it is required by some.
+global bs4Present
+try:
+    from bs4 import BeautifulSoup
+except ImportError:
+    bs4Present = False
+else:
+    bs4Present = True
 
 try:
     from supybot.i18n import PluginInternationalization
@@ -62,30 +69,6 @@ class PkgInfo(callbacks.Plugin):
         self.__parent.__init__(irc)
         self.addrs = {'ubuntu':'http://packages.ubuntu.com/',
                       'debian':"http://packages.debian.org/"}
-
-    class DebPkgParse(HTMLParser):
-        def handle_starttag(self, tag, attrs):
-            if tag == "meta":
-                attrs = dict(attrs)
-                try:
-                    if attrs['name'] == "Description":
-                        self.tags.append(attrs['content'])
-                    elif attrs['name'] == "Keywords":
-                        self.tags.extend(attrs['content'].replace(",","").split())
-                except KeyError: pass
-        def feed(self, data):
-            self.tags = []
-            HTMLParser.feed(self, data)
-            return self.tags
-
-    def DebianParse(self, irc, suite, pkg, distro):
-        parser = PkgInfo.DebPkgParse()
-        self.url = self.addrs[distro] + "{}/{}".format(suite, pkg)
-        try:
-            self.fd = utils.web.getUrl(self.url).decode("utf-8")
-        except Exception as e:
-            irc.error(str(e), Raise=True)
-        return parser.feed(self.fd)
 
     def MadisonParse(self, pkg, dist, codenames='', suite=''):
         arch = ','.join(self.registryValue("archs"))
@@ -110,25 +93,33 @@ class PkgInfo(callbacks.Plugin):
         Fetches information for <package> from Debian or Ubuntu's repositories.
         <suite> is the codename/release name (e.g. 'trusty', 'squeeze').
         For Arch Linux packages, please use 'archpkg' and 'archaur' instead."""
+        if not bs4Present:
+            irc.error("This command requires the Beautiful Soup 4 library. See"
+                " https://github.com/GLolol/SupyPlugins/blob/master/README.md"
+                "#pkginfo for instructions on how to install it.", Raise=True)
         # Guess the distro from the suite name
         if suite.startswith(("oldstable","squeeze","wheezy","stable",
             "jessie","testing","sid","unstable")):
             distro = "debian"
         else: distro = "ubuntu"
-        p = self.DebianParse(irc, suite.lower(), pkg.lower(), distro)
-        if "Error</title>" in self.fd:
-            err = re.findall("""<div class\="perror">\s*<p>(.*?)</p>$""", self.fd, re.M)
-            if "two or more packages specified" in err[0]:
-                irc.error("Unknown distribution/release.", Raise=True)
-            irc.reply(err[0])
-            return
+        url = self.addrs[distro.lower()] + "{}/{}".format(suite.lower(), pkg.lower())
         try:
-            c = ' '.join(p[2].split("-"))
-        except: c = p[2]
-        # This returns a list in the form [package description, distro,
-        # release/codename, language (will always be 'en'), component, section, package-version]
-        irc.reply("Package: \x02{} ({})\x02 in {} {} - {}; View more at: {}".format(pkg, p[-1], p[1],
-        c, p[0], self.url))
+            fd = utils.web.getUrl(url).decode("utf-8")
+        except Exception as e:
+            irc.error(str(e), Raise=True)
+        soup = BeautifulSoup(fd)
+        if "Error" in soup.title.string:
+            err = soup.find('div', attrs={"id":"content"}).find('p').string
+            if "two or more packages specified" in err:
+                irc.error("Unknown distribution/release.", Raise=True)
+            irc.reply(err)
+            return
+        desc = soup.find('meta', attrs={"name":"Description"})["content"]
+        # Get package information from the meta tags
+        keywords = soup.find('meta', attrs={"name":"Keywords"})["content"]
+        keywords = keywords.replace(",","").split()
+        irc.reply("Package: \x02{} ({})\x02 in {} - {}; View more at: {}".format(pkg, 
+        keywords[-1], keywords[1], desc, url))
     package = wrap(package, ['somethingWithoutSpaces', 'somethingWithoutSpaces'])
 
     def vlist(self, irc, msg, args, distro, pkg):
@@ -190,10 +181,33 @@ class PkgInfo(callbacks.Plugin):
                 if self.registryValue("verbose"):
                     verboseInfo = " [ID:{} Votes:{}]".format(x['ID'], x['NumVotes'])
                 s += "{} - {} \x02({}{})\x02, ".format(x['Name'],x['Description'],x['Version'], verboseInfo)
-            irc.reply(s[:-2])
+            irc.reply(s[:-2]) # cut off the ", " at the end
         else: irc.error("No results found.",Raise=True)
     archaur = wrap(archaur, ['somethingWithoutSpaces'])
 
+    def pkgsearch(self, irc, msg, args, distro, query):
+        """<distro> <query>
+
+        Looks up <query> in <distro>'s website (for Debian/Ubuntu)."""
+        if not bs4Present:
+            irc.error("This command requires the Beautiful Soup 4 library. See"
+                " https://github.com/GLolol/SupyPlugins/blob/master/README.md"
+                "#pkginfo for instructions on how to install it.", Raise=True)
+        try:
+            url = '%ssearch?keywords=%s' % (self.addrs[distro.lower()], quote(query))
+        except KeyError:
+            irc.error('Unknown distribution.', Raise=True)
+        try:
+            fd = utils.web.getUrl(url).decode("utf-8")
+        except Exception as e:
+            irc.error(str(e), Raise=True)
+        soup = BeautifulSoup(fd)
+        # Debian/Ubuntu use h3 for result names in the format 'Package abcd'
+        results = [pkg.string.split()[1] for pkg in soup.find_all('h3')]
+        s = "Found %s results: \x02%s\x02; View more at %s" % (len(results), 
+            utils.str.commaAndify(results), url)
+        irc.reply(s)
+    pkgsearch = wrap(pkgsearch, ['somethingWithoutSpaces', 'somethingWithoutSpaces'])
 
 Class = PkgInfo
 
