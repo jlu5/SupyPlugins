@@ -48,4 +48,4 @@ Any specific plugin dependencies *should* also be listed.
     * ***Requires:*** a DNS lookup binary such as `host` (as in `/usr/bin/host`, installable in Debian/Ubuntu via `apt-get install bind9-host`)
 
 ##### TLDInfo
-- Fetches TLD information from IANA's database (http://www.iana.org/domains/root/db/).
+- Checks if something is a valid TLD using IANA's database (http://www.iana.org/domains/root/db/).
