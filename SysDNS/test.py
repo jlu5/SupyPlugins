@@ -32,6 +32,9 @@ from supybot.test import *
 
 class SysDNSTestCase(PluginTestCase):
     plugins = ('SysDNS',)
+    
+    def testBasics(self):
+        self.assertNotError('sysdns dns google.com')
 
 
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:
