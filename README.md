@@ -1,106 +1,98 @@
-Supybot-Weather
-===============
+[![Build Status](https://travis-ci.org/reticulatingspline/Weather.svg?branch=master)](https://travis-ci.org/reticulatingspline/Weather)
 
-Update
+# Limnoria plugin for Weather Underground
 
-    20130705 - I have updated the user settings system as I've got a ton of requests to go to individual
-    settings.
+## Introduction
 
-    setmetric and setcolortemp have been folded into the setuser command.
+I made this plugin because quite a few Weather plugins didn't work well and WunderWeather, which uses
+this API, is on their older XML api that they don't have documented anymore and, one would assume, will
+be depreciated at some point.
 
-    Please see the setuser help for all settings, outside of setweather, for a user.
+## Install
 
-Overview
+You will need a working Limnoria bot on Python 2.7 for this to work.
 
-    This is a Supybot plugin for displaying Weather via Weather Underground (http://www.wunderground.com)
-    They've got a nice JSON api that is free to use when you register and grab an API key.
+Go into your Limnoria plugin dir, usually ~/supybot/plugins and run:
 
-    I made this plugin because quite a few Weather plugins didn't work well and WunderWeather, which uses
-    this API, is on their older XML api that they don't have documented anymore and, one would assume, will
-    be depreciated at some point.
+```
+git clone https://github.com/reticulatingspline/Weather
+```
 
-    Besides a few of the ideas like having a user database, colorized temp, most of the code is mine.
+To install additional requirements, run:
 
-Instructions
+```
+pip install -r requirements.txt 
+```
 
-    NOTICE: If you were using the older version of this plugin before June 2013,
-    you _MUST_ delete the older Weather.db file in the Supybot data directory.
-    Normally, this is at <supybotdir>/data/Weather.db
-    The internal DB is not compatable and must be deleted before.
+Next, load the plugin:
 
-    First, you will need to register for a free API key. Signup takes less than a minute at:
+```
+/msg bot load Weather
+```
 
-        http://www.wunderground.com/weather/api/
+[Fetch an API key for Wunderground](http://www.wunderground.com/weather/api/) by signing up (free).
+Once getting this key, you will need to set it on your bot before things will work.
+Reload once you perform this operation to start using it.
 
-    You will need an API key to use this plugin. Configure it via:
+```
+/msg bot config plugins.Weather.apiKey APIKEY
+```
 
-        /msg <bot> config plugin.Weather.apiKey <apiKey>
+Now, reload the bot and you should be good to go:
 
-    Now reload the plugin:
+```
+/msg bot reload Weather
+```
 
-        /msg <bot> reload Weather
+Optional: There are some config variables that can be set for the bot. They mainly control output stuff.
 
-    You can now use the basic functionality by:
+```
+/msg bot config search Weather
+```
 
-        /msg <bot> wunderground 10012 (or your zipcode)
+## Example Usage
 
-    I suggest adding an alias to this command to make it easier.
+```
+<spline> @wunderground 10002
+<myybot>  New York, NY :: Rain :: 52F | Visibility: 4.0mi | Saturday: Rain. High around 55F.  ...
+```
 
-        /msg <bot> Alias add weather wunderground
-        /msg <bot> Alias add w wunderground
+## Features
 
-Options
+There are a ton of options to configure. You can look through these via
 
-    There are a ton of options to configure. You can look through these via /msg <bot> config search Weather
-    Many of these are also available via --help when calling the wunderground command.
+```
+/msg bot config search Weather
+```
 
+Many of these are also available via --help when calling the wunderground command.
 
-    Another feature that will make you and your users happy is an internal database that can remember your
-    location, setting for metric, and color temperature.
-    
-    Basically, instead of having to type wunderground 10152 (or wherever you are), you can just type in
-    wunderground. This can be done via setting a location with the setweather command.
+Users can also have their location remembered by the plugin's internal database so that
+they will not have to continually type in their location. NOTE: It uses their nick only,
+so if they are on a different nick, even with an identical hostmask, it will not match.
 
-        /msg <bot> setweather 10152
-        /msg <bot> setuser metric False (to use imperial units)
-        /msg <bot> setuser colortemp False (or true)
+```
+@setweather <location>
+```
 
-    The bot's db is very simple and only remembers a nick and setting. So, if you change nicks, it will not
-    remember you unless you set it on this new nick.
+This now allows a user to type in the weather command w/o any arguments:
 
-Options
+```
+<spline> @wunderground
+<myybot> Manchester, NH :: Rain :: 45F | Visibility: 10.0mi | Saturday: Occasional light rain. High 56F. ...
+```
 
-    This plugin has a bit of configuration that can be done with it. We'll start with the basics:
+Users can also have the bot remember their options like for using Metric when displaying weather:
 
-    - useImperial:
-    We display using non-metric units. For the rest of the world who uses them, you may set this
-    per channel or in the config via the:
+```
+<spline> @setuser metric False
+```
 
-        /msg <bot> config plugins.Weather.useImperial configuration variable (True/False)
+## About
 
-    You may also use --metric when calling to get metric units.
+All of my plugins are free and open source. When I first started out, one of the main reasons I was
+able to learn was due to other code out there. If you find a bug or would like an improvement, feel
+free to give me a message on IRC or fork and submit a pull request. Many hours do go into each plugin,
+so, if you're feeling generous, I do accept donations via Amazon or browse my [wish list](http://amzn.com/w/380JKXY7P5IKE).
 
-    - languages:
-    By default, it is set to English. Weather Underground has a variety of language support
-    documented here: http://api.wunderground.com/weather/api/d/docs?d=language-support
-    If you do not want to use English, you can set this via one of the codes above:
-
-        /msg <bot> config plugins.Weather.lang EN (replace EN with the 2 letter language code)
-
-
-    - disableColorTemp
-    On a similar note, I coded a neat "color" to temperature function that will color any temperature
-    on a basis of what it is (works for metric, too). Think of how temperature maps are done where
-    you would see red/orange/yellow if it's "hot", green if "moderate", and blue if its "cold".
-    By default, I have this ON. This can also be personalized via /msg <bot> setcolortemp True/False
-    once a user is in the database. You can turn it off like this:
-
-        /msg <bot> config plugins.Weather.disableColorTemp True
-
-Documentation
-
-    Some links:
-        # Main documentation: http://www.wunderground.com/weather/api/
-        # https://github.com/davidwilemski/Weather/blob/master/weather.py
-        # https://bitbucket.org/rizon/pypsd/src/8f975a375ab4/modules/internets/api/weather.py
-        # http://ronie.googlecode.com/svn-history/r283/trunk/weather.wunderground/default.py
+I'm always looking for work, so if you are in need of a custom feature, plugin or something bigger, contact me via GitHub or IRC.
