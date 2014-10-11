@@ -75,7 +75,8 @@ You can use zipcodes (10002), cities (New York, NY), etc. Weather Underground is
 intelligent here.
 
 ```
-@setweather 10002 
+<spline> @setweather 10002
+<myybot> I have changed spline's weather ID to 10002
 ```
 
 This now allows a user to type in the weather command w/o any arguments:
@@ -89,6 +90,7 @@ Users can also have the bot remember their options like for using Metric when di
 
 ```
 <spline> @setuser metric False
+<myybot> I have changed spline's metric setting to 0
 ```
 
 ## About
