@@ -6,7 +6,6 @@
 ###
 
 from supybot.test import *
-from supybot.utils import stripFormatting
 
 class WeatherTestCase(PluginTestCase):
     plugins = ('Weather',)
