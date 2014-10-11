@@ -146,8 +146,6 @@ class Randomness(callbacks.Plugin):
             bemotes = meh + (":(", ":|", '-_-')
             semotes = (":<", ";_;", ";-;", "D:", ">:", "x(")
             if irc.network.lower() == "overdrive-irc":
-                # if msg.nick.lower() == 'gbyers' and msg.args[1].lower() == 'hi lily':
-                    # irc.queueMsg(ircmsgs.kick(msg.args[0], msg.nick, "stfu"))
                 if "fishbot" in irc.state.channels[msg.args[0]].users:
                     hurtresponses = [ow, random.choice(semotes), 
                         ow+random.choice(semotes), "RIP", "i cry",
@@ -167,7 +165,7 @@ class Randomness(callbacks.Plugin):
                         else:
                             irc.queueMsg(ircmsgs.privmsg(msg.args[0], random.choice(hurtresponses)))
                 if "wow" in irc.state.channels[msg.args[0]].ops and \
-                    ircutils.stripFormatting(msg.args[1].lower()).startswith("wow"):
+                    ircutils.stripFormatting(msg.args[1].lower().split()[0]) == "wow":
                     wowResponses1 = ["what is it",
                                     "hi %s%s" % (msg.nick, dots),
                                     "o/",
@@ -203,16 +201,6 @@ class Randomness(callbacks.Plugin):
                         irc.queueMsg(ircmsgs.privmsg("BotServ", "say {} {}".format(msg.args[0],random.choice(wowResponses1))))
                     elif n >= 50:
                         irc.queueMsg(ircmsgs.privmsg("BotServ", "act {} {}".format(msg.args[0],random.choice(volatile)+msg.nick)))
-#                elif msg.nick.lower().startswith("brend"):
-#                    bad = ["chink", "nigr", "nigger", "chinq"] # Seriously though, racism *sucks*.
-#                    for w in bad:
-#                        if w in ircutils.stripFormatting(msg.args[1].lower()):
-#                            irc.queueMsg(ircmsgs.kick(msg.args[0], msg.nick, "RACIST"))
-#                        return
-#                    alsobad = ["veggie tales", 'whore', 'wh0re']
-#                    for w in alsobad:
-#                        if w in ircutils.stripFormatting(msg.args[1].lower()):
-#                            irc.queueMsg(ircmsgs.kick(msg.args[0], msg.nick, "nothx"))
                 if ircutils.stripFormatting(msg.args[1]) == ".":
                     dotresponses = ["r u mad?", "lol r u mad", "mmm dots", ",", "no spam pls" + dots, ":D", "ok"]
                     if len(self.dotCounter) >= 2:
@@ -324,7 +312,7 @@ class Randomness(callbacks.Plugin):
         
         Attacks <nick>."""
         irc.reply(self._attack(user), action=True)
-    attack = wrap(attack, ['something'])
+    attack = wrap(attack, ['text'])
     
     def cheat(self, irc, msg, args, num, action):
         """<number of votes> <action>
