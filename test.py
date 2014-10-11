@@ -11,6 +11,7 @@ class WeatherTestCase(PluginTestCase):
     plugins = ('Weather',)
 
     def testWeather(self):
+        conf.supybot.plugins.Weather.apiKey.setValue('fc7cb609a45365fa')
         self.assertRegexp('wunderground 10002', 'New York, NY')
 
 
