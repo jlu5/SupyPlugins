@@ -71,8 +71,11 @@ Users can also have their location remembered by the plugin's internal database 
 they will not have to continually type in their location. NOTE: It uses their nick only,
 so if they are on a different nick, even with an identical hostmask, it will not match.
 
+You can use zipcodes (10002), cities (New York, NY), etc. Weather Underground is pretty
+intelligent here.
+
 ```
-@setweather <location>
+@setweather 10002 
 ```
 
 This now allows a user to type in the weather command w/o any arguments:
