@@ -6,13 +6,15 @@
 ###
 
 from supybot.test import *
+import os
 
 class WeatherTestCase(PluginTestCase):
     plugins = ('Weather',)
 
     def setUp(self):
         PluginTestCase.setUp(self)
-        conf.supybot.plugins.Weather.apiKey.setValue('fc7cb609a45365fa')
+        apiKey = os.environ.get('apiKey')
+        conf.supybot.plugins.Weather.apiKey.setValue(apiKey)
 
     def testWeather(self):
         self.assertSnarfResponse('reload Weather', 'The operation succeeded.')
