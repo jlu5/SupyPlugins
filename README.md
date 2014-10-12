@@ -32,13 +32,13 @@ Any specific plugin dependencies *should* also be listed.
 
 ##### PkgInfo
 - Fetches package information from the websites of Debian, Ubuntu, and Arch Linux's repositories.
-    * ***Requires:*** Beautiful Soup 4 - installable via `pip install beautifulsoup4` (Python 2/3), `apt-get install python-bs4` (Python 2), or `apt-get install python3-bs4` (Python 3)
+    * ***Requires:*** [Beautiful Soup 4](http://www.crummy.com/software/BeautifulSoup/bs4/doc/) - install it via `pip install beautifulsoup4` or `apt-get install python-bs4`/`python3-bs4` (Debian/Ubuntu)
 
 ##### Randomness
 - Random commands for my own personal use; you probably don't want this loaded!
 
 ##### RelayLink
-- [LinkRelay](https://github.com/ProgVal/Supybot-plugins/tree/master/LinkRelay) forked into a different name. See `RelayLink/README.md` for more details.
+- [LinkRelay](https://github.com/ProgVal/Supybot-plugins/tree/master/LinkRelay) forked into a different name. See [RelayLink/README.md] for more details.
 
 ##### SupyMisc
 - Some assorted commands that don't seem to fit anywhere else.
