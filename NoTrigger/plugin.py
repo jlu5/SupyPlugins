@@ -28,6 +28,7 @@
 
 ###
 import re
+import string
 
 import supybot.utils as utils
 from supybot.commands import *
@@ -58,9 +59,9 @@ class NoTrigger(callbacks.Plugin):
             ircutils.isChannel(msg.args[0]) and \
             self.registryValue('enable', msg.args[0]):
             s = msg.args[1]
-            prefixes = ["+", "$", ";", ".", "%", "!", "`", "\\", "@", "&", 
-                        "*", "~", ":", "^", "(", ")", "-", "=", ">", "<", ","]
+            prefixes = list(string.punctuation)
             rpairs = {"\007":"",
+                     "moo":"m\003oo"
                      }
             if self.registryValue('colorAware') and \
                 self.isChanStripColor(irc, msg.args[0]):
@@ -69,12 +70,10 @@ class NoTrigger(callbacks.Plugin):
                 # Reset Formatting (Ctrl+O), \037 = Underline,
                 # \026 = Italic/Reverse video
                 prefixes += ["\003", "\002", "\017", "\037", "\026"]
-            else:
-                rpairs['moo'] = 'm\003oo'
             if self.registryValue('spaceBeforeNicks', msg.args[0]):
                 # If the last character of the first word ends with a ',' or
                 # ':', prepend a space.
-                if s.split()[0][-1] in [",", ":"]:
+                if s.split()[0].endswith((",", ":")):
                     s = " " + s
             # Handle actions properly but destroy any other \001 (CTCP) messages
             if self.registryValue('blockCtcp', msg.args[0]) and \
@@ -82,9 +81,8 @@ class NoTrigger(callbacks.Plugin):
                 s = s[1:-1]
             for k, v in rpairs.items():
                 s = s.replace(k, v)
-            for item in prefixes:
-                if s.startswith(item):
-                    s = " " + s
+            if s.startswith(tuple(prefixes)):
+                s = " " + s
             msg = ircmsgs.privmsg(msg.args[0], s, msg=msg)
         return msg
 
