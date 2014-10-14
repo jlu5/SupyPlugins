@@ -209,6 +209,39 @@ class PkgInfo(callbacks.Plugin):
         irc.reply(s)
     pkgsearch = wrap(pkgsearch, ['somethingWithoutSpaces', 'somethingWithoutSpaces'])
 
+    def mintpkg(self, irc, msg, args, release, query):
+        """<release> <package>
+        
+        Looks up <package> in Linux Mint's repositories."""
+        if not bs4Present:
+            irc.error("This command requires the Beautiful Soup 4 library. See"
+                " https://github.com/GLolol/SupyPlugins/blob/master/README.md"
+                "#pkginfo for instructions on how to install it.", Raise=True)
+        addr = 'http://packages.linuxmint.com/list.php?release=' + quote(release)
+        try:
+            fd = utils.web.getUrl(addr).decode("utf-8")
+        except Exception as e:
+            irc.error(str(e), Raise=True)
+        soup = BeautifulSoup(fd)
+        results = soup.find_all("td")
+        found = {}
+        for result in results:
+            name = result.contents[0].string
+            if query == name:
+                self.log.info(str(result.contents))
+                version, pkg = result.next_sibling.next_sibling.string, name
+                found[pkg] = version
+                self.log.info(str(found))
+        if found:
+            s = 'Found %s results: ' % len(found)
+            for x in found:
+                s += '%s \x02(%s)\x02, ' % (x, found[x])
+            s += 'View more at: %s' % addr
+            irc.reply(s)
+        else:
+            irc.error('No results found.')
+    mintpkg = wrap(mintpkg, ['somethingWithoutSpaces', 'somethingWithoutSpaces'])
+
 Class = PkgInfo
 
 
