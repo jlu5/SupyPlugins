@@ -209,8 +209,8 @@ class PkgInfo(callbacks.Plugin):
         irc.reply(s)
     pkgsearch = wrap(pkgsearch, ['somethingWithoutSpaces', 'somethingWithoutSpaces'])
 
-    def mintpkg(self, irc, msg, args, release, query):
-        """<release> <package>
+    def mintpkg(self, irc, msg, args, release, query, opts):
+        """<release> <package> [--exact]
         
         Looks up <package> in Linux Mint's repositories."""
         if not bs4Present:
@@ -223,15 +223,24 @@ class PkgInfo(callbacks.Plugin):
         except Exception as e:
             irc.error(str(e), Raise=True)
         soup = BeautifulSoup(fd)
+        # Linux Mint puts their package lists in tables
         results = soup.find_all("td")
-        found = {}
+        found = OrderedDict()
+        query = query.lower()
+        exact = 'exact' in dict(opts)
         for result in results:
-            name = result.contents[0].string
-            if query == name:
-                self.log.info(str(result.contents))
-                version, pkg = result.next_sibling.next_sibling.string, name
-                found[pkg] = version
-                self.log.info(str(found))
+            name = result.contents[0].string # Package name
+            if query == name or (query in name and not exact):
+                # This feels like really messy code, but we have to find tags
+                # relative to our results.
+                # Ascend to find the section name (in <h2>):
+                section = result.parent.parent.parent.previous_sibling.\
+                    previous_sibling.string
+                # Find the package version in the next <td>; for some reason we have
+                # to go two siblings further, as the first .next_sibling returns '\n'.
+                # This is mentioned briefly in Beautiful Soup 4's documentation...
+                version = result.next_sibling.next_sibling.string
+                found['%s [\x02%s\x02]' % (name, section)] = version
         if found:
             s = 'Found %s results: ' % len(found)
             for x in found:
@@ -240,7 +249,8 @@ class PkgInfo(callbacks.Plugin):
             irc.reply(s)
         else:
             irc.error('No results found.')
-    mintpkg = wrap(mintpkg, ['somethingWithoutSpaces', 'somethingWithoutSpaces'])
+    mintpkg = wrap(mintpkg, ['somethingWithoutSpaces', 'somethingWithoutSpaces',
+        getopts({'exact':''})])
 
 Class = PkgInfo
 

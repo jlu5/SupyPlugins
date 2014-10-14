@@ -31,7 +31,7 @@ Any specific plugin dependencies *should* also be listed.
 - Generates random passwords on the fly!
 
 ##### PkgInfo
-- Fetches package information from the websites of Debian, Ubuntu, and Arch Linux's repositories.
+- Fetches package information from Debian, Ubuntu, Arch Linux, and Linux Mint's repositories.
     * ***Requires:*** [Beautiful Soup 4](http://www.crummy.com/software/BeautifulSoup/bs4/doc/) - install it via `pip install beautifulsoup4` or `apt-get install python-bs4`/`python3-bs4` (Debian/Ubuntu)
 
 ##### Randomness
