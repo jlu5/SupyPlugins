@@ -68,12 +68,12 @@ class PkgInfo(callbacks.Plugin):
         self.__parent = super(PkgInfo, self)
         self.__parent.__init__(irc)
         self.addrs = {'ubuntu':'http://packages.ubuntu.com/',
-                      'debian':"http://packages.debian.org/"}
+                      'debian':"https://packages.debian.org/"}
 
     def MadisonParse(self, pkg, dist, codenames='', suite=''):
         arch = ','.join(self.registryValue("archs"))
         self.arg = urlencode({'package':pkg,'table':dist,'a':arch,'c':codenames,'s':suite})
-        url = 'http://qa.debian.org/madison.php?text=on&' + self.arg
+        url = 'https://qa.debian.org/madison.php?text=on&' + self.arg
         d = OrderedDict()
         fd = utils.web.getUrlFd(url)
         for line in fd.readlines():
@@ -143,7 +143,7 @@ class PkgInfo(callbacks.Plugin):
         Looks up <package> in the Arch Linux package repositories.
         If --exact is given, will output only exact matches.
         """
-        baseurl = 'http://www.archlinux.org/packages/search/json/?'
+        baseurl = 'https://www.archlinux.org/packages/search/json/?'
         if 'exact' in dict(opts):
             fd = utils.web.getUrl(baseurl + urlencode({'name':pkg}))
         else:
