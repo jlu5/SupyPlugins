@@ -28,6 +28,7 @@
 
 ###
 import random
+import itertools
 
 import supybot.conf as conf
 import supybot.utils as utils
@@ -90,6 +91,29 @@ class SupyMisc(callbacks.Plugin):
         if not step: step = 1
         irc.reply(random.randrange(start, stop, step))
     randrange = wrap(randrange, ['int', 'int', additional('int')])
+
+    def mreplace(self, irc, msg, args, bad, good, text):
+        """<bad substring1>,[<bad substring2>],... <good substring1,[<good substring2>],...> <text>
+
+        Replaces all instances of <bad substringX> with <good substringX> in <text> (from left to right).
+        Effectively an alternative for Supybot's filter.translate, but with support for substrings
+        of different lengths."""
+        if len(good) != len(bad):
+            irc.error("<bad substrings> must be the same length as <good substrings>", Raise=True)
+        for pair in itertools.izip(bad, good):
+            text = text.replace(pair[0], pair[1])
+        irc.reply(text)
+    mreplace = wrap(mreplace, [commalist('something'), commalist('something'), 'text'])
+
+## Fill this in later, try to prevent forkbombs and stuff.
+#    def permutations(self, irc, msg, args, length, text):
+#        """[<length>] <text>
+#
+#        Returns [<length>]-length permutations of <text>. If not specified, [<length>]
+#        defaults to the length of <text>."""
+#        s = ' '.join(''.join(p) for p in itertools.permutations(text, length or None))
+#        irc.reply(s)
+#    permutations = wrap(permutations, [additional('int'), 'text'])
 
     ### Generic informational commands (ident fetcher, channel counter, etc.)
 
