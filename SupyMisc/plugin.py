@@ -96,7 +96,7 @@ class SupyMisc(callbacks.Plugin):
         """<bad substring1>,[<bad substring2>],... <good substring1,[<good substring2>],...> <text>
 
         Replaces all instances of <bad substringX> with <good substringX> in <text> (from left to right).
-        Effectively an alternative for Supybot's filter.translate, but with support for substrings
+        Essentially an alternative for Supybot's format.translate, but with support for substrings
         of different lengths."""
         if len(good) != len(bad):
             irc.error("<bad substrings> must be the same length as <good substrings>", Raise=True)
