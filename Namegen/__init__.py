@@ -28,36 +28,42 @@
 
 ###
 
-from supybot.test import *
+"""
+Add a description of the plugin (to be presented to the user inside the wizard)
+here.  This should describe *what* the plugin does.
+"""
 
-class PkgInfoTestCase(PluginTestCase):
-    plugins = ('PkgInfo',)
-    def testPackageCommandBasics(self):
-        self.assertRegexp('package sid bash', 'Package: .*?bash'
-        ' .*?; View more at: http://packages.debian.org/sid/bash')
-        self.assertRegexp('package trusty apt', 'Package: .*?apt'
-        ' .*?; View more at: http://packages.ubuntu.com/trusty/apt')
-        self.assertError('package afdsfsadf asfasfasf')
-        self.assertRegexp('package sid afsadfasfsa', 'no such package', re.I)
+import supybot
+import supybot.world as world
 
-    def testVlistCommandBasics(self):
-        self.assertError('vlist all afdsafas')
-        self.assertError('vlist invalid-distro firefox')
-        self.assertNotError('vlist debian bash')
+# Use this for the version of this plugin.  You may wish to put a CVS keyword
+# in here if you're keeping the plugin in CVS or some similar system.
+__version__ = ""
 
-    def testArchpkg(self):
-        self.assertError('archpkg afdsfbjeiog')
-        self.assertNotError('archpkg bash')
-        self.assertRegexp('archpkg pacman --exact', 'Found 1.*?pacman -.*?')
+# XXX Replace this with an appropriate author or supybot.Author instance.
+__author__ = supybot.authors.unknown
 
-    def testArchaur(self):
-        self.assertError('archaur wjoitgjwotgjv')
-        self.assertNotError('archaur yaourt')
+# This is a dictionary mapping supybot.Author instances to lists of
+# contributions.
+__contributors__ = {}
 
-    def testMintPkg(self):
-        self.assertNotError('mintpkg qiana cinnamon')
+# This is a url where the most recent plugin package can be downloaded.
+__url__ = '' # 'http://supybot.com/Members/yourname/Namegen/download'
 
-    def testPkgsearch(self):
-        self.assertNotError('pkgsearch debian python')
+from . import config
+from . import plugin
+from imp import reload
+# In case we're being reloaded.
+reload(config)
+reload(plugin)
+# Add more reloads here if you add third-party modules and want them to be
+# reloaded when this plugin is reloaded.  Don't forget to import them as well!
+
+if world.testing:
+    from . import test
+
+Class = plugin.Class
+configure = config.configure
+
 
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:

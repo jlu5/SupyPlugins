@@ -30,34 +30,12 @@
 
 from supybot.test import *
 
-class PkgInfoTestCase(PluginTestCase):
-    plugins = ('PkgInfo',)
-    def testPackageCommandBasics(self):
-        self.assertRegexp('package sid bash', 'Package: .*?bash'
-        ' .*?; View more at: http://packages.debian.org/sid/bash')
-        self.assertRegexp('package trusty apt', 'Package: .*?apt'
-        ' .*?; View more at: http://packages.ubuntu.com/trusty/apt')
-        self.assertError('package afdsfsadf asfasfasf')
-        self.assertRegexp('package sid afsadfasfsa', 'no such package', re.I)
+class NamegenTestCase(PluginTestCase):
+    plugins = ('Namegen',)
+    
+    def testNamegen(self):
+        self.assertNotError('namegen')
+        self.assertNotError('namegen 2')
 
-    def testVlistCommandBasics(self):
-        self.assertError('vlist all afdsafas')
-        self.assertError('vlist invalid-distro firefox')
-        self.assertNotError('vlist debian bash')
-
-    def testArchpkg(self):
-        self.assertError('archpkg afdsfbjeiog')
-        self.assertNotError('archpkg bash')
-        self.assertRegexp('archpkg pacman --exact', 'Found 1.*?pacman -.*?')
-
-    def testArchaur(self):
-        self.assertError('archaur wjoitgjwotgjv')
-        self.assertNotError('archaur yaourt')
-
-    def testMintPkg(self):
-        self.assertNotError('mintpkg qiana cinnamon')
-
-    def testPkgsearch(self):
-        self.assertNotError('pkgsearch debian python')
 
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:

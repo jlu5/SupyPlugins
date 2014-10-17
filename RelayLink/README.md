@@ -1,4 +1,4 @@
-A fork of the LinkRelay plugin, tailored to my needs.
+A fork of the LinkRelay plugin, tailored to my needs. **Mainstream development has ceased. Any new changes will only be for maintainence purposes/bugfixes.**
 
 #### Differences from [stock LinkRelay](https://github.com/ProgVal/Supybot-plugins/tree/master/LinkRelay):
 

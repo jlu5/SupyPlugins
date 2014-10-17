@@ -3,7 +3,7 @@
 
 This repository includes forks/mods of existing Supybot plugins and some that I've written myself. All of the code in this repository is considered **experimental** and **not** ready for production use. It may glitch, break, or spontaneously combust at any time. You have been warned!
 
-*Note:* This repository is currently being written for Python 2.7/Python 3.4, and has not been tested for compatibility with other Python versions. Older Python versions are unsupported, use at your own risk!
+*Note:* This repository is currently being written for Python 2.7/Python 3.4, and has not been tested for compatibility with other Python versions. Older Python versions are unsupported; use them at your own risk!
 
 ## Support
 If you have any questions, concerns, or feature requests, please feel free to submit an issue. Pull requests are welcome.
@@ -24,8 +24,11 @@ Any specific plugin dependencies *should* also be listed.
 ##### NoTrigger
 - Anti-abuse script; prevents the bot from triggering other bots by modifying its output slightly. 
 
+##### Namegen
+- A simple random name generator.
+
 ##### OperUp
-- Simple plugin that allows Supybot to oper up on configured networks, automatically (on connect) and manually.
+- Simple plugin that allows Supybot to oper up on configured networks, automatically (on connect) and manually. **This plugin is deprecated and will likely be removed in a future release.**
 
 ##### PassGen
 - Generates random passwords on the fly!
@@ -39,6 +42,7 @@ Any specific plugin dependencies *should* also be listed.
 
 ##### RelayLink
 - [LinkRelay](https://github.com/ProgVal/Supybot-plugins/tree/master/LinkRelay) forked into a different name. See [RelayLink/README.md] for more details.
+- **Mainstream development has ceased. Any new changes will only be for maintainence purposes/bugfixes.**
 
 ##### SupyMisc
 - Some assorted commands that don't seem to fit anywhere else.

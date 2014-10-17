@@ -28,36 +28,29 @@
 
 ###
 
-from supybot.test import *
+import supybot.conf as conf
+import supybot.registry as registry
+try:
+    from supybot.i18n import PluginInternationalization
+    _ = PluginInternationalization('Namegen')
+except:
+    # Placeholder that allows to run the plugin on a bot
+    # without the i18n module
+    _ = lambda x:x
 
-class PkgInfoTestCase(PluginTestCase):
-    plugins = ('PkgInfo',)
-    def testPackageCommandBasics(self):
-        self.assertRegexp('package sid bash', 'Package: .*?bash'
-        ' .*?; View more at: http://packages.debian.org/sid/bash')
-        self.assertRegexp('package trusty apt', 'Package: .*?apt'
-        ' .*?; View more at: http://packages.ubuntu.com/trusty/apt')
-        self.assertError('package afdsfsadf asfasfasf')
-        self.assertRegexp('package sid afsadfasfsa', 'no such package', re.I)
+def configure(advanced):
+    # This will be called by supybot to configure this module.  advanced is
+    # a bool that specifies whether the user identified themself as an advanced
+    # user or not.  You should effect your configuration by manipulating the
+    # registry as appropriate.
+    from supybot.questions import expect, anything, something, yn
+    conf.registerPlugin('Namegen', True)
 
-    def testVlistCommandBasics(self):
-        self.assertError('vlist all afdsafas')
-        self.assertError('vlist invalid-distro firefox')
-        self.assertNotError('vlist debian bash')
 
-    def testArchpkg(self):
-        self.assertError('archpkg afdsfbjeiog')
-        self.assertNotError('archpkg bash')
-        self.assertRegexp('archpkg pacman --exact', 'Found 1.*?pacman -.*?')
+Namegen = conf.registerPlugin('Namegen')
+# This is where your configuration variables (if any) should go.  For example:
+# conf.registerGlobalValue(Namegen, 'someConfigVariableName',
+#     registry.Boolean(False, _("""Help for someConfigVariableName.""")))
 
-    def testArchaur(self):
-        self.assertError('archaur wjoitgjwotgjv')
-        self.assertNotError('archaur yaourt')
-
-    def testMintPkg(self):
-        self.assertNotError('mintpkg qiana cinnamon')
-
-    def testPkgsearch(self):
-        self.assertNotError('pkgsearch debian python')
 
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:
