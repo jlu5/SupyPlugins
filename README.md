@@ -41,7 +41,7 @@ Any specific plugin dependencies *should* also be listed.
 - Random commands for my own personal use; you probably don't want this loaded!
 
 ##### RelayLink
-- [LinkRelay](https://github.com/ProgVal/Supybot-plugins/tree/master/LinkRelay) forked into a different name. See [RelayLink/README.md] for more details.
+- [LinkRelay](https://github.com/ProgVal/Supybot-plugins/tree/master/LinkRelay) forked into a different name. See [RelayLink/README.md](RelayLink/README.md) for more details.
 - **Mainstream development has ceased. Any new changes will only be for maintainence purposes/bugfixes.**
 
 ##### SupyMisc
