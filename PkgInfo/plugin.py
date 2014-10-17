@@ -68,12 +68,12 @@ class PkgInfo(callbacks.Plugin):
         self.__parent = super(PkgInfo, self)
         self.__parent.__init__(irc)
         self.addrs = {'ubuntu':'http://packages.ubuntu.com/',
-                      'debian':"http://packages.debian.org/"}
+                      'debian':"https://packages.debian.org/"}
 
     def MadisonParse(self, pkg, dist, codenames='', suite=''):
         arch = ','.join(self.registryValue("archs"))
         self.arg = urlencode({'package':pkg,'table':dist,'a':arch,'c':codenames,'s':suite})
-        url = 'http://qa.debian.org/madison.php?text=on&' + self.arg
+        url = 'https://qa.debian.org/madison.php?text=on&' + self.arg
         d = OrderedDict()
         fd = utils.web.getUrlFd(url)
         for line in fd.readlines():
@@ -143,7 +143,7 @@ class PkgInfo(callbacks.Plugin):
         Looks up <package> in the Arch Linux package repositories.
         If --exact is given, will output only exact matches.
         """
-        baseurl = 'http://www.archlinux.org/packages/search/json/?'
+        baseurl = 'https://www.archlinux.org/packages/search/json/?'
         if 'exact' in dict(opts):
             fd = utils.web.getUrl(baseurl + urlencode({'name':pkg}))
         else:
@@ -208,6 +208,49 @@ class PkgInfo(callbacks.Plugin):
             utils.str.commaAndify(results), url)
         irc.reply(s)
     pkgsearch = wrap(pkgsearch, ['somethingWithoutSpaces', 'somethingWithoutSpaces'])
+
+    def mintpkg(self, irc, msg, args, release, query, opts):
+        """<release> <package> [--exact]
+        
+        Looks up <package> in Linux Mint's repositories."""
+        if not bs4Present:
+            irc.error("This command requires the Beautiful Soup 4 library. See"
+                " https://github.com/GLolol/SupyPlugins/blob/master/README.md"
+                "#pkginfo for instructions on how to install it.", Raise=True)
+        addr = 'http://packages.linuxmint.com/list.php?release=' + quote(release)
+        try:
+            fd = utils.web.getUrl(addr).decode("utf-8")
+        except Exception as e:
+            irc.error(str(e), Raise=True)
+        soup = BeautifulSoup(fd)
+        # Linux Mint puts their package lists in tables
+        results = soup.find_all("td")
+        found = OrderedDict()
+        query = query.lower()
+        exact = 'exact' in dict(opts)
+        for result in results:
+            name = result.contents[0].string # Package name
+            if query == name or (query in name and not exact):
+                # This feels like really messy code, but we have to find tags
+                # relative to our results.
+                # Ascend to find the section name (in <h2>):
+                section = result.parent.parent.parent.previous_sibling.\
+                    previous_sibling.string
+                # Find the package version in the next <td>; for some reason we have
+                # to go two siblings further, as the first .next_sibling returns '\n'.
+                # This is mentioned briefly in Beautiful Soup 4's documentation...
+                version = result.next_sibling.next_sibling.string
+                found['%s [\x02%s\x02]' % (name, section)] = version
+        if found:
+            s = 'Found %s results: ' % len(found)
+            for x in found:
+                s += '%s \x02(%s)\x02, ' % (x, found[x])
+            s += 'View more at: %s' % addr
+            irc.reply(s)
+        else:
+            irc.error('No results found.')
+    mintpkg = wrap(mintpkg, ['somethingWithoutSpaces', 'somethingWithoutSpaces',
+        getopts({'exact':''})])
 
 Class = PkgInfo
 
