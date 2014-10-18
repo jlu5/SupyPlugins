@@ -204,9 +204,12 @@ class PkgInfo(callbacks.Plugin):
         soup = BeautifulSoup(fd)
         # Debian/Ubuntu use h3 for result names in the format 'Package abcd'
         results = [pkg.string.split()[1] for pkg in soup.find_all('h3')]
-        s = "Found %s results: \x02%s\x02; View more at %s" % (len(results), 
-            utils.str.commaAndify(results), url)
-        irc.reply(s)
+        if results:
+            s = "Found %s results: \x02%s\x02; View more at %s" % (len(results),
+                utils.str.commaAndify(results), url)
+            irc.reply(s)
+        else:
+            irc.error("No results found.")
     pkgsearch = wrap(pkgsearch, ['somethingWithoutSpaces', 'somethingWithoutSpaces'])
 
     def mintpkg(self, irc, msg, args, release, query, opts):
