@@ -217,14 +217,19 @@ class PkgInfo(callbacks.Plugin):
                 utils.str.commaAndify(results), url)
             irc.reply(s)
         else:
-            if distro == "debian":
-                errorParse = soup.find("div", class_="note")
-                errorParse = errorParse.p
-            else:
-                errorParse = soup.find("p", attrs={"id": "psearchtoomanyhits"})
-            for e in errorParse.findAll('br'):
-                e.replace_with(" ")
-            irc.error(errorParse.text.strip() or "No results found.")
+            e = "No results found."
+            try:
+                if distro == "debian":
+                    errorParse = soup.find("div", class_="note").p
+                else:
+                    errorParse = soup.find("p", attrs={"id": "psearchtoomanyhits"})
+                if errorParse:
+                    for br in errorParse.findAll('br'):
+                        br.replace_with(" ")
+                    e = errorParse.text.strip()
+            except AttributeError:
+                pass
+            irc.error(e)
     pkgsearch = wrap(pkgsearch, ['somethingWithoutSpaces', 'somethingWithoutSpaces'])
 
     def mintpkg(self, irc, msg, args, release, query, opts):
