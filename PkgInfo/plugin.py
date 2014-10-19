@@ -156,11 +156,12 @@ class PkgInfo(callbacks.Plugin):
                 s = "{} - {} \x02({})\x02".format(x['pkgname'],x['pkgdesc'],x['pkgver'])
                 f.add(s)
                 archs[s].append(x['arch'])
+            count = len(f)
             if self.registryValue("verbose"):
-                irc.reply('Found %s results: ' % len(f)+', ' \
+                irc.reply('Found %s results: ' % count + ', ' \
                 .join("{} \x02[{!s}]\x02".format(s, ', '.join(archs[s])) for s in f))
             else:
-                irc.reply('Found {} results: {}'.format(len(f),', '.join(f)))
+                irc.reply('Found {} results: {}'.format(count,', '.join(f)))
         else: irc.error("No results found.",Raise=True)
     archpkg = wrap(archpkg, ['somethingWithoutSpaces', getopts({'exact':''})])
     
@@ -173,16 +174,22 @@ class PkgInfo(callbacks.Plugin):
         data = json.loads(fd.decode("utf-8"))
         if data["type"] == "error":
             irc.error(data["results"], Raise=True)
-        if data['resultcount']:
-            s = "Found {} result{}: ".format(data["resultcount"], 
+        count = data["resultcount"]
+        if count:
+            # We want this to be limited to prevent overflow warnings
+            # in the bot.
+            if count > 240:
+                count = '240+'
+            s = "Found {} result{}: ".format(count,
                 's' if data["resultcount"] != 1 else '')
-            for x in data['results']:
+            for x in data['results'][:240]:
                 verboseInfo = ''
                 if self.registryValue("verbose"):
                     verboseInfo = " [ID:{} Votes:{}]".format(x['ID'], x['NumVotes'])
                 s += "{} - {} \x02({}{})\x02, ".format(x['Name'],x['Description'],x['Version'], verboseInfo)
             irc.reply(s[:-2]) # cut off the ", " at the end
-        else: irc.error("No results found.",Raise=True)
+        else: 
+            irc.error("No results found.", Raise=True)
     archaur = wrap(archaur, ['somethingWithoutSpaces'])
 
     def pkgsearch(self, irc, msg, args, distro, query):
