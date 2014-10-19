@@ -178,11 +178,11 @@ class PkgInfo(callbacks.Plugin):
         if count:
             # We want this to be limited to prevent overflow warnings
             # in the bot.
-            if count > 240:
-                count = '240+'
+            if count > 150:
+                count = '150+'
             s = "Found {} result{}: ".format(count,
                 's' if data["resultcount"] != 1 else '')
-            for x in data['results'][:240]:
+            for x in data['results'][:150]:
                 verboseInfo = ''
                 if self.registryValue("verbose"):
                     verboseInfo = " [ID:{} Votes:{}]".format(x['ID'], x['NumVotes'])
@@ -200,8 +200,9 @@ class PkgInfo(callbacks.Plugin):
             irc.error("This command requires the Beautiful Soup 4 library. See"
                 " https://github.com/GLolol/SupyPlugins/blob/master/README.md"
                 "#pkginfo for instructions on how to install it.", Raise=True)
+        distro = distro.lower()
         try:
-            url = '%ssearch?keywords=%s' % (self.addrs[distro.lower()], quote(query))
+            url = '%ssearch?keywords=%s' % (self.addrs[distro], quote(query))
         except KeyError:
             irc.error('Unknown distribution.', Raise=True)
         try:
@@ -216,7 +217,14 @@ class PkgInfo(callbacks.Plugin):
                 utils.str.commaAndify(results), url)
             irc.reply(s)
         else:
-            irc.error("No results found.")
+            if distro == "debian":
+                errorParse = soup.find("div", class_="note")
+                errorParse = errorParse.p
+            else:
+                errorParse = soup.find("p", attrs={"id": "psearchtoomanyhits"})
+            for e in errorParse.findAll('br'):
+                e.replace_with(" ")
+            irc.error(errorParse.text.strip() or "No results found.")
     pkgsearch = wrap(pkgsearch, ['somethingWithoutSpaces', 'somethingWithoutSpaces'])
 
     def mintpkg(self, irc, msg, args, release, query, opts):
