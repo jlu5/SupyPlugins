@@ -53,7 +53,6 @@ import supybot.callbacks as callbacks
 import supybot.conf as conf
 import random
 import json
-from base64 import b64decode
 import re
 from time import sleep
 from supybot.utils.structures import TimeoutQueue

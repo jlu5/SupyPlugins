@@ -30,7 +30,6 @@
 ###
 
 import re
-import copy
 import itertools
 import supybot.log as log
 import supybot.conf as conf

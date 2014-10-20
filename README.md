@@ -27,8 +27,9 @@ Any specific plugin dependencies *should* also be listed.
 ##### Namegen
 - A simple random name generator.
 
-##### OperUp
+##### OperUp *(deprecated)*
 - Simple plugin that allows Supybot to oper up on configured networks, automatically (on connect) and manually. **This plugin is deprecated and will likely be removed in a future release.**
+    - *No longer in active development.*
 
 ##### PassGen
 - Generates random passwords on the fly!
@@ -38,11 +39,11 @@ Any specific plugin dependencies *should* also be listed.
     * ***Requires:*** [Beautiful Soup 4](http://www.crummy.com/software/BeautifulSoup/bs4/doc/) - install it via `pip install beautifulsoup4` or `apt-get install python-bs4`/`python3-bs4` (Debian/Ubuntu)
 
 ##### Randomness
-- Random commands for my own personal use; you probably don't want this loaded!
+- Random commands for my own personal use; you probably don't need this loaded!
 
 ##### RelayLink
 - [LinkRelay](https://github.com/ProgVal/Supybot-plugins/tree/master/LinkRelay) forked into a different name. See [RelayLink/README.md](RelayLink/README.md) for more details.
-- **Mainstream development has ceased. Any new changes will only be for maintainence purposes/bugfixes.**
+    - **Mainstream development has ceased. Any new changes will only be for maintainence purposes/bugfixes.**
 
 ##### SupyMisc
 - Some assorted commands that don't seem to fit anywhere else.

@@ -42,7 +42,7 @@ except ImportError: # Python 2
 import json
 
 # I don't want to be too dependant on BeautifulSoup at this time;
-# not all use it, but it is required by some.
+# not all commands use it, but it is required by some. -GLolol
 global bs4Present
 try:
     from bs4 import BeautifulSoup

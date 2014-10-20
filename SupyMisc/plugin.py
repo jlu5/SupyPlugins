@@ -28,7 +28,7 @@
 
 ###
 import random
-import itertools
+# import itertools
 
 import supybot.conf as conf
 import supybot.utils as utils
