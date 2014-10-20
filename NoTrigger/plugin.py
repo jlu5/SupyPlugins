@@ -27,7 +27,6 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 ###
-import re
 import string
 
 import supybot.utils as utils
@@ -60,12 +59,11 @@ class NoTrigger(callbacks.Plugin):
             self.registryValue('enable', msg.args[0]):
             s = msg.args[1]
             prefixes = list(string.punctuation)
-            rpairs = {"\007":"",
-                     "moo":"m\003oo"
+            rpairs = {"\007":""
                      }
+            suffixes = ("moo")
             if self.registryValue('colorAware') and \
                 self.isChanStripColor(irc, msg.args[0]):
-                rpairs['moo'] = 'm#oo'
                 # \003 = Colour (Ctrl+K), \002 = Bold (Ctrl+B), \017 =
                 # Reset Formatting (Ctrl+O), \037 = Underline,
                 # \026 = Italic/Reverse video
@@ -83,11 +81,11 @@ class NoTrigger(callbacks.Plugin):
                 s = s.replace(k, v)
             if s.startswith(tuple(prefixes)):
                 s = " " + s
+            if s.endswith(suffixes):
+                s += u"\u00A0"
             msg = ircmsgs.privmsg(msg.args[0], s, msg=msg)
         return msg
 
-
 Class = NoTrigger
-
 
 # vim:set shiftwidth=4 softtabstop=4 expandtab textwidth=79:
