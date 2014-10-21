@@ -664,13 +664,13 @@ class Weather(callbacks.Plugin):
         if args['astronomy']:
             outdata['moonilluminated'] = data['moon_phase']['percentIlluminated']
             outdata['moonage'] = data['moon_phase']['ageOfMoon']
-            sunriseh = int(data['moon_phase']['sunrise']['hour'])
-            sunrisem = int(data['moon_phase']['sunrise']['minute'])
-            sunseth = int(data['moon_phase']['sunset']['hour'])
-            sunsetm = int(data['moon_phase']['sunset']['minute'])
+            sunriseh = data['moon_phase']['sunrise']['hour']
+            sunrisem = data['moon_phase']['sunrise']['minute']
+            sunseth = data['moon_phase']['sunset']['hour']
+            sunsetm = data['moon_phase']['sunset']['minute']
             outdata['sunrise'] = "{0}:{1}".format(sunriseh, sunrisem)  # construct sunrise.
             outdata['sunset'] = "{0}:{1}".format(sunseth, sunsetm)  # construct sunset. calc "time of day" below.
-            outdata['lengthofday'] = "%dh%dm" % divmod((((sunseth-sunriseh)+float((sunsetm-sunrisem)/60.0))*60),60)
+            outdata['lengthofday'] = "%dh%dm" % divmod((((int(sunseth)-int(sunriseh))+float((int(sunsetm)-int(sunrisem))/60.0))*60),60)
 
         # handle alerts
         if args['alerts']:  # only look for alerts if there.
