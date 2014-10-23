@@ -7,7 +7,10 @@
 import json  # json.
 from math import floor  # for wind.
 import sqlite3  # userdb.
-from itertools import izip  # userdb.
+try:
+    from itertools import izip
+except ImportError:  # python3
+    izip = zip
 # extra supybot libs
 import supybot.conf as conf
 import supybot.log as log
@@ -241,7 +244,7 @@ class Weather(callbacks.Plugin):
                 return ircutils.mircColor(("{0:.0f}F".format(x)), color)
             else:  # temp is in F and we need to go back to C.
                 return ircutils.mircColor(("{0:.0f}C".format((x - 32) * 5 / 9)),color)
-        except Exception, e:  # rutroh. something went wrong.
+        except Exception as e:  # rutroh. something went wrong.
             self.log.info("_temp: ERROR trying to convert temp: {0} message: {1}".format(x, e))
             return x
     
@@ -330,7 +333,7 @@ class Weather(callbacks.Plugin):
         # try and fetch.
         try:
             page = utils.web.getUrl(url)
-        except Exception, e:  # something didn't work.
+        except Exception as e:  # something didn't work.
             self.log.info("_wuac: ERROR: Trying to open {0} message: {1}".format(url, e))
             return None
         # now process json and return.
@@ -339,7 +342,7 @@ class Weather(callbacks.Plugin):
             loc = data['RESULTS'][0]['zmw']  # find the first zmw.
             loc = "zmw:%s" % loc  # return w/zmw: attached.
             return loc
-        except Exception, e:
+        except Exception as e:
             self.log.info("_wuac: ERROR processing json in {0} :: {1}".format(url, e))
             return None
 
@@ -356,7 +359,7 @@ class Weather(callbacks.Plugin):
             self.log.info("URL: {0}".format(url))
             page = utils.web.getUrl(url)
             return page
-        except Exception, e:  # something didn't work.
+        except Exception as e:  # something didn't work.
             self.log.info("_wunderjson: ERROR Trying to open {0} message: {1}".format(url, e))
             return None
 
