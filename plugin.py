@@ -647,18 +647,26 @@ class Weather(callbacks.Plugin):
 
         # handle almanac
         if args['almanac']:
-            outdata['highyear'] = data['almanac']['temp_high']['recordyear']
-            outdata['lowyear'] = data['almanac']['temp_low']['recordyear']
+            outdata['highyear'] = data['almanac']['temp_high'].get('recordyear', 'NA')
+            outdata['lowyear'] = data['almanac']['temp_low'].get('recordyear', 'NA')
             if args['imperial']:  # imperial.
                 outdata['highnormal'] = data['almanac']['temp_high']['normal']['F'] + "F"
-                outdata['highrecord'] = data['almanac']['temp_high']['record']['F'] + "F"
                 outdata['lownormal'] = data['almanac']['temp_low']['normal']['F'] + "F"
-                outdata['lowrecord'] = data['almanac']['temp_low']['record']['F'] + "F"
+                if outdata['highyear'] != "NA" and outdata['lowyear'] != "NA":
+                    outdata['highrecord'] = data['almanac']['temp_high']['record']['F']
+                    outdata['lowrecord'] = data['almanac']['temp_low']['record']['F']
+                else:
+                    outdata['highrecord'] = "NA"
+                    outdata['lowrecord'] = "NA"
             else:  # metric.
                 outdata['highnormal'] = data['almanac']['temp_high']['normal']['C'] + "C"
-                outdata['highrecord'] = data['almanac']['temp_high']['record']['C'] + "C"
                 outdata['lownormal'] = data['almanac']['temp_low']['normal']['C'] + "C"
-                outdata['lowrecord'] = data['almanac']['temp_low']['record']['C'] + "C"
+                if outdata['highyear'] != "NA" and outdata['lowyear'] != "NA":
+                    outdata['highrecord'] = data['almanac']['temp_high']['record']['C']
+                    outdata['lowrecord'] = data['almanac']['temp_low']['record']['C']
+                else:
+                    outdata['highrecord'] = "NA"
+                    outdata['lowrecord'] = "NA"
 
         # handle astronomy
         if args['astronomy']:
