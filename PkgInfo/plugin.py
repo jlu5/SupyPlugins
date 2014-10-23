@@ -98,11 +98,12 @@ class PkgInfo(callbacks.Plugin):
                 " https://github.com/GLolol/SupyPlugins/blob/master/README.md"
                 "#pkginfo for instructions on how to install it.", Raise=True)
         # Guess the distro from the suite name
+        pkg, suite, pkg = map(str.lower, (pkg, suite, pkg))
         if suite.startswith(("oldstable","squeeze","wheezy","stable",
             "jessie","testing","sid","unstable")):
             distro = "debian"
         else: distro = "ubuntu"
-        url = self.addrs[distro.lower()] + "{}/{}".format(suite.lower(), pkg.lower())
+        url = self.addrs[distro] + "{}/{}".format(suite, pkg)
         try:
             fd = utils.web.getUrl(url).decode("utf-8")
         except Exception as e:
@@ -143,6 +144,7 @@ class PkgInfo(callbacks.Plugin):
         Looks up <package> in the Arch Linux package repositories.
         If --exact is given, will output only exact matches.
         """
+        pkg = pkg.lower()
         baseurl = 'https://www.archlinux.org/packages/search/json/?'
         if 'exact' in dict(opts):
             fd = utils.web.getUrl(baseurl + urlencode({'name':pkg}))
@@ -169,6 +171,7 @@ class PkgInfo(callbacks.Plugin):
         """<package>
         
         Looks up <package> in the Arch Linux AUR."""
+        pkg = pkg.lower()
         baseurl = 'https://aur.archlinux.org/rpc.php?type=search&'
         fd = utils.web.getUrl(baseurl + urlencode({'arg':pkg}))
         data = json.loads(fd.decode("utf-8"))
