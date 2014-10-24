@@ -10,7 +10,7 @@ install:
 # Run supybot-test
 script:
   - echo $TRAVIS_PYTHON_VERSION
-  - supybot-test --plugins-dir=. --no-network
+  - supybot-test -c --plugins-dir=. --no-network
 notifications:
     email: false
 matrix:
