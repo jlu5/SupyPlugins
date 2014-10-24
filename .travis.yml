@@ -1,0 +1,24 @@
+language: python
+python:
+  - "2.6"
+  - "2.7"
+  - "3.2"
+  - "3.3"
+  - "3.4"
+# Fetch dependencies
+install:
+    - pip install -vr requirements.txt||true
+# Run supybot-test
+script:
+  - echo $TRAVIS_PYTHON_VERSION
+  - supybot-test --plugins-dir=. --no-network
+notifications:
+    email: false
+matrix:
+    fast_finish: true
+    allow_failures:
+        - python: "3.2"
+        - python: "3.3"
+branches:
+  except:
+    - /^archive-.*$/

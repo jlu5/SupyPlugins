@@ -1,6 +1,10 @@
 __pycache__/
 *.py[cod]
 *.mo
+**/test-data/
+**/test-conf/
+**/test-logs/
+backup/
 
 # emacs/vi
 *.swo
