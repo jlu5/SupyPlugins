@@ -68,10 +68,10 @@ class Namegen(callbacks.Plugin):
         """[<count>]
         
         Generates random names. If not specified, [<count>] defaults to 10."""
-        if count > 100:
-            irc.error("Too many names to count!", Raise=True)
         if not count:
             count = 10
+        if count > 100:
+            irc.error("Too many names to count!", Raise=True)
         r = range if version_info[0] >= 3 else xrange
         s = ', '.join([self._namegen() for _ in r(count)])
         irc.reply(s)

@@ -72,9 +72,12 @@ class RelayLinkTestCase(ChannelPluginTestCase):
         self.assertResponse('config supybot.plugins.relaylink.substitutes',
                             'foobar | foo*bar')
         self.assertNotError('relaylink substitute baz b*z')
-        self.assertResponse('config supybot.plugins.relaylink.substitutes',
+        try:
+            self.assertResponse('config supybot.plugins.relaylink.substitutes',
                             'foobar | foo*bar || baz | b*z')
-
+        except AssertionError:
+            self.assertResponse('config supybot.plugins.relaylink.substitutes',
+                            'baz | b*z || foobar | foo*bar')
     def testNoSubstitute(self):
         self.assertNotError('config supybot.plugins.relaylink.substitutes '
                             'foobar | foo*bar || baz | b*z')
