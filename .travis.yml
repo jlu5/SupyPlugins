@@ -1,9 +1,12 @@
 language: python
 python:
+  - "2.6"
   - "2.7"
   - "3.2"
   - "3.3"
   - "3.4"
+  - "pypy"
+  - "pypy3"
 # Fetch dependencies
 before_install:
     - sudo apt-get -qq update
@@ -13,7 +16,7 @@ install:
 # Run supybot-test
 script:
   - echo $TRAVIS_PYTHON_VERSION
-  - supybot-test -c --plugins-dir=. --no-network
+  - supybot-test -c --plugins-dir=.
 notifications:
     email: false
 matrix:
@@ -21,6 +24,9 @@ matrix:
     allow_failures:
         - python: "3.2"
         - python: "3.3"
+        - python: "2.6"
+        - python: "pypy"
+        - python: "pypy3"
 branches:
   except:
     - /^archive-.*$/
