@@ -15,6 +15,11 @@ class WeatherTestCase(PluginTestCase):
     def setUp(self):
         PluginTestCase.setUp(self)
         apiKey = os.environ.get('apiKey')
+        if not apiKey:
+            e = """The Wunderground API key has not been set. 
+            please set this value correctly and try again:
+            'export apiKey=<key>' for bash users"""
+            raise Exception(e)
         conf.supybot.plugins.Weather.apiKey.setValue(apiKey)
 
     def testWeather(self):
