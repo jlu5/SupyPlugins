@@ -49,8 +49,11 @@ def configure(advanced):
 
 PkgInfo = conf.registerPlugin('PkgInfo')
 conf.registerGlobalValue(PkgInfo, 'archs',
-     registry.CommaSeparatedListOfStrings(['i386','amd64','source','all'],
-     _("""Defines what architectures the bot will look for.""")))
+     registry.CommaSeparatedListOfStrings(['i386','amd64','all'],
+     _("""Defines what architectures the bot will look for in the 'vlist'
+       command. It is recommended to include 'all' in this list because
+       some packages are architecture independent and will not otherwise be
+       displayed, leading to misleading "No results found" errors.""")))
 conf.registerGlobalValue(PkgInfo, 'verbose',
      registry.Boolean(True,
      _("""Determines whether verbose output will be used (show architectures,

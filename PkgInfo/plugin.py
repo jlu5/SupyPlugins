@@ -129,7 +129,7 @@ class PkgInfo(callbacks.Plugin):
         Fetches all available version of <package> in <distribution>, if 
         such package exists. Supported entries for <distribution> 
         include: 'debian', 'ubuntu', 'derivatives', and 'all'."""
-        distro = distro.lower()
+        pkg, distro = map(str.lower, (pkg, distro))
         d = self.MadisonParse(pkg, distro)
         if not d: irc.error("No results found.",Raise=True)
         try:
