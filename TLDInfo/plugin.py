@@ -66,7 +66,7 @@ class TLDInfo(callbacks.Plugin):
                 irc.error("An error occurred while contacting IANA's "
                     "TLD Database.", Raise=True)
         else:
-            irc.reply("{} appears to be a valid TLD, see {}".format(("."+text), (db+s)))
+            irc.reply(".{} appears to be a valid TLD, see {}{}".format(text, db, s))
     tld = wrap(tld, ['something'])
 
 

@@ -82,7 +82,11 @@ class NoTrigger(callbacks.Plugin):
             if s.startswith(tuple(prefixes)):
                 s = " " + s
             if s.endswith(suffixes):
-                s += u"\u00A0"
+                if version_info[0] >= 3:
+                    s += "\u00A0"
+                else:
+                    from codecs import unicode_escape_decode as u
+                    s += u('\u00A0')[0]
             msg = ircmsgs.privmsg(msg.args[0], s, msg=msg)
         return msg
 
