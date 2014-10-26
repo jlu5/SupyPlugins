@@ -28,6 +28,7 @@
 
 ###
 
+from sys import version_info
 from supybot.test import *
 
 class TLDInfoTestCase(PluginTestCase):
@@ -40,8 +41,10 @@ class TLDInfoTestCase(PluginTestCase):
         # https://www.iana.org/domains/root/db/xn--io0a7i
         # Chinese internationalized domain for 'network' (similar to .net)
         self.assertNotError('tld xn--io0a7i')
-        # self.assertNotError('tld \u7f51\u7edc')
-        self.assertNotRegexp('tld xn--io0a7i', '.*no results found.*', re.I)
-        # self.assertNotRegexp('tld \u7f51\u7edc', '.*no results found.*', re.I)
+        if version_info[0] > 3:
+            self.assertNotError('tld \u7f51\u7edc')
+        else:
+            from codecs import unicode_escape_decode as u
+            self.assertNotError('tld '+u('\u7f51\u7edc')[0])
 
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:

@@ -61,8 +61,7 @@ class TLDInfo(callbacks.Plugin):
             data = utils.web.getUrl(db + s)
         except utils.web.Error as e:
             if "HTTP Error 404:" in str(e):
-                irc.reply("No results found for TLD {} (using "
-                    "http://www.iana.org/domains/root/db)".format("."+text))
+                irc.error("No results found for TLD .{}".format(text), Raise=True)
             else:
                 irc.error("An error occurred while contacting IANA's "
                     "TLD Database.", Raise=True)
