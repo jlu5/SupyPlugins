@@ -82,7 +82,7 @@ class PkgInfo(callbacks.Plugin):
         fd = utils.web.getUrlFd(url)
         for line in fd.readlines():
             L = line.decode("utf-8").split("|")
-            L = map(str.strip, map(str, L))
+            L = list(map(str.strip, list(map(str, L))))
             if useSource:
                 d['%s: %s' % (L[2], L[0])] = (L[1], L[3])
             else:

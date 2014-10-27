@@ -43,8 +43,8 @@ class PkgInfoTestCase(PluginTestCase):
     def testVlistCommandBasics(self):
         self.assertError('vlist all afdsafas')
         self.assertError('vlist invalid-distro firefox')
-        self.assertNotError('vlist debian bash')
-        self.assertNotError('vlist debian bash --source')
+        self.assertRegexp('vlist debian bash', 'Found [1-9][0-9]* results: (.*?\(.*?\))+')
+        self.assertRegexp('vlist debian bash --source', 'Found [1-9][0-9]* results: .*?: bash.*?\(.*?\).*?')
 
     def testArchpkg(self):
         self.assertError('archpkg afdsfbjeiog')
@@ -53,7 +53,7 @@ class PkgInfoTestCase(PluginTestCase):
 
     def testArchaur(self):
         self.assertError('archaur wjoitgjwotgjv')
-        self.assertNotError('archaur yaourt')
+        self.assertRegexp('archaur yaourt', 'Found [1-9][0-9]* results: .*?yaourt.*?')
 
     def testMintPkg(self):
         self.assertNotError('mintpkg qiana cinnamon')
