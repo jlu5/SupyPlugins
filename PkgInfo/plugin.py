@@ -70,15 +70,23 @@ class PkgInfo(callbacks.Plugin):
         self.addrs = {'ubuntu':'http://packages.ubuntu.com/',
                       'debian':"https://packages.debian.org/"}
 
-    def MadisonParse(self, pkg, dist, codenames='', suite=''):
+    def MadisonParse(self, pkg, dist, codenames='', suite='', useSource=False):
         arch = ','.join(self.registryValue("archs"))
-        self.arg = urlencode({'package':pkg,'table':dist,'a':arch,'c':codenames,'s':suite})
+        self.arg = {'package':pkg,'table':dist,'a':arch,'c':codenames,'s':suite,
+            }
+        if useSource:
+            self.arg['S'] = 'on'
+        self.arg = urlencode(self.arg)
         url = 'https://qa.debian.org/madison.php?text=on&' + self.arg
         d = OrderedDict()
         fd = utils.web.getUrlFd(url)
         for line in fd.readlines():
             L = line.decode("utf-8").split("|")
-            d[L[2].strip()] = (L[1].strip(),L[3].strip())
+            L = map(str.strip, map(str, L))
+            if useSource:
+                d['%s: %s' % (L[2], L[0])] = (L[1], L[3])
+            else:
+                d[L[2]] = (L[1],L[3])
         if d:
             if self.registryValue("verbose"):
                 return 'Found %s results: ' % len(d) + ', '.join("{!s} " \
@@ -86,6 +94,8 @@ class PkgInfo(callbacks.Plugin):
                 d.items())
             return 'Found %s results: ' % len(d) + ', '.join("{!s} " \
             "\x02({!s})\x02".format(k,v[0]) for (k,v) in d.items())
+        else:
+            self.log.debug("PkgInfo: No results found for URL %s" % url)
         
     def package(self, irc, msg, args, suite, pkg):
         """<suite> <package>
@@ -123,20 +133,23 @@ class PkgInfo(callbacks.Plugin):
         keywords[-1], keywords[1], desc, url))
     package = wrap(package, ['somethingWithoutSpaces', 'somethingWithoutSpaces'])
 
-    def vlist(self, irc, msg, args, distro, pkg):
-        """<distribution> <package>
+    def vlist(self, irc, msg, args, distro, pkg, opts):
+        """<distribution> <package> [--source]
 
         Fetches all available version of <package> in <distribution>, if 
         such package exists. Supported entries for <distribution> 
-        include: 'debian', 'ubuntu', 'derivatives', and 'all'."""
+        include: 'debian', 'ubuntu', 'derivatives', and 'all'. If 
+        --source is given, search for packages by source package
+        name."""
         pkg, distro = map(str.lower, (pkg, distro))
-        d = self.MadisonParse(pkg, distro)
+        d = self.MadisonParse(pkg, distro, useSource='source' in dict(opts))
         if not d: irc.error("No results found.",Raise=True)
         try:
             d += " View more at: {}search?keywords={}".format(self.addrs[distro], pkg)
-        except KeyError: pass
+        except KeyError: 
+            pass
         irc.reply(d)
-    vlist = wrap(vlist, ['somethingWithoutSpaces', 'somethingWithoutSpaces'])
+    vlist = wrap(vlist, ['somethingWithoutSpaces', 'somethingWithoutSpaces', getopts({'source':''})])
     
     def archpkg(self, irc, msg, args, pkg, opts):
         """<package> [--exact]

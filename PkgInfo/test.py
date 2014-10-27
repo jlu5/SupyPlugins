@@ -44,6 +44,7 @@ class PkgInfoTestCase(PluginTestCase):
         self.assertError('vlist all afdsafas')
         self.assertError('vlist invalid-distro firefox')
         self.assertNotError('vlist debian bash')
+        self.assertNotError('vlist debian bash --source')
 
     def testArchpkg(self):
         self.assertError('archpkg afdsfbjeiog')
