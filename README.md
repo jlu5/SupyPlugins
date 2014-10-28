@@ -52,3 +52,6 @@ Any specific plugin dependencies *should* also be listed.
 ##### SysDNS
 - An alternative to Supybot's built-in DNS function, using DNS lookup utilities (such as host or dig) available on the host machine.
     * ***Requires:*** a DNS lookup binary such as `host` (as in `/usr/bin/host`, installable in Debian/Ubuntu via `apt-get install bind9-host`)
+
+##### Voteserv
+- A plugin for storing and manipulating votes/polls.
