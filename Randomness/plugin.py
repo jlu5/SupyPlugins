@@ -71,24 +71,24 @@ class Randomness(callbacks.Plugin):
         self.__parent = super(Randomness, self)
         self.__parent.__init__(irc)
         self.dotCounter = TimeoutQueue(10)
-        self.vfilename = conf.supybot.directories.data.dirize(irc.network+".votes")
+        self.vfilename = conf.supybot.directories.data.dirize("votes.db")
         try:
             with open(self.vfilename, "r") as f:
-                self.votes = json.load(f)
+                self.votedb = json.load(f)
         except IOError:
             self.log.debug("Randomness: failed to load vote database %s"
                 ", creating a new one..." % self.vfilename)
-            self.votes = {}
+            self.votedb = {}
 
     def loadVoteDB(self):
         self.log.debug("Randomness: loading votes database "+self.vfilename)
         with open(self.vfilename, "r") as f:
-            self.votes = json.load(f)
+            self.votedb = json.load(f)
             
     def exportVoteDB(self):
         self.log.debug("Randomness: exporting votes database "+self.vfilename)
         with open(self.vfilename, 'w') as f:
-            json.dump(self.votes, f)
+            json.dump(self.votedb, f)
             f.write("\n")
             
     def die(self):
@@ -233,7 +233,7 @@ class Randomness(callbacks.Plugin):
         
     def _formatAction(self, action):
         a = action.split()
-        try: n = self.votes[action][0]
+        try: n = self.votedb[action][0]
         except KeyError: n = 0
         if len(a) >= 2:
             return "\x02%s\x02 %s. (Votes: \x02%s\x02)" % \
@@ -248,14 +248,14 @@ class Randomness(callbacks.Plugin):
         but could be an interesting way to get user feedback."""
         action = action.lower()
         try:
-            if self._lazyhostmask(msg.prefix) in self.votes[action][1]:
+            if self._lazyhostmask(msg.prefix) in self.votedb[action]:
                 irc.reply("You have already voted to %s." % action)
                 return
         except KeyError:
-            self.votes[action] = [0, []]
-        self.votes[action][0] += 1
+            self.votedb[action] = [0]
+        self.votedb[action][0] += 1
         irc.reply("%s voted to %s" % (msg.nick,self._formatAction(action)))
-        self.votes[action][1].append(self._lazyhostmask(msg.prefix))
+        self.votedb[action].append(self._lazyhostmask(msg.prefix))
     vote = wrap(vote, ['text'])
     
     def voteexport(self, irc, msg, args):
@@ -287,24 +287,25 @@ class Randomness(callbacks.Plugin):
         """takes no arguments.
         
         Clears all votes stored in memory. Use with caution!"""
-        self.votes = {}
+        self.votedb = {}
         irc.replySuccess()
     voteclear = wrap(voteclear, ['admin'])
     
-    def numvotes(self, irc, msg, args, action):
+    def votes(self, irc, msg, args, action):
         """<action>
         
         Returns the amount of people that have voted for <action>."""
         try:
-            n = self.votes[action.lower()][0]
+            n = self.votedb[action.lower()][0]
         except KeyError:
             n = 0
         if irc.nested:
             irc.reply(n)
         else:
-            irc.reply('\x02%s\x02 people have voted to %s' % 
-            (n, self._formatAction(action)))
-    numvotes = wrap(numvotes, ['text'])
+            irc.reply('\x02%s\x02 %s voted to %s' % 
+            (n, 'person has' if n == 1 else 'people have',
+            self._formatAction(action)))
+    votes = wrap(votes, ['text'])
     
     def attack(self, irc, msg, args, user):
         """<nick>
@@ -320,7 +321,7 @@ class Randomness(callbacks.Plugin):
         perfect for rigged elections!
         This will also reset the list of hosts that have voted for
         <action>, allowing everyone to vote again."""
-        self.votes[action.lower()] = [num, []]
+        self.votedb[action.lower()] = [num]
         irc.replySuccess()
     cheat = wrap(cheat, ['admin', 'int', 'text'])
 
