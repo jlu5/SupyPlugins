@@ -66,23 +66,23 @@ class Voteserv(callbacks.Plugin):
         self.log.debug("Voteserv: loading votes database "+self.vfilename)
         with open(self.vfilename, "r") as f:
             self.votedb = json.load(f)
-            
+
     def exportVoteDB(self):
         self.log.debug("Voteserv: exporting votes database "+self.vfilename)
         with open(self.vfilename, 'w') as f:
             json.dump(self.votedb, f, indent=4, separators=(',', ': '))
             f.write("\n")
-            
+
     def die(self):
         self.__parent.die()
         try:
             self.exportVoteDB()
         except IOError as e:
             self.log.error("Failed to export votes database: " + str(e))
-            
+
     def _lazyhostmask(self, host):
         return "*!"+host.split("!",1)[1]
-        
+
     def _formatAction(self, action):
         a = action.split()
         try: n = self.votedb[action][0]
