@@ -105,6 +105,30 @@ class SupyMisc(callbacks.Plugin):
         irc.reply(text)
     mreplace = wrap(mreplace, [commalist('something'), commalist('something'), 'text'])
 
+    def tld(self, irc, msg, args, text):
+        """<tld>
+
+        Checks whether <tld> is a valid TLD using IANA's TLD database
+        (http://www.iana.org/domains/root/db/)."""
+        db = "http://www.iana.org/domains/root/db/"
+        text = text.split(".")[-1] # IANA's DB doesn't care about second level domains
+        # Encode everything in IDN in order to support international TLDs
+        try: # Python 2
+            s = text.decode("utf8").encode("idna")
+        except AttributeError: # Python 3
+            s = text.encode("idna").decode()
+        try:
+            data = utils.web.getUrl(db + s)
+        except utils.web.Error as e:
+            if "HTTP Error 404:" in str(e):
+                irc.error("No results found for TLD .{}".format(text), Raise=True)
+            else:
+                irc.error("An error occurred while contacting IANA's "
+                    "TLD Database.", Raise=True)
+        else:
+            irc.reply(".{} appears to be a valid TLD, see {}{}".format(text, db, s))
+    tld = wrap(tld, ['something'])
+
 ## Fill this in later, try to prevent forkbombs and stuff.
 #    def permutations(self, irc, msg, args, length, text):
 #        """[<length>] <text>

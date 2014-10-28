@@ -28,10 +28,23 @@
 
 ###
 
+from sys import version_info
 from supybot.test import *
 
 class SupyMiscTestCase(PluginTestCase):
     plugins = ('SupyMisc',)
 
+    def testTld(self):
+        self.assertNotError('tld .com')
+
+    def testTldInternationalTLDs(self):
+        # https://www.iana.org/domains/root/db/xn--io0a7i
+        # Chinese internationalized domain for 'network' (similar to .net)
+        self.assertNotError('tld xn--io0a7i')
+        if version_info[0] >= 3:
+            self.assertNotError('tld \u7f51\u7edc')
+        else:
+            from codecs import unicode_escape_decode as u
+            self.assertNotError('tld '+u('\u7f51\u7edc')[0])
 
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:
