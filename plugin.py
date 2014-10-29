@@ -4,10 +4,14 @@
 # All rights reserved.
 ###
 # my libs
+from __future__ import unicode_literals
 import json  # json.
 from math import floor  # for wind.
 import sqlite3  # userdb.
-from itertools import izip  # userdb.
+try:
+    from itertools import izip
+except ImportError:  # python3
+    izip = zip
 # extra supybot libs
 import supybot.conf as conf
 import supybot.log as log
@@ -241,7 +245,7 @@ class Weather(callbacks.Plugin):
                 return ircutils.mircColor(("{0:.0f}F".format(x)), color)
             else:  # temp is in F and we need to go back to C.
                 return ircutils.mircColor(("{0:.0f}C".format((x - 32) * 5 / 9)),color)
-        except Exception, e:  # rutroh. something went wrong.
+        except Exception as e:  # rutroh. something went wrong.
             self.log.info("_temp: ERROR trying to convert temp: {0} message: {1}".format(x, e))
             return x
     
@@ -330,7 +334,7 @@ class Weather(callbacks.Plugin):
         # try and fetch.
         try:
             page = utils.web.getUrl(url)
-        except Exception, e:  # something didn't work.
+        except Exception as e:  # something didn't work.
             self.log.info("_wuac: ERROR: Trying to open {0} message: {1}".format(url, e))
             return None
         # now process json and return.
@@ -339,7 +343,7 @@ class Weather(callbacks.Plugin):
             loc = data['RESULTS'][0]['zmw']  # find the first zmw.
             loc = "zmw:%s" % loc  # return w/zmw: attached.
             return loc
-        except Exception, e:
+        except Exception as e:
             self.log.info("_wuac: ERROR processing json in {0} :: {1}".format(url, e))
             return None
 
@@ -356,7 +360,7 @@ class Weather(callbacks.Plugin):
             self.log.info("URL: {0}".format(url))
             page = utils.web.getUrl(url)
             return page
-        except Exception, e:  # something didn't work.
+        except Exception as e:  # something didn't work.
             self.log.info("_wunderjson: ERROR Trying to open {0} message: {1}".format(url, e))
             return None
 
@@ -691,7 +695,7 @@ class Weather(callbacks.Plugin):
 
         # OUTPUT.
         # we go step-by-step to build the proper string. ° u" \u00B0C"
-        output = "{0} :: {1} ::".format(self._bold(outdata['location'].encode('utf-8')), outdata['weather'].encode('utf-8'))
+        output = "{0} :: {1} ::".format(self._bold(outdata['location']), outdata['weather'])
         # add in temperature.
         output += " {0}".format(outdata['temp'])
         # humidity.
@@ -708,19 +712,19 @@ class Weather(callbacks.Plugin):
         for (k, v) in args.items():
             if k in ['wind', 'visibility', 'uv', 'pressure', 'dewpoint']: # if key is in extras
                 if v: # if that key's value is True, we add it.
-                    output += "| {0}: {1} ".format(self._bold(k.title()), outdata[k].encode('utf-8'))
+                    output += "| {0}: {1} ".format(self._bold(k.title()), outdata[k])
         # add in the first two forecast item in conditions + updated time.
-        output += "| {0}: {1}".format(self._bold(forecastdata[0]['day'].encode('utf-8')), forecastdata[0]['text'].encode('utf-8'))
-        output += " {0}: {1}".format(self._bold(forecastdata[1]['day'].encode('utf-8')), forecastdata[1]['text'].encode('utf-8'))
+        output += "| {0}: {1}".format(self._bold(forecastdata[0]['day']), forecastdata[0]['text'])
+        output += " {0}: {1}".format(self._bold(forecastdata[1]['day']), forecastdata[1]['text'])
          # show Updated?
         if args['updated']:
-            output += " | {0} {1}".format(self._bold('Updated:'), outdata['observation'].encode('utf-8'))
+            output += " | {0} {1}".format(self._bold('Updated:'), outdata['observation'])
         # finally, output the basic weather.
         irc.reply(output)
 
         # next, for outputting, handle the extras like alerts, almanac, astronomy, forecast.
         if args['alerts']:  # if --alerts issued.
-            irc.reply("{0} :: {1}".format(self._bu("Alerts:"), outdata['alerts'].encode('utf-8')))
+            irc.reply("{0} :: {1}".format(self._bu("Alerts:"), outdata['alerts']))
         # handle almanac if --almanac is given.
         if args['almanac']:
             if args['nocolortemp']:  # disable colored temp?
@@ -745,11 +749,11 @@ class Weather(callbacks.Plugin):
             outforecast = [] # prep string for output.
             for (k, v) in fullforecastdata.items(): # iterate through forecast data.
                 if args['nocolortemp']:
-                    outforecast.append("{0}: {1} ({2}/{3})".format(self._bold(v['day'].encode('utf-8')),\
-                        v['text'].encode('utf-8'), v['high'], v['low']))
+                    outforecast.append("{0}: {1} ({2}/{3})".format(self._bold(v['day']),\
+                        v['text'], v['high'], v['low']))
                 else:
-                    outforecast.append("{0}: {1} ({2}/{3})".format(self._bold(v['day'].encode('utf-8')),\
-                        v['text'].encode('utf-8'), self._temp(v['high']), self._temp(v['low'])))
+                    outforecast.append("{0}: {1} ({2}/{3})".format(self._bold(v['day']),\
+                        v['text'], self._temp(v['high']), self._temp(v['low'])))
             # construct our string to output.
             output = "{0} :: {1}".format(self._bu('Forecast:'), " | ".join(outforecast))
             # now output to irc.
