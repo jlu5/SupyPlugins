@@ -10,7 +10,7 @@ be deprecated at some point.
 
 ## Install
 
-You will need a working Limnoria bot on Python 2.7 for this to work.
+You will need a working Limnoria bot on Python 2.7/3.4 for this to work.
 
 Go into your Limnoria plugin dir, usually ~/supybot/plugins and run:
 
