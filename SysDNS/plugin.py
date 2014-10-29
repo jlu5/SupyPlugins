@@ -44,13 +44,13 @@ except ImportError:
     _ = lambda x:x
 
 class SysDNS(callbacks.Plugin):
-    """An alternative to Supybot's built-in DNS function, using the host DNS lookup
+    """An alternative to Supybot's built-in DNS function, using the 'host' DNS lookup
     utility available on the host machine.
     """
     threaded = True
     def dns(self, irc, msg, args, optlist, text):
         """[--type type] <host>
-        Looks up a DNS hostname using the host binary available on the system. --type
+        Looks up a DNS hostname using the 'host' binary available on the system. --type
         controls the type of record to look for. (A, AAAA, etc.)
         """
         cmd = self.registryValue('command')
@@ -69,7 +69,7 @@ class SysDNS(callbacks.Plugin):
                                             stderr=subprocess.PIPE,
                                             stdin=null)
             except OSError as e:
-                irc.error('It seems the configured host command was '
+                irc.error('It seems the configured \'host\' command was '
                           'not available (%s).' % e, Raise=True)
             result = inst.communicate()
             if result[1]: # stderr

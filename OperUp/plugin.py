@@ -109,7 +109,7 @@ class OperUp(callbacks.Plugin):
                     "check to see if these values are correct!"))
         else:
             irc.error(_("This network is not configured for opering! (see"
-                " @config plugins.OperUp.opernets)"))
+                " 'config plugins.OperUp.opernets')"))
     operup = wrap(operup, ['owner'])
                
     def deoper(self, irc, msg, args):

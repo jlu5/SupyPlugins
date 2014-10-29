@@ -142,7 +142,7 @@ class SupyMisc(callbacks.Plugin):
     ### Generic informational commands (ident fetcher, channel counter, etc.)
 
     def serverlist(self, irc, msg, args):
-        """A command similar to the !networks command, but showing configured servers instead 
+        """A command similar to the 'networks' command, but showing configured servers instead 
         of the connected one."""
         L = []
         for ircd in world.ircs:

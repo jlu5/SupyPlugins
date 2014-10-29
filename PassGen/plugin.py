@@ -53,10 +53,10 @@ class PassGen(callbacks.Plugin):
         Makes a randomly generated password, [<len>] characters long if
         specified. Otherwise, uses the bot's configured default length.
         (see config plugins.PassGen.defaultLen)"""
+        maxlen = self.registryValue('maxLength')
         if not len:
             len = self.registryValue('defaultLen')
-        maxlen = self.registryValue('maxLength')
-        if len > maxlen:
+        elif len > maxlen:
             irc.error("The specified length ({}) is longer than the maximum "
                 "allowed on this bot. Current maximum: {}".format(len, maxlen), \
                 Raise=True)
