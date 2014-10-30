@@ -11,10 +11,9 @@ before_install:
     - sudo apt-get -qq update
 install:
     - sudo apt-get install -qq bind9-host
-    - pip install -vr requirements.txt||true
+    - pip install -vr requirements.txt
 # Run supybot-test
 script:
-  - echo $TRAVIS_PYTHON_VERSION
   - supybot-test -c --plugins-dir=.
 notifications:
     email: false
