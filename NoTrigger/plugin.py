@@ -28,6 +28,7 @@
 
 ###
 import string
+from sys import version_info
 
 import supybot.utils as utils
 from supybot.commands import *
