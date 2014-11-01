@@ -29,6 +29,7 @@
 
 ###
 
+from __future__ import unicode_literals
 import supybot.utils as utils
 from supybot.commands import *
 import supybot.conf as conf
@@ -38,11 +39,10 @@ import supybot.callbacks as callbacks
 import supybot.world as world
 import supybot.log as log
 
-import urllib2
 from xml.dom import minidom
 from time import time
 
-from LastFMDB import *
+from .LastFMDB import *
 
 class LastFMParser:
 
@@ -107,15 +107,13 @@ class LastFM(callbacks.Plugin):
 
         url = "%s/%s/%s.txt" % (self.APIURL_1_0, id, method)
         try:
-            f = urllib2.urlopen(url)
-        except urllib2.HTTPError:
+            f = utils.web.getUrlFd(url)
+        except utils.web.Error:
             irc.error("Unknown ID (%s) or unknown method (%s)"
-                    % (msg.nick, method))
-            return
+                    % (msg.nick, method), Raise=True)
 
-
-        lines = f.read().split("\n")
-        content = map(lambda s: s.split(",")[-1], lines)
+        lines = f.readlines()
+        content = list(map(lambda s: s.split(",")[-1], lines))
 
         irc.reply("%s's %s: %s (with a total number of %i entries)"
                 % (id, method, ", ".join(content[0:maxResults]),
@@ -136,8 +134,8 @@ class LastFM(callbacks.Plugin):
         # see http://www.lastfm.de/api/show/user.getrecenttracks
         url = "%s&method=user.getrecenttracks&user=%s" % (self.APIURL_2_0, id)
         try:
-            f = urllib2.urlopen(url)
-        except urllib2.HTTPError:
+            f = utils.web.getUrlFd(url)
+        except utils.web.Error:
             irc.error("Unknown ID (%s)" % id)
             return
 
@@ -145,12 +143,12 @@ class LastFM(callbacks.Plugin):
         (user, isNowPlaying, artist, track, album, time) = parser.parseRecentTracks(f)
         albumStr = "[" + album + "]" if album else ""
         if isNowPlaying:
-            irc.reply(('%s is listening to "%s" by %s %s'
-                    % (user, track, artist, albumStr)).encode("utf8"))
+            irc.reply('%s is listening to "%s" by %s %s'
+                    % (user, track, artist, albumStr))
         else:
-            irc.reply(('%s listened to "%s" by %s %s more than %s'
+            irc.reply('%s listened to "%s" by %s %s more than %s'
                     % (user, track, artist, albumStr,
-                        self._formatTimeago(time))).encode("utf-8"))
+                        self._formatTimeago(time)))
 
     np = wrap(nowPlaying, [optional("something")])
 
@@ -179,8 +177,8 @@ class LastFM(callbacks.Plugin):
 
         url = "%s/%s/profile.xml" % (self.APIURL_1_0, id)
         try:
-            f = urllib2.urlopen(url)
-        except urllib2.HTTPError:
+            f = utils.web.getUrlFd(url)
+        except utils.web.Error:
             irc.error("Unknown user (%s)" % id)
             return
 
@@ -188,8 +186,8 @@ class LastFM(callbacks.Plugin):
         keys = "realname registered age gender country playcount".split()
         profile = tuple([self._parse(xml, node) for node in keys])
 
-        irc.reply(("%s (realname: %s) registered on %s; age: %s / %s; \
-Country: %s; Tracks played: %s" % ((id,) + profile)).encode("utf8"))
+        irc.reply("%s (realname: %s) registered on %s; age: %s / %s; "
+                  "Country: %s; Tracks played: %s" % ((id,) + profile))
 
     profile = wrap(profile, [optional("something")])
 
@@ -209,8 +207,8 @@ Country: %s; Tracks played: %s" % ((id,) + profile)).encode("utf8"))
             self.APIURL_2_0, user1, user2, maxResults
         )
         try:
-            f = urllib2.urlopen(url)
-        except urllib2.HTTPError, e:
+            f = utils.web.getUrlFd(url)
+        except utils.web.Error as e:
             irc.error("Failure: %s" % (e))
             return
 
@@ -221,10 +219,8 @@ Country: %s; Tracks played: %s" % ((id,) + profile)).encode("utf8"))
         # Note: XPath would be really cool here...
         artists = [el for el in resultNode.getElementsByTagName("artist")]
         artistNames = [el.getElementsByTagName("name")[0].firstChild.data for el in artists]
-        irc.reply(("Result of comparison between %s and %s: score: %s, common artists: %s" \
-                % (user1, user2, scoreStr, ", ".join(artistNames))
-            ).encode("utf-8")
-        )
+        irc.reply("Result of comparison between %s and %s: score: %s, common artists: %s" \
+                % (user1, user2, scoreStr, ", ".join(artistNames)))
 
     compare = wrap(compareUsers, ["something", optional("something")])
 
