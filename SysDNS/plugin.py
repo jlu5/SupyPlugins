@@ -48,7 +48,7 @@ class SysDNS(callbacks.Plugin):
     utility available on the host machine.
     """
     threaded = True
-    def dns(self, irc, msg, args, optlist, text):
+    def dns(self, irc, msg, args, optlist, server):
         """[--type type] <host>
         Looks up a DNS hostname using the 'host' binary available on the system. --type
         controls the type of record to look for. (A, AAAA, etc.)
@@ -59,9 +59,9 @@ class SysDNS(callbacks.Plugin):
                       'supybot.plugins.SysDNS.command appropriately.', Raise=True)
         else:
             try:
-                args = [cmd, '-t', dict(optlist)['type'], text]
+                args = [cmd, '-t', dict(optlist)['type'], server]
             except KeyError:
-                args = [cmd, text]
+                args = [cmd, server]
             try:
                 with open(os.devnull) as null:
                     inst = subprocess.Popen(args,
@@ -78,7 +78,7 @@ class SysDNS(callbacks.Plugin):
                 response = result[0].decode('utf8').splitlines()
                 response = [l for l in response if l]
                 irc.replies(response)
-    dns = thread(wrap(dns, [getopts({'type':'something'}), 'text']))
+    dns = thread(wrap(dns, [getopts({'type':'something'}), 'somethingWithoutSpaces']))
 
 
 Class = SysDNS
