@@ -28,6 +28,7 @@
 
 ###
 
+import unittest
 from supybot.test import *
 
 class PkgInfoTestCase(PluginTestCase):
@@ -48,8 +49,12 @@ class PkgInfoTestCase(PluginTestCase):
 
     def testArchpkg(self):
         self.assertError('archpkg afdsfbjeiog')
-        self.assertNotError('archpkg bash')
-        self.assertRegexp('archpkg pacman --exact', 'Found 1.*?pacman -.*?')
+        try:
+            self.assertNotError('archpkg bash')
+            self.assertRegexp('archpkg pacman --exact', 'Found 1.*?pacman -.*?')
+        except AssertionError as e:
+            if "HTTP Error 50" in str(e): # It's not our fault; the API is down.
+                raise unittest.SkipTest("HTTP error 50x; the API's probably down again")
 
     def testArchaur(self):
         self.assertError('archaur wjoitgjwotgjv')
