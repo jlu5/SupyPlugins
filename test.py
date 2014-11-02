@@ -28,33 +28,34 @@
 
 ###
 
-#from __future__ import print_function
-
 from supybot.test import *
 from plugin import LastFMParser
 
-from StringIO import StringIO
+try:
+    from StringIO import StringIO
+except ImportError:
+    from io import StringIO
 
 class LastFMTestCase(PluginTestCase):
     plugins = ('LastFM',)
 
     def testLastfm(self):
-        print self.assertNotError("lastfm recenttracks")
-        print self.assertError("lastfm TESTEXCEPTION")
-        print self.assertNotError("lastfm recenttracks czshadow")
-        print self.assertNotError("lastfm np krf")
+        self.assertNotError("lastfm recenttracks")
+        self.assertError("lastfm TESTEXCEPTION")
+        self.assertNotError("lastfm recenttracks czshadow")
+        self.assertNotError("lastfm np krf")
 
     def testLastfmDB(self):
-        print self.assertNotError("lastfm set nick") # test db
-        print self.assertNotError("lastfm set test") # test db unset
+        self.assertNotError("lastfm set nick") # test db
+        self.assertNotError("lastfm set test") # test db unset
 
     def testLastfmProfile(self):
-        print self.assertNotError("lastfm profile czshadow")
-        print self.assertNotError("lastfm profile test")
+        self.assertNotError("lastfm profile czshadow")
+        self.assertNotError("lastfm profile test")
 
     def testLastfmCompare(self):
-        print self.assertNotError("lastfm compare krf czshadow")
-        print self.assertNotError("lastfm compare krf")
+        self.assertNotError("lastfm compare krf czshadow")
+        self.assertNotError("lastfm compare krf")
 
     def testLastFMParseRecentTracks(self):
         """Parser tests"""
