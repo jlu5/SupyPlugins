@@ -11,7 +11,8 @@ install:
     - pip install -vr requirements.txt
 # Run supybot-test
 script:
-  - cd .. && supybot-test -c supybot-lastfm
+  - cd .. && mv supybot-lastfm LastFM/
+  - supybot-test -c LastFM/
 notifications:
     email: false
 matrix:
