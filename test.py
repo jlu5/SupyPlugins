@@ -39,6 +39,17 @@ except ImportError:
 class LastFMTestCase(PluginTestCase):
     plugins = ('LastFM',)
 
+    def setUp(self):
+        PluginTestCase.setUp(self)
+        apiKey = os.environ.get('lastfm_apikey')
+        if not apiKey:
+            e = ("The LastFM API key has not been set. "
+            "Please set the environment variable 'lastfm_apikey' "
+            "and try again. ('export lastfm_apikey=<apikey>' for those "
+            "using bash)")
+            raise callbacks.Error(e)
+        conf.supybot.plugins.LastFM.apiKey.setValue(apiKey)
+
     def testLastfm(self):
         self.assertNotError("lastfm recenttracks")
         self.assertError("lastfm TESTEXCEPTION")
