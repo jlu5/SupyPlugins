@@ -33,13 +33,13 @@ from supybot.test import *
 
 class PkgInfoTestCase(PluginTestCase):
     plugins = ('PkgInfo',)
-    def testPackageCommandBasics(self):
-        self.assertRegexp('package sid bash', 'Package: .*?bash'
+    def testPkgCommand(self):
+        self.assertRegexp('pkg sid bash', 'Package: .*?bash'
         ' .*?; View more at: .*?packages.debian.org/sid/bash')
-        self.assertRegexp('package trusty apt', 'Package: .*?apt'
+        self.assertRegexp('pkg trusty apt', 'Package: .*?apt'
         ' .*?; View more at: .*?packages.ubuntu.com/trusty/apt')
-        self.assertError('package afdsfsadf asfasfasf')
-        self.assertRegexp('package sid afsadfasfsa', 'no such package', re.I)
+        self.assertError('pkg afdsfsadf asfasfasf')
+        self.assertRegexp('pkg sid afsadfasfsa', 'no such package', re.I)
 
     def testVlistCommandBasics(self):
         self.assertError('vlist all afdsafas')
