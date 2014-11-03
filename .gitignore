@@ -1,27 +1,23 @@
-*.py[co]
-
-# Packages
-*.egg
-*.egg-info
-dist
-build
-eggs
-parts
-bin
-var
-sdist
-develop-eggs
-.installed.cfg
-
-# Installer logs
-pip-log.txt
-
-# Unit test / coverage reports
-.coverage
-.tox
-
-#Translations
+__pycache__/
+*.py[cod]
 *.mo
+**/test-data/
+**/test-conf/
+**/test-logs/
+backup/
 
-#Mr Developer
-.mr.developer.cfg
+# emacs/vi
+*.swo
+*.swp
+*~
+
+# OS-Generated
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
