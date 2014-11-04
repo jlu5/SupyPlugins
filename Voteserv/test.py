@@ -41,18 +41,30 @@ class VoteservTestCase(PluginTestCase):
     def testVoteservBasic(self):
         self.assertRegexp('vote test something', 'foo voted to.*?test.*?something.*')
         self.assertRegexp('votes test something', '.*?1.*?voted to.*?test.*?something.*')
-        
+
     def testNoDuplicateVotes(self):
         # The plugin should block duplicate votes from the same user by hostmask.
         self.assertNotError('vote test something')
         self.assertError('vote test something')
 
     def testCheat(self):
-        self.assertNotError('vote abcdefg')
         self.assertNotError('cheat 300 abcdefg')
+        self.assertRegexp('votes abcdefg', '.*?300.*? voted to \x02abcdefg.*')
+
+    def testCheatResetsVotes(self):
+        self.assertNotError('vote Abcd')
+        self.assertNotError('cheat 200 Abcd')
         # 'cheat' should set the votes for something to a certain amount AND
         # reset the list of people who voted, allowing them to all vote again.
-        self.assertRegexp('votes abcdefg', '.*?300.*? voted to \x02abcdefg.*')
-        self.assertNotError('vote abcdefg')
+        self.assertNotError('vote Abcd')
 
+    def testVoteStripFormatting(self):
+        self.assertError('vote "\x02\x02\x0f      \x03"')
+        self.assertNotError('vote "\x02\x03    helLo"')
+        self.assertRegexp('votes Hello', ".*?1.*?voted to.*?")
+
+    def testCheatStripFormatting(self):
+        self.assertError('cheat 30 " "')
+        self.assertNotError('cheat 30 "   lose the game\x02 "')
+        self.assertRegexp('votes lose the game ', ".*?30.*?voted to.*?")
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:

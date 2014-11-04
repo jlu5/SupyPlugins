@@ -98,7 +98,9 @@ class Voteserv(callbacks.Plugin):
 
         Votes for something. It doesn't actually perform any actions directly,
         but could be an interesting way to get user feedback."""
-        action = action.lower()
+        action = ircutils.stripFormatting(action.lower()).strip()
+        if not action: # It must be just whitespace or formatting codes
+            irc.error("You must specify a proper action!", Raise=True)
         try:
             if self._lazyhostmask(msg.prefix) in self.votedb[action]:
                 irc.error("You have already voted to %s." % action, Raise=True)
@@ -147,8 +149,11 @@ class Voteserv(callbacks.Plugin):
         """<action>
         
         Returns the amount of people that have voted for <action>."""
+        action = ircutils.stripFormatting(action.lower()).strip()
+        if not action:
+            irc.error("You must specify a proper action!", Raise=True)
         try:
-            n = self.votedb[action.lower()][0]
+            n = self.votedb[action][0]
         except KeyError:
             n = 0
         if irc.nested:
@@ -166,7 +171,10 @@ class Voteserv(callbacks.Plugin):
         perfect for rigged elections!
         This will also reset the list of hosts that have voted for
         <action>, allowing everyone to vote again."""
-        self.votedb[action.lower()] = [num]
+        action = ircutils.stripFormatting(action.lower()).strip()
+        if not action:
+            irc.error("You must specify a proper action!", Raise=True)
+        self.votedb[action] = [num]
         irc.replySuccess()
     cheat = wrap(cheat, ['admin', 'int', 'text'])
 
