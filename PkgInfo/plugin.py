@@ -159,6 +159,8 @@ class PkgInfo(callbacks.Plugin):
         supported = ("debian", "ubuntu", "derivatives", "all")
         if distro not in supported:
             distro = self._getDistro(distro)
+            if distro is None:
+                irc.error("Unknown distribution.", Raise=True)
         d = self.MadisonParse(pkg, distro, useSource='source' in dict(opts))
         if not d: irc.error("No results found.",Raise=True)
         try:
