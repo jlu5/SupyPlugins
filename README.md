@@ -19,6 +19,9 @@ Please note that this list may not always be up to date; your best bet is to act
 ##### Isup
 - Provides a simple command to check whether a website is up or down (using [isup.me](http://isup.me)).
 
+##### LastFM
+- LastFM plugin, forked from [krf/supybot-lastfm](https://github.com/krf/supybot-lastfm). Also available as a [separate repository](https://github.com/GLolol/supybot-lastfm).
+
 ##### NoTrigger
 - Anti-abuse script; prevents the bot from triggering other bots by modifying its output slightly. 
 
