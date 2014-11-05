@@ -1,10 +1,23 @@
-supybot-lastfm
+supybot-lastfm (GLolol's fork)
 ==============
 
-A plugin for supybot that displays various information about a LastFM ID in IRC.
+[![Build Status](https://travis-ci.org/GLolol/supybot-lastfm.svg?branch=devel)](https://travis-ci.org/GLolol/supybot-lastfm)
+A plugin for Supybot that displays various information about LastFM IDs on IRC. 
 
-Usage
------
+### Changes made in this fork:
+
+- Native Python 3 support.
+- Code cleanup (use Supybot's built in URL fetcher instead of urllib/urllib2).
+- Bug fixes.
+
+A full list of changes can be found [here](https://github.com/GLolol/supybot-lastfm/compare/krf:master...devel). 
+
+### Support
+You may find me on IRC at `irc.overdrive.pw #dev` ([webchat](http://webchat.overdrive.pw/?channels=dev)).
+
+Feel free to suggest enhancements on the [issue tracker](https://github.com/GLolol/supybot-lastfm/issues); pull requests are welcome. 
+
+### Usage
 
 Showing now playing information:
 ```
@@ -29,10 +42,3 @@ Showing help:
 [10:28:29] $help lastfm
 [10:28:29] (lastfm method [id]) — Lists LastFM info where method is in [friends, neighbours, profile, recenttracks, tags, topalbums, topartists, toptracks]. Set your LastFM ID with the set method (default is your current nick) or specify id to switch for one call.
 ```
-
-Development
------------
-
-Feel free to suggest enhancements, I'm happy to receive code contributions
-
-The files `__init__.py` and `plugin.py` provide some documentation.
