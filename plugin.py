@@ -121,7 +121,7 @@ class LastFM(callbacks.Plugin):
             irc.error("Unknown ID (%s) or unknown method (%s)"
                     % (msg.nick, method), Raise=True)
 
-        lines = f.readlines()
+        lines = f.read().decode("utf-8").split("\n")
         content = list(map(lambda s: s.split(",")[-1], lines))
 
         irc.reply("%s's %s: %s (with a total number of %i entries)"
