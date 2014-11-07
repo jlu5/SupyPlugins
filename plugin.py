@@ -383,6 +383,11 @@ class Weather(callbacks.Plugin):
             irc.reply("ERROR: Need a Wunderground API key. Set config plugins.Weather.apiKey and reload Weather.")
             return
 
+        # this is to stop spam.
+        if optinput and len(optinput) > 50:
+            irc.reply("ERROR: Locations should not be this long. Try again.")
+            return
+
         # urlargs will be used to build the url to query the API.
         # besides lang, these are unmutable values that should not be changed.
         urlArgs = {'features':['conditions', 'forecast'],
