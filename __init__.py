@@ -39,7 +39,7 @@ import supybot.world as world
 
 # Use this for the version of this plugin.  You may wish to put a CVS keyword
 # in here if you're keeping the plugin in CVS or some similar system.
-__version__ = "0.3rc2"
+__version__ = ""
 
 # Replace this with an appropriate author or supybot.Author instance.
 __author__ = supybot.Author("Kevin Funk", "KRF", "krf@electrostorm.net")
@@ -49,10 +49,13 @@ __contributors__ = {
             supybot.Author("Ilya Kuznetsov", "worklez", "worklez@gmail.com"): ["profile"],
             supybot.Author("Pavel Dvořák", "czshadow", "czshadow@gmail.com"):
             ["misc"],
+            supybot.Author('James Lu', 'GLolol',
+                        'GLolol@overdrive.pw'):
+                        ['Python 3 support', 'bugfixes']
         }
 
 # This is a url where the most recent plugin package can be downloaded.
-__url__ = 'https://github.com/krf/supybot-lastfm'
+__url__ = 'https://github.com/GLolol/supybot-lastfm'
 
 from . import config
 from . import plugin
