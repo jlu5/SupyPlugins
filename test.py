@@ -29,7 +29,7 @@
 ###
 
 from supybot.test import *
-from plugin import LastFMParser
+from .plugin import LastFMParser
 
 try:
     from StringIO import StringIO

@@ -189,22 +189,30 @@ class LastFM(callbacks.Plugin):
         Set your LastFM ID with the set method (default is your current nick)
         or specify <id> to switch for one call.
         """
-
+        if not self.apiKey:
+            irc.error("The API Key is not set for this plugin. Please set it via"
+                      "config plugins.lastfm.apikey and reload the plugin. "
+                      "You can sign up for an API Key using "
+                      "http://www.last.fm/api/account/create", Raise=True)
         id = (optionalId or self.db.getId(msg.nick) or msg.nick)
 
-        url = "%s/%s/profile.xml" % (self.APIURL_1_0, id)
+        url = "%sapi_key=%s&method=user.getInfo&user=%s" % (self.APIURL_2_0, self.apiKey, id)
         try:
             f = utils.web.getUrlFd(url)
         except utils.web.Error:
-            irc.error("Unknown user (%s)" % id)
-            return
+            irc.error("Unknown user (%s)" % id, Raise=True)
 
-        xml = minidom.parse(f).getElementsByTagName("profile")[0]
-        keys = "realname registered age gender country playcount".split()
-        profile = tuple([self._parse(xml, node) for node in keys])
-
-        irc.reply("%s (realname: %s) registered on %s; age: %s / %s; "
-                  "Country: %s; Tracks played: %s" % ((id,) + profile))
+        xml = minidom.parse(f).getElementsByTagName("user")[0]
+        keys = ("realname", "registered", "age", "gender", "country", "playcount")
+        profile = {"id": id}
+        for tag in keys:
+            try:
+                profile[tag] = xml.getElementsByTagName(tag)[0].firstChild.data.strip()
+            except AttributeError: # empty field
+                profile[tag] = 'unknown'
+        # node.getElementsByTagName(tagName)[0].firstChild.data
+        irc.reply(("%(id)s (realname: %(realname)s) registered on %(registered)s; age: %(age)s / %(gender)s; "
+                  "Country: %(country)s; Tracks played: %(playcount)s") % profile)
 
     profile = wrap(profile, [optional("something")])
 
