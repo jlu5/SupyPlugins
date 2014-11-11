@@ -108,14 +108,24 @@ class LastFM(callbacks.Plugin):
                       "config plugins.lastfm.apikey and reload the plugin. "
                       "You can sign up for an API Key using "
                       "http://www.last.fm/api/account/create", Raise=True)
-
+        method = method.lower()
+        knownMethods = {'friends': 'user.getFriends',
+                        'neighbours': 'user.getNeighbours',
+                        'profile': 'user.getInfo',
+                        'recenttracks': 'user.getRecentTracks',
+                        'tags': 'user.getTopTags',
+                        'topalbums': 'user.getTopAlbums',
+                        'topartists': 'user.getTopArtists',
+                        'toptracks': 'user.getTopTracks'}
+        if method not in knownMethods:
+            irc.error("Unsupported method '%s'" % method, Raise=True)
         id = (optionalId or self.db.getId(msg.nick) or msg.nick)
         channel = msg.args[0]
         maxResults = self.registryValue("maxResults", channel)
-        method = method.lower()
 
-        url = "%s/%s/%s.txt" % (self.APIURL_1_0, id, method)
-        # url = "%sapi_key=%s&method=%s&user=%s" % (self.APIURL_2_0, self.apiKey, method, id)
+        # url = "%s/%s/%s.txt" % (self.APIURL_1_0, id, method)
+        url = "%sapi_key=%s&method=%s&user=%s" % (self.APIURL_2_0,
+            self.apiKey, knownMethods[method], id)
         try:
             f = utils.web.getUrlFd(url)
         except utils.web.Error:
