@@ -48,9 +48,10 @@ class LastFMParser:
 
     def parseRecentTracks(self, stream):
         """
-        @return Tuple with track information of last track
-        """
+        <stream>
 
+        Returns a tuple with the information of the last-played track.
+        """
         xml = minidom.parse(stream).getElementsByTagName("recenttracks")[0]
         user = xml.getAttribute("user")
 
@@ -150,8 +151,7 @@ class LastFM(callbacks.Plugin):
         try:
             f = utils.web.getUrlFd(url)
         except utils.web.Error:
-            irc.error("Unknown ID (%s)" % id)
-            return
+            irc.error("Unknown ID (%s)" % id, Raise=True)
 
         parser = LastFMParser()
         (user, isNowPlaying, artist, track, album, time) = parser.parseRecentTracks(f)
@@ -237,8 +237,7 @@ class LastFM(callbacks.Plugin):
         try:
             f = utils.web.getUrlFd(url)
         except utils.web.Error as e:
-            irc.error("Failure: %s" % (e))
-            return
+            irc.error("Failure: %s" % (e), Raise=True)
 
         xml = minidom.parse(f)
         resultNode = xml.getElementsByTagName("result")[0]
@@ -270,11 +269,11 @@ class LastFM(callbacks.Plugin):
             return "%i seconds ago" % (t)
 
     def _formatRating(self, score):
-        """Format rating
+        """<score>
 
-        @param score Value in the form of [0:1] (float)
+        Formats <score> values to text. <score> should be a float
+        between 0 and 1.
         """
-
         if score >= 0.9:
             return "Super"
         elif score >= 0.7:
