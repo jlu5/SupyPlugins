@@ -28,7 +28,6 @@
 
 ###
 import random
-# import itertools
 
 import supybot.conf as conf
 import supybot.utils as utils
@@ -129,28 +128,24 @@ class SupyMisc(callbacks.Plugin):
             irc.reply(".{} appears to be a valid TLD, see {}{}".format(text, db, s))
     tld = wrap(tld, ['something'])
 
-## Fill this in later, try to prevent forkbombs and stuff.
-#    def permutations(self, irc, msg, args, length, text):
-#        """[<length>] <text>
-#
-#        Returns [<length>]-length permutations of <text>. If not specified, [<length>]
-#        defaults to the length of <text>."""
-#        s = ' '.join(''.join(p) for p in itertools.permutations(text, length or None))
-#        irc.reply(s)
-#    permutations = wrap(permutations, [additional('int'), 'text'])
-
     ### Generic informational commands (ident fetcher, channel counter, etc.)
-
     def serverlist(self, irc, msg, args):
-        """A command similar to the 'networks' command, but showing configured servers instead 
-        of the connected one."""
-        L = []
+        """takes no arguments.
+        A command similar to the 'networks' command, but showing configured servers
+        instead of the connected one."""
+        L, res = {}, []
         for ircd in world.ircs:
-            # fetch a list of tuples in the format (server, port)
-            for server in conf.supybot.networks.get(ircd.network).servers():
-                # list every server configured for every network connected
-                L.append("%s: %s" % (ircd.network, server[0]))
-        irc.reply(', '.join(L)) # finally, join them up in a comma-separated list
+            net = ircd.network
+            # Get a list of server:port strings for every network, and put this
+            # into a dictionary (netname -> list of servers)
+            L[net] = (':'.join(str(x) for x in s) for s in \
+                conf.supybot.networks.get(net).servers())
+        for k, v in L.items():
+            # Check SSL status and format response
+            sslstatus = "\x0303on\x03" if conf.supybot.networks.get(k).ssl() else \
+                "\x0304off\x03"
+            res.append("\x02%s\x02 (%s) [SSL: %s]" % (k, ', '.join(v), sslstatus))
+        irc.reply(', '.join(res))
     serverlist = wrap(serverlist)
 
     def netcount(self, irc, msg, args):
@@ -168,7 +163,7 @@ class SupyMisc(callbacks.Plugin):
     def chancount(self, irc, msg, args):
         """takes no arguments.
         Counts the amount of channels the bot is on. """
-        irc.reply(len(irc.state.channels.keys()))
+        irc.reply(len(irc.state.channels))
     chancount = wrap(chancount)
 
     def getchan(self, irc, msg, args):
