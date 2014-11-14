@@ -39,8 +39,13 @@ import supybot.callbacks as callbacks
 import supybot.world as world
 import supybot.log as log
 
+from bs4 import BeautifulSoup
 from xml.dom import minidom
 from time import time
+try:
+    from itertools import izip # Python 2
+except ImportError:
+    izip = zip # Python 3
 
 from .LastFMDB import *
 
@@ -48,9 +53,10 @@ class LastFMParser:
 
     def parseRecentTracks(self, stream):
         """
-        @return Tuple with track information of last track
-        """
+        <stream>
 
+        Returns a tuple with the information of the last-played track.
+        """
         xml = minidom.parse(stream).getElementsByTagName("recenttracks")[0]
         user = xml.getAttribute("user")
 
@@ -80,12 +86,10 @@ class LastFM(callbacks.Plugin):
         self.__parent.__init__(irc)
         self.db = LastFMDB(dbfilename)
         world.flushers.append(self.db.flush)
-        # 1.0 API (deprecated)
-        self.APIURL_1_0 = "http://ws.audioscrobbler.com/1.0/user"
 
         # 2.0 API (see http://www.lastfm.de/api/intro)
         self.apiKey = self.registryValue("apiKey")
-        self.APIURL_2_0 = "http://ws.audioscrobbler.com/2.0/?"
+        self.APIURL = "http://ws.audioscrobbler.com/2.0/?"
 
     def die(self):
         if self.db.flush in world.flushers:
@@ -107,25 +111,37 @@ class LastFM(callbacks.Plugin):
                       "config plugins.lastfm.apikey and reload the plugin. "
                       "You can sign up for an API Key using "
                       "http://www.last.fm/api/account/create", Raise=True)
-
+        method = method.lower()
+        knownMethods = {'friends': 'user.getFriends',
+                        'neighbours': 'user.getNeighbours',
+                        'profile': 'user.getInfo',
+                        'recenttracks': 'user.getRecentTracks',
+                        'tags': 'user.getTopTags',
+                        'topalbums': 'user.getTopAlbums',
+                        'topartists': 'user.getTopArtists',
+                        'toptracks': 'user.getTopTracks'}
+        if method not in knownMethods:
+            irc.error("Unsupported method '%s'" % method, Raise=True)
         id = (optionalId or self.db.getId(msg.nick) or msg.nick)
         channel = msg.args[0]
         maxResults = self.registryValue("maxResults", channel)
-        method = method.lower()
 
-        url = "%s/%s/%s.txt" % (self.APIURL_1_0, id, method)
-        # url = "%sapi_key=%s&method=%s&user=%s" % (self.APIURL_2_0, self.apiKey, method, id)
+        url = "%sapi_key=%s&method=%s&user=%s" % (self.APIURL,
+            self.apiKey, knownMethods[method], id)
         try:
             f = utils.web.getUrlFd(url)
         except utils.web.Error:
             irc.error("Unknown ID (%s) or unknown method (%s)"
                     % (msg.nick, method), Raise=True)
 
-        lines = f.read().decode("utf-8").split("\n")
-        content = list(map(lambda s: s.split(",")[-1], lines))
-
+        soup = BeautifulSoup(f, "xml")
+        content = soup.find("lfm").contents[1].find_all("name")
+        results = [res.string for res in content[0:maxResults*2]]
+        if method in ('topalbums', 'toptracks'):
+            # Annoying, hackish way of grouping artist+album/track items
+            results = ["%s - %s" % (thing, artist) for thing, artist in izip(results[1::2], results[::2])]
         irc.reply("%s's %s: %s (with a total number of %i entries)"
-                % (id, method, ", ".join(content[0:maxResults]),
+                % (id, method, ", ".join(results[0:maxResults]),
                     len(content)))
 
     lastfm = wrap(lastfm, ["something", optional("something")])
@@ -146,12 +162,11 @@ class LastFM(callbacks.Plugin):
         id = (optionalId or self.db.getId(msg.nick) or msg.nick)
 
         # see http://www.lastfm.de/api/show/user.getrecenttracks
-        url = "%sapi_key=%s&method=user.getrecenttracks&user=%s" % (self.APIURL_2_0, self.apiKey, id)
+        url = "%sapi_key=%s&method=user.getrecenttracks&user=%s" % (self.APIURL, self.apiKey, id)
         try:
             f = utils.web.getUrlFd(url)
         except utils.web.Error:
-            irc.error("Unknown ID (%s)" % id)
-            return
+            irc.error("Unknown ID (%s)" % id, Raise=True)
 
         parser = LastFMParser()
         (user, isNowPlaying, artist, track, album, time) = parser.parseRecentTracks(f)
@@ -189,22 +204,29 @@ class LastFM(callbacks.Plugin):
         Set your LastFM ID with the set method (default is your current nick)
         or specify <id> to switch for one call.
         """
-
+        if not self.apiKey:
+            irc.error("The API Key is not set for this plugin. Please set it via"
+                      "config plugins.lastfm.apikey and reload the plugin. "
+                      "You can sign up for an API Key using "
+                      "http://www.last.fm/api/account/create", Raise=True)
         id = (optionalId or self.db.getId(msg.nick) or msg.nick)
 
-        url = "%s/%s/profile.xml" % (self.APIURL_1_0, id)
+        url = "%sapi_key=%s&method=user.getInfo&user=%s" % (self.APIURL, self.apiKey, id)
         try:
             f = utils.web.getUrlFd(url)
         except utils.web.Error:
-            irc.error("Unknown user (%s)" % id)
-            return
+            irc.error("Unknown user (%s)" % id, Raise=True)
 
-        xml = minidom.parse(f).getElementsByTagName("profile")[0]
-        keys = "realname registered age gender country playcount".split()
-        profile = tuple([self._parse(xml, node) for node in keys])
-
-        irc.reply("%s (realname: %s) registered on %s; age: %s / %s; "
-                  "Country: %s; Tracks played: %s" % ((id,) + profile))
+        xml = minidom.parse(f).getElementsByTagName("user")[0]
+        keys = ("realname", "registered", "age", "gender", "country", "playcount")
+        profile = {"id": id}
+        for tag in keys:
+            try:
+                profile[tag] = xml.getElementsByTagName(tag)[0].firstChild.data.strip()
+            except AttributeError: # empty field
+                profile[tag] = 'unknown'
+        irc.reply(("%(id)s (realname: %(realname)s) registered on %(registered)s; age: %(age)s / %(gender)s; "
+                  "Country: %(country)s; Tracks played: %(playcount)s") % profile)
 
     profile = wrap(profile, [optional("something")])
 
@@ -225,12 +247,11 @@ class LastFM(callbacks.Plugin):
         maxResults = self.registryValue("maxResults", channel)
         # see http://www.lastfm.de/api/show/tasteometer.compare
         url = "%sapi_key=%s&method=tasteometer.compare&type1=user&type2=user&value1=%s&value2=%s&limit=%s" % (
-            self.APIURL_2_0, self.apiKey, user1, user2, maxResults)
+            self.APIURL, self.apiKey, user1, user2, maxResults)
         try:
             f = utils.web.getUrlFd(url)
         except utils.web.Error as e:
-            irc.error("Failure: %s" % (e))
-            return
+            irc.error("Failure: %s" % (e), Raise=True)
 
         xml = minidom.parse(f)
         resultNode = xml.getElementsByTagName("result")[0]
@@ -262,11 +283,11 @@ class LastFM(callbacks.Plugin):
             return "%i seconds ago" % (t)
 
     def _formatRating(self, score):
-        """Format rating
+        """<score>
 
-        @param score Value in the form of [0:1] (float)
+        Formats <score> values to text. <score> should be a float
+        between 0 and 1.
         """
-
         if score >= 0.9:
             return "Super"
         elif score >= 0.7:

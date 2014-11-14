@@ -1,1 +1,3 @@
 git+https://github.com/ProgVal/Limnoria.git
+beautifulsoup4
+lxml
