@@ -39,8 +39,13 @@ import supybot.callbacks as callbacks
 import supybot.world as world
 import supybot.log as log
 
+from bs4 import BeautifulSoup
 from xml.dom import minidom
 from time import time
+try:
+    from itertools import izip # Python 2
+except ImportError:
+    izip = zip # Python 3
 
 from .LastFMDB import *
 
@@ -132,11 +137,18 @@ class LastFM(callbacks.Plugin):
             irc.error("Unknown ID (%s) or unknown method (%s)"
                     % (msg.nick, method), Raise=True)
 
-        lines = f.read().decode("utf-8").split("\n")
-        content = list(map(lambda s: s.split(",")[-1], lines))
+        soup = BeautifulSoup(f, "xml")
+        content = soup.find("lfm").contents[1].find_all("name")
+        results = [res.string for res in content[0:maxResults*2]]
+        if method in ('topalbums', 'toptracks'):
+            # Annoying, hackish way of grouping artist+album/track items
+            results = ["%s - %s" % (thing, artist) for thing, artist in izip(results[1::2], results[::2])]
+
+        # lines = f.read().decode("utf-8").split("\n")
+        # content = list(map(lambda s: s.split(",")[-1], lines))
 
         irc.reply("%s's %s: %s (with a total number of %i entries)"
-                % (id, method, ", ".join(content[0:maxResults]),
+                % (id, method, ", ".join(results[0:maxResults]),
                     len(content)))
 
     lastfm = wrap(lastfm, ["something", optional("something")])
