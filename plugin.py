@@ -54,7 +54,10 @@ class LastFMParser:
         xml = minidom.parse(stream).getElementsByTagName("recenttracks")[0]
         user = xml.getAttribute("user")
 
-        t = xml.getElementsByTagName("track")[0] # most recent track
+        try:
+            t = xml.getElementsByTagName("track")[0] # most recent track
+        except IndexError:
+            return [user] + [None]*5
         isNowPlaying = (t.getAttribute("nowplaying") == "true")
         if not isNowPlaying:
             time = int(t.getElementsByTagName("date")[0].getAttribute("uts"))
