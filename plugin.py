@@ -86,12 +86,10 @@ class LastFM(callbacks.Plugin):
         self.__parent.__init__(irc)
         self.db = LastFMDB(dbfilename)
         world.flushers.append(self.db.flush)
-        # 1.0 API (deprecated)
-        self.APIURL_1_0 = "http://ws.audioscrobbler.com/1.0/user"
 
         # 2.0 API (see http://www.lastfm.de/api/intro)
         self.apiKey = self.registryValue("apiKey")
-        self.APIURL_2_0 = "http://ws.audioscrobbler.com/2.0/?"
+        self.APIURL = "http://ws.audioscrobbler.com/2.0/?"
 
     def die(self):
         if self.db.flush in world.flushers:
@@ -128,8 +126,7 @@ class LastFM(callbacks.Plugin):
         channel = msg.args[0]
         maxResults = self.registryValue("maxResults", channel)
 
-        # url = "%s/%s/%s.txt" % (self.APIURL_1_0, id, method)
-        url = "%sapi_key=%s&method=%s&user=%s" % (self.APIURL_2_0,
+        url = "%sapi_key=%s&method=%s&user=%s" % (self.APIURL,
             self.apiKey, knownMethods[method], id)
         try:
             f = utils.web.getUrlFd(url)
@@ -143,10 +140,6 @@ class LastFM(callbacks.Plugin):
         if method in ('topalbums', 'toptracks'):
             # Annoying, hackish way of grouping artist+album/track items
             results = ["%s - %s" % (thing, artist) for thing, artist in izip(results[1::2], results[::2])]
-
-        # lines = f.read().decode("utf-8").split("\n")
-        # content = list(map(lambda s: s.split(",")[-1], lines))
-
         irc.reply("%s's %s: %s (with a total number of %i entries)"
                 % (id, method, ", ".join(results[0:maxResults]),
                     len(content)))
@@ -169,7 +162,7 @@ class LastFM(callbacks.Plugin):
         id = (optionalId or self.db.getId(msg.nick) or msg.nick)
 
         # see http://www.lastfm.de/api/show/user.getrecenttracks
-        url = "%sapi_key=%s&method=user.getrecenttracks&user=%s" % (self.APIURL_2_0, self.apiKey, id)
+        url = "%sapi_key=%s&method=user.getrecenttracks&user=%s" % (self.APIURL, self.apiKey, id)
         try:
             f = utils.web.getUrlFd(url)
         except utils.web.Error:
@@ -218,7 +211,7 @@ class LastFM(callbacks.Plugin):
                       "http://www.last.fm/api/account/create", Raise=True)
         id = (optionalId or self.db.getId(msg.nick) or msg.nick)
 
-        url = "%sapi_key=%s&method=user.getInfo&user=%s" % (self.APIURL_2_0, self.apiKey, id)
+        url = "%sapi_key=%s&method=user.getInfo&user=%s" % (self.APIURL, self.apiKey, id)
         try:
             f = utils.web.getUrlFd(url)
         except utils.web.Error:
@@ -232,7 +225,6 @@ class LastFM(callbacks.Plugin):
                 profile[tag] = xml.getElementsByTagName(tag)[0].firstChild.data.strip()
             except AttributeError: # empty field
                 profile[tag] = 'unknown'
-        # node.getElementsByTagName(tagName)[0].firstChild.data
         irc.reply(("%(id)s (realname: %(realname)s) registered on %(registered)s; age: %(age)s / %(gender)s; "
                   "Country: %(country)s; Tracks played: %(playcount)s") % profile)
 
@@ -255,7 +247,7 @@ class LastFM(callbacks.Plugin):
         maxResults = self.registryValue("maxResults", channel)
         # see http://www.lastfm.de/api/show/tasteometer.compare
         url = "%sapi_key=%s&method=tasteometer.compare&type1=user&type2=user&value1=%s&value2=%s&limit=%s" % (
-            self.APIURL_2_0, self.apiKey, user1, user2, maxResults)
+            self.APIURL, self.apiKey, user1, user2, maxResults)
         try:
             f = utils.web.getUrlFd(url)
         except utils.web.Error as e:
