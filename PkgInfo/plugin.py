@@ -85,7 +85,7 @@ class PkgInfo(callbacks.Plugin):
             distro = None
         return distro
 
-    def MadisonParse(self, pkg, dist, codenames='', suite='', useSource=False):
+    def MadisonParse(self, pkg, dist, codenames='', suite='', useSource=False, reverse=False):
         arch = ','.join(self.registryValue("archs"))
         self.arg = {'package':pkg,'table':dist,'a':arch,'c':codenames,'s':suite,
             }
@@ -103,6 +103,9 @@ class PkgInfo(callbacks.Plugin):
             else:
                 d[L[2]] = (L[1],L[3])
         if d:
+            if reverse:
+                # *sigh*... I wish there was a better way to do this
+                d = OrderedDict(reversed(tuple(d.items())))
             if self.registryValue("verbose"):
                 return 'Found %s results: ' % len(d) + ', '.join("{!s} " \
                 "\x02({!s} [{!s}])\x02".format(k,v[0],v[1]) for (k,v) in \
@@ -148,27 +151,31 @@ class PkgInfo(callbacks.Plugin):
     pkg = wrap(package, ['somethingWithoutSpaces', 'somethingWithoutSpaces'])
 
     def vlist(self, irc, msg, args, distro, pkg, opts):
-        """<distribution> <package> [--source]
+        """<distribution> <package> [--source] [--reverse(d)]
 
         Fetches all available version of <package> in <distribution>, if
         such package exists. Supported entries for <distribution>
         include 'debian', 'ubuntu', 'derivatives', and 'all'. If
         --source is given, search for packages by source package
-        name."""
+        name. If --reverse or --reversed is given, show the newest package versions
+        first."""
         pkg, distro = map(str.lower, (pkg, distro))
         supported = ("debian", "ubuntu", "derivatives", "all")
         if distro not in supported:
             distro = self._getDistro(distro)
             if distro is None:
                 irc.error("Unknown distribution.", Raise=True)
-        d = self.MadisonParse(pkg, distro, useSource='source' in dict(opts))
+        opts = dict(opts)
+        reverse = 'reverse' in opts or 'reversed' in opts
+        d = self.MadisonParse(pkg, distro, useSource='source' in opts, reverse=reverse)
         if not d: irc.error("No results found.",Raise=True)
         try:
             d += " View more at: {}search?keywords={}".format(self.addrs[distro], pkg)
         except KeyError:
             pass
         irc.reply(d)
-    vlist = wrap(vlist, ['somethingWithoutSpaces', 'somethingWithoutSpaces', getopts({'source':''})])
+    vlist = wrap(vlist, ['somethingWithoutSpaces', 'somethingWithoutSpaces', getopts({'source':'',
+        'reverse':'','reversed':''})])
 
     def archpkg(self, irc, msg, args, pkg, opts):
         """<package> [--exact]
