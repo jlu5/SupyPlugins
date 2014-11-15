@@ -36,7 +36,7 @@ reload(plugin)
 # reloaded when this plugin is reloaded.  Don't forget to import them as well!
 
 if world.testing:
-    import test
+    from . import test
 
 Class = plugin.Class
 configure = config.configure
