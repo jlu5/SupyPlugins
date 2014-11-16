@@ -48,13 +48,10 @@ def configure(advanced):
 
 
 SupyMisc = conf.registerPlugin('SupyMisc')
-# This is where your configuration variables (if any) should go.  For example:
-# conf.registerGlobalValue(SupyMisc, 'someConfigVariableName',
-#     registry.Boolean(False, _("""Help for someConfigVariableName.""")))
 
-conf.registerGroup(SupyMisc, 'repeat')
-conf.registerGlobalValue(SupyMisc.repeat, 'max',
-     registry.PositiveInteger(100, _("""The maximum value <num> someone can use with the repeat command.""")))
+conf.registerGlobalValue(SupyMisc, 'maxLen',
+     registry.PositiveInteger(100, _("""The maximum value/lengths someone 
+     can use with the repeat and mreplace commands.""")))
 
 
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:

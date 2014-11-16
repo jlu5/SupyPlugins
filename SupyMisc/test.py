@@ -34,6 +34,10 @@ from supybot.test import *
 class SupyMiscTestCase(PluginTestCase):
     plugins = ('SupyMisc',)
 
+    def setUp(self):
+        PluginTestCase.setUp(self)
+        self.prefix = 'foo!bar@baz.not'
+
     def testTld(self):
         self.assertNotError('tld .com')
 
@@ -46,5 +50,18 @@ class SupyMiscTestCase(PluginTestCase):
         else:
             from codecs import unicode_escape_decode as u
             self.assertNotError('tld '+u('\u7f51\u7edc')[0])
+
+    def testColorwheel(self):
+        self.assertRegexp('colors', '.*\x03.*')
+
+    def testHostFetchers(self):
+        self.assertResponse('me', 'foo')
+        self.assertResponse('getident', 'bar')
+        self.assertResponse('gethost', 'baz.not')
+        self.assertResponse('botnick', self.nick)
+
+    def testmreplace(self):
+        self.assertResponse('mreplace hi,there hello,ok hmm, hi there everyone',
+            'hmm, hello ok everyone')
 
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:

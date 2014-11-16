@@ -205,18 +205,6 @@ class Randomness(callbacks.Plugin):
         irc.reply(self._attack(user), action=True)
     attack = wrap(attack, ['text'])
 
-    def colors(self, irc, msg, args):
-        """takes no arguments.
-
-        Replies with a display of IRC colour codes."""
-        s = ("\x03,00  \x0F\x0300 00\x0F \x03,01  \x0F\x0301 01\x0F \x03,02  \x0F\x0302 02\x0F \x03,03  "
-             "\x0F\x0303 03\x0F \x03,04  \x0F\x0304 04\x0F \x03,05  \x0F\x0305 05\x0F \x03,06  \x0F\x0306"
-             " 06\x0F \x03,07  \x0F\x0307 07\x0F \x03,08  \x0F\x0308 08\x0F \x03,09  \x0F\x0309 09\x0F "
-             "\x03,10  \x0F\x0310 10\x0F \x03,11  \x0F\x0311 11\x0F \x03,12  \x0F\x0312 12\x0F \x03,13  "
-             "\x0F\x0313 13\x0F \x03,14  \x0F\x0314 14\x0F \x03,15  \x0F\x0315 15\x0F")
-        irc.reply(s)
-    colors = wrap(colors)
-
 Class = Randomness
 
 
