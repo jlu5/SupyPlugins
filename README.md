@@ -21,7 +21,7 @@ Please note that this list may not always be up to date; your best bet is to act
 
 ##### LastFM
 - LastFM plugin, forked from [krf/supybot-lastfm](https://github.com/krf/supybot-lastfm). Also available as a [separate repository](https://github.com/GLolol/supybot-lastfm).
-- **Requires:** [Beautiful Soup 4](http://www.crummy.com/software/BeautifulSoup/bs4/doc/), lxml (for XML parsing)
+   - **Requires:** [Beautiful Soup 4](http://www.crummy.com/software/BeautifulSoup/bs4/doc/), lxml (for XML parsing)
 
 ##### NoTrigger
 - Anti-abuse script; prevents the bot from triggering other bots by modifying its output slightly. 
@@ -31,21 +31,21 @@ Please note that this list may not always be up to date; your best bet is to act
 
 ##### OperUp *(deprecated)*
 - Simple plugin that allows Supybot to oper up on configured networks, automatically (on connect) and manually.
-- **This plugin is deprecated and will likely be removed in a future release.**
+   - **This plugin is deprecated and will likely be removed in a future release.**
 
 ##### PassGen
 - Generates random passwords on the fly!
 
 ##### PkgInfo
 - Fetches package information from Debian, Ubuntu, Arch Linux, and Linux Mint's repositories.
-- **Requires:** [Beautiful Soup 4](http://www.crummy.com/software/BeautifulSoup/bs4/doc/) - install it via `pip install beautifulsoup4` or `apt-get install python-bs4`/`python3-bs4` (Debian/Ubuntu)
+   - **Requires:** [Beautiful Soup 4](http://www.crummy.com/software/BeautifulSoup/bs4/doc/) - install it via `pip install beautifulsoup4` or `apt-get install python-bs4`/`python3-bs4` (Debian/Ubuntu)
 
 ##### Randomness
 - Random commands for my own personal use; you probably don't need this loaded!
 
 ##### RelayLink
 - [LinkRelay](https://github.com/ProgVal/Supybot-plugins/tree/master/LinkRelay) forked into a different name. See [RelayLink/README.md](RelayLink/README.md) for more details.
-- **Mainstream development has ceased. Any new changes will only be for maintainence purposes/bugfixes.**
+   - **Mainstream development has ceased. Any new changes will only be for maintainence purposes or bugfixes.**
 
 ##### SupyMisc
 - Some assorted commands that don't seem to fit anywhere else.
