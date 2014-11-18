@@ -4,6 +4,8 @@ supybot-lastfm (GLolol's fork)
 [![Build Status](https://travis-ci.org/GLolol/supybot-lastfm.svg?branch=devel)](https://travis-ci.org/GLolol/supybot-lastfm)
 A plugin for Supybot that displays various information about LastFM IDs on IRC. 
 
+**This version of the plugin depends on Beautiful Soup 4 and lxml for parsing! (This may change in the future).**
+
 ### Changes made in this fork:
 
 - Native Python 3 support.
