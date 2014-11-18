@@ -86,7 +86,10 @@ class PkgInfo(callbacks.Plugin):
         return distro
 
     def MadisonParse(self, pkg, dist, codenames='', suite='', useSource=False, reverse=False):
-        arch = ','.join(self.registryValue("archs"))
+        # The arch value implies 'all' (architecture-independent packages) and 'source'
+        # (source packages), in order to prevent misleading "Not found" errors.
+        arch = self.registryValue("archs") + ['all', 'source']
+        arch = ','.join(set(arch))
         self.arg = {'package':pkg,'table':dist,'a':arch,'c':codenames,'s':suite,
             }
         if useSource:
