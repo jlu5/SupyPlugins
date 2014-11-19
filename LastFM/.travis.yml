@@ -22,3 +22,6 @@ matrix:
         - python: "3.3"
         - python: "pypy"
         - python: "pypy3"
+branches:
+  except:
+    - /^pr\/.*$/
