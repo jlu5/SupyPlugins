@@ -48,9 +48,11 @@ def configure(advanced):
 
 
 Voteserv = conf.registerPlugin('Voteserv')
-# This is where your configuration variables (if any) should go.  For example:
-# conf.registerGlobalValue(Voteserv, 'someConfigVariableName',
-#     registry.Boolean(False, _("""Help for someConfigVariableName.""")))
-
+conf.registerGlobalValue(Voteserv, 'allowAdminOverride',
+     registry.Boolean(False, _("""Determines whether bot admins will be
+     allowed to override duplicate vote checks.""")))
+conf.registerGlobalValue(Voteserv, 'allowCheat',
+     registry.Boolean(False, _("""Determines whether the 'cheat' command
+     is enabled.""")))
 
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:

@@ -34,6 +34,7 @@ import supybot.utils as utils
 from supybot.commands import *
 import supybot.plugins as plugins
 import supybot.ircutils as ircutils
+import supybot.ircdb as ircdb
 import supybot.callbacks as callbacks
 try:
     from supybot.i18n import PluginInternationalization
@@ -46,6 +47,10 @@ except ImportError:
 class Voteserv(callbacks.Plugin):
     """Small plugin for storing and manipulating votes/polls."""
     threaded = True
+
+    def _pluralize(self, n):
+        """Returns 's' if <n> is not 1."""
+        return 's' if n != 1 else ''
 
     def __init__(self, irc):
         self.__parent = super(Voteserv, self)
@@ -99,10 +104,12 @@ class Voteserv(callbacks.Plugin):
         Votes for something. It doesn't actually perform any actions directly,
         but could be an interesting way to get user feedback."""
         action = ircutils.stripFormatting(action.lower()).strip()
+        override = self.registryValue("allowAdminOverride") and \
+            ircdb.checkCapability(msg.prefix, 'admin')
         if not action: # It must be just whitespace or formatting codes
             irc.error("You must specify a proper action!", Raise=True)
         try:
-            if self._lazyhostmask(msg.prefix) in self.votedb[action]:
+            if self._lazyhostmask(msg.prefix) in self.votedb[action] and not override:
                 irc.error("You have already voted to %s." % action, Raise=True)
         except KeyError:
             self.votedb[action] = [0]
@@ -113,9 +120,9 @@ class Voteserv(callbacks.Plugin):
 
     def voteexport(self, irc, msg, args):
         """takes no arguments.
-        
+
         Exports votes stored in memory to file: data/votes.db
-        This is also done automatically when the plugin is unloaded or 
+        This is also done automatically when the plugin is unloaded or
         reloaded."""
         try:
             self.exportVoteDB()
@@ -127,7 +134,7 @@ class Voteserv(callbacks.Plugin):
 
     def voteimport(self, irc, msg, args):
         """takes no arguments.
-        
+
         Imports the vote database for the current network."""
         try:
             self.loadVoteDB()
@@ -139,44 +146,64 @@ class Voteserv(callbacks.Plugin):
 
     def voteclear(self, irc, msg, args):
         """takes no arguments.
-        
+
         Clears all votes stored in memory. Use with caution!"""
         self.votedb = {}
         irc.replySuccess()
     voteclear = wrap(voteclear, ['admin'])
 
-    def votes(self, irc, msg, args, action):
-        """<action>
-        
-        Returns the amount of people that have voted for <action>."""
+    def votes(self, irc, msg, args, opts, action):
+        """[--hosts] [--number] <action>
+
+        Returns the amount of people that have voted for <action>. If
+        --hosts is given, also show the hosts that have voted for <action>.
+        If --number is given, only returns the number of people who has
+        voted for <action> (useful for nested commands)."""
         action = ircutils.stripFormatting(action.lower()).strip()
         if not action:
             irc.error("You must specify a proper action!", Raise=True)
         try:
-            n = self.votedb[action][0]
+            n, hosts = self.votedb[action][0], self.votedb[action][1:]
         except KeyError:
-            n = 0
-        if irc.nested:
+            n, hosts = 0, None
+        opts = dict(opts)
+        if 'number' in opts:
             irc.reply(n)
         else:
-            irc.reply('\x02%s\x02 %s voted to %s' % 
-            (n, 'person has' if n == 1 else 'people have',
-            self._formatAction(action)))
-    votes = wrap(votes, ['text'])
+            s = '\x02%s\x02 %s voted to %s' % \
+                (n, 'person has' if n == 1 else 'people have', \
+                self._formatAction(action))
+            if 'hosts' in opts and n:
+                s += " (%s)" % ", ".join(set(hosts))
+            irc.reply(s)
+    votes = wrap(votes, [getopts({'hosts':'', 'number':''}), 'text'])
 
     def cheat(self, irc, msg, args, num, action):
         """<number of votes> <action>
-        
+
         Sets the number of votes for <action> to a certain amount,
         perfect for rigged elections!
         This will also reset the list of hosts that have voted for
         <action>, allowing everyone to vote again."""
+        if not self.registryValue("allowCheat"):
+            irc.error("This command is disabled; please set config plugins."
+                "voteserv.allowCheat accordingly.", Raise=True)
         action = ircutils.stripFormatting(action.lower()).strip()
         if not action:
             irc.error("You must specify a proper action!", Raise=True)
         self.votedb[action] = [num]
         irc.replySuccess()
     cheat = wrap(cheat, ['admin', 'int', 'text'])
+
+    def listallvotes(self, irc, msg, args):
+        """<takes no arguments>.
+
+        Returns the list of things that have been voted for, along
+        with the number of votes for each."""
+        s = "; ".join(['"%s": \x02%s\x02 vote%s' % (k, v[0], self._pluralize(v[0]))
+            for k, v in self.votedb.items()])
+        irc.reply(s)
+    listallvotes = wrap(listallvotes)
 
 Class = Voteserv
 

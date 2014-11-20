@@ -31,7 +31,8 @@
 from supybot.test import *
 
 class VoteservTestCase(PluginTestCase):
-    plugins = ('Voteserv',)
+    plugins = ('Voteserv','Admin')
+    config = {'supybot.plugins.voteserv.allowCheat': True}
 
     def setUp(self):
         PluginTestCase.setUp(self)
@@ -67,4 +68,17 @@ class VoteservTestCase(PluginTestCase):
         self.assertError('cheat 30 " "')
         self.assertNotError('cheat 30 "   lose the game\x02 "')
         self.assertRegexp('votes lose the game ', ".*?30.*?voted to.*?")
+
+    def testAdminOverride(self):
+        conf.supybot.plugins.voteserv.allowAdminOverride.setValue(True)
+        try:
+            u = ircdb.users.newUser()
+            u.name = 'abcde'
+            ircdb.users.setUser(u)
+            self.assertNotError('capability add abcde admin')
+            self.assertNotError('vote test something')
+            self.assertNotError('vote test something')
+        finally:
+            conf.supybot.plugins.voteserv.allowAdminOverride.setValue(False)
+            ircdb.users.delUser(u.id)
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:
