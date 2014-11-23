@@ -294,7 +294,7 @@ class Weather(callbacks.Plugin):
         # grab a list of valid settings.
         validset = self.db.getsettings()
         if optset not in validset:
-            irc.reply("ERROR: '{0}' is an invalid setting. Must be one of: {1}".format(optset, " | ".join(sorted([i for i in validset]))))
+            irc.error("'{0}' is an invalid setting. Must be one of: {1}".format(optset, " | ".join(sorted([i for i in validset]))), Raise=True)
             return
         # setting value True/False
         if optbool:  # True.
@@ -303,7 +303,7 @@ class Weather(callbacks.Plugin):
             value = 0
         # check user first.
         if not self.db.getuser(msg.nick.lower()):  # user exists
-            irc.reply("ERROR: You're not in the database. You must setweather first.")
+            irc.error("You're not in the database. You must setweather first.", Raise=True)
         else:  # user is valid. perform the op.
             self.db.setsetting(msg.nick.lower(), optset, value)
             irc.reply("I have changed {0}'s {1} setting to {2}".format(msg.nick, optset, value))
@@ -382,13 +382,11 @@ class Weather(callbacks.Plugin):
 
         # first, check if we have an API key. Useless w/o this.
         if len(self.APIKEY) < 1 or not self.APIKEY or self.APIKEY == "Not set":
-            irc.reply("ERROR: Need a Wunderground API key. Set config plugins.Weather.apiKey and reload Weather.")
-            return
+            irc.error("Need a Wunderground API key. Set config plugins.Weather.apiKey and reload Weather.", Raise=True)
 
         # this is to stop spam.
         if optinput and len(optinput) > 50:
-            irc.reply("ERROR: Locations should not be this long. Try again.")
-            return
+            irc.error("Locations should not be this long. Try again.", Raise=True)
 
         # urlargs will be used to build the url to query the API.
         # besides lang, these are unmutable values that should not be changed.
@@ -441,8 +439,7 @@ class Weather(callbacks.Plugin):
                             args[k] = False
         else:  # user was not found.
             if not optinput:  # location was also not specified, so we must bail.
-                irc.reply("ERROR: I did not find a preset location for you. Set via setweather <location>")
-                return
+                irc.error("I did not find a preset location for you. Set via setweather <location>", Raise=True)
 
         # handle optlist (getopts). this will manipulate output via args dict.
         # we must do this after the dblookup for users as it would always override.
@@ -485,13 +482,11 @@ class Weather(callbacks.Plugin):
         if optinput:  # if we have optinput, regardless if the user is known or not, autocomplete it.
             wloc = self._wuac(optinput)
             if not wloc:  # error looking up the location.
-                irc.reply("ERROR: Sorry, I can not find a valid location for: {0}".format(optinput))
-                return
+                irc.error("I could not find a valid location for: {0}".format(optinput), Raise=True)
         elif loc and not optinput:  # user is known. location is set. no optinput.
             wloc = loc   # set wloc as their location. worst case, the user gets an error for setting it wrong.
         else:  # no optinput. no location. error out. this should happen above but lets be redundant.
-            irc.reply("ERROR: Sorry, you specify a city to search for weather.")
-            return
+            irc.error("You must specify a city to search for weather.", Raise=True)
 
         # build url now. first, apikey. then, iterate over urlArgs and insert.
         url = 'http://api.wunderground.com/api/%s/' % (self.APIKEY) # first part of url, w/APIKEY
@@ -509,23 +504,20 @@ class Weather(callbacks.Plugin):
         # now that we're done, lets finally make our API call.
         page = self._wunderjson(url, wloc)
         if not page:
-            irc.reply("ERROR: Failed to load Wunderground API. Check logs.")
-            return
+            irc.error("Failed to load Wunderground API. Check the logs for more information.", Raise=True)
 
         # process json.
         try:
             data = json.loads(page.decode('utf-8'))
         except Exception as e:
             self.log.error("ERROR: could not process JSON from: {0} :: {1}".format(url, e))
-            irc.reply("ERROR: Could not process JSON from Weather Underground. Check the logs.")
-            return
+            irc.error("Could not process JSON from Weather Underground. Check the logs.", Raise=True)
 
         # now, a series of sanity checks before we process.
         if 'error' in data['response']:  # check if there are errors.
             errortype = data['response']['error']['type']  # type. description is below.
             errordesc = data['response']['error'].get('description', 'no description')
-            irc.reply("ERROR: I got an error searching '{0}'. ({1}: {2})".format(loc, errortype, errordesc))
-            return
+            irc.error("I got an error searching '{0}'. ({1}: {2})".format(loc, errortype, errordesc), Raise=True)
         # if there is more than one city matching (Ambiguous Results).  we now go with the first (best?) match.
         # this should no longer be the case with our autocomplete routine above but we'll keep this anyways.
         if 'results' in data['response']:  # we grab the first location's "ZMW" which then gets constructed as location.
@@ -533,8 +525,7 @@ class Weather(callbacks.Plugin):
             # grab this first location and search again.
             page = self._wunderjson(url, first)
             if not page:
-                irc.reply("ERROR: Failed to load Wunderground API.")
-                return
+                irc.error("Failed to load Wunderground API.", Raise=True)
             # we're here if we got the second search (best?) now lets reload the json and continue.
             data = json.loads(page.decode('utf-8'))
 
