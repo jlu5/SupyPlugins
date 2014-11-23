@@ -48,9 +48,9 @@ def configure(advanced):
 
 
 Namegen = conf.registerPlugin('Namegen')
-# This is where your configuration variables (if any) should go.  For example:
-# conf.registerGlobalValue(Namegen, 'someConfigVariableName',
-#     registry.Boolean(False, _("""Help for someConfigVariableName.""")))
+conf.registerGlobalValue(Namegen, 'syllables',
+    registry.PositiveInteger(2, _("""Specifies the maximum amount of syllables
+    a name can have.""")))
 
 
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:

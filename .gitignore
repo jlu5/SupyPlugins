@@ -5,6 +5,8 @@ __pycache__/
 **/test-conf/
 **/test-logs/
 backup/
+web/
+tmp/
 
 # emacs/vi
 *.swo
