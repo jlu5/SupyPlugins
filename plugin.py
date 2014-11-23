@@ -214,12 +214,14 @@ class Weather(callbacks.Plugin):
 
         # lets be safe and wrap in a try/except because we can't always trust data purity.
         try:
+            if x.startswith('NA'): # Wunderground sends a field that's not available
+                return x
             # first, convert into F so we only have one table.
             if x.endswith('C'):  # c.
-                x = float(str(x).replace('C', '')) * 9 / 5 + 32  # remove C + math into float(F).
+                x = float(x[:-1]) * 9 / 5 + 32  # remove C + math into float(F).
                 unit = "C"
             else:  # f.
-                x = float(str(x).replace('F', ''))  # remove F. str->float.
+                x = float(x[:-1])  # remove F. str->float.
                 unit = "F"
             # determine color.
             if x < 10.0:
@@ -549,11 +551,11 @@ class Weather(callbacks.Plugin):
         else:  # we do have wind. process differently.
             if args['imperial']:  # imperial units for wind.
                 outdata['wind'] = "{0}@{1}mph".format(self._wind(data['current_observation']['wind_degrees']), data['current_observation']['wind_mph'])
-                if data['current_observation']['wind_gust_mph'] > 0:   # gusts?
+                if int(data['current_observation']['wind_gust_mph']) > 0:   # gusts?
                     outdata['wind'] += " ({0}mph gusts)".format(data['current_observation']['wind_gust_mph'])
             else:  # handle metric units for wind.
                 outdata['wind'] = "{0}@{1}kph".format(self._wind(data['current_observation']['wind_degrees']),data['current_observation']['wind_kph'])
-                if data['current_observation']['wind_gust_kph'] > 0:  # gusts?
+                if int(data['current_observation']['wind_gust_kph']) > 0:  # gusts?
                     outdata['wind'] += " ({0}kph gusts)".format(data['current_observation']['wind_gust_kph'])
 
         # handle the time. concept/method from WunderWeather plugin.
