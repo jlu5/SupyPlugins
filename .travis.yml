@@ -3,18 +3,16 @@ python:
   - "2.7"
   - "3.4"
   - pypy
+  - pypy3
 # command to install dependencies, 
 install:
-    - pip install -vr requirements.txt||true
+    - pip install -vr requirements.txt
 # command to run tests, e.g. python setup.py test
 script:
-  - echo $TRAVIS_PYTHON_VERSION
-  - cd .. && supybot-test Weather
+  - cd .. && mv Supybot-Weather Weather
+  - supybot-test Weather
 notifications:
     email: false
-    irc:
-      channels:
-        - "irc.efnet.net#supybot"
 matrix:
     fast_finish: true
 
