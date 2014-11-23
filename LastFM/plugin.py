@@ -273,11 +273,11 @@ class LastFM(callbacks.Plugin):
 
     def _formatTimeago(self, unixtime):
         t = int(time()-unixtime)
-        if t/86400 > 0:
+        if t/86400 >= 1:
             return "%i days ago" % (t/86400)
-        if t/3600 > 0:
+        if t/3600 >= 1:
             return "%i hours ago" % (t/3600)
-        if t/60 > 0:
+        if t/60 >= 1:
             return "%i minutes ago" % (t/60)
         if t > 0:
             return "%i seconds ago" % (t)
