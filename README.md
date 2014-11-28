@@ -10,7 +10,8 @@ The recommended way of fetching plugins in this repository is to clone the git r
 * `$ git clone https://github.com/GLolol/SupyPlugins` 
 
 and adding the folder to your bot's `config directories.plugins`. 
-or Python 3.4+.** The repository *may* also work with Python 3.2-3.3 (Debian 7/Ubuntu 12.04/Fedora 19-20), but this is relatively untested (besides [some tests with Travis-CI](https://travis-ci.org/GLolol/SupyPlugins/)) and therefore not officially supported. **Anything older will *not* work.**
+
+**You will need a working copy of [Limnoria](https://github.com/ProgVal/Limnoria) running on Python 2.7 or Python 3.4+.** The repository *may* also work with Python 3.2-3.3 (Debian 7/Ubuntu 12.04/Fedora 19-20), but this is relatively untested (besides [some tests with Travis-CI](https://travis-ci.org/GLolol/SupyPlugins/)) and therefore not officially supported. **Anything older will *not* work.**
 
 For those of you using a recent version of Limnoria's PluginDownloader, you can also fetch [individual plugins](#list-of-plugins) by running: 
 
