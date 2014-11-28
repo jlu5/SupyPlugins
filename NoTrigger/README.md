@@ -41,7 +41,7 @@ Some bots will also respond to their nick!
 ...
 ```
 
-This is slightly harder to parse, so we have to check if a message matches `<something>: <text>` or `<something>, <text>` (where <something> can be used as the name of a bot).
+This is slightly harder to parse, so we have to check if a message matches `<something>: <text>` or `<something>, <text>` (where `<something>` can be used as the name of a bot).
 
 OKAY OKAY, now our bot is really foolproof, right?
 
