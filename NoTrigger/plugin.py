@@ -59,25 +59,36 @@ class NoTrigger(callbacks.Plugin):
             ircutils.isChannel(msg.args[0]) and \
             self.registryValue('enable', msg.args[0]):
             s = msg.args[1]
-            prefixes = list(string.punctuation)
+            prefixes = string.punctuation
             rpairs = {"\007":""
                      }
             suffixes = ("moo")
             if self.registryValue('colorAware') and \
-                self.isChanStripColor(irc, msg.args[0]):
+                self.isChanStripColor(irc, msg.args[0]) and \
+                s.startswith(("\003", "\002", "\017", "\037", "\026")):
                 # \003 = Colour (Ctrl+K), \002 = Bold (Ctrl+B), \017 =
                 # Reset Formatting (Ctrl+O), \037 = Underline,
                 # \026 = Italic/Reverse video
-                prefixes += ["\003", "\002", "\017", "\037", "\026"]
-            if self.registryValue('spaceBeforeNicks', msg.args[0]):
+                self.log.info("NoTrigger (%s/%s): prepending message with "
+                    "a space since our message begins with a formatting code "
+                    "and the channel seems to be blocking colors." % \
+                    (msg.args[0], irc.network))
+                s = " " + s
+            elif self.registryValue('spaceBeforeNicks', msg.args[0]) and \
+                s.split()[0].endswith((",", ":")):
                 # If the last character of the first word ends with a ',' or
                 # ':', prepend a space.
-                if s.split()[0].endswith((",", ":")):
-                    s = " " + s
+                s = " " + s
+                self.log.info("NoTrigger (%s/%s): prepending message with "
+                    "a space due to config plugins.notrigger."
+                    "spaceBeforeNicks." % (msg.args[0], irc.network))
             # Handle actions properly but destroy any other \001 (CTCP) messages
             if self.registryValue('blockCtcp', msg.args[0]) and \
                 s.startswith("\001") and not s.startswith("\001ACTION"):
                 s = s[1:-1]
+                self.log.info("NoTrigger (%s/%s): blocking non-ACTION "
+                    "CTCP due to config plugins.notrigger.blockCtcp." % \
+                     (msg.args[0], irc.network))
             for k, v in rpairs.items():
                 s = s.replace(k, v)
             if s.startswith(tuple(prefixes)):
