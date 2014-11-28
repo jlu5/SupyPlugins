@@ -35,9 +35,9 @@ class PkgInfoTestCase(PluginTestCase):
     plugins = ('PkgInfo',)
     def testPkgCommand(self):
         self.assertRegexp('pkg sid bash', 'Package: .*?bash'
-        ' .*?; View more at: .*?packages.debian.org/sid/bash')
+        ' .*?')
         self.assertRegexp('pkg trusty apt', 'Package: .*?apt'
-        ' .*?; View more at: .*?packages.ubuntu.com/trusty/apt')
+        ' .*?')
         self.assertError('pkg afdsfsadf asfasfasf')
         self.assertRegexp('pkg sid afsadfasfsa', 'no such package', re.I)
 
