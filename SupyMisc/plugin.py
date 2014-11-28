@@ -124,6 +124,7 @@ class SupyMisc(callbacks.Plugin):
              "\x0F\x0313 13\x0F \x03,14  \x0F\x0314 14\x0F \x03,15  \x0F\x0315 15\x0F")
         irc.reply(s)
     colors = wrap(colors)
+    colours = wrap(colors)
 
     def tld(self, irc, msg, args, text):
         """<tld>
