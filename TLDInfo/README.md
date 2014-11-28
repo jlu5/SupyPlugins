@@ -1,1 +1,1 @@
-Checks if something is a valid TLD using IANA's database (http://www.iana.org/domains/root/db/).
+This plugin has been merged into the SupyMisc plugin, please use that instead! (This folder serves only as a stub to alert users about this change.)

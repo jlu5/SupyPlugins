@@ -28,7 +28,10 @@
 
 ###
 import random
-# import itertools
+try:
+    from itertools import izip
+except ImportError:
+    izip = zip
 
 import supybot.conf as conf
 import supybot.utils as utils
@@ -69,7 +72,7 @@ class SupyMisc(callbacks.Plugin):
         Returns <text> repeated <num> times. <num> must be a positive integer. 
         To keep leading and trailing spaces, it is recommended to quote the <text>
         argument " like this ". """
-        maxN = self.registryValue("repeat.max")
+        maxN = self.registryValue("maxLen")
         if num <= maxN:
             irc.reply(text * num)
         else:
@@ -98,35 +101,72 @@ class SupyMisc(callbacks.Plugin):
         Replaces all instances of <bad substringX> with <good substringX> in <text> (from left to right).
         Essentially an alternative for Supybot's format.translate, but with support for substrings
         of different lengths."""
-        if len(good) != len(bad):
+        maxLen = self.registryValue("maxLen")
+        lbad, lgood = len(good), len(bad)
+        if lbad > maxLen or lgood > maxLen:
+            irc.error("Too many substrings given. Current maximum: {}" \
+                .format(maxN), Raise=True)
+        if lbad != lgood:
             irc.error("<bad substrings> must be the same length as <good substrings>", Raise=True)
-        for pair in itertools.izip(bad, good):
+        for pair in izip(bad, good):
             text = text.replace(pair[0], pair[1])
         irc.reply(text)
     mreplace = wrap(mreplace, [commalist('something'), commalist('something'), 'text'])
 
-## Fill this in later, try to prevent forkbombs and stuff.
-#    def permutations(self, irc, msg, args, length, text):
-#        """[<length>] <text>
-#
-#        Returns [<length>]-length permutations of <text>. If not specified, [<length>]
-#        defaults to the length of <text>."""
-#        s = ' '.join(''.join(p) for p in itertools.permutations(text, length or None))
-#        irc.reply(s)
-#    permutations = wrap(permutations, [additional('int'), 'text'])
+    def colors(self, irc, msg, args):
+        """takes no arguments.
+
+        Replies with a display of IRC colour codes."""
+        s = ("\x03,00  \x0F\x0300 00\x0F \x03,01  \x0F\x0301 01\x0F \x03,02  \x0F\x0302 02\x0F \x03,03  "
+             "\x0F\x0303 03\x0F \x03,04  \x0F\x0304 04\x0F \x03,05  \x0F\x0305 05\x0F \x03,06  \x0F\x0306"
+             " 06\x0F \x03,07  \x0F\x0307 07\x0F \x03,08  \x0F\x0308 08\x0F \x03,09  \x0F\x0309 09\x0F "
+             "\x03,10  \x0F\x0310 10\x0F \x03,11  \x0F\x0311 11\x0F \x03,12  \x0F\x0312 12\x0F \x03,13  "
+             "\x0F\x0313 13\x0F \x03,14  \x0F\x0314 14\x0F \x03,15  \x0F\x0315 15\x0F")
+        irc.reply(s)
+    colors = wrap(colors)
+
+    def tld(self, irc, msg, args, text):
+        """<tld>
+
+        Checks whether <tld> is a valid TLD using IANA's TLD database
+        (http://www.iana.org/domains/root/db/)."""
+        db = "http://www.iana.org/domains/root/db/"
+        text = text.split(".")[-1] # IANA's DB doesn't care about second level domains
+        # Encode everything in IDN in order to support international TLDs
+        try: # Python 2
+            s = text.decode("utf8").encode("idna")
+        except AttributeError: # Python 3
+            s = text.encode("idna").decode()
+        try:
+            data = utils.web.getUrl(db + s)
+        except utils.web.Error as e:
+            if "HTTP Error 404:" in str(e):
+                irc.error("No results found for TLD .{}".format(text), Raise=True)
+            else:
+                irc.error("An error occurred while contacting IANA's "
+                    "TLD Database.", Raise=True)
+        else:
+            irc.reply(".{} appears to be a valid TLD, see {}{}".format(text, db, s))
+    tld = wrap(tld, ['something'])
 
     ### Generic informational commands (ident fetcher, channel counter, etc.)
-
     def serverlist(self, irc, msg, args):
-        """A command similar to the !networks command, but showing configured servers instead 
-        of the connected one."""
-        L = []
+        """takes no arguments.
+        A command similar to the 'networks' command, but showing configured servers
+        instead of the connected one."""
+        L, res = {}, []
         for ircd in world.ircs:
-            # fetch a list of tuples in the format (server, port)
-            for server in conf.supybot.networks.get(ircd.network).servers():
-                # list every server configured for every network connected
-                L.append("%s: %s" % (ircd.network, server[0]))
-        irc.reply(', '.join(L)) # finally, join them up in a comma-separated list
+            net = ircd.network
+            # Get a list of server:port strings for every network, and put this
+            # into a dictionary (netname -> list of servers)
+            L[net] = (':'.join(str(x) for x in s) for s in \
+                conf.supybot.networks.get(net).servers())
+        for k, v in L.items():
+            # Check SSL status and format response
+            sslstatus = "\x0303on\x03" if conf.supybot.networks.get(k).ssl() else \
+                "\x0304off\x03"
+            res.append("\x02%s\x02 (%s) [SSL: %s]" % (k, ', '.join(v), sslstatus))
+        irc.reply(', '.join(res))
     serverlist = wrap(serverlist)
 
     def netcount(self, irc, msg, args):
@@ -144,7 +184,7 @@ class SupyMisc(callbacks.Plugin):
     def chancount(self, irc, msg, args):
         """takes no arguments.
         Counts the amount of channels the bot is on. """
-        irc.reply(len(irc.state.channels.keys()))
+        irc.reply(len(irc.state.channels))
     chancount = wrap(chancount)
 
     def getchan(self, irc, msg, args):

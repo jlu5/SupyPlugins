@@ -1,5 +1,5 @@
 ###
-# Copyright (c) 2014, James Lu (GLolol)
+# Copyright (c) 2008, Kevin Funk
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -30,48 +30,44 @@
 
 import supybot.utils as utils
 from supybot.commands import *
+import supybot.conf as conf
 import supybot.plugins as plugins
 import supybot.ircutils as ircutils
 import supybot.callbacks as callbacks
-try:
-    from supybot.i18n import PluginInternationalization
-    _ = PluginInternationalization('TLDInfo')
-except ImportError:
-    # Placeholder that allows to run the plugin on a bot
-    # without the i18n module
-    _ = lambda x:x
+import supybot.world as world
+import supybot.conf as conf
+import supybot.plugins as plugins
 
-class TLDInfo(callbacks.Plugin):
-    """Fetches TLD information from IANA's database (http://www.iana.org/domains/root/db/)."""
-    threaded = True
+class LastFMDB(plugins.ChannelUserDB):
+    """Holds the LastFM IDs of all known nicks
 
-    def tld(self, irc, msg, args, text):
-        """<tld>
+    (This database is case insensitive and channel independent)
+    """
 
-        Checks whether <tld> is a valid TLD using IANA's database
-        (http://www.iana.org/domains/root/db/)."""
-        db = "http://www.iana.org/domains/root/db/"
-        text = text.split(".")[-1] # IANA's DB doesn't care about second level domains
-        # Encode everything in IDN in order to support international TLDs
-        try: # Python 2
-            s = text.decode("utf8").encode("idna")
-        except AttributeError: # Python 3
-            s = text.encode("idna").decode()
+    def __init__(self, *args, **kwargs):
+        plugins.ChannelUserDB.__init__(self, *args, **kwargs)
+
+    def serialize(self, v):
+
+        return list(v)
+
+    def deserialize(self, channel, id, L):
+        (id,) = L
+        return (id,)
+
+    def set(self, nick, id):
+        """ 
+        if nick.lower() == id.lower():
+            del self['x', nick.lower()] # FIXME: Bug in supybot(?)
+        else:"""
+        self['x', nick.lower()] = (id,)
+
+    def getId(self, nick):
         try:
-            data = utils.web.getUrl(db + s)
-        except utils.web.Error as e:
-            if "HTTP Error 404:" in str(e):
-                irc.reply("No results found for TLD {} (using "
-                    "http://www.iana.org/domains/root/db)".format("."+text))
-            else:
-                irc.error("An error occurred while contacting IANA's "
-                    "TLD Database.", Raise=True)
-        else:
-            irc.reply("{} appears to be a valid TLD, see {}".format(("."+text), (db+s)))
-    tld = wrap(tld, ['something'])
+            return self['x', nick.lower()][0]
+        except:
+            return # entry does not exist
 
+filename = conf.supybot.directories.data.dirize("LastFM.db")
 
-Class = TLDInfo
-
-
-# vim:set shiftwidth=4 softtabstop=4 expandtab textwidth=79:
+# vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:

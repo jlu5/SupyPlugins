@@ -48,11 +48,8 @@ from supybot.commands import *
 import supybot.plugins as plugins
 import supybot.ircutils as ircutils
 import supybot.ircmsgs as ircmsgs
-import supybot.ircdb as ircdb
 import supybot.callbacks as callbacks
-import supybot.conf as conf
 import random
-import json
 import re
 from time import sleep
 from supybot.utils.structures import TimeoutQueue
@@ -63,40 +60,13 @@ except ImportError:
     _ = lambda x:x
 
 class Randomness(callbacks.Plugin):
-    """Random commands for my own personal use, including a silly
-    voting mechanism amongst other things."""
+    """This plugin contains commands for my own personal use."""
     threaded = True
     
     def __init__(self, irc):
         self.__parent = super(Randomness, self)
         self.__parent.__init__(irc)
         self.dotCounter = TimeoutQueue(10)
-        self.vfilename = conf.supybot.directories.data.dirize(irc.network+".votes")
-        try:
-            with open(self.vfilename, "r") as f:
-                self.votes = json.load(f)
-        except IOError:
-            self.log.debug("Randomness: failed to load vote database %s"
-                ", creating a new one..." % self.vfilename)
-            self.votes = {}
-
-    def loadVoteDB(self):
-        self.log.debug("Randomness: loading votes database "+self.vfilename)
-        with open(self.vfilename, "r") as f:
-            self.votes = json.load(f)
-            
-    def exportVoteDB(self):
-        self.log.debug("Randomness: exporting votes database "+self.vfilename)
-        with open(self.vfilename, 'w') as f:
-            json.dump(self.votes, f)
-            f.write("\n")
-            
-    def die(self):
-        self.__parent.die()
-        try:
-            self.exportVoteDB()
-        except IOError as e:
-            self.log.error("Failed to export votes database: " + str(e))
 
     # The code below contains automatic replies then turned on. Since this
     # is a mostly personal plugin, they will only activate on certain
@@ -228,101 +198,12 @@ class Randomness(callbacks.Plugin):
  #                   and r >= 0.3:
  #                   irc.queueMsg(ircmsgs.privmsg(msg.args[0], "OH, hackinbot! " + random.choice(gemotes)))
 
-    def _lazyhostmask(self, host):
-        return "*!"+host.split("!",1)[1]
-        
-    def _formatAction(self, action):
-        a = action.split()
-        try: n = self.votes[action][0]
-        except KeyError: n = 0
-        if len(a) >= 2:
-            return "\x02%s\x02 %s. (Votes: \x02%s\x02)" % \
-                (a[0], ' '.join(a[1:]), n)
-        return "\x02%s\x02. (Votes: \x02%s\x02)" % \
-            (action, n)
-
-    def vote(self, irc, msg, args, action):
-        """<something>
-
-        Votes for something. It doesn't actually perform any actions directly,
-        but could be an interesting way to get user feedback."""
-        action = action.lower()
-        try:
-            if self._lazyhostmask(msg.prefix) in self.votes[action][1]:
-                irc.reply("You have already voted to %s." % action)
-                return
-        except KeyError:
-            self.votes[action] = [0, []]
-        self.votes[action][0] += 1
-        irc.reply("%s voted to %s" % (msg.nick,self._formatAction(action)))
-        self.votes[action][1].append(self._lazyhostmask(msg.prefix))
-    vote = wrap(vote, ['text'])
-    
-    def voteexport(self, irc, msg, args):
-        """takes no arguments.
-        
-        Exports votes stored in memory to file: data/%s(network).votes
-        This is done automatically when the plugin is unloaded or reloaded."""
-        try:
-            self.exportVoteDB()
-        except IOError as e:
-            irc.error("IOError caught exporting DB: "+str(e))
-        else:
-            irc.replySuccess()
-    voteexport = wrap(voteexport, ['admin'])
-
-    def voteimport(self, irc, msg, args):
-        """takes no arguments.
-        
-        Imports the vote database for the current network."""
-        try:
-            self.loadVoteDB()
-        except IOError as e:
-            irc.error("IOError caught importing DB: "+str(e))
-        else:
-            irc.replySuccess()
-    voteimport = wrap(voteimport, ['admin'])
-    
-    def voteclear(self, irc, msg, args):
-        """takes no arguments.
-        
-        Clears all votes stored in memory. Use with caution!"""
-        self.votes = {}
-        irc.replySuccess()
-    voteclear = wrap(voteclear, ['admin'])
-    
-    def numvotes(self, irc, msg, args, action):
-        """<action>
-        
-        Returns the amount of people that have voted for <action>."""
-        try:
-            n = self.votes[action.lower()][0]
-        except KeyError:
-            n = 0
-        if irc.nested:
-            irc.reply(n)
-        else:
-            irc.reply('\x02%s\x02 people have voted to %s' % 
-            (n, self._formatAction(action)))
-    numvotes = wrap(numvotes, ['text'])
-    
     def attack(self, irc, msg, args, user):
         """<nick>
         
         Attacks <nick>."""
         irc.reply(self._attack(user), action=True)
     attack = wrap(attack, ['text'])
-    
-    def cheat(self, irc, msg, args, num, action):
-        """<number of votes> <action>
-        
-        Sets the number of votes for <action> to a certain amount,
-        perfect for rigged elections!
-        This will also reset the list of hosts that have voted for
-        <action>, allowing everyone to vote again."""
-        self.votes[action.lower()] = [num, []]
-        irc.replySuccess()
-    cheat = wrap(cheat, ['admin', 'int', 'text'])
 
 Class = Randomness
 

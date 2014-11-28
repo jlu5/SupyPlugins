@@ -56,26 +56,33 @@ class Namegen(callbacks.Plugin):
             with open(os.path.join(os.path.dirname(__file__), '%s.txt') % fn) as f:
                 self.names[fn] = f.read().splitlines()
 
-    def _namegen(self):
+    def _namegen(self, syl):
         """Generates a random name."""
-        numSyl = random.randint(0, 3)
+        numSyl = random.randint(0, syl)
         name = "{}{}{}".format(random.choice(self.names['starts']), \
             ''.join(random.sample(self.names['middles'], numSyl)), \
             random.choice(self.names['ends']))
         return name
         
-    def namegen(self, irc, msg, args, count):
-        """[<count>]
+    def namegen(self, irc, msg, args, count, syl):
+        """[<count>] [<syllables>]
         
-        Generates random names. If not specified, [<count>] defaults to 10."""
+        Generates random names. If not specified, [<count>] defaults to 10.
+        [<syllables>] specifies the maximum number of syllables a name can have,
+        and defaults to the value set in 'config plugins.namegen.syllables'."""
+        confsyl = self.registryValue("syllables")
+        maxsyl = max(confsyl, 10)
         if not count:
             count = 10
-        if count > 100:
+        elif count > 100:
             irc.error("Too many names to count!", Raise=True)
+        elif syl and syl > maxsyl:
+            irc.error("Too many syllables specified.", Raise=True)
+        syl = syl or confsyl
         r = range if version_info[0] >= 3 else xrange
-        s = ', '.join([self._namegen() for _ in r(count)])
+        s = ', '.join([self._namegen(syl) for _ in r(count)])
         irc.reply(s)
-    namegen = wrap(namegen, [optional('int')])
+    namegen = wrap(namegen, [optional('positiveInt'), optional('positiveInt')])
 
 
 Class = Namegen

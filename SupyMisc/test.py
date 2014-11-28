@@ -28,10 +28,40 @@
 
 ###
 
+from sys import version_info
 from supybot.test import *
 
 class SupyMiscTestCase(PluginTestCase):
     plugins = ('SupyMisc',)
 
+    def setUp(self):
+        PluginTestCase.setUp(self)
+        self.prefix = 'foo!bar@baz.not'
+
+    def testTld(self):
+        self.assertNotError('tld .com')
+
+    def testTldInternationalTLDs(self):
+        # https://www.iana.org/domains/root/db/xn--io0a7i
+        # Chinese internationalized domain for 'network' (similar to .net)
+        self.assertNotError('tld xn--io0a7i')
+        if version_info[0] >= 3:
+            self.assertNotError('tld \u7f51\u7edc')
+        else:
+            from codecs import unicode_escape_decode as u
+            self.assertNotError('tld '+u('\u7f51\u7edc')[0])
+
+    def testColorwheel(self):
+        self.assertRegexp('colors', '.*\x03.*')
+
+    def testHostFetchers(self):
+        self.assertResponse('me', 'foo')
+        self.assertResponse('getident', 'bar')
+        self.assertResponse('gethost', 'baz.not')
+        self.assertResponse('botnick', self.nick)
+
+    def testmreplace(self):
+        self.assertResponse('mreplace hi,there hello,ok hmm, hi there everyone',
+            'hmm, hello ok everyone')
 
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:

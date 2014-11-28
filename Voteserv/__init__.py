@@ -28,20 +28,43 @@
 
 ###
 
-from supybot.test import *
+"""
+Add a description of the plugin (to be presented to the user inside the wizard)
+here.  This should describe *what* the plugin does.
+"""
 
-class TLDInfoTestCase(PluginTestCase):
-    plugins = ('TLDInfo',)
+import supybot
+import supybot.world as world
 
-    def testBasics(self):
-        self.assertNotError('tld .com')
+# Use this for the version of this plugin.  You may wish to put a CVS keyword
+# in here if you're keeping the plugin in CVS or some similar system.
+__version__ = ""
 
-    def testInternationalTLDs(self):
-        # https://www.iana.org/domains/root/db/xn--io0a7i
-        # Chinese internationalized domain for 'network' (similar to .net)
-        self.assertNotError('tld xn--io0a7i')
-        # self.assertNotError('tld \u7f51\u7edc')
-        self.assertNotRegexp('tld xn--io0a7i', '.*no results found.*', re.I)
-        # self.assertNotRegexp('tld \u7f51\u7edc', '.*no results found.*', re.I)
+# XXX Replace this with an appropriate author or supybot.Author instance.
+__author__ = supybot.Author('James Lu', 'GLolol',
+                            'GLolol@overdrive.pw')
+
+# This is a dictionary mapping supybot.Author instances to lists of
+# contributions.
+__contributors__ = {}
+
+# This is a url where the most recent plugin package can be downloaded.
+__url__ = 'https://github.com/GLolol/SupyPlugins/'
+
+from . import config
+from . import plugin
+from imp import reload
+# In case we're being reloaded.
+reload(config)
+reload(plugin)
+# Add more reloads here if you add third-party modules and want them to be
+# reloaded when this plugin is reloaded.  Don't forget to import them as well!
+
+if world.testing:
+    from . import test
+
+Class = plugin.Class
+configure = config.configure
+
 
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:

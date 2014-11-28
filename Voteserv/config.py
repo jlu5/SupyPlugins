@@ -28,42 +28,31 @@
 
 ###
 
-import unittest
-from supybot.test import *
+import supybot.conf as conf
+import supybot.registry as registry
+try:
+    from supybot.i18n import PluginInternationalization
+    _ = PluginInternationalization('Voteserv')
+except:
+    # Placeholder that allows to run the plugin on a bot
+    # without the i18n module
+    _ = lambda x:x
 
-class PkgInfoTestCase(PluginTestCase):
-    plugins = ('PkgInfo',)
-    def testPkgCommand(self):
-        self.assertRegexp('pkg sid bash', 'Package: .*?bash'
-        ' .*?; View more at: .*?packages.debian.org/sid/bash')
-        self.assertRegexp('pkg trusty apt', 'Package: .*?apt'
-        ' .*?; View more at: .*?packages.ubuntu.com/trusty/apt')
-        self.assertError('pkg afdsfsadf asfasfasf')
-        self.assertRegexp('pkg sid afsadfasfsa', 'no such package', re.I)
+def configure(advanced):
+    # This will be called by supybot to configure this module.  advanced is
+    # a bool that specifies whether the user identified themself as an advanced
+    # user or not.  You should effect your configuration by manipulating the
+    # registry as appropriate.
+    from supybot.questions import expect, anything, something, yn
+    conf.registerPlugin('Voteserv', True)
 
-    def testVlistCommandBasics(self):
-        self.assertError('vlist all afdsafas')
-        self.assertError('vlist invalid-distro firefox')
-        self.assertRegexp('vlist debian bash', 'Found [1-9][0-9]* results: (.*?\(.*?\))+')
-        self.assertRegexp('vlist debian bash --source', 'Found [1-9][0-9]* results: .*?: bash.*?\(.*?\).*?')
 
-    def testArchpkg(self):
-        self.assertError('archpkg afdsfbjeiog')
-        try:
-            self.assertNotError('archpkg bash')
-            self.assertRegexp('archpkg pacman --exact', 'Found 1.*?pacman -.*?')
-        except AssertionError as e:
-            if "HTTP Error 50" in str(e): # It's not our fault; the API is down.
-                raise unittest.SkipTest("HTTP error 50x; the API's probably down again")
-
-    def testArchaur(self):
-        self.assertError('archaur wjoitgjwotgjv')
-        self.assertRegexp('archaur yaourt', 'Found [1-9][0-9]* results: .*?yaourt.*?')
-
-    def testMintPkg(self):
-        self.assertNotError('mintpkg qiana cinnamon')
-
-    def testPkgsearch(self):
-        self.assertNotError('pkgsearch debian python')
+Voteserv = conf.registerPlugin('Voteserv')
+conf.registerGlobalValue(Voteserv, 'allowAdminOverride',
+     registry.Boolean(False, _("""Determines whether bot admins will be
+     allowed to override duplicate vote checks.""")))
+conf.registerGlobalValue(Voteserv, 'allowCheat',
+     registry.Boolean(False, _("""Determines whether the 'cheat' command
+     is enabled.""")))
 
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:
