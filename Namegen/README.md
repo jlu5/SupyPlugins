@@ -1,5 +1,13 @@
 This plugin provides a simple random name generator.
 
+### Usage
+
+```
+<@GLolol> %namegen 6
+<@Atlas> Mararik, Darimegineris, Dararacyal, Eran, Melyn, Labhenbin
+```
+
+### License
 Portions of this code was taken from Atheme services' [gameserv/namegen](https://github.com/atheme/atheme/blob/875d8b7/modules/gameserv/names/default) module. The license is as follows:
 
 ```
