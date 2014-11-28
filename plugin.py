@@ -178,7 +178,7 @@ class LastFM(callbacks.Plugin):
             irc.reply('%s is listening to "%s" by %s %s'
                     % (user, track, artist, albumStr))
         else:
-            irc.reply('%s listened to "%s" by %s %s more than %s'
+            irc.reply('%s listened to "%s" by %s %smore than %s'
                     % (user, track, artist, albumStr,
                         self._formatTimeago(time)))
 
