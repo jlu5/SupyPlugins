@@ -149,8 +149,9 @@ class PkgInfo(callbacks.Plugin):
         # Get package information from the meta tags
         keywords = soup.find('meta', attrs={"name":"Keywords"})["content"]
         keywords = keywords.replace(",","").split()
-        irc.reply("Package: \x02{} ({})\x02 in {} - {}; View more at: {}".format(pkg,
-        keywords[-1], keywords[1], desc, url))
+        s = format("Package: \x02%s (%s)\x02 in %s - %s, View more at: %u", pkg,
+        keywords[-1], keywords[1], desc, url)
+        irc.reply(s)
     pkg = wrap(package, ['somethingWithoutSpaces', 'somethingWithoutSpaces'])
 
     def vlist(self, irc, msg, args, distro, pkg, opts):
@@ -173,7 +174,8 @@ class PkgInfo(callbacks.Plugin):
         d = self.MadisonParse(pkg, distro, useSource='source' in opts, reverse=reverse)
         if not d: irc.error("No results found.",Raise=True)
         try:
-            d += " View more at: {}search?keywords={}".format(self.addrs[distro], pkg)
+            url = "{}search?keywords={}".format(self.addrs[distro], pkg)
+            d += format(" View more at: %u", url)
         except KeyError:
             pass
         irc.reply(d)
@@ -260,8 +262,8 @@ class PkgInfo(callbacks.Plugin):
         # Debian/Ubuntu use h3 for result names in the format 'Package abcd'
         results = [pkg.string.split()[1] for pkg in soup.find_all('h3')]
         if results:
-            s = "Found %s results: \x02%s\x02; View more at %s" % (len(results),
-                utils.str.commaAndify(results), url)
+            s = format("Found %s results: \x02%L\x02, View more at: %u", len(results),
+                results, url)
             irc.reply(s)
         else:
             e = "No results found."
@@ -315,7 +317,7 @@ class PkgInfo(callbacks.Plugin):
             s = 'Found %s results: ' % len(found)
             for x in found:
                 s += '%s \x02(%s)\x02, ' % (x, found[x])
-            s += 'View more at: %s' % addr
+            s += format('View more at: %u', addr)
             irc.reply(s)
         else:
             irc.error('No results found.')
