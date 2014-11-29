@@ -28,6 +28,8 @@
 
 ###
 import random
+import re
+import json
 try:
     from itertools import izip
 except ImportError:
@@ -176,11 +178,32 @@ class SupyMisc(callbacks.Plugin):
         irc.reply(len(world.ircs))
     netcount = wrap(netcount)
     
-    def supyplugins(self, irc, msg, args):
+    def supyplugins(self, irc, msg, args, text):
         """takes no arguments.
         Returns a URL for the source of this plugin. """
-        irc.reply("SupyPlugins source is available at: https://github.com/GLolol/SupyPlugins")
-    supyplugins = wrap(supyplugins)
+        base = 'https://github.com/GLolol/SupyPlugins'
+        if not text:
+            irc.reply(format("SupyPlugins source is available at: %u", base))
+            return
+        apiurl = 'https://api.github.com/repos/GLolol/SupyPlugins/contents/'
+        text = re.sub("\/+", "/", text)
+        try:
+            text, line = text.split("#")
+        except ValueError:
+            line = ''
+        try:
+            fd = utils.web.getUrl(apiurl + text)
+            data = json.loads(fd.decode("utf-8"))
+            if type(data) == list:
+                s = "%s/tree/master/%s" % (base, text)
+            else:
+                s = data['html_url']
+        except (AttributeError, utils.web.Error):
+            irc.error('Not found.', Raise=True)
+        if line:
+            s += "#%s" % line
+        irc.reply(format('%u', s))
+    supyplugins = wrap(supyplugins, [additional('text')])
 
     def chancount(self, irc, msg, args):
         """takes no arguments.
