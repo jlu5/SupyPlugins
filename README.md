@@ -3,7 +3,6 @@
 
 My collection of plugins for [Supybot/Limnoria](https://github.com/ProgVal/Limnoria). This repository is provided **AS IS**, **without any warranty provided**! It may glitch, break, or spontaneously combust at any time. You have been warned!
 
-
 ## Installation
 The recommended way of fetching plugins in this repository is to clone the git repository: 
 
@@ -69,3 +68,6 @@ Most of these plugins have their own READMEs in their folders; you can check the
 
 ##### Voteserv
 - A plugin for storing and manipulating votes/polls.
+
+##### [Weather](Weather/README.md)
+- My fork of [reticulatingspline's Weather](https://github.com/reticulatingspline/Weather) plugin. [Source](https://github.com/GLolol/Supybot-Weather)
