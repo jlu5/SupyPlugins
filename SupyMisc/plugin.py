@@ -179,8 +179,10 @@ class SupyMisc(callbacks.Plugin):
     netcount = wrap(netcount)
     
     def supyplugins(self, irc, msg, args, text):
-        """takes no arguments.
-        Returns a URL for the source of this plugin. """
+        """[<file/folder>]
+        Returns a URL for the source of this repository. If <file/folder>
+        is specified, it will expand a link to it, if such file or folder
+        exists."""
         base = 'https://github.com/GLolol/SupyPlugins'
         if not text:
             irc.reply(format("SupyPlugins source is available at: %u", base))
