@@ -1,6 +1,6 @@
-[![Build Status](https://travis-ci.org/reticulatingspline/Weather.svg?branch=master)](https://travis-ci.org/reticulatingspline/Weather)
+[![Build Status](https://travis-ci.org/GLolol/Supybot-Weather.svg?branch=master)](https://travis-ci.org/GLolol/Supybot-Weather)
 
-# Limnoria plugin for Weather Underground
+# Limnoria plugin for Weather Underground (GLolol's fork)
 
 ## Introduction
 
@@ -12,10 +12,10 @@ be deprecated at some point.
 
 You will need a working Limnoria bot on Python 2.7/3.4 for this to work.
 
-Go into your Limnoria plugin dir, usually ~/supybot/plugins and run:
+Go into your Limnoria plugin dir, usually `~/supybot/plugins` and run:
 
 ```
-git clone https://github.com/reticulatingspline/Weather
+git clone https://github.com/GLolol/Supybot-Weather
 ```
 
 To install additional requirements, run:
@@ -42,7 +42,7 @@ Once getting this key, you will need to set it on your bot before things will wo
 Reload once you perform this operation to start using it.
 
 ```
-/msg bot config plugins.Weather.apiKey APIKEY
+/msg bot config plugins.Weather.apiKey <APIKEY>
 ```
 
 Now, reload the bot and you should be good to go:
@@ -51,7 +51,7 @@ Now, reload the bot and you should be good to go:
 /msg bot reload Weather
 ```
 
-Optional: There are some config variables that can be set for the bot. They mainly control output stuff.
+*Optional:* There are some config variables that can be set for the bot. They mainly control output stuff.
 
 ```
 /msg bot config search Weather
@@ -66,7 +66,7 @@ Optional: There are some config variables that can be set for the bot. They main
 
 ## Features
 
-There are a ton of options to configure. You can look through these via
+There are a ton of options to configure. You can find these via:
 
 ```
 /msg bot config search Weather
@@ -93,20 +93,9 @@ This now allows a user to type in the weather command w/o any arguments:
 <myybot> Manchester, NH :: Rain :: 45F | Visibility: 10.0mi | Saturday: Occasional light rain. High 56F. ...
 ```
 
-Users can also have the bot remember their options like for using Metric when displaying weather:
+Users can also have the bot remember their preferred options, such as using Metric when displaying weather:
 
 ```
 <spline> @setuser metric False
 <myybot> I have changed spline's metric setting to 0
 ```
-
-## About
-
-All of my plugins are free and open source. When I first started out, one of the main reasons I was
-able to learn was due to other code out there. If you find a bug or would like an improvement, feel
-free to give me a message on IRC or fork and submit a pull request. Many hours do go into each plugin,
-so, if you're feeling generous, I do accept donations via PayPal below.
-
-I'm always looking for work, so if you are in need of a custom feature, plugin or something bigger, contact me via GitHub or IRC.
-
-[![Donate via PayPal](https://www.paypalobjects.com/en_US/i/btn/btn_donate_SM.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=N2MKJ2CVZQE96&lc=US&currency_code=USD&bn=PP%2dDonationsBF%3abtn_donate_SM%2egif%3aNonHosted)
