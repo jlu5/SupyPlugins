@@ -1,12 +1,12 @@
 ##WTE - Worst Translations Ever! 
 
-WTE is a plugin that can stick text through multiple rounds of Google Translate, in order to get
-rather amusing results! It automatically picks a list of languages to go through, and translates
+WTE is a plugin that sticks text through multiple rounds of Google Translate, in order to get
+some interesting results. It automatically picks a list of languages to go through, and translates
 back and forth between them quite a few times. This guarantees that the result will be different
 every time.
 
 Any source language [supported by Google Translate](https://translate.google.com/about/intl/en_ALL/#supportedLangs)
-is allowed, since auto-detection is used to translate text back to English.
+is allowed, since auto-detection is used to translate text back to your desired language. This can be set via `config plugins.wte.language`, and defaults to English (`en`).
 
 Samples:
 
