@@ -48,9 +48,11 @@ def configure(advanced):
 
 
 WTE = conf.registerPlugin('WTE')
-# This is where your configuration variables (if any) should go.  For example:
-# conf.registerGlobalValue(WTE, 'someConfigVariableName',
-#     registry.Boolean(False, _("""Help for someConfigVariableName.""")))
+conf.registerChannelValue(WTE, 'language',
+     registry.String('en', _("""Determines what the output language
+     of 'wte' will be. This should be one of Google Translate's language
+     codes as listed at:
+     https://cloud.google.com/translate/v2/using_rest#language-params""")))
 
 
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:

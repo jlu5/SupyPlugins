@@ -66,7 +66,7 @@ class WTE(callbacks.Plugin):
         'ur', 'pl', 'eo', 'yo', 'en', 'yi')
 
     def getTranslation(self, irc, sourceLang, targetLang, text):
-        url = "https://translate.google.com/translate_a/t?"+ \
+        url = "http://translate.google.com/translate_a/t?"+ \
             urlencode({"client": "p",
                 "sl":sourceLang, "tl":targetLang,
                 "q":text})
@@ -85,10 +85,14 @@ class WTE(callbacks.Plugin):
         Worst Translations Ever! plugin. Translates <text> through
         multiple rounds of Google Translate to get amazing results!
         """
+        outlang = self.registryValue('language', msg.args[0])
+        if outlang not in self.langs:
+            irc.error("Unrecognized output language. Please set "
+                "'config plugins.wte.language' correctly.", Raise=True)
         ll = random.sample(self.langs, random.randint(8,12))
         for targetlang in ll:
-            text = self.getTranslation(irc, 'en', targetlang, text)
-            text = self.getTranslation(irc, "auto", 'en', text)
+            text = self.getTranslation(irc, outlang, targetlang, text)
+            text = self.getTranslation(irc, "auto", outlang, text)
         irc.reply(text)
     wte = wrap(wte, ['text'])
 
