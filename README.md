@@ -71,3 +71,6 @@ Most of these plugins have their own READMEs in their folders; you can check the
 
 ##### [Weather](Weather/README.md)
 - My fork of [reticulatingspline's Weather](https://github.com/reticulatingspline/Weather) plugin. [Source](https://github.com/GLolol/Supybot-Weather)
+
+##### [WTE](WTE/README.md)
+- Worst Translations Ever! plugin. Translates <text> through multiple rounds of Google Translate to get some interesting results!
