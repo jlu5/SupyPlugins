@@ -86,6 +86,7 @@ class WTE(callbacks.Plugin):
             args['q'] = text
         url = "http://translate.google.com/translate_a/t?"+ \
             urlencode(args)
+        self.log.debug("WTE: Using URL %s" % url)
         try:
             data = json.loads(utils.web.getUrl(url).decode("utf-8"))
         except utils.web.Error as e:
@@ -102,10 +103,13 @@ class WTE(callbacks.Plugin):
         multiple rounds of Google Translate to get amazing results!
         """
         outlang = self.registryValue('language', msg.args[0])
+        inp = text
         if outlang not in self.langs:
             irc.error("Unrecognized output language. Please set "
                 "'config plugins.wte.language' correctly.", Raise=True)
         ll = random.sample(self.langs, random.randint(6,12))
+        self.log.debug(format("WTE: Using %i languages: %L "
+            "(outlang %s)", len(ll), ll, outlang))
         for targetlang in ll:
             text = self.getTranslation(irc, "auto", targetlang, text)
         text = self.getTranslation(irc, "auto", outlang, text)
@@ -117,6 +121,10 @@ class WTE(callbacks.Plugin):
                 "are some lingering issues handling Unicode on "
                 "versions of Python 2.")
             irc.error(s, Raise=True)
+        if self.registryValue("verbose", msg.args[0]):
+            irc.reply(format("Translated through \x02%i\x02 languages: %L "
+                "(outlang %s)",
+                len(ll), ll, outlang))
         irc.reply(text)
     wte = wrap(wte, ['text'])
 

@@ -48,6 +48,9 @@ def configure(advanced):
 
 
 WTE = conf.registerPlugin('WTE')
+conf.registerChannelValue(WTE, 'verbose',
+     registry.Boolean(False, _("""Determines whether
+     verbose output (list of languages used, etc.) will be used.""")))
 conf.registerChannelValue(WTE, 'language',
      registry.String('en', _("""Determines what the output language
      of 'wte' will be. This should be one of Google Translate's language
