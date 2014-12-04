@@ -33,5 +33,10 @@ from supybot.test import *
 class WTETestCase(PluginTestCase):
     plugins = ('WTE',)
 
+    def testWTE(self):
+        m = self.getMsg("wte The quick brown fox jumps over "
+            "the lazy dog.")
+        print('\nResponse: %s' % m.args[1])
+        assert m, 'No response found.'
 
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:

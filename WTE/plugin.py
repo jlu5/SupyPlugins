@@ -28,6 +28,7 @@
 
 ###
 
+from __future__ import unicode_literals
 import supybot.utils as utils
 from supybot.commands import *
 import supybot.plugins as plugins
@@ -40,6 +41,8 @@ try: # Python 3
     from urllib.parse import urlencode
 except ImportError: # Python 2
     from urllib import urlencode
+from sys import version_info
+
 try:
     from supybot.i18n import PluginInternationalization
     _ = PluginInternationalization('WTE')
@@ -66,6 +69,8 @@ class WTE(callbacks.Plugin):
         'ur', 'pl', 'eo', 'yo', 'en', 'yi')
 
     def getTranslation(self, irc, sourceLang, targetLang, text):
+        if version_info[0] < 3:
+            text = text.encode("utf-8")
         url = "http://translate.google.com/translate_a/t?"+ \
             urlencode({"client": "p",
                 "sl":sourceLang, "tl":targetLang,
