@@ -34,12 +34,15 @@ from supybot.test import *
 class PkgInfoTestCase(PluginTestCase):
     plugins = ('PkgInfo',)
     def testPkgCommand(self):
-        self.assertRegexp('pkg sid bash', 'Package: .*?bash'
-        ' .*?')
-        self.assertRegexp('pkg trusty apt', 'Package: .*?apt'
-        ' .*?')
-        self.assertError('pkg afdsfsadf asfasfasf')
-        self.assertRegexp('pkg sid afsadfasfsa', 'no such package', re.I)
+        try:
+            self.assertRegexp('pkg sid bash', 'Package: .*?bash'
+            ' .*?', timeout=12)
+            self.assertRegexp('pkg trusty apt', 'Package: .*?apt'
+            ' .*?')
+            self.assertError('pkg afdsfsadf asfasfasf')
+            self.assertRegexp('pkg sid afsadfasfsa', 'no such package', re.I)
+        except TimeoutError:
+            raise unittest.SkipTest("Connection timed out.")
 
     def testVlistCommandBasics(self):
         self.assertError('vlist all afdsafas')
@@ -55,15 +58,29 @@ class PkgInfoTestCase(PluginTestCase):
         except AssertionError as e:
             if "HTTP Error 50" in str(e): # It's not our fault; the API is down.
                 raise unittest.SkipTest("HTTP error 50x; the API's probably down again")
+        except TimeoutError:
+            raise unittest.SkipTest("Connection timed out.")
 
     def testArchaur(self):
-        self.assertError('archaur wjoitgjwotgjv')
-        self.assertRegexp('archaur yaourt', 'Found [1-9][0-9]* results: .*?yaourt.*?')
+        try:
+            self.assertError('archaur wjoitgjwotgjv')
+            self.assertRegexp('archaur yaourt', 'Found [1-9][0-9]* results: .*?yaourt.*?')
+        except AssertionError as e:
+            if "HTTP Error 50" in str(e): # It's not our fault; the API is down.
+                raise unittest.SkipTest("HTTP error 50x; the API's probably down again")
+        except TimeoutError:
+            raise unittest.SkipTest("Connection timed out.")
 
     def testMintPkg(self):
-        self.assertNotError('mintpkg qiana cinnamon')
+        try:
+            self.assertNotError('mintpkg qiana cinnamon')
+        except TimeoutError:
+            raise unittest.SkipTest("Connection timed out.")
 
     def testPkgsearch(self):
-        self.assertNotError('pkgsearch debian python')
+        try:
+            self.assertNotError('pkgsearch debian python')
+        except TimeoutError:
+            raise unittest.SkipTest("Connection timed out.")
 
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:
