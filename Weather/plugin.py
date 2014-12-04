@@ -250,10 +250,10 @@ class Weather(callbacks.Plugin):
         except Exception as e:  # rutroh. something went wrong.
             self.log.info("_temp: ERROR trying to convert temp: {0} message: {1}".format(x, e))
             return x
-    
+
     def _tw(self, bol, x):
         """This is a convenience handle that wraps _temp."""
-        
+
         # make sure we have 'bol', which should come in from args['nocolortemp'].
         # since the option is a negation, we assume NO.
         if not bol:  # COLOR IT.
@@ -618,7 +618,7 @@ class Weather(callbacks.Plugin):
                 outdata['windchill'] = self._tw(args['nocolortemp'], str(data['current_observation']['windchill_c']) + 'C')
                 outdata['feelslike'] = self._tw(args['nocolortemp'], str(data['current_observation']['feelslike_c']) + 'C')
                 outdata['visibility'] = str(data['current_observation']['visibility_km']) + 'km'
-            
+
         # handle forecast data part. output will be below. (not --forecast)
         forecastdata = {}  # key = int(day), value = forecast dict.
         for forecastday in data['forecast']['txt_forecast']['forecastday']:

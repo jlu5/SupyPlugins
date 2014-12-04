@@ -15,7 +15,7 @@ class WeatherTestCase(PluginTestCase):
         PluginTestCase.setUp(self)
         apiKey = os.environ.get('apiKey')
         if not apiKey:
-            e = """The Wunderground API key has not been set. 
+            e = """The Wunderground API key has not been set.
             please set this value correctly and try again:
             'export apiKey=<key>' for bash users"""
             raise Exception(e)
