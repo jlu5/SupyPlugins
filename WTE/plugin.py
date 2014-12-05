@@ -103,7 +103,6 @@ class WTE(callbacks.Plugin):
         multiple rounds of Google Translate to get amazing results!
         """
         outlang = self.registryValue('language', msg.args[0])
-        inp = text
         if outlang not in self.langs:
             irc.error("Unrecognized output language. Please set "
                 "'config plugins.wte.language' correctly.", Raise=True)
