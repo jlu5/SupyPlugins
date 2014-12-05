@@ -73,8 +73,15 @@ class WTE(callbacks.Plugin):
         'cs', 'uk', 'ja', 'hr', 'kn', 'gl', 'mk', 'fa', 'sk', 'mn', 'es', 
         'ur', 'pl', 'eo', 'yo', 'en', 'yi')
 
+    def _jsonRepair(self, data):
+        while ',,' in data:
+            data = data.replace(',,', ',null,')
+        while '[,' in data:
+            data = data.replace('[,', '[')
+        return data
+
     def getTranslation(self, irc, sourceLang, targetLang, text):
-        args = {"client": "p", "sl":sourceLang, "tl":targetLang}
+        args = {"client": "t", "sl": sourceLang, "tl": targetLang}
         if version_info[0] < 3:
             # Python 2's Unicode handling is just horrible. I've tried a
             # dozen different combinations of encoding and decoding and they
@@ -84,17 +91,18 @@ class WTE(callbacks.Plugin):
             args['q'] = filter(lambda x: x in printable, text)
         else:
             args['q'] = text
-        url = "http://translate.google.com/translate_a/t?"+ \
+        url = "https://translate.google.com/translate_a/t?"+ \
             urlencode(args)
         self.log.debug("WTE: Using URL %s" % url)
+        headers = {'User-Agent': ('Mozilla/5.0 (X11; Linux i586; rv:31.0) '
+                                 'Gecko/20100101 Firefox/31.0')}
         try:
-            data = json.loads(utils.web.getUrl(url).decode("utf-8"))
+            data = utils.web.getUrlFd(url, headers).read().decode("utf-8")
         except utils.web.Error as e:
             irc.error(str(e), Raise=True)
-        if "dict" in data:
-            return data["dict"][0]["entry"][0]["word"]
-        else:
-            return data["sentences"][0]["trans"]
+        data = self._jsonRepair(data)
+        data = json.loads(data)
+        return ''.join(x[0] for x in data[0])
 
     def wte(self, irc, msg, args, text):
         """wte <text>
@@ -106,7 +114,7 @@ class WTE(callbacks.Plugin):
         if outlang not in self.langs:
             irc.error("Unrecognized output language. Please set "
                 "'config plugins.wte.language' correctly.", Raise=True)
-        ll = random.sample(self.langs, random.randint(6,12))
+        ll = random.sample(self.langs, random.randint(5,10))
         self.log.debug(format("WTE: Using %i languages: %L "
             "(outlang %s)", len(ll), ll, outlang))
         for targetlang in ll:
