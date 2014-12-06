@@ -34,22 +34,19 @@ from supybot.commands import *
 import supybot.plugins as plugins
 import supybot.ircutils as ircutils
 import supybot.callbacks as callbacks
+
 from collections import OrderedDict, defaultdict
 try: # Python 3
     from urllib.parse import urlencode, quote
 except ImportError: # Python 2
     from urllib import urlencode, quote
 import json
-
-# I don't want to be too dependant on BeautifulSoup at this time;
-# not all commands use it, but it is required by some. -GLolol
-global bs4Present
 try:
     from bs4 import BeautifulSoup
 except ImportError:
-    bs4Present = False
-else:
-    bs4Present = True
+    raise ImportError("Beautiful Soup 4 is required for this plugin: get it"
+        " at http://www.crummy.com/software/BeautifulSoup/bs4/doc/"
+        "#installing-beautiful-soup")
 
 try:
     from supybot.i18n import PluginInternationalization
@@ -61,7 +58,7 @@ except ImportError:
 
 class PkgInfo(callbacks.Plugin):
     """Fetches package information from the repositories of
-    Debian, Arch Linux, and Ubuntu."""
+    Debian, Arch Linux, Linux Mint, and Ubuntu."""
     threaded = True
 
     def __init__(self, irc):
@@ -125,10 +122,6 @@ class PkgInfo(callbacks.Plugin):
         Fetches information for <package> from Debian or Ubuntu's repositories.
         <release> is the codename/release name (e.g. 'trusty', 'squeeze').
         For Arch Linux packages, please use 'archpkg' and 'archaur' instead."""
-        if not bs4Present:
-            irc.error("This command requires the Beautiful Soup 4 library. See"
-                " https://github.com/GLolol/SupyPlugins/blob/master/README.md"
-                "#pkginfo for instructions on how to install it.", Raise=True)
         pkg = pkg.lower()
         distro = self._getDistro(release)
         try:
@@ -254,10 +247,6 @@ class PkgInfo(callbacks.Plugin):
         """<distro> <query>
 
         Looks up <query> in <distro>'s website (for Debian/Ubuntu)."""
-        if not bs4Present:
-            irc.error("This command requires the Beautiful Soup 4 library. See"
-                " https://github.com/GLolol/SupyPlugins/blob/master/README.md"
-                "#pkginfo for instructions on how to install it.", Raise=True)
         distro = distro.lower()
         if distro not in ("debian", "ubuntu"):
             distro = self._getDistro(distro)
@@ -296,10 +285,6 @@ class PkgInfo(callbacks.Plugin):
         """<release> <package> [--exact]
 
         Looks up <package> in Linux Mint's repositories."""
-        if not bs4Present:
-            irc.error("This command requires the Beautiful Soup 4 library. See"
-                " https://github.com/GLolol/SupyPlugins/blob/master/README.md"
-                "#pkginfo for instructions on how to install it.", Raise=True)
         addr = 'http://packages.linuxmint.com/list.php?release=' + quote(release)
         try:
             fd = utils.web.getUrl(addr).decode("utf-8")
