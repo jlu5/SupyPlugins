@@ -150,8 +150,14 @@ class PkgInfo(callbacks.Plugin):
         # Get package information from the meta tags
         keywords = soup.find('meta', attrs={"name":"Keywords"})["content"]
         keywords = keywords.replace(",","").split()
+        version = keywords[-1]
+        if version == "virtual":
+            providing = [obj.a.text for obj in soup.find_all('dt')]
+            desc = "Virtual package provided by: \x02%s\x02" % ', '.join(providing[:10])
+            if len(providing) > 10:
+                desc += " and \x02%s\x02 others" % (len(providing) - 10)
         s = format("Package: \x02%s (%s)\x02 in %s - %s, View more at: %u", pkg,
-        keywords[-1], keywords[1], desc, url)
+        version, keywords[1], desc, url)
         irc.reply(s)
     pkg = wrap(package, ['somethingWithoutSpaces', 'somethingWithoutSpaces'])
 
