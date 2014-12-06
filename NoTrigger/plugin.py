@@ -46,14 +46,25 @@ except ImportError:
 
 class NoTrigger(callbacks.Plugin):
     """Mods outFilter to prevent the bot from triggering other bots."""
-    
+
+    def __init__(self, irc):
+        self.__parent = super(NoTrigger, self)
+        self.__parent.__init__(irc)
+        # This uses Unicode Character 'ZERO WIDTH SPACE' (U+200B) for
+        # padding, which looks nicer (it's invisible) and does the trick.
+        if version_info[0] >= 3:
+            self.padchar = "\u200B"
+        else:
+            from codecs import unicode_escape_decode as u
+            self.padchar = u('\u200B')[0]
+
     def isChanStripColor(self, irc, channel):
         c = irc.state.channels[channel]
         for item in self.registryValue('colorAware.modes'):
             if item in c.modes:
                 return True
         return False
-    
+
     def outFilter(self, irc, msg):
         if msg.command == 'PRIVMSG' and \
             ircutils.isChannel(msg.args[0]) and \
@@ -73,12 +84,12 @@ class NoTrigger(callbacks.Plugin):
                     "a space since our message begins with a formatting code "
                     "and the channel seems to be blocking colors." % \
                     (msg.args[0], irc.network))
-                s = " " + s
+                s = self.padchar + s
             elif self.registryValue('spaceBeforeNicks', msg.args[0]) and \
                 s.split()[0].endswith((",", ":")):
                 # If the last character of the first word ends with a ',' or
                 # ':', prepend a space.
-                s = " " + s
+                s = self.padchar + s
                 self.log.info("NoTrigger (%s/%s): prepending message with "
                     "a space due to config plugins.notrigger."
                     "spaceBeforeNicks." % (msg.args[0], irc.network))
@@ -92,13 +103,9 @@ class NoTrigger(callbacks.Plugin):
             for k, v in rpairs.items():
                 s = s.replace(k, v)
             if s.startswith(tuple(prefixes)):
-                s = " " + s
+                s = self.padchar + s
             if s.endswith(suffixes):
-                if version_info[0] >= 3:
-                    s += "\u00A0"
-                else:
-                    from codecs import unicode_escape_decode as u
-                    s += u('\u00A0')[0]
+                s += self.padchar
             msg = ircmsgs.privmsg(msg.args[0], s, msg=msg)
         return msg
 

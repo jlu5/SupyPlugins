@@ -37,11 +37,11 @@ class NoTriggerTestCase(ChannelPluginTestCase):
         'supybot.plugins.notrigger.blockCtcp': True}
 
     def testSpaceBeforePrefixes(self):
-        self.assertResponse('echo !test', ' !test')
+        self.assertNotRegexp('echo !test', '^!test$')
 
     def testSpaceBeforeNicks(self):
-        self.assertResponse('echo example: hello', ' example: hello')
-        self.assertResponse('echo user1, hello', ' user1, hello')
+        self.assertNotRegexp('echo example: hello', '^example: hello$')
+        self.assertNotRegexp('echo user1, hello', '^user1, hello$')
 
     def testCTCPBlocking(self):
         self.assertResponse('echo \x01PING abcd\x01', 'PING abcd')
