@@ -41,7 +41,7 @@ class PkgInfoTestCase(PluginTestCase):
             ' .*?')
             self.assertError('pkg afdsfsadf asfasfasf')
             self.assertRegexp('pkg sid afsadfasfsa', 'no such package', re.I)
-        except TimeoutError:
+        except test.TimeoutError:
             raise unittest.SkipTest("Connection timed out.")
 
     def testVlistCommandBasics(self):
@@ -58,7 +58,7 @@ class PkgInfoTestCase(PluginTestCase):
         except AssertionError as e:
             if "HTTP Error 50" in str(e): # It's not our fault; the API is down.
                 raise unittest.SkipTest("HTTP error 50x; the API's probably down again")
-        except TimeoutError:
+        except test.TimeoutError:
             raise unittest.SkipTest("Connection timed out.")
 
     def testArchaur(self):
@@ -68,19 +68,19 @@ class PkgInfoTestCase(PluginTestCase):
         except AssertionError as e:
             if "HTTP Error 50" in str(e): # It's not our fault; the API is down.
                 raise unittest.SkipTest("HTTP error 50x; the API's probably down again")
-        except TimeoutError:
+        except test.TimeoutError:
             raise unittest.SkipTest("Connection timed out.")
 
     def testMintPkg(self):
         try:
             self.assertNotError('mintpkg qiana cinnamon')
-        except TimeoutError:
+        except test.TimeoutError:
             raise unittest.SkipTest("Connection timed out.")
 
     def testPkgsearch(self):
         try:
             self.assertNotError('pkgsearch debian python')
-        except TimeoutError:
+        except test.TimeoutError:
             raise unittest.SkipTest("Connection timed out.")
 
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:
