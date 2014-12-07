@@ -155,7 +155,7 @@ class PkgInfo(callbacks.Plugin):
     pkg = wrap(package, ['somethingWithoutSpaces', 'somethingWithoutSpaces'])
 
     def vlist(self, irc, msg, args, distro, pkg, opts):
-        """<distribution> <package> [--source] [--reverse(d)]
+        """<distribution> <package> [--source] [--reverse]
 
         Fetches all available version of <package> in <distribution>, if
         such package exists. Supported entries for <distribution>
@@ -170,7 +170,7 @@ class PkgInfo(callbacks.Plugin):
             if distro is None:
                 irc.error("Unknown distribution.", Raise=True)
         opts = dict(opts)
-        reverse = 'reverse' in opts or 'reversed' in opts
+        reverse = 'reverse' in opts
         d = self.MadisonParse(pkg, distro, useSource='source' in opts, reverse=reverse)
         if not d: irc.error("No results found.",Raise=True)
         try:
@@ -180,7 +180,7 @@ class PkgInfo(callbacks.Plugin):
             pass
         irc.reply(d)
     vlist = wrap(vlist, ['somethingWithoutSpaces', 'somethingWithoutSpaces', getopts({'source':'',
-        'reverse':'','reversed':''})])
+        'reverse':''})])
 
     def archpkg(self, irc, msg, args, pkg, opts):
         """<package> [--exact]
