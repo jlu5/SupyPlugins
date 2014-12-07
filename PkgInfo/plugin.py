@@ -116,7 +116,7 @@ class PkgInfo(callbacks.Plugin):
         else:
             self.log.debug("PkgInfo: No results found for URL %s" % url)
 
-    def package(self, irc, msg, args, release, pkg):
+    def package(self, irc, msg, args, release, pkg, opts):
         """<release> <package>
 
         Fetches information for <package> from Debian or Ubuntu's repositories.
@@ -139,6 +139,32 @@ class PkgInfo(callbacks.Plugin):
                 irc.error("Unknown distribution/release.", Raise=True)
             irc.reply(err)
             return
+        opts = dict(opts)
+        if opts:
+            items = soup.find_all('dt')
+            keyws = {'depends': 'dep:', 'recommends': 'rec:', 'suggests': 'sug:'}
+            if 'depends' in opts: 
+                lookup = 'depends'
+            elif 'recommends' in opts: 
+                lookup = 'recommends'
+            elif 'suggests' in opts: 
+                lookup = 'suggests'
+            keyw = keyws[lookup]
+            res = []
+            for item in items:
+                name = item.a.text
+                if item.text.startswith("or") and keyw in \
+                    item.find_previous_siblings("dt")[0].span.text:
+                    res[-1] = "%s or \x02%s\x02" % (res[-1], name)
+                elif keyw in item.span.text:
+                    res.append("\x02%s\x02" % name)
+            if res:
+                s = ("Package \x02%s\x02 %s the following: %s" % (pkg, lookup,
+                    ', '.join(res)))
+                irc.reply(s)
+            else:
+                irc.error("%s doesn't seem to %s on anything." % (pkg, lookup[:-1]))
+            return
         desc = soup.find('meta', attrs={"name":"Description"})["content"]
         # Get package information from the meta tags
         keywords = soup.find('meta', attrs={"name":"Keywords"})["content"]
@@ -152,7 +178,8 @@ class PkgInfo(callbacks.Plugin):
         s = format("Package: \x02%s (%s)\x02 in %s - %s, View more at: %u", pkg,
         version, keywords[1], desc, url)
         irc.reply(s)
-    pkg = wrap(package, ['somethingWithoutSpaces', 'somethingWithoutSpaces'])
+    pkg = wrap(package, ['somethingWithoutSpaces', 'somethingWithoutSpaces', 
+        getopts({'depends':'', 'recommends':'', 'suggests':''})])
 
     def vlist(self, irc, msg, args, distro, pkg, opts):
         """<distribution> <package> [--source] [--reverse]
