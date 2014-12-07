@@ -116,11 +116,13 @@ class PkgInfo(callbacks.Plugin):
         else:
             self.log.debug("PkgInfo: No results found for URL %s" % url)
 
-    def package(self, irc, msg, args, release, pkg):
-        """<release> <package>
+    def package(self, irc, msg, args, release, pkg, opts):
+        """<release> <package> [--{depends|recommends|suggests}]
 
         Fetches information for <package> from Debian or Ubuntu's repositories.
-        <release> is the codename/release name (e.g. 'trusty', 'squeeze').
+        <release> is the codename/release name (e.g. 'trusty', 'squeeze'). If
+        --depends, --recommends, or --suggests is given, fetches dependency info
+        for <package>.
         For Arch Linux packages, please use 'archpkg' and 'archaur' instead."""
         pkg = pkg.lower()
         distro = self._getDistro(release)
@@ -139,6 +141,35 @@ class PkgInfo(callbacks.Plugin):
                 irc.error("Unknown distribution/release.", Raise=True)
             irc.reply(err)
             return
+        opts = dict(opts)
+        if opts:
+            items = soup.find_all('dt')
+            keyws = {'depends': 'dep:', 'recommends': 'rec:', 'suggests': 'sug:'}
+            if 'depends' in opts: 
+                lookup = 'depends'
+            elif 'recommends' in opts: 
+                lookup = 'recommends'
+            elif 'suggests' in opts: 
+                lookup = 'suggests'
+            keyw = keyws[lookup]
+            res = []
+            for item in items:
+                try:
+                    name = item.a.text
+                    if item.text.startswith("or") and keyw in \
+                        item.find_previous_siblings("dt")[0].span.text:
+                        res[-1] = "%s or \x02%s\x02" % (res[-1], name)
+                    elif keyw in item.span.text:
+                        res.append("\x02%s\x02" % name)
+                except AttributeError as e:
+                    continue
+            if res:
+                s = format("Package \x02%s\x02 %s: %L, View more at %u", pkg, lookup,
+                    res, url)
+                irc.reply(s)
+            else:
+                irc.error("%s doesn't seem to have any %s." % (pkg, lookup))
+            return
         desc = soup.find('meta', attrs={"name":"Description"})["content"]
         # Get package information from the meta tags
         keywords = soup.find('meta', attrs={"name":"Keywords"})["content"]
@@ -152,16 +183,17 @@ class PkgInfo(callbacks.Plugin):
         s = format("Package: \x02%s (%s)\x02 in %s - %s, View more at: %u", pkg,
         version, keywords[1], desc, url)
         irc.reply(s)
-    pkg = wrap(package, ['somethingWithoutSpaces', 'somethingWithoutSpaces'])
+    pkg = wrap(package, ['somethingWithoutSpaces', 'somethingWithoutSpaces', 
+        getopts({'depends':'', 'recommends':'', 'suggests':''})])
 
     def vlist(self, irc, msg, args, distro, pkg, opts):
-        """<distribution> <package> [--source] [--reverse(d)]
+        """<distribution> <package> [--source] [--reverse]
 
         Fetches all available version of <package> in <distribution>, if
         such package exists. Supported entries for <distribution>
         include 'debian', 'ubuntu', 'derivatives', and 'all'. If
         --source is given, search for packages by source package
-        name. If --reverse or --reversed is given, show the newest package versions
+        name. If --reverse is given, show the newest package versions
         first."""
         pkg, distro = map(str.lower, (pkg, distro))
         supported = ("debian", "ubuntu", "derivatives", "all")
@@ -170,7 +202,7 @@ class PkgInfo(callbacks.Plugin):
             if distro is None:
                 irc.error("Unknown distribution.", Raise=True)
         opts = dict(opts)
-        reverse = 'reverse' in opts or 'reversed' in opts
+        reverse = 'reverse' in opts
         d = self.MadisonParse(pkg, distro, useSource='source' in opts, reverse=reverse)
         if not d: irc.error("No results found.",Raise=True)
         try:
@@ -180,7 +212,7 @@ class PkgInfo(callbacks.Plugin):
             pass
         irc.reply(d)
     vlist = wrap(vlist, ['somethingWithoutSpaces', 'somethingWithoutSpaces', getopts({'source':'',
-        'reverse':'','reversed':''})])
+        'reverse':''})])
 
     def archpkg(self, irc, msg, args, pkg, opts):
         """<package> [--exact]
