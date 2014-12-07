@@ -117,10 +117,12 @@ class PkgInfo(callbacks.Plugin):
             self.log.debug("PkgInfo: No results found for URL %s" % url)
 
     def package(self, irc, msg, args, release, pkg, opts):
-        """<release> <package>
+        """<release> <package> [--{depends|recommends|suggests}]
 
         Fetches information for <package> from Debian or Ubuntu's repositories.
-        <release> is the codename/release name (e.g. 'trusty', 'squeeze').
+        <release> is the codename/release name (e.g. 'trusty', 'squeeze'). If
+        --depends, --recommends, or --suggests is given, fetches dependency info
+        for <package>.
         For Arch Linux packages, please use 'archpkg' and 'archaur' instead."""
         pkg = pkg.lower()
         distro = self._getDistro(release)
@@ -152,18 +154,21 @@ class PkgInfo(callbacks.Plugin):
             keyw = keyws[lookup]
             res = []
             for item in items:
-                name = item.a.text
-                if item.text.startswith("or") and keyw in \
-                    item.find_previous_siblings("dt")[0].span.text:
-                    res[-1] = "%s or \x02%s\x02" % (res[-1], name)
-                elif keyw in item.span.text:
-                    res.append("\x02%s\x02" % name)
+                try:
+                    name = item.a.text
+                    if item.text.startswith("or") and keyw in \
+                        item.find_previous_siblings("dt")[0].span.text:
+                        res[-1] = "%s or \x02%s\x02" % (res[-1], name)
+                    elif keyw in item.span.text:
+                        res.append("\x02%s\x02" % name)
+                except AttributeError as e:
+                    continue
             if res:
-                s = ("Package \x02%s\x02 %s the following: %s" % (pkg, lookup,
-                    ', '.join(res)))
+                s = format("Package \x02%s\x02 %s: %L, View more at %u", pkg, lookup,
+                    res, url)
                 irc.reply(s)
             else:
-                irc.error("%s doesn't seem to %s on anything." % (pkg, lookup[:-1]))
+                irc.error("%s doesn't seem to have any %s." % (pkg, lookup))
             return
         desc = soup.find('meta', attrs={"name":"Description"})["content"]
         # Get package information from the meta tags
@@ -188,7 +193,7 @@ class PkgInfo(callbacks.Plugin):
         such package exists. Supported entries for <distribution>
         include 'debian', 'ubuntu', 'derivatives', and 'all'. If
         --source is given, search for packages by source package
-        name. If --reverse or --reversed is given, show the newest package versions
+        name. If --reverse is given, show the newest package versions
         first."""
         pkg, distro = map(str.lower, (pkg, distro))
         supported = ("debian", "ubuntu", "derivatives", "all")
