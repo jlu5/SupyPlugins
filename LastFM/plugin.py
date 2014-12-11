@@ -136,7 +136,7 @@ class LastFM(callbacks.Plugin):
 
         soup = BeautifulSoup(f, "xml")
         content = soup.find("lfm").contents[1].find_all("name")
-        results = [res.string for res in content[0:maxResults*2]]
+        results = [res.string.strip() for res in content[0:maxResults*2]]
         if method in ('topalbums', 'toptracks'):
             # Annoying, hackish way of grouping artist+album/track items
             results = ["%s - %s" % (thing, artist) for thing, artist in izip(results[1::2], results[::2])]
@@ -178,7 +178,7 @@ class LastFM(callbacks.Plugin):
             irc.reply('%s is listening to "%s" by %s %s'
                     % (user, track, artist, albumStr))
         else:
-            irc.reply('%s listened to "%s" by %s %smore than %s'
+            irc.reply('%s listened to "%s" by %s %s more than %s'
                     % (user, track, artist, albumStr,
                         self._formatTimeago(time)))
 
