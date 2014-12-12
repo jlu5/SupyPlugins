@@ -41,14 +41,21 @@ class PkgInfoTestCase(PluginTestCase):
             ' .*?')
             self.assertError('pkg afdsfsadf asfasfasf')
             self.assertRegexp('pkg sid afsadfasfsa', 'no such package', re.I)
-        except test.TimeoutError:
+        except AssertionError as e:
+            if "HTTP Error 50" in str(e) or "[Errno" in str(e): # It's not our fault; the API is down.
+                raise unittest.SkipTest("HTTP error 50x; the API's probably down again")
+        except TimeoutError:
             raise unittest.SkipTest("Connection timed out.")
 
     def testVlistCommandBasics(self):
-        self.assertError('vlist all afdsafas')
-        self.assertError('vlist invalid-distro firefox')
-        self.assertRegexp('vlist debian bash', 'Found [1-9][0-9]* results: (.*?\(.*?\))+')
-        self.assertRegexp('vlist debian bash --source', 'Found [1-9][0-9]* results: .*?: bash.*?\(.*?\).*?')
+        try:
+            self.assertError('vlist all afdsafas')
+            self.assertError('vlist invalid-distro firefox')
+            self.assertRegexp('vlist debian bash', 'Found [1-9][0-9]* results: (.*?\(.*?\))+')
+            self.assertRegexp('vlist debian bash --source', 'Found [1-9][0-9]* results: .*?: bash.*?\(.*?\).*?')
+        except AssertionError as e:
+            if "HTTP Error 50" in str(e) or "[Errno" in str(e): # It's not our fault; the API is down.
+                raise unittest.SkipTest("HTTP error 50x; the API's probably down again")
 
     def testArchpkg(self):
         self.assertError('archpkg afdsfbjeiog')
@@ -56,9 +63,9 @@ class PkgInfoTestCase(PluginTestCase):
             self.assertNotError('archpkg bash')
             self.assertRegexp('archpkg pacman --exact', 'Found 1.*?pacman -.*?')
         except AssertionError as e:
-            if "HTTP Error 50" in str(e): # It's not our fault; the API is down.
+            if "HTTP Error 50" in str(e) or "[Errno" in str(e): # It's not our fault; the API is down.
                 raise unittest.SkipTest("HTTP error 50x; the API's probably down again")
-        except test.TimeoutError:
+        except TimeoutError:
             raise unittest.SkipTest("Connection timed out.")
 
     def testArchaur(self):
@@ -66,21 +73,27 @@ class PkgInfoTestCase(PluginTestCase):
             self.assertError('archaur wjoitgjwotgjv')
             self.assertRegexp('archaur yaourt', 'Found [1-9][0-9]* results: .*?yaourt.*?')
         except AssertionError as e:
-            if "HTTP Error 50" in str(e): # It's not our fault; the API is down.
+            if "HTTP Error 50" in str(e) or "[Errno" in str(e): # It's not our fault; the API is down.
                 raise unittest.SkipTest("HTTP error 50x; the API's probably down again")
-        except test.TimeoutError:
+        except TimeoutError:
             raise unittest.SkipTest("Connection timed out.")
 
     def testMintPkg(self):
         try:
             self.assertNotError('mintpkg qiana cinnamon')
-        except test.TimeoutError:
+        except AssertionError as e:
+            if "HTTP Error 50" in str(e) or "[Errno" in str(e): # It's not our fault; the API is down.
+                raise unittest.SkipTest("HTTP error 50x; the API's probably down again")
+        except TimeoutError:
             raise unittest.SkipTest("Connection timed out.")
 
     def testPkgsearch(self):
         try:
             self.assertNotError('pkgsearch debian python')
-        except test.TimeoutError:
+        except AssertionError as e:
+            if "HTTP Error 50" in str(e) or "[Errno" in str(e): # It's not our fault; the API is down.
+                raise unittest.SkipTest("HTTP error 50x; the API's probably down again")
+        except TimeoutError:
             raise unittest.SkipTest("Connection timed out.")
 
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:
