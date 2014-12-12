@@ -177,9 +177,13 @@ class Voteserv(callbacks.Plugin):
 
         Returns the list of things that have been voted for, along
         with the number of votes for each."""
-        s = "; ".join(['"%s": \x02%s\x02 vote%s' % (k, v[0], self._pluralize(v[0]))
-            for k, v in self.votedb.items()])
-        irc.reply(s)
+        items = self.votedb.items()
+        if items:
+            s = "; ".join(['"%s": \x02%s\x02 vote%s' % (k, v[0], self._pluralize(v[0]))
+                for k, v in items])
+            irc.reply(s)
+        else:
+            irc.error("The vote database is empty!")
     listallvotes = wrap(listallvotes)
 
 Class = Voteserv
