@@ -93,7 +93,7 @@ class WTE(callbacks.Plugin):
             args['q'] = text
         url = "https://translate.google.com/translate_a/t?"+ \
             urlencode(args)
-        self.log.debug("WTE: Using URL %s" % url)
+        self.log.debug("WTE: Using URL %s", url)
         headers = {'User-Agent': ('Mozilla/5.0 (X11; Linux i586; rv:31.0) '
                                  'Gecko/20100101 Firefox/31.0')}
         try:

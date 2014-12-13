@@ -67,11 +67,11 @@ class Voteserv(callbacks.Plugin):
                 self.votedb = json.load(f)
         except IOError:
             self.log.error("Voteserv: failed to load votes database %s"
-                ", creating a new one in memory..." % self.vfilename)
+                ", creating a new one in memory...", self.vfilename)
             self.votedb = {}
         except ValueError:
             self.log.error("Voteserv: Invalid JSON found in votes database "
-                "%s, creating a new one in memory..." % self.vfilename)
+                "%s, creating a new one in memory...", self.vfilename)
             self.votedb = {}
 
     def exportVoteDB(self):

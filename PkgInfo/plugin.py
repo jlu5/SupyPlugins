@@ -93,7 +93,7 @@ class PkgInfo(callbacks.Plugin):
             self.arg['S'] = 'on'
         self.arg = urlencode(self.arg)
         url = 'https://qa.debian.org/madison.php?text=on&' + self.arg
-        self.log.debug("PkgInfo: Using url %s for 'vlist' command" % url)
+        self.log.debug("PkgInfo: Using url %s for 'vlist' command", url)
         d = OrderedDict()
         fd = utils.web.getUrlFd(url)
         for line in fd.readlines():
@@ -114,7 +114,7 @@ class PkgInfo(callbacks.Plugin):
             return 'Found %s results: ' % len(d) + ', '.join("{!s} " \
             "\x02({!s})\x02".format(k,v[0]) for (k,v) in d.items())
         else:
-            self.log.debug("PkgInfo: No results found for URL %s" % url)
+            self.log.debug("PkgInfo: No results found for URL %s", url)
 
     def package(self, irc, msg, args, release, pkg, opts):
         """<release> <package> [--{depends|recommends|suggests}]
@@ -226,7 +226,7 @@ class PkgInfo(callbacks.Plugin):
             url = baseurl + urlencode({'name':pkg})
         else:
             url = baseurl + urlencode({'q':pkg})
-        self.log.debug("PkgInfo: using url %s for 'archpkg' command" % url)
+        self.log.debug("PkgInfo: using url %s for 'archpkg' command", url)
         fd = utils.web.getUrl(url)
         data = json.loads(fd.decode("utf-8"))
         if data['valid'] and data['results']:
@@ -252,7 +252,7 @@ class PkgInfo(callbacks.Plugin):
         pkg = pkg.lower()
         baseurl = 'https://aur.archlinux.org/rpc.php?type=search&'
         url = baseurl + urlencode({'arg':pkg})
-        self.log.debug("PkgInfo: using url %s for 'archaur' command" % url)
+        self.log.debug("PkgInfo: using url %s for 'archaur' command", url)
         fd = utils.web.getUrl(url)
         data = json.loads(fd.decode("utf-8"))
         if data["type"] == "error":

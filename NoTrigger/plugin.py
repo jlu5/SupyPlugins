@@ -82,8 +82,8 @@ class NoTrigger(callbacks.Plugin):
                 # \026 = Italic/Reverse video
                 self.log.info("NoTrigger (%s/%s): prepending message with "
                     "a space since our message begins with a formatting code "
-                    "and the channel seems to be blocking colors." % \
-                    (msg.args[0], irc.network))
+                    "and the channel seems to be blocking colors.",
+                    msg.args[0], irc.network)
                 s = self.padchar + s
             elif self.registryValue('spaceBeforeNicks', msg.args[0]) and \
                 s.split()[0].endswith((",", ":")):
@@ -92,14 +92,14 @@ class NoTrigger(callbacks.Plugin):
                 s = self.padchar + s
                 self.log.info("NoTrigger (%s/%s): prepending message with "
                     "a space due to config plugins.notrigger."
-                    "spaceBeforeNicks." % (msg.args[0], irc.network))
+                    "spaceBeforeNicks.", msg.args[0], irc.network)
             # Handle actions properly but destroy any other \001 (CTCP) messages
             if self.registryValue('blockCtcp', msg.args[0]) and \
                 s.startswith("\001") and not s.startswith("\001ACTION"):
                 s = s[1:-1]
                 self.log.info("NoTrigger (%s/%s): blocking non-ACTION "
-                    "CTCP due to config plugins.notrigger.blockCtcp." % \
-                     (msg.args[0], irc.network))
+                    "CTCP due to config plugins.notrigger.blockCtcp.",
+                     msg.args[0], irc.network)
             for k, v in rpairs.items():
                 s = s.replace(k, v)
             if s.startswith(tuple(prefixes)):

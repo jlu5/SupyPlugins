@@ -45,7 +45,7 @@ except:
 class OperUp(callbacks.Plugin):
     """Simple plugin that allows Supybot to oper up on configured networks, on
         connect and manually."""
-    
+
     def do005(self, irc, msg):
         """Oper up on connect."""
         if not self.registryValue('autoOper'):
@@ -53,43 +53,43 @@ class OperUp(callbacks.Plugin):
         if irc.network in self.registryValue('operNets'):
             if self.registryValue("operName") and \
                 self.registryValue("operPass"):
-                irc.sendMsg(ircmsgs.IrcMsg(command="OPER", 
-                    args=[self.registryValue("operName"), 
+                irc.sendMsg(ircmsgs.IrcMsg(command="OPER",
+                    args=[self.registryValue("operName"),
                     self.registryValue("operPass")]))
             else:
                 self.log.warning("OperUp: Bot is set to oper on network %s, but"
-                    " operName and/or operPass are not defined!")
-    
+                    " operName and/or operPass are not defined!", irc.network)
+
     def do381(self, irc, msg):
         self.log.info("OperUp: Received 381 (successfully opered up) from "
-            "network %s." % irc.network)
+            "network %s.", irc.network)
         if self.registryValue("operModes"):
-            self.log.info("OperUp: Opered up on %s, sending user modes %s"
-                % (irc.network, ''.join(self.registryValue("operModes"))))
-            irc.sendMsg(ircmsgs.mode(irc.nick, 
+            self.log.info("OperUp: Opered up on %s, sending user modes %s",
+                irc.network, ''.join(self.registryValue("operModes")))
+            irc.sendMsg(ircmsgs.mode(irc.nick,
                 self.registryValue("operModes")))
-        
+
     def do385(self, irc, msg):
         self.log.info("OperUp: Received 385 (not opered anymore) from network"
-            " %s." % irc.network)
-        
+            " %s.", irc.network)
+
     def do461(self, irc, msg):
         self.log.warning("OperUp: Received 461 (some command needs more "
-            "parameters) from network %s." % irc.network)
-        
+            "parameters) from network %s.", irc.network)
+
     def do464(self, irc, msg):
         self.log.error("OperUp: Received 461 (password mismatch) from "
-            "network %s." % irc.network)
-        
+            "network %s.", irc.network)
+
     def do481(self, irc, msg):
         self.log.warning("OperUp: Received 481 (missing oper privileges) "
-            "from network %s." % irc.network)
-       
+            "from network %s.", irc.network)
+
     def do491(self, irc, msg):
         self.log.error("OperUp: Received 491 (server has been configured "
-            "to disallow the your bot's host from opering) from network %s." \
-            % irc.network)
-        
+            "to disallow the your bot's host from opering) from network %s.",
+            irc.network)
+
     def operup(self, irc, msg, args):
         """takes no arguments.
         Makes the bot Oper up using the name and password defined in config.
@@ -99,7 +99,7 @@ class OperUp(callbacks.Plugin):
         if irc.network in self.registryValue('operNets'):
             if self.registryValue("operName") and \
                 self.registryValue("operPass"):
-                irc.sendMsg(ircmsgs.IrcMsg(command="OPER", 
+                irc.sendMsg(ircmsgs.IrcMsg(command="OPER",
                     args=[self.registryValue("operName"),
                     self.registryValue("operPass")]))
                 irc.replySuccess()
@@ -111,7 +111,7 @@ class OperUp(callbacks.Plugin):
             irc.error(_("This network is not configured for opering! (see"
                 " 'config plugins.OperUp.opernets')"))
     operup = wrap(operup, ['owner'])
-               
+
     def deoper(self, irc, msg, args):
         """takes no arguments.
         Makes the bot deoper by setting user modes -Oo on itself.
