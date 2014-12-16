@@ -55,7 +55,6 @@ except:
 
 @internationalizeDocstring
 class RelayLink(callbacks.Plugin):
-    # noIgnore = True
     threaded = True
 
     class Relay():
@@ -140,7 +139,7 @@ class RelayLink(callbacks.Plugin):
             nickprefix = '-'
         if re.match('^\x01ACTION .*\x01$', text):
             text = text.strip('\x01')
-            text = text[ 7 : ]
+            text = text[7:]
             if colored:
                 return ('%(network)s* %(nickprefix)s\x03%(color)s%(nick)s\x03 %(text)s',
                         {'nick': nick, 'color': color, 'text': text,
@@ -166,14 +165,15 @@ class RelayLink(callbacks.Plugin):
         if irc.nested:
             irc.error('This command cannot be nested.', Raise=True)
         elif not self.relays:
-            irc.reply(_('This is no relay enabled. Use "RelayLink add" "RelayLink'
+            irc.reply(_('This is no relay enabled. Use "RelayLink add" or "RelayLink'
                 ' addall" to add one.'))
             return
         for relay in self.relays:
             if relay.hasTargetIRC:
                 hasIRC = 'Link healthy!'
             else:
-                hasIRC = '\x0302IRC object not scraped yet.\017'
+                hasIRC = ('\x0302IRC object not refreshed yet. Reloading the plugin may '
+                    'help.\017')
             s ='\x02%s\x02 on \x02%s\x02 ==> \x02%s\x02 on \x02%s\x02.  %s'
             if not self.registryValue('color', msg.args[0]):
                 s = s.replace('\x02', '')
@@ -343,14 +343,14 @@ class RelayLink(callbacks.Plugin):
             return s % args
         def send(s):
             if not relay.hasTargetIRC:
-                self.log.info('RelayLink:  IRC %s not yet scraped.' %
+                self.log.info('RelayLink: IRC %s not yet scraped.' %
                               relay.targetNetwork)
             elif relay.targetIRC.zombie:
-                self.log.info('RelayLink:  IRC %s appears to be a zombie'%
+                self.log.info('RelayLink: IRC %s appears to be a zombie'%
                               relay.targetNetwork)
             elif irc.isChannel(relay.targetChannel) and \
                     relay.targetChannel not in relay.targetIRC.state.channels:
-                self.log.info('RelayLink:  I\'m not in in %s on %s' %
+                self.log.info('RelayLink: I\'m not in %s on %s' %
                               (relay.targetChannel, relay.targetNetwork))
             else:
                 if isPrivmsg or \
@@ -362,14 +362,14 @@ class RelayLink(callbacks.Plugin):
                     return
                 msg.tag('relayedMsg')
                 relay.targetIRC.sendMsg(msg)
-        
+
         msgs = self.registryValue("antiflood.messages")
         if self.registryValue("antiflood.enable") and msgs and \
             len(self.floodCounter) > msgs:
             if not self.floodActivated:
                 secs = self.registryValue("antiflood.seconds")
                 limit = "({} messages in {} seconds)".format(msgs,secs)
-                self.log.info("RelayLink: flood protection triggered on {} {}".format(irc.network,limit))
+                self.log.info("RelayLink: flood protection triggered on %s %s", irc.network, limit)
                 s = ("%(network)s*** Flood detected {}. Not relaying messages for {} seconds!".format(limit, secs))
                 self.floodActivated = True
                 if self.registryValue('antiflood.announce'):
@@ -381,7 +381,7 @@ class RelayLink(callbacks.Plugin):
                             send(new_s)
             return
         else: self.floodActivated = False
-        
+
         if channel is None:
             for relay in self.relays:
                 if not relay.hasSourceIRCChannels:
@@ -426,13 +426,15 @@ class RelayLink(callbacks.Plugin):
         keys = [option for (option, arg) in optlist]
         if irc.nested and 'count' not in keys:
             irc.error('This command cannot be nested.', Raise=True)
-        if msg.nick not in irc.state.channels[channel].users:
+        try:
+            c = irc.state.channels[channel]
+        except KeyError:
+            irc.error("Unknown channel '%s'." % channel, Raise=True)
+        if msg.nick not in c.users:
             self.log.warning('RelayLink: %s on %s attempted to view'
-                ' nicks in %s without being in it.'
-                % (msg.nick, irc.network, channel))
+                ' nicks in %s without being in it.', msg.nick, irc.network, channel)
             irc.error(('You are not in %s.' % channel), Raise=True)
         # Include the local channel for nicks output
-        c = irc.state.channels[channel]
         totalUsers = len(c.users)
         totalChans = 1
         users = []
@@ -451,14 +453,15 @@ class RelayLink(callbacks.Plugin):
         s = _('%d users in %s on %s:  %s') % (totalUsers,
             channel, irc.network,
             utils.str.commaAndify(users))
-        if 'count' not in keys: irc.reply(s, private=True)
+        if 'count' not in keys:
+            irc.reply(s, private=True)
         for relay in self.relays:
             if relay.sourceChannel == channel and \
                     relay.sourceNetwork.lower() == irc.network.lower():
                 totalChans += 1
                 if not relay.hasTargetIRC:
-                    irc.reply(_('I haven\'t scraped the IRC object for %s '
-                              'yet. Try again in a minute or two.') % \
+                    irc.reply(_("Relays for network %s hasn't been refreshed yet, "
+                        "try reloading the plugin or waiting for a minute.") % \
                               relay.targetNetwork)
                 else:
                     users = []
@@ -472,7 +475,6 @@ class RelayLink(callbacks.Plugin):
                     channels = relay.targetIRC.state.channels
                     found = False
                     for key, channel_ in channels.items():
-                        #if re.match(relay.targetChannel, key):
                         if ircutils.toLower(relay.targetChannel) \
                             == ircutils.toLower(key):
                             found = True
@@ -505,7 +507,7 @@ class RelayLink(callbacks.Plugin):
                             relay.targetNetwork,
                             utils.str.commaAndify(users))
                     if 'count' not in keys: irc.reply(s, private=True)
-        if not irc.nested: 
+        if not irc.nested:
             irc.reply("Total users across %d channels: %d. " % \
                 (totalChans, totalUsers), private=False if 'count' in keys else True)
         else:
@@ -598,9 +600,13 @@ class RelayLink(callbacks.Plugin):
                               'regexp': 'something',
                               'reciprocal': ''})])
 
+    def _fail(self, c):
+        if self.registryValue('logFailedChanges'):
+            self.log.warning("RelayLink: failed to batch remove relay: %s -> %s", c[0], c[1])
+
     def addall(self, irc, msg, args, optlist, channels):
         """[--regexp <regexp>] <channel1@network1> <channel2@network2> [<channel3@network3>] ...
-        
+
         Batch adds all the relays/reciprocals between the channels defined. Useful if you are
         relaying to more than 2 networks/channels with one bot, as a large amount of
         reciprocals easily becomes a mess.
@@ -613,7 +619,7 @@ class RelayLink(callbacks.Plugin):
         if len(channels) > self.registryValue('addall.max'):
             irc.error('Too many channels specified, aborting. (see config plugins.RelayLink.addall.max)', Raise=True)
         for ch in channels:
-            if len(ch.split("@")) != 2: 
+            if len(ch.split("@")) != 2:
                 irc.error("Channels must be specified in the format #channel@network", Raise=True)
         failedWrites = writes = 0
         # Get all the channel combinations and try to add them one by one
@@ -622,20 +628,19 @@ class RelayLink(callbacks.Plugin):
             if not self._writeToConfig(c[0], c[1],
                                    optlist['regexp'], True):
                 failedWrites += 1
-                if self.registryValue('logFailedChanges'):
-                    self.log.warning("RelayLink: failed to batch add relay: {} -> {}".format(c[0],c[1]))
+                self._fail(c)
             writes += 1
-        self._loadFromConfig()
+            self._loadFromConfig()
         if failedWrites == 0:
             irc.replySuccess()
         else:
             irc.reply('Finished, though {} out of {} relays failed to be added.'.format(failedWrites, writes))
     addall = wrap(addall, [('checkCapability', 'admin'),
                      getopts({'regexp': 'something'}), 'text'])
-                     
+
     def removeall(self, irc, msg, args, optlist, channels):
         """[--regexp <regexp>] <channel1@network1> [<channel2@network2>] [<channel3@network3>] ...
-        
+
         Batch removes relays. If only one channel@network is given, removes all
         relays going to and from the channel.
         Otherwise, removes all relays going between the channels defined (similar to addall)."""
@@ -645,29 +650,29 @@ class RelayLink(callbacks.Plugin):
             irc.error('Too many channels specified, aborting. (see config plugins.RelayLink.addall.max)', Raise=True)
         failedWrites = writes = 0
         for ch in channels:
-            if len(ch.split("@")) != 2: 
+            if len(ch.split("@")) != 2:
                 irc.error("Channels must be specified in the format #channel@network", Raise=True)
         if len(channels) == 1:
-            c = tuple(channels[0].split('@'))
+            # Only one channel@net specified, so we'll try to remove all relays going to
+            # or from this channel
+            c = channels[0].split('@')
             for relay in self.relays:
-                # semi-hack channel matching; not sure if there's a better way to do this
+                # I wish I knew a better way to do this...
                 if c[0] == relay.sourceChannel and c[1] == relay.sourceNetwork:
-                    s = "%s@%s" % (relay.targetChannel, relay.targetNetwork)
+                    s = '@'.join((relay.targetChannel, relay.targetNetwork))
                     if not self._writeToConfig(channels[0], s,
                         optlist['regexp'], False):
-                        # This shouldn't really ever error, but we'll keep it just in case
                         failedWrites += 1
-                        if self.registryValue('logFailedChanges'):
-                            self.log.warning("RelayLink: failed to batch remove relay: {} -> {}".format(c[0],c[1]))
+                        self._fail(('@'.join(c), s))
                     writes += 1
                 elif c[0] == relay.targetChannel and c[1] == relay.targetNetwork:
-                    s = "%s@%s" % (relay.sourceChannel, relay.sourceNetwork)
+                    s = '@'.join((relay.sourceChannel, relay.sourceNetwork))
                     if not self._writeToConfig(s, channels[0],
                         optlist['regexp'], False):
                         failedWrites += 1
-                        if self.registryValue('logFailedChanges'):
-                            self.log.warning("RelayLink: failed to batch remove relay: {} -> {}".format(c[0],c[1]))
+                        self._fail(('@'.join(c), s))
                     writes += 1
+                self._loadFromConfig()
             if writes == 0:
                 irc.error("No matching relays for %s found." % channels[0], Raise=True)
         elif len(channels) >= 2:
@@ -677,10 +682,9 @@ class RelayLink(callbacks.Plugin):
                 if not self._writeToConfig(c[0], c[1],
                                        optlist['regexp'], False):
                     failedWrites += 1
-                    if self.registryValue('logFailedChanges'):
-                        self.log.warning("RelayLink: failed to batch remove relay: {} -> {}".format(c[0],c[1]))
+                    self._fail(c)
                 writes += 1
-        self._loadFromConfig()
+                self._loadFromConfig()
         if failedWrites == 0:
             irc.replySuccess()
         else:
@@ -784,23 +788,25 @@ class RelayLink(callbacks.Plugin):
         """<remoteUser> <network> <text>
 
         Sends a private message to a user on a remote network."""
-        found = found2 = False
+        found_targetnet = found_sourcenet = False
         if not self.registryValue("remotepm.enable"):
             irc.error("This command is not enabled; please set 'config plugins.relaylink.remotepm.enable' "
                 "to True.", Raise=True)
         for relay in self.relays:
+            # Find if the remote user exists in any known relay channel on the target net
             channels = otherIrc.state.channels
             for key, channel_ in channels.items():
                 if ircutils.toLower(relay.targetChannel) \
                     == ircutils.toLower(key) and remoteuser in channel_.users:
-                    found = True
+                    found_targetnet = True
                     break
+            # Find if the caller has at least one source channel in common with the target
             for ch in irc.state.channels:
                 if ircutils.toLower(relay.sourceChannel) == \
                     ircutils.toLower(ch) and msg.nick in irc.state.channels[ch].users:
-                    found2 = True
+                    found_sourcenet = True
                     break
-        if found and found2:
+        if found_targetnet and found_sourcenet:
             prefix = msg.prefix if self.registryValue("remotepm.useHostmasks") else msg.nick
             if self.registryValue("remotepm.useNotice"):
                 otherIrc.queueMsg(ircmsgs.notice(remoteuser, "Message from %s on %s: %s" % (prefix, irc.network, text)))

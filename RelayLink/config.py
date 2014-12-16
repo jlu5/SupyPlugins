@@ -120,7 +120,7 @@ conf.registerGlobalValue(RelayLink, 'substitutes',
     yourself unless you know what you do. Use 'relaylink (no)substitute' instead.""")))
 
 conf.registerGlobalValue(RelayLink, 'logFailedChanges',
-    registry.Boolean(False, _("""Determines whether the bot should log failed config changes.""")))
+    registry.Boolean(True, _("""Determines whether the bot should log failed config changes.""")))
 
 conf.registerGroup(RelayLink, 'addall')
 conf.registerGlobalValue(RelayLink.addall, 'max',
