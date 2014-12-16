@@ -168,21 +168,23 @@ class RelayLink(callbacks.Plugin):
             irc.reply(_('This is no relay enabled. Use "RelayLink add" or "RelayLink'
                 ' addall" to add one.'))
             return
+        replies = []
         for relay in self.relays:
             if relay.hasTargetIRC:
-                hasIRC = 'Link healthy!'
+                hasIRC = '\x0309Link healthy!\x03'
             else:
-                hasIRC = ('\x0302IRC object not refreshed yet. Reloading the plugin may '
-                    'help.\017')
-            s ='\x02%s\x02 on \x02%s\x02 ==> \x02%s\x02 on \x02%s\x02.  %s'
+                hasIRC = ('\x0312IRC object not refreshed yet. Reloading the plugin may '
+                    'help.\x03')
+            s = '\x02%s\x02 on \x02%s\x02 => \x02%s\x02 on \x02%s\x02 [%s]'
             if not self.registryValue('color', msg.args[0]):
-                s = s.replace('\x02', '')
-            irc.reply(s %
+                hasIRC, s = map(ircutils.stripFormatting, (hasIRC, s))
+            replies.append(s %
                         (relay.sourceChannel,
                          relay.sourceNetwork,
                          relay.targetChannel,
                          relay.targetNetwork,
-                         hasIRC), private=True)
+                         hasIRC))
+        irc.replies(replies, private=True)
 
     def doPrivmsg(self, irc, msg):
         self.addIRC(irc)
