@@ -184,7 +184,7 @@ class RelayLink(callbacks.Plugin):
                          relay.targetChannel,
                          relay.targetNetwork,
                          hasIRC))
-        irc.replies(replies, private=True)
+        irc.replies(replies)
 
     def doPrivmsg(self, irc, msg):
         self.addIRC(irc)
