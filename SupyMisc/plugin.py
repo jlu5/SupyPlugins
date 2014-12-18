@@ -94,8 +94,10 @@ class SupyMisc(callbacks.Plugin):
         Returns a random integer between <start> and <stop>, with optional [<step>]
         between them."""
         if not step: step = 1
+        if stop <= start:
+            irc.error("<stop> must be larger than <start>.", Raise=True)
         irc.reply(random.randrange(start, stop, step))
-    randrange = wrap(randrange, ['int', 'int', additional('int')])
+    randrange = wrap(randrange, ['int', 'int', additional('positiveInt')])
 
     def mreplace(self, irc, msg, args, bad, good, text):
         """<bad substring1>,[<bad substring2>],... <good substring1,[<good substring2>],...> <text>
