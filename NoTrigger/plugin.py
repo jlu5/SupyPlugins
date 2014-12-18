@@ -80,7 +80,7 @@ class NoTrigger(callbacks.Plugin):
                 # \003 = Colour (Ctrl+K), \002 = Bold (Ctrl+B), \017 =
                 # Reset Formatting (Ctrl+O), \037 = Underline,
                 # \026 = Italic/Reverse video
-                self.log.info("NoTrigger (%s/%s): prepending message with "
+                self.log.debug("NoTrigger (%s/%s): prepending message with "
                     "a space since our message begins with a formatting code "
                     "and the channel seems to be blocking colors.",
                     msg.args[0], irc.network)
@@ -90,14 +90,14 @@ class NoTrigger(callbacks.Plugin):
                 # If the last character of the first word ends with a ',' or
                 # ':', prepend a space.
                 s = self.padchar + s
-                self.log.info("NoTrigger (%s/%s): prepending message with "
+                self.log.debug("NoTrigger (%s/%s): prepending message with "
                     "a space due to config plugins.notrigger."
                     "spaceBeforeNicks.", msg.args[0], irc.network)
             # Handle actions properly but destroy any other \001 (CTCP) messages
             if self.registryValue('blockCtcp', msg.args[0]) and \
                 s.startswith("\001") and not s.startswith("\001ACTION"):
                 s = s[1:-1]
-                self.log.info("NoTrigger (%s/%s): blocking non-ACTION "
+                self.log.debug("NoTrigger (%s/%s): blocking non-ACTION "
                     "CTCP due to config plugins.notrigger.blockCtcp.",
                      msg.args[0], irc.network)
             for k, v in rpairs.items():
