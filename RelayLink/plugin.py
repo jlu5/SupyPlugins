@@ -345,15 +345,15 @@ class RelayLink(callbacks.Plugin):
             return s % args
         def send(s):
             if not relay.hasTargetIRC:
-                self.log.info('RelayLink: IRC %s not yet scraped.' %
+                self.log.debug('RelayLink: IRC %s not yet scraped.',
                               relay.targetNetwork)
             elif relay.targetIRC.zombie:
-                self.log.info('RelayLink: IRC %s appears to be a zombie'%
+                self.log.debug('RelayLink: IRC %s appears to be a zombie',
                               relay.targetNetwork)
             elif irc.isChannel(relay.targetChannel) and \
                     relay.targetChannel not in relay.targetIRC.state.channels:
-                self.log.info('RelayLink: I\'m not in %s on %s' %
-                              (relay.targetChannel, relay.targetNetwork))
+                self.log.debug('RelayLink: I\'m not in %s on %s'.
+                              relay.targetChannel, relay.targetNetwork)
             else:
                 if isPrivmsg or \
                         self.registryValue('nonPrivmsgs', channel) == 'privmsg':
@@ -632,7 +632,7 @@ class RelayLink(callbacks.Plugin):
                 failedWrites += 1
                 self._fail(c)
             writes += 1
-            self._loadFromConfig()
+        self._loadFromConfig()
         if failedWrites == 0:
             irc.replySuccess()
         else:
@@ -674,7 +674,7 @@ class RelayLink(callbacks.Plugin):
                         failedWrites += 1
                         self._fail(('@'.join(c), s))
                     writes += 1
-                self._loadFromConfig()
+            self._loadFromConfig()
             if writes == 0:
                 irc.error("No matching relays for %s found." % channels[0], Raise=True)
         elif len(channels) >= 2:
