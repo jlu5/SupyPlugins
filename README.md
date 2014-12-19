@@ -32,7 +32,8 @@ Please note that this list may not always be up to date; your best bet is to act
 Most of these plugins have their own READMEs in their folders; you can check them for a usage demonstration or further explanation of what they do.
 
 ##### DDG
-- Looks for results on DuckDuckGo.
+- Provides an interface to DuckDuckGo's web search.
+   - **Requires:** [Beautiful Soup 4](http://www.crummy.com/software/BeautifulSoup/bs4/doc/)
 
 ##### Isup
 - Provides a simple command to check whether a website is up or down (using [isup.me](http://isup.me)).
