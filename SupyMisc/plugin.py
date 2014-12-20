@@ -30,6 +30,7 @@
 import random
 import re
 import json
+from itertools import product
 try:
     from itertools import izip
 except ImportError:
@@ -117,18 +118,22 @@ class SupyMisc(callbacks.Plugin):
         irc.reply(text)
     mreplace = wrap(mreplace, [commalist('something'), commalist('something'), 'text'])
 
-    def colors(self, irc, msg, args):
+    def colors(self, irc, msg, args, opts):
         """takes no arguments.
 
         Replies with a display of IRC colour codes."""
-        s = ("\x03,00  \x0F\x0300 00\x0F \x03,01  \x0F\x0301 01\x0F \x03,02  \x0F\x0302 02\x0F \x03,03  "
-             "\x0F\x0303 03\x0F \x03,04  \x0F\x0304 04\x0F \x03,05  \x0F\x0305 05\x0F \x03,06  \x0F\x0306"
-             " 06\x0F \x03,07  \x0F\x0307 07\x0F \x03,08  \x0F\x0308 08\x0F \x03,09  \x0F\x0309 09\x0F "
-             "\x03,10  \x0F\x0310 10\x0F \x03,11  \x0F\x0311 11\x0F \x03,12  \x0F\x0312 12\x0F \x03,13  "
-             "\x0F\x0313 13\x0F \x03,14  \x0F\x0314 14\x0F \x03,15  \x0F\x0315 15\x0F")
+        opts = dict(opts)
+        if 'all' in opts:
+            s = ['\x03%s,%s %s,%s \x0F' % (x,y,x,y) for (x, y) in product(range(16), range(16))]
+            s = ''.join(s)
+        else:
+            s = ("\x03,00  \x0F\x0300 00\x0F \x03,01  \x0F\x0301 01\x0F \x03,02  \x0F\x0302 02\x0F \x03,03  "
+                 "\x0F\x0303 03\x0F \x03,04  \x0F\x0304 04\x0F \x03,05  \x0F\x0305 05\x0F \x03,06  \x0F\x0306"
+                 " 06\x0F \x03,07  \x0F\x0307 07\x0F \x03,08  \x0F\x0308 08\x0F \x03,09  \x0F\x0309 09\x0F "
+                 "\x03,10  \x0F\x0310 10\x0F \x03,11  \x0F\x0311 11\x0F \x03,12  \x0F\x0312 12\x0F \x03,13  "
+                 "\x0F\x0313 13\x0F \x03,14  \x0F\x0314 14\x0F \x03,15  \x0F\x0315 15\x0F")
         irc.reply(s)
-    colors = wrap(colors)
-    colours = wrap(colors)
+    colors = wrap(colors, [getopts({'all': ''})])
 
     def tld(self, irc, msg, args, text):
         """<tld>
