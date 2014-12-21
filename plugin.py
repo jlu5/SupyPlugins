@@ -135,7 +135,7 @@ class LastFM(callbacks.Plugin):
 
         xml = minidom.parse(f).getElementsByTagName("lfm")[0]
         content = xml.childNodes[1].getElementsByTagName("name")
-        results = [res.string.strip() for res in content[0:maxResults*2]]
+        results = [res.firstChild.nodeValue.strip() for res in content[0:maxResults*2]]
         if method in ('topalbums', 'toptracks'):
             # Annoying, hackish way of grouping artist+album/track items
             results = ["%s - %s" % (thing, artist) for thing, artist in izip(results[1::2], results[::2])]
