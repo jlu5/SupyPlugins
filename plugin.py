@@ -39,7 +39,6 @@ import supybot.callbacks as callbacks
 import supybot.world as world
 import supybot.log as log
 
-from bs4 import BeautifulSoup
 from xml.dom import minidom
 from time import time
 try:
@@ -134,8 +133,8 @@ class LastFM(callbacks.Plugin):
             irc.error("Unknown ID (%s) or unknown method (%s)"
                     % (msg.nick, method), Raise=True)
 
-        soup = BeautifulSoup(f, "xml")
-        content = soup.find("lfm").contents[1].find_all("name")
+        xml = minidom.parse(f).getElementsByTagName("lfm")[0]
+        content = xml.childNodes[1].getElementsByTagName("name")
         results = [res.string.strip() for res in content[0:maxResults*2]]
         if method in ('topalbums', 'toptracks'):
             # Annoying, hackish way of grouping artist+album/track items
