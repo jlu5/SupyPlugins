@@ -43,7 +43,6 @@ Most of these plugins have their own READMEs in their folders; you can check the
 
 ##### LastFM
 - LastFM plugin, forked from [krf/supybot-lastfm](https://github.com/krf/supybot-lastfm). Also available as a [separate repository](https://github.com/GLolol/supybot-lastfm).
-   - **Requires:** [Beautiful Soup 4](http://www.crummy.com/software/BeautifulSoup/bs4/doc/), lxml (for XML parsing)
 
 ##### [NoTrigger](NoTrigger/README.md)
 - Anti-abuse script; prevents the bot from triggering other bots by modifying its output slightly. For more information, see [NoTrigger/README.md](NoTrigger/README.md).
