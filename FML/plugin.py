@@ -47,28 +47,36 @@ class FML(callbacks.Plugin):
     """Displays entries from fmylife.com."""
     threaded = True
 
-    def fml(self, irc, msg, args):
-        """requires no arguments.
+    def fml(self, irc, msg, args, query):
+        """[<id>]
 
-        Displays a random entry from fmylife.com."""
-        url = 'http://api.betacie.com/view/random?key=4be9c43fc03fe&language=en'
+        Displays an entry from fmylife.com. If <id>
+        is not given, fetch a random entry from the API."""
+        query = query or 'random'
+        url = ('http://api.betacie.com/view/%s/nocomment'
+              '?key=4be9c43fc03fe&language=en' % query)
         try:
             data = utils.web.getUrl(url)
         except utils.web.Error as e:
             irc.error(str(e), Raise=True)
         tree = ElementTree.fromstring(data.decode('utf-8'))
         tree = tree.find('items/item')
-
-        category = tree.find('category').text
-        text = tree.find('text').text
-        fmlid = tree.attrib['id']
-        url = tree.find('short_url').text
+        try:
+            category = tree.find('category').text
+            text = tree.find('text').text
+            fmlid = tree.attrib['id']
+            url = tree.find('short_url').text
+        except AttributeError as e:
+            self.log.debug("FML: Error fetching FML %s from URL %s: %s", query,
+                          url, e)
+            irc.error("That FML does not exist or there was an error "
+                      "fetching data from the API.", Raise=True)
         votes = ircutils.bold("[Agreed: %s / Deserved: %s]" % \
             (tree.find('agree').text, tree.find('deserved').text))
         s = format('\x02#%i [%s]\x02: %s - %s %u', fmlid, 
                    category, text, votes, url)
         irc.reply(s)
-    fml = wrap(fml)
+    fml = wrap(fml, [additional('positiveInt')])
 
 Class = FML
 
