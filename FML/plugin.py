@@ -41,7 +41,8 @@ try:
 except ImportError:
     # Placeholder that allows to run the plugin on a bot
     # without the i18n module
-    _ = lambda x:x
+    _ = lambda x: x
+
 
 class FML(callbacks.Plugin):
     """Displays entries from fmylife.com."""
@@ -51,7 +52,8 @@ class FML(callbacks.Plugin):
         """requires no arguments.
 
         Displays a random entry from fmylife.com."""
-        url = 'http://api.betacie.com/view/random?key=4be9c43fc03fe&language=en'
+        url = ('http://api.betacie.com/view/random?key=4be9c43fc03fe'
+               '&language=en')
         try:
             data = utils.web.getUrl(url)
         except utils.web.Error as e:
@@ -63,9 +65,10 @@ class FML(callbacks.Plugin):
         text = tree.find('text').text
         fmlid = tree.attrib['id']
         url = tree.find('short_url').text
-        votes = ircutils.bold("[Agreed: %s / Deserved: %s]" % \
-            (tree.find('agree').text, tree.find('deserved').text))
-        s = format('\x02#%i [%s]\x02: %s - %s %u', fmlid, 
+        votes = ircutils.bold("[Agreed: %s / Deserved: %s]" %
+                              (tree.find('agree').text,
+                               tree.find('deserved').text))
+        s = format('\x02#%i [%s]\x02: %s - %s %u', fmlid,
                    category, text, votes, url)
         irc.reply(s)
     fml = wrap(fml)

@@ -39,35 +39,37 @@ try:
 except ImportError:
     # Placeholder that allows to run the plugin on a bot
     # without the i18n module
-    _ = lambda x:x
+    _ = lambda x: x
+
 
 class Isup(callbacks.Plugin):
     """Provides a simple command to check whether a website is up
     or down (using isup.me)."""
-    
+
     def _getreply(self, url):
         data = utils.web.getUrl("http://isup.me/%s" % url).decode("utf-8")
         if "It's just you." in data:
             reply = 'up'
-        elif "looks down from here" in data: 
+        elif "looks down from here" in data:
             reply = 'down'
         elif "doesn't look like a site" in data:
             reply = 'unknown'
         elif "and still think we're down" in data:
-            return "Haven't you got anything better to do than look for hidden special replies? :P"
-        else: 
+            return ("Haven't you got anything better to do than look for "
+                    "hidden special replies? :P")
+        else:
             return "An error occurred, please check your URL and try again."
         try:
             return self.registryValue("replies." + reply) % url
         except TypeError:
             return self.registryValue("replies." + reply)
-    
+
     def check(self, irc, msg, args, url):
         """<url>
         Check whether a website is up or down using isup.me."""
-        try: 
+        try:
             url = url.split("://")[1]
-        except: 
+        except:
             pass
         irc.reply(self._getreply(url))
     check = wrap(check, ['something'])
