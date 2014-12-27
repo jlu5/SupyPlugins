@@ -30,11 +30,12 @@
 
 from supybot.test import *
 
+
 class NoTriggerTestCase(ChannelPluginTestCase):
-    plugins = ('NoTrigger','Utilities', 'Reply')
+    plugins = ('NoTrigger', 'Utilities', 'Reply')
     config = {'supybot.plugins.notrigger.enable': True,
-        'supybot.plugins.notrigger.spaceBeforeNicks': True,
-        'supybot.plugins.notrigger.blockCtcp': True}
+              'supybot.plugins.notrigger.spaceBeforeNicks': True,
+              'supybot.plugins.notrigger.blockCtcp': True}
 
     def testSpaceBeforePrefixes(self):
         self.assertNotRegexp('echo !test', '^!test$')
