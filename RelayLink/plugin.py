@@ -352,7 +352,7 @@ class RelayLink(callbacks.Plugin):
                               relay.targetNetwork)
             elif irc.isChannel(relay.targetChannel) and \
                     relay.targetChannel not in relay.targetIRC.state.channels:
-                self.log.debug('RelayLink: I\'m not in %s on %s'.
+                self.log.debug('RelayLink: I\'m not in %s on %s.',
                               relay.targetChannel, relay.targetNetwork)
             else:
                 if isPrivmsg or \
