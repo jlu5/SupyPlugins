@@ -42,7 +42,8 @@ try:
 except ImportError:
     # Placeholder that allows to run the plugin on a bot
     # without the i18n module
-    _ = lambda x:x
+    _ = lambda x: x
+
 
 class NoTrigger(callbacks.Plugin):
     """Mods outFilter to prevent the bot from triggering other bots."""
@@ -67,39 +68,40 @@ class NoTrigger(callbacks.Plugin):
 
     def outFilter(self, irc, msg):
         if msg.command == 'PRIVMSG' and \
-            ircutils.isChannel(msg.args[0]) and \
-            self.registryValue('enable', msg.args[0]):
+                ircutils.isChannel(msg.args[0]) and \
+                self.registryValue('enable', msg.args[0]):
             s = msg.args[1]
             prefixes = string.punctuation
-            rpairs = {"\007":""
-                     }
+            rpairs = {"\007": ""}
             suffixes = ("moo")
             if self.registryValue('colorAware') and \
-                self.isChanStripColor(irc, msg.args[0]) and \
-                s.startswith(("\003", "\002", "\017", "\037", "\026")):
+                    self.isChanStripColor(irc, msg.args[0]) and \
+                    s.startswith(("\003", "\002", "\017", "\037", "\026")):
                 # \003 = Colour (Ctrl+K), \002 = Bold (Ctrl+B), \017 =
                 # Reset Formatting (Ctrl+O), \037 = Underline,
                 # \026 = Italic/Reverse video
                 self.log.debug("NoTrigger (%s/%s): prepending message with "
-                    "a space since our message begins with a formatting code "
-                    "and the channel seems to be blocking colors.",
-                    msg.args[0], irc.network)
+                               "a space since our message begins with a "
+                               "formatting code and the channel seems to be "
+                               "blocking colors.", msg.args[0], irc.network)
                 s = self.padchar + s
             elif self.registryValue('spaceBeforeNicks', msg.args[0]) and \
-                s.split()[0].endswith((",", ":")):
+                    s.split()[0].endswith((",", ":")):
                 # If the last character of the first word ends with a ',' or
                 # ':', prepend a space.
                 s = self.padchar + s
                 self.log.debug("NoTrigger (%s/%s): prepending message with "
-                    "a space due to config plugins.notrigger."
-                    "spaceBeforeNicks.", msg.args[0], irc.network)
-            # Handle actions properly but destroy any other \001 (CTCP) messages
+                               "a space due to config plugins.notrigger."
+                               "spaceBeforeNicks.", msg.args[0], irc.network)
+            # Handle actions properly but destroy any other \001 (CTCP)
+            # messages
             if self.registryValue('blockCtcp', msg.args[0]) and \
-                s.startswith("\001") and not s.startswith("\001ACTION"):
+                    s.startswith("\001") and not s.startswith("\001ACTION"):
                 s = s[1:-1]
                 self.log.debug("NoTrigger (%s/%s): blocking non-ACTION "
-                    "CTCP due to config plugins.notrigger.blockCtcp.",
-                     msg.args[0], irc.network)
+                               "CTCP due to config "
+                               "plugins.notrigger.blockCtcp.", msg.args[0],
+                               irc.network)
             for k, v in rpairs.items():
                 s = s.replace(k, v)
             if s.startswith(tuple(prefixes)):

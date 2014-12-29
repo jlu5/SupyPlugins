@@ -43,33 +43,38 @@ try:
 except ImportError:
     # Placeholder that allows to run the plugin on a bot
     # without the i18n module
-    _ = lambda x:x
+    _ = lambda x: x
+
 
 class Namegen(callbacks.Plugin):
     """Simple random name generator."""
     threaded = True
+
     def __init__(self, irc):
         self.__parent = super(Namegen, self)
         self.__parent.__init__(irc)
         self.names = {}
         for fn in ('starts', 'middles', 'ends'):
-            with open(os.path.join(os.path.dirname(__file__), '%s.txt') % fn) as f:
+            with open(os.path.join(os.path.dirname(__file__), '%s.txt') % fn) \
+                    as f:
                 self.names[fn] = f.read().splitlines()
 
     def _namegen(self, syl):
         """Generates a random name."""
         numSyl = random.randint(0, syl)
-        name = "{}{}{}".format(random.choice(self.names['starts']), \
-            ''.join(random.sample(self.names['middles'], numSyl)), \
-            random.choice(self.names['ends']))
+        starts = random.choice(self.names['starts'])
+        middles = random.sample(self.names['middles'], numSyl)
+        ends = random.choice(self.names['ends'])
+        name = "{}{}{}".format(starts, middles, ends)
         return name
-        
+
     def namegen(self, irc, msg, args, count, syl):
         """[<count>] [<syllables>]
-        
+
         Generates random names. If not specified, [<count>] defaults to 10.
-        [<syllables>] specifies the maximum number of syllables a name can have,
-        and defaults to the value set in 'config plugins.namegen.syllables'."""
+        [<syllables>] specifies the maximum number of syllables a name can
+        have, and defaults to the value set in 'config
+        plugins.namegen.syllables'."""
         confsyl = self.registryValue("syllables")
         maxsyl = max(confsyl, 10)
         if not count:

@@ -41,7 +41,8 @@ try:
 except ImportError:
     # Placeholder that allows to run the plugin on a bot
     # without the i18n module
-    _ = lambda x:x
+    _ = lambda x: x
+
 
 class FML(callbacks.Plugin):
     """Displays entries from fmylife.com."""
@@ -61,19 +62,21 @@ class FML(callbacks.Plugin):
             irc.error(str(e), Raise=True)
         tree = ElementTree.fromstring(data.decode('utf-8'))
         tree = tree.find('items/item')
+
         try:
             category = tree.find('category').text
             text = tree.find('text').text
             fmlid = tree.attrib['id']
             url = tree.find('short_url').text
         except AttributeError as e:
-            self.log.debug("FML: Error fetching FML %s from URL %s: %s", query,
-                          url, e)
+            self.log.debug("FML: Error fetching FML %s from URL %s: %s",
+                           query, url, e)
             irc.error("That FML does not exist or there was an error "
                       "fetching data from the API.", Raise=True)
-        votes = ircutils.bold("[Agreed: %s / Deserved: %s]" % \
-            (tree.find('agree').text, tree.find('deserved').text))
-        s = format('\x02#%i [%s]\x02: %s - %s %u', fmlid, 
+        votes = ircutils.bold("[Agreed: %s / Deserved: %s]" %
+                              (tree.find('agree').text,
+                              tree.find('deserved').text))
+        s = format('\x02#%i [%s]\x02: %s - %s %u', fmlid,
                    category, text, votes, url)
         irc.reply(s)
     fml = wrap(fml, [additional('positiveInt')])

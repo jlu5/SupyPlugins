@@ -30,9 +30,10 @@
 
 from supybot.test import *
 
+
 class NamegenTestCase(PluginTestCase):
     plugins = ('Namegen',)
-    
+
     def testNamegen(self):
         self.assertNotError('namegen')
         self.assertNotError('namegen 2')
