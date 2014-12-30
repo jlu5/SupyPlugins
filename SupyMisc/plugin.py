@@ -119,7 +119,7 @@ class SupyMisc(callbacks.Plugin):
     mreplace = wrap(mreplace, [commalist('something'), commalist('something'), 'text'])
 
     def colors(self, irc, msg, args, opts):
-        """takes no arguments.
+        """[--{colors,all}]
 
         Replies with a display of IRC colour codes."""
         opts = dict(opts)
