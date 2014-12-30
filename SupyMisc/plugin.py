@@ -127,6 +127,13 @@ class SupyMisc(callbacks.Plugin):
             s = ['\x03%s,%s %s,%s \x0F' % (x,y,x,y) for (x, y) in
                  product(range(16), range(16))]
             s = ''.join(s)
+        if 'long' in opts:
+            s = ("\x0301,00 0 White \x0300,01 1 Black \x0300,02 2 Blue "
+                 "\x0300,03 3 Green \x0300,04 4 Red \x0300,05 5 Brown "
+                 "\x0300,06 6 Purple \x0301,07 7 Orange \x0301,08 8 Yellow "
+                 "\x0301,09 9 Light Green \x0300,10 10 Cyan \x0301,11 11 Light Cyan "
+                 "\x0300,12 12 Light Blue \x0300,13 13 Pink \x0300,14 14 Grey "
+                 "\x0301,15 15 Light Grey ")
         else:
             s = ("\x0300,00  \x0F\x0300 00\x0F \x0301,01  \x0F\x0301 01\x0F "
                  "\x0302,02  \x0F\x0302 02\x0F \x0303,03  \x0F\x0303 03\x0F "
@@ -137,7 +144,7 @@ class SupyMisc(callbacks.Plugin):
                  "\x0312,12  \x0F\x0312 12\x0F \x0313,13  \x0F\x0313 13\x0F "
                  "\x0314,14  \x0F\x0314 14\x0F \x0315,15  \x0F\x0315 15\x0F")
         irc.reply(s)
-    colors = wrap(colors, [getopts({'all': ''})])
+    colors = wrap(colors, [getopts({'all': '', 'long': ''})])
 
     def tld(self, irc, msg, args, text):
         """<tld>
