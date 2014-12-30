@@ -124,14 +124,18 @@ class SupyMisc(callbacks.Plugin):
         Replies with a display of IRC colour codes."""
         opts = dict(opts)
         if 'all' in opts:
-            s = ['\x03%s,%s %s,%s \x0F' % (x,y,x,y) for (x, y) in product(range(16), range(16))]
+            s = ['\x03%s,%s %s,%s \x0F' % (x,y,x,y) for (x, y) in
+                 product(range(16), range(16))]
             s = ''.join(s)
         else:
-            s = ("\x03,00  \x0F\x0300 00\x0F \x03,01  \x0F\x0301 01\x0F \x03,02  \x0F\x0302 02\x0F \x03,03  "
-                 "\x0F\x0303 03\x0F \x03,04  \x0F\x0304 04\x0F \x03,05  \x0F\x0305 05\x0F \x03,06  \x0F\x0306"
-                 " 06\x0F \x03,07  \x0F\x0307 07\x0F \x03,08  \x0F\x0308 08\x0F \x03,09  \x0F\x0309 09\x0F "
-                 "\x03,10  \x0F\x0310 10\x0F \x03,11  \x0F\x0311 11\x0F \x03,12  \x0F\x0312 12\x0F \x03,13  "
-                 "\x0F\x0313 13\x0F \x03,14  \x0F\x0314 14\x0F \x03,15  \x0F\x0315 15\x0F")
+            s = ("\x0300,00  \x0F\x0300 00\x0F \x0301,01  \x0F\x0301 01\x0F "
+                 "\x0302,02  \x0F\x0302 02\x0F \x0303,03  \x0F\x0303 03\x0F "
+                 "\x0304,04  \x0F\x0304 04\x0F \x0305,05  \x0F\x0305 05\x0F "
+                 "\x0306,06  \x0F\x0306 06\x0F \x0307,07  \x0F\x0307 07\x0F "
+                 "\x0308,08  \x0F\x0308 08\x0F \x0309,09  \x0F\x0309 09\x0F "
+                 "\x0310,10  \x0F\x0310 10\x0F \x0311,11  \x0F\x0311 11\x0F "
+                 "\x0312,12  \x0F\x0312 12\x0F \x0313,13  \x0F\x0313 13\x0F "
+                 "\x0314,14  \x0F\x0314 14\x0F \x0315,15  \x0F\x0315 15\x0F")
         irc.reply(s)
     colors = wrap(colors, [getopts({'all': ''})])
 
@@ -141,7 +145,8 @@ class SupyMisc(callbacks.Plugin):
         Checks whether <tld> is a valid TLD using IANA's TLD database
         (http://www.iana.org/domains/root/db/)."""
         db = "http://www.iana.org/domains/root/db/"
-        text = text.split(".")[-1] # IANA's DB doesn't care about second level domains
+        text = text.split(".")[-1]  # IANA's DB doesn't care about second level
+                                    # domains
         # Encode everything in IDN in order to support international TLDs
         try: # Python 2
             s = text.decode("utf8").encode("idna")
@@ -151,12 +156,14 @@ class SupyMisc(callbacks.Plugin):
             data = utils.web.getUrl(db + s)
         except utils.web.Error as e:
             if "HTTP Error 404:" in str(e):
-                irc.error("No results found for TLD .{}".format(text), Raise=True)
+                irc.error("No results found for TLD .{}".format(text),
+                          Raise=True)
             else:
                 irc.error("An error occurred while contacting IANA's "
                     "TLD Database.", Raise=True)
         else:
-            irc.reply(".{} appears to be a valid TLD, see {}{}".format(text, db, s))
+            irc.reply(".{} appears to be a valid TLD, see {}{}".format(text,
+                                                                       db, s))
     tld = wrap(tld, ['something'])
 
     ### Generic informational commands (ident fetcher, channel counter, etc.)
