@@ -31,6 +31,9 @@ Please note that this list may not always be up to date; your best bet is to act
 
 Most of these plugins have their own READMEs in their folders; you can check them for a usage demonstration or further explanation of what they do.
 
+##### CtcpNext
+- Alternative to the official Ctcp plugin, with a database for configurable replies.
+
 ##### DDG
 - Provides an interface to DuckDuckGo's web search.
    - **Requires:** [Beautiful Soup 4](http://www.crummy.com/software/BeautifulSoup/bs4/doc/)
