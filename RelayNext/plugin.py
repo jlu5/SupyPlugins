@@ -236,8 +236,12 @@ class RelayNext(callbacks.Plugin):
                 self.relay(irc, msg, channel=channel)
     def doQuit(self, irc, msg):
         for channel in self._getAllRelaysForNetwork(irc):
-            if msg.nick in self.ircstates[irc].channels[channel].users:
-                self.relay(irc, msg, channel=channel)
+            try:
+                if msg.nick in self.ircstates[irc].channels[channel].users:
+                    self.relay(irc, msg, channel=channel)
+            except Exception as e:
+                self.log.debug("RelayNext: something happened while handling a quit:"
+                               " %s", str(e))
 
     def outFilter(self, irc, msg):
         # Catch our own messages and send them into the relay (this is
