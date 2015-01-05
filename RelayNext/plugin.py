@@ -30,6 +30,7 @@
 
 from copy import deepcopy
 import pickle
+import re
 
 import supybot.world as world
 import supybot.irclib as irclib
@@ -172,7 +173,12 @@ class RelayNext(callbacks.Plugin):
                 newnick = self.simpleHash(newnick)
             s = '- %s is now known as %s' % (nick, newnick)
         elif msg.command == 'PRIVMSG':
-            s = '<%s> %s' % (nick, msg.args[1])
+            text = msg.args[1]
+            if re.match('^\x01ACTION .*\x01$', text):
+                text = text[8:-1]
+                s = '* %s %s' % (nick, text)
+            else:
+                s = '<%s> %s' % (nick, msg.args[1])
         elif msg.command == 'JOIN':
             s = '- %s%s has joined %s' % (nick, userhost, channel)
         elif msg.command == 'PART':
