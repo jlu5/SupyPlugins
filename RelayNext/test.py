@@ -33,5 +33,4 @@ from supybot.test import *
 class RelayNextTestCase(PluginTestCase):
     plugins = ('RelayNext',)
 
-
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:

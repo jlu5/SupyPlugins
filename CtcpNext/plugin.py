@@ -119,7 +119,7 @@ class CtcpNext(callbacks.PluginRegexp):
         """
         self.db[ctcp.upper()] = response
         irc.replySuccess()
-    set = wrap(set, ['somethingWithoutSpaces', 'text'])
+    set = wrap(set, ['admin', 'somethingWithoutSpaces', 'text'])
 
     def unset(self, irc, msg, args, ctcp):
         """<ctcp>
@@ -133,7 +133,7 @@ class CtcpNext(callbacks.PluginRegexp):
             irc.error("No such CTCP '%s' exists." % ctcp, Raise=True)
         else:
             irc.replySuccess()
-    unset = wrap(unset, ['somethingWithoutSpaces'])
+    unset = wrap(unset, ['admin', 'somethingWithoutSpaces'])
     
     def list(self, irc, msg, args):
         """takes no arguments.
