@@ -28,6 +28,7 @@
 
 ###
 
+from copy import deepcopy
 import pickle
 
 import supybot.world as world
@@ -158,7 +159,10 @@ class RelayNext(callbacks.Plugin):
         # Skip hostmask checking if the sender is a server
         # ('.') present in name
         if useHostmask and '.' not in nick:
-            userhost = ' (%s)' % msg.prefix.split('!', 1)[1]
+            try:
+                userhost = ' (%s)' % msg.prefix.split('!', 1)[1]
+            except:
+                pass
 
         if msg.command == 'NICK':
             newnick = msg.args[0]
@@ -207,12 +211,14 @@ class RelayNext(callbacks.Plugin):
                     try:
                         otherIrc = self.networks[net]
                     except KeyError:
-                        self.log.info("RelayNext: message to %s dropped, we "
+                        self.log.debug("RelayNext: message to %s dropped, we "
                                       "are not connected there!", net)
                     else:
                         out_s = self._format(irc, msg)
                         if out_s:
-                            otherIrc.queueMsg(ircmsgs.privmsg(target, out_s))
+                            out_msg = ircmsgs.privmsg(target, out_s)
+                            out_msg.tag('relayedMsg')
+                            otherIrc.queueMsg(out_msg)
 
     def doPrivmsg(self, irc, msg):
         self.relay(irc, msg)
@@ -230,6 +236,16 @@ class RelayNext(callbacks.Plugin):
         for channel in self._getAllRelaysForNetwork(irc):
             if msg.nick in self.ircstates[irc].channels[channel].users:
                 self.relay(irc, msg, channel=channel)
+
+    def outFilter(self, irc, msg):
+        # Catch our own messages and send them into the relay (this is
+        # useful because Supybot is often a multi-purpose bot!)
+        if msg.command == 'PRIVMSG' and not msg.relayedMsg:
+                if msg.args[0] in self._getAllRelaysForNetwork(irc):
+                    new_msg = deepcopy(msg)
+                    new_msg.nick = irc.nick
+                    self.relay(irc, new_msg, channel=msg.args[0])
+        return msg
 
     ### User commands
 
