@@ -204,26 +204,26 @@ class RelayNext(callbacks.Plugin):
         # Get the source channel
         source = "%s@%s" % (channel, irc.network)
         source = source.lower()
-        for relay in self.db.values():
-            if source in relay:  # If our channel is in a relay
-                # Create a copy of the relay definition so we don't
-                # overwrite it
-                targets = set(relay[:])
-                # Remove the current channel so we we don't get a loop
-                # of messages being relayed back to source
-                targets.remove(source)
-                for cn in targets:
-                    target, net = cn.split("@")
-                    if net not in self.networks.keys():
-                        self.initializeNetworks()
-                    try:
-                        otherIrc = self.networks[net]
-                    except KeyError:
-                        self.log.debug("RelayNext: message to %s dropped, we "
-                                      "are not connected there!", net)
-                    else:
-                        out_s = self._format(irc, msg)
-                        if out_s:
+        out_s = self._format(irc, msg)
+        if out_s:
+            for relay in self.db.values():
+                if source in relay:  # If our channel is in a relay
+                    # Create a copy of the relay definition so we don't
+                    # overwrite it
+                    targets = set(relay[:])
+                    # Remove the current channel so we we don't get a loop
+                    # of messages being relayed back to source
+                    targets.remove(source)
+                    for cn in targets:
+                        target, net = cn.split("@")
+                        if net not in self.networks.keys():
+                            self.initializeNetworks()
+                        try:
+                            otherIrc = self.networks[net]
+                        except KeyError:
+                            self.log.debug("RelayNext: message to %s dropped, we "
+                                           "are not connected there!", net)
+                        else:
                             out_msg = ircmsgs.privmsg(target, out_s)
                             out_msg.tag('relayedMsg')
                             otherIrc.queueMsg(out_msg)
