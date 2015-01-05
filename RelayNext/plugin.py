@@ -271,6 +271,7 @@ class RelayNext(callbacks.Plugin):
         source = "%s@%s" % (channel, irc.network)
         source = source.lower()
         totalChans = 0
+        totalUsers = 0
         allUsers = []
         # Make a set to prevent duplicates since one channel
         # can be part of many relays
@@ -287,7 +288,7 @@ class RelayNext(callbacks.Plugin):
                 c = self.networks[net].state.channels[channel]
             except KeyError:
                 continue
-            totalUsers = len(c.users)
+            totalUsers += len(c.users)
             users = []
             for s in c.users:
                 s = s.strip()
@@ -300,7 +301,7 @@ class RelayNext(callbacks.Plugin):
                 else:
                     users.append(s)
             allUsers += c.users
-            s = format('%s users in %s on %s: %L', totalUsers,
+            s = format('%s users in %s on %s: %L', len(c.users),
                        channel, net, users)
             if 'count' not in opts:
                 irc.reply(s, private=True)
