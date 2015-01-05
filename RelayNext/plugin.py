@@ -46,7 +46,8 @@ try:
 except ImportError:
     # Placeholder that allows to run the plugin on a bot
     # without the i18n module
-    _ = lambda x:x
+    _ = lambda x: x
+
 
 filename = conf.supybot.directories.data.dirize("RelayNext.db")
 
@@ -69,7 +70,8 @@ class RelayNext(callbacks.Plugin):
             with open(filename, 'wb') as f:
                 pickle.dump(self.db, f, 2)
         except Exception as e:
-             self.log.warning('RelayNext: Unable to write pickled database: %s', e)
+             self.log.warning('RelayNext: Unable to write pickled database: %s',
+                              e)
 
     def __init__(self, irc):
         self.__parent = super(RelayNext, self)
@@ -145,10 +147,10 @@ class RelayNext(callbacks.Plugin):
         s = ''
         nick = msg.nick
         userhost = ''
-        noHighlight = True
-        useHostmask = True
-        color = True
         channel = msg.args[0]
+        noHighlight = self.registryValue('noHighlight', channel)
+        useHostmask = self.registryValue('hostmasks', channel)
+        color = self.registryValue('color', channel)
         netname = irc.network.lower()
 
         if color:

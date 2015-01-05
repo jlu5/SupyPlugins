@@ -36,7 +36,8 @@ try:
 except:
     # Placeholder that allows to run the plugin on a bot
     # without the i18n module
-    _ = lambda x:x
+    _ = lambda x: x
+
 
 def configure(advanced):
     # This will be called by supybot to configure this module.  advanced is
@@ -48,9 +49,17 @@ def configure(advanced):
 
 
 RelayNext = conf.registerPlugin('RelayNext')
-# This is where your configuration variables (if any) should go.  For example:
-# conf.registerGlobalValue(RelayNext, 'someConfigVariableName',
-#     registry.Boolean(False, _("""Help for someConfigVariableName.""")))
+
+conf.registerChannelValue(RelayNext, 'color',
+    registry.Boolean(True, _("""Determines whether the bot will color relayed
+    PRIVMSGs so as to make the messages easier to read.""")))
+conf.registerChannelValue(RelayNext, 'hostmasks',
+    registry.Boolean(True, _("""Determines whether the bot will relay the
+    hostmask of the person joining or parting the channel when he or she joins
+    or parts.""")))
+conf.registerChannelValue(RelayNext, 'noHighlight',
+    registry.Boolean(False, _("""Determines whether the bot should prefix nicks
+    with a hyphen (-) to prevent excess highlights (in PRIVMSGs and actions).""")))
 
 
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:
