@@ -208,11 +208,8 @@ class RelayNext(callbacks.Plugin):
         if out_s:
             for relay in self.db.values():
                 if source in relay:  # If our channel is in a relay
-                    # Create a copy of the relay definition so we don't
-                    # overwrite it
-                    targets = set(relay[:])
-                    # Remove the current channel so we we don't get a loop
-                    # of messages being relayed back to source
+                    # Remove ourselves so we don't get duplicated messages
+                    targets = relay[:]
                     targets.remove(source)
                     for cn in targets:
                         target, net = cn.split("@")
@@ -339,7 +336,7 @@ class RelayNext(callbacks.Plugin):
         NAME of your network (see 'networks' for a list of connected ones).
         <id> is the name of your relay; it can be a number, string, etc.
         """
-        relays = set(relays)
+        relays = set([relay.lower() for relay in relays])
         if len(relays) < 2:
             irc.error("Not enough channels to relay between (need at least "
                       "2).", Raise=True)
@@ -350,7 +347,7 @@ class RelayNext(callbacks.Plugin):
                 irc.error("Channels must be given in the form "
                           "#channel@networkname", Raise=True)
         else:
-            self.db[rid] = [relay.lower() for relay in relays]
+            self.db[rid] = list(relays)
             irc.replySuccess()
     set = wrap(set, ['admin', 'somethingWithoutSpaces',
                      many('somethingWithoutSpaces')])
