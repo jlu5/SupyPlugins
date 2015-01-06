@@ -61,5 +61,11 @@ conf.registerChannelValue(RelayNext, 'noHighlight',
     registry.Boolean(False, _("""Determines whether the bot should prefix nicks
     with a hyphen (-) to prevent excess highlights (in PRIVMSGs and actions).""")))
 
+conf.registerGroup(RelayNext, 'events')
+
+_events = ('quit', 'join', 'part', 'nick', 'mode', 'kick')
+for ev in _events:
+    conf.registerChannelValue(RelayNext.events, 'relay%ss' % ev,
+        registry.Boolean(True, """Determines whether the bot should relay %ss.""" % ev))
 
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:

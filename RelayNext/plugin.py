@@ -231,19 +231,25 @@ class RelayNext(callbacks.Plugin):
     def doPrivmsg(self, irc, msg):
         self.relay(irc, msg)
 
-    doJoin = doPart = doKick = doMode = doPrivmsg
+    def doJoin(self, irc, msg):
+        if self.registryValue("events.relay%ss" % msg.command, msg.args[0]):
+            self.relay(irc, msg)
+
+    doPart = doKick = doMode = doJoin
 
     # NICK and QUIT aren't channel specific, so they require a bit
     # of extra handling
     def doNick(self, irc, msg):
         newnick = msg.args[0]
         for channel in self._getAllRelaysForNetwork(irc):
-            if newnick in irc.state.channels[channel].users:
+            if self.registryValue("events.relaynicks", channel) and \
+                    newnick in irc.state.channels[channel].users:
                 self.relay(irc, msg, channel=channel)
     def doQuit(self, irc, msg):
         for channel in self._getAllRelaysForNetwork(irc):
             try:
-                if msg.nick in self.ircstates[irc].channels[channel].users:
+                if self.registryValue("events.relayquits", channel) and \
+                        msg.nick in self.ircstates[irc].channels[channel].users:
                     self.relay(irc, msg, channel=channel)
             except Exception as e:
                 self.log.debug("RelayNext: something happened while handling a quit:"
