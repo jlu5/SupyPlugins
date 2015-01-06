@@ -1,18 +1,18 @@
 # SupyPlugins
 [![Build Status](https://travis-ci.org/GLolol/SupyPlugins.svg?branch=master)](https://travis-ci.org/GLolol/SupyPlugins)
 
-My collection of plugins for [Supybot/Limnoria](https://github.com/ProgVal/Limnoria). This repository is provided **AS IS**, **without any warranty provided**! It may glitch, break, or spontaneously combust at any time. You have been warned!
+My collection of plugins for [Supybot/Limnoria](https://github.com/ProgVal/Limnoria). This repository is provided **AS IS**, **without any warranty**! It may glitch, break, or spontaneously combust at any time. You have been warned!
 
 ## Installation
-The recommended way of fetching plugins in this repository is to clone the git repository: 
+The recommended way of fetching plugins in this repository is to clone the git repository:
 
-* `$ git clone https://github.com/GLolol/SupyPlugins` 
+* `$ git clone https://github.com/GLolol/SupyPlugins`
 
-and adding the folder to your bot's `config directories.plugins`. 
+and adding the folder to your bot's `config directories.plugins`.
 
-**You will need a working copy of [Limnoria](https://github.com/ProgVal/Limnoria) running on Python 2.7 or Python 3.4+.** The repository *may* also work with Python 3.2-3.3 (Debian 7/Ubuntu 12.04/Fedora 19-20), but this is relatively untested (besides [some tests with Travis-CI](https://travis-ci.org/GLolol/SupyPlugins/)) and therefore not officially supported. **Anything older will *not* work.**
+**You will need a working copy of [Limnoria](https://github.com/ProgVal/Limnoria) running on Python 2.7 or Python 3.2+.** Anything older will *not* work.
 
-For those of you using a recent version of Limnoria's PluginDownloader, you can also fetch [individual plugins](#list-of-plugins) by running: 
+If you are using a recent version of Limnoria's PluginDownloader, you can also fetch [individual plugins](#list-of-plugins) by running:
 
 * `install GLolol <plugin>`
 
@@ -29,7 +29,7 @@ Unless otherwise noted, all plugins are available under a 3 clause BSD license (
 ## List of plugins
 Please note that this list may not always be up to date; your best bet is to actually browse the code for yourself! Any specific plugin dependencies should also be listed.
 
-Most of these plugins have their own READMEs in their folders; you can check them for a usage demonstration or further explanation of what they do.
+Most of these plugins also have their own READMEs in their folders; you can usually find a usage demonstration or further explanation of what they do.
 
 ##### CtcpNext
 - Alternative to the official Ctcp plugin, with a database for configurable replies.
@@ -52,10 +52,6 @@ Most of these plugins have their own READMEs in their folders; you can check the
 
 ##### [Namegen](Namegen/README.md)
 - A small random name generator.
-
-##### OperUp *(deprecated)*
-- Simple plugin that allows Supybot to oper up on configured networks, automatically (on connect) and manually.
-   - **This plugin is deprecated and will likely be removed in a future release.**
 
 ##### PassGen
 - Generates random passwords on the fly!
@@ -82,5 +78,5 @@ Most of these plugins have their own READMEs in their folders; you can check the
 - My fork of [reticulatingspline's Weather](https://github.com/reticulatingspline/Weather) plugin. [Source](https://github.com/GLolol/Supybot-Weather)
 
 ##### [WTE](WTE/README.md)
-- Worst Translations Ever! plugin. Translates <text> through multiple rounds of Google Translate to get some interesting results!
+- Worst Translations Ever! plugin. Translates text through multiple rounds of Google Translate to get some interesting results!
    - Due to lingering issues with Unicode handling in Python 2, **Python 3 is strongly recommended** for those using this plugin.
