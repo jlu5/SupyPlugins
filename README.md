@@ -64,6 +64,9 @@ Most of these plugins also have their own READMEs in their folders; you can usua
 - [LinkRelay](https://github.com/ProgVal/Supybot-plugins/tree/master/LinkRelay) forked into a different name. See [RelayLink/README.md](RelayLink/README.md) for more details.
    - **Mainstream development has ceased. Any new changes will only be for maintainence purposes or bugfixes.**
 
+##### [RelayNext](RelayNext/README.md)
+- Next generation relayer plugin, designed with two-way relays in mind.
+
 ##### SupyMisc
 - Some assorted commands that don't seem to fit anywhere else.
 
