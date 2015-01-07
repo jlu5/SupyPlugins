@@ -209,7 +209,7 @@ class RelayNext(callbacks.Plugin):
             for relay in self.db.values():
                 if source in relay:  # If our channel is in a relay
                     # Remove ourselves so we don't get duplicated messages
-                    targets = relay[:]
+                    targets = deepcopy(relay)
                     targets.remove(source)
                     for cn in targets:
                         target, net = cn.split("@")
@@ -328,29 +328,84 @@ class RelayNext(callbacks.Plugin):
                       private=True)
     nicks = wrap(nicks, ['Channel', getopts({'count': ''})])
 
-    def set(self, irc, msg, args, rid, relays):
-        """<id> <relays>
-
-        Sets relay <id> to relay between <relays>. <relays> is a space
-        separated list of #channel@network combinations, where network is the
-        NAME of your network (see 'networks' for a list of connected ones).
-        <id> is the name of your relay; it can be a number, string, etc.
-        """
-        relays = set([relay.lower() for relay in relays])
-        if len(relays) < 2:
-            irc.error("Not enough channels to relay between (need at least "
-                      "2).", Raise=True)
-
+    def checkRelays(self, irc, relays):
         for relay in relays:
+            self.log.info("RelayNext: checking relay %s", relay)
             r = relay.split("@")
             if len(r) != 2 or not (ircutils.isChannel(r[0]) and r[1]):
                 irc.error("Channels must be given in the form "
                           "#channel@networkname", Raise=True)
-        else:
-            self.db[rid] = list(relays)
-            irc.replySuccess()
+
+    def set(self, irc, msg, args, rid, relays):
+        """<id> <relays>
+
+        Sets relay <id> to relay between <relays>. <relays> is a space
+        separated list of #channel@network combinations, where <network> is the
+        name of your network. <id> is the name of your relay, which can be a
+        number, string, etc.
+        """
+        relays = set(map(str.lower, relays))
+        if len(relays) < 2:
+            irc.error("Not enough channels to relay between (need at least "
+                      "2).", Raise=True)
+        self.checkRelays(irc, relays)
+        self.db[rid] = relays
+        irc.replySuccess()
     set = wrap(set, ['admin', 'somethingWithoutSpaces',
                      many('somethingWithoutSpaces')])
+
+    def add(self, irc, msg, args, rid, relays):
+        """<id> <relays>
+
+        Adds <relays> to relay <id>, creating it if it does not already
+        exist. <relays> is a space separated list of #channel@network
+        combinations, where <network> is the name of your network.
+        <id> is the name of your relay, which can be a number, string, etc.
+        """
+        # Supybot's internals are terribly inconsistent here, only
+        # returning a list IF there are more than one items. Otherwise,
+        # the object is returned alone.
+        if type(relays) == list:
+            relays = list(map(str.lower, relays))
+        else:
+            relays = [relays.lower()]
+        self.checkRelays(irc, relays)
+        if rid not in self.db.keys() and len(relays) < 2:
+            irc.error("Not enough channels to relay between (need at least "
+                      "2).", Raise=True)
+        try:
+            new_relays = self.db[rid]
+        except KeyError:
+            self.db[rid] = new_relays = set()
+        new_relays.update(relays)
+        irc.replySuccess()
+    add = wrap(add, ['admin', 'somethingWithoutSpaces',
+                     many('somethingWithoutSpaces')])
+
+    def remove(self, irc, msg, args, rid, relays):
+        """<id> <relays>
+
+        Removes <relays> from relay <id>. <relays> is a space separated
+        list of #channel@network combinations, where <network> is the name
+        of your network. <id> is the name of your relay, which can be a
+        number, string, etc.
+        """
+        try:
+            current_relays = self.db[rid]
+        except KeyError:
+            irc.error("No such relay '%s' exists." % rid, Raise=True)
+        if type(relays) == list:
+            relays = list(map(str.lower, relays))
+        else:
+            relays = [relays.lower()]
+        self.checkRelays(irc, relays)
+        for relay in relays:
+            current_relays.discard(relay)
+        if len(current_relays) < 2:
+            del self.db[rid]
+        irc.replySuccess()
+    remove = wrap(remove, ['admin', 'somethingWithoutSpaces',
+                           many('somethingWithoutSpaces')])
 
     def unset(self, irc, msg, args, rid):
         """<id>
