@@ -60,10 +60,13 @@ class NoTrigger(callbacks.Plugin):
             self.padchar = u('\u200B')[0]
 
     def isChanStripColor(self, irc, channel):
-        c = irc.state.channels[channel]
-        for item in self.registryValue('colorAware.modes'):
-            if item in c.modes:
-                return True
+        try:
+            c = irc.state.channels[channel]
+            for item in self.registryValue('colorAware.modes'):
+                if item in c.modes:
+                    return True
+        except KeyError:
+            return True
         return False
 
     def outFilter(self, irc, msg):
