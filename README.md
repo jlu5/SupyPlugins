@@ -60,10 +60,6 @@ Most of these plugins also have their own READMEs in their folders; you can usua
 - Fetches package information from Debian, Ubuntu, Arch Linux, and Linux Mint's repositories.
    - **Requires:** [Beautiful Soup 4](http://www.crummy.com/software/BeautifulSoup/bs4/doc/) - install it via `pip install beautifulsoup4` or `apt-get install python-bs4`/`python3-bs4` (Debian/Ubuntu)
 
-##### [RelayLink](RelayLink/README.md)
-- [LinkRelay](https://github.com/ProgVal/Supybot-plugins/tree/master/LinkRelay) forked into a different name. See [RelayLink/README.md](RelayLink/README.md) for more details.
-   - **Mainstream development has ceased. Any new changes will only be for maintainence purposes or bugfixes.**
-
 ##### [RelayNext](RelayNext/README.md)
 - Next generation relayer plugin, designed with two-way relays in mind.
 
