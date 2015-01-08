@@ -330,7 +330,6 @@ class RelayNext(callbacks.Plugin):
 
     def checkRelays(self, irc, relays):
         for relay in relays:
-            self.log.info("RelayNext: checking relay %s", relay)
             r = relay.split("@")
             if len(r) != 2 or not (ircutils.isChannel(r[0]) and r[1]):
                 irc.error("Channels must be given in the form "
