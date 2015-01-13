@@ -34,22 +34,19 @@ from supybot.commands import *
 import supybot.plugins as plugins
 import supybot.ircutils as ircutils
 import supybot.callbacks as callbacks
+
 from collections import OrderedDict, defaultdict
-try: # Python 3
+try:  # Python 3
     from urllib.parse import urlencode, quote
-except ImportError: # Python 2
+except ImportError:  # Python 2
     from urllib import urlencode, quote
 import json
-
-# I don't want to be too dependant on BeautifulSoup at this time;
-# not all commands use it, but it is required by some. -GLolol
-global bs4Present
 try:
     from bs4 import BeautifulSoup
 except ImportError:
-    bs4Present = False
-else:
-    bs4Present = True
+    raise ImportError("Beautiful Soup 4 is required for this plugin: get it"
+                      " at http://www.crummy.com/software/BeautifulSoup/bs4/"
+                      "doc/#installing-beautiful-soup")
 
 try:
     from supybot.i18n import PluginInternationalization
@@ -57,77 +54,84 @@ try:
 except ImportError:
     # Placeholder that allows to run the plugin on a bot
     # without the i18n module
-    _ = lambda x:x
+    _ = lambda x: x
+
 
 class PkgInfo(callbacks.Plugin):
     """Fetches package information from the repositories of
-    Debian, Arch Linux, and Ubuntu."""
+    Debian, Arch Linux, Linux Mint, and Ubuntu."""
     threaded = True
 
     def __init__(self, irc):
         self.__parent = super(PkgInfo, self)
         self.__parent.__init__(irc)
-        self.addrs = {'ubuntu':'http://packages.ubuntu.com/',
-                      'debian':"https://packages.debian.org/"}
+        self.addrs = {'ubuntu': 'http://packages.ubuntu.com/',
+                      'debian': "https://packages.debian.org/"}
 
     def _getDistro(self, release):
         """<release>
 
         Guesses the distribution from the release name."""
         release = release.lower()
-        if release.startswith(("oldstable","squeeze","wheezy","stable",
-            "jessie","testing","sid","unstable")):
+        if release.startswith(("oldstable", "squeeze", "wheezy", "stable",
+                               "jessie", "testing", "sid", "unstable")):
             distro = "debian"
-        elif release.startswith(("hardy","lucid","maverick","natty","oneiric",
-            "precise","quantal","raring","saucy","trusty","utopic","vivid")):
+        elif release.startswith(("hardy", "lucid", "maverick", "natty",
+                                 "oneiric", "precise", "quantal", "raring",
+                                 "saucy", "trusty", "utopic", "vivid")):
             distro = "ubuntu"
         else:
             distro = None
         return distro
 
-    def MadisonParse(self, pkg, dist, codenames='', suite='', useSource=False, reverse=False):
-        # The arch value implies 'all' (architecture-independent packages) and 'source'
-        # (source packages), in order to prevent misleading "Not found" errors.
+    def MadisonParse(self, pkg, dist, codenames='', suite='', useSource=False,
+                     reverse=False):
+        """Parser for the madison API at https://qa.debian.org/madison.php."""
+        # This arch value implies 'all' (architecture-independent packages)
+        # and 'source' (source packages), in order to prevent misleading
+        # "Not found" errors.
         arch = self.registryValue("archs") + ['all', 'source']
         arch = ','.join(set(arch))
-        self.arg = {'package':pkg,'table':dist,'a':arch,'c':codenames,'s':suite,
-            }
+        self.arg = {'package': pkg, 'table': dist, 'a': arch, 'c': codenames,
+                    's': suite}
         if useSource:
             self.arg['S'] = 'on'
         self.arg = urlencode(self.arg)
         url = 'https://qa.debian.org/madison.php?text=on&' + self.arg
+        self.log.debug("PkgInfo: Using url %s for 'vlist' command", url)
         d = OrderedDict()
         fd = utils.web.getUrlFd(url)
         for line in fd.readlines():
             L = line.decode("utf-8").split("|")
-            L = list(map(str.strip, list(map(str, L))))
+            L = map(str.strip, L)
+            name, version, release, archs = L
             if useSource:
-                d['%s: %s' % (L[2], L[0])] = (L[1], L[3])
+                d['%s: %s' % (release, name)] = (version, archs)
             else:
-                d[L[2]] = (L[1],L[3])
+                d[release] = (version, archs)
         if d:
             if reverse:
                 # *sigh*... I wish there was a better way to do this
                 d = OrderedDict(reversed(tuple(d.items())))
             if self.registryValue("verbose"):
-                return 'Found %s results: ' % len(d) + ', '.join("{!s} " \
-                "\x02({!s} [{!s}])\x02".format(k,v[0],v[1]) for (k,v) in \
-                d.items())
-            return 'Found %s results: ' % len(d) + ', '.join("{!s} " \
-            "\x02({!s})\x02".format(k,v[0]) for (k,v) in d.items())
+                items = ["{name} \x02({version} [{archs}])\x02".format(name=k,
+                         version=v[0], archs=v[1]) for (k, v) in d.items()]
+            else:
+                items = ["{name} \x02({version})\x02".format(name=k,
+                         version=v[0]) for (k, v) in d.items()]
+            s = format('Found %n: %L', (len(d), 'result'), items)
+            return s
         else:
-            self.log.debug("PkgInfo: No results found for URL %s" % url)
+            self.log.debug("PkgInfo: No results found for URL %s", url)
 
-    def package(self, irc, msg, args, release, pkg):
-        """<release> <package>
+    def package(self, irc, msg, args, release, pkg, opts):
+        """<release> <package> [--{depends|recommends|suggests}]
 
         Fetches information for <package> from Debian or Ubuntu's repositories.
-        <release> is the codename/release name (e.g. 'trusty', 'squeeze').
+        <release> is the codename/release name (e.g. 'trusty', 'squeeze'). If
+        --depends, --recommends, or --suggests is given, fetches dependency
+        info for <package>.
         For Arch Linux packages, please use 'archpkg' and 'archaur' instead."""
-        if not bs4Present:
-            irc.error("This command requires the Beautiful Soup 4 library. See"
-                " https://github.com/GLolol/SupyPlugins/blob/master/README.md"
-                "#pkginfo for instructions on how to install it.", Raise=True)
         pkg = pkg.lower()
         distro = self._getDistro(release)
         try:
@@ -140,27 +144,66 @@ class PkgInfo(callbacks.Plugin):
             irc.error(str(e), Raise=True)
         soup = BeautifulSoup(fd)
         if "Error" in soup.title.string:
-            err = soup.find('div', attrs={"id":"content"}).find('p').string
+            err = soup.find('div', attrs={"id": "content"}).find('p').string
             if "two or more packages specified" in err:
                 irc.error("Unknown distribution/release.", Raise=True)
             irc.reply(err)
             return
-        desc = soup.find('meta', attrs={"name":"Description"})["content"]
+        opts = dict(opts)
+        if opts:
+            items = soup.find_all('dt')
+            keyws = {'depends': 'dep:', 'recommends': 'rec:',
+                     'suggests': 'sug:'}
+            if 'depends' in opts:
+                lookup = 'depends'
+            elif 'recommends' in opts:
+                lookup = 'recommends'
+            elif 'suggests' in opts:
+                lookup = 'suggests'
+            keyw = keyws[lookup]
+            res = []
+            for item in items:
+                try:
+                    name = item.a.text
+                    if item.text.startswith("or") and keyw in \
+                            item.find_previous_siblings("dt")[0].span.text:
+                        res[-1] = "%s or \x02%s\x02" % (res[-1], name)
+                    elif keyw in item.span.text:
+                        res.append("\x02%s\x02" % name)
+                except AttributeError as e:
+                    continue
+            if res:
+                s = format("Package \x02%s\x02 %s: %L, View more at %u", pkg,
+                           lookup, res, url)
+                irc.reply(s)
+            else:
+                irc.error("%s doesn't seem to have any %s." % (pkg, lookup))
+            return
+        desc = soup.find('meta', attrs={"name": "Description"})["content"]
         # Get package information from the meta tags
-        keywords = soup.find('meta', attrs={"name":"Keywords"})["content"]
-        keywords = keywords.replace(",","").split()
-        irc.reply("Package: \x02{} ({})\x02 in {} - {}; View more at: {}".format(pkg,
-        keywords[-1], keywords[1], desc, url))
-    pkg = wrap(package, ['somethingWithoutSpaces', 'somethingWithoutSpaces'])
+        keywords = soup.find('meta', attrs={"name": "Keywords"})["content"]
+        keywords = keywords.replace(",", "").split()
+        version = keywords[-1]
+        if version == "virtual":
+            providing = [obj.a.text for obj in soup.find_all('dt')]
+            desc = ("Virtual package provided by: \x02%s\x02" %
+                    ', '.join(providing[:10]))
+            if len(providing) > 10:
+                desc += " and \x02%s\x02 others" % (len(providing) - 10)
+        s = format("Package: \x02%s (%s)\x02 in %s - %s, View more at: %u",
+                   pkg, version, keywords[1], desc, url)
+        irc.reply(s)
+    pkg = wrap(package, ['somethingWithoutSpaces', 'somethingWithoutSpaces',
+               getopts({'depends': '', 'recommends': '', 'suggests': ''})])
 
     def vlist(self, irc, msg, args, distro, pkg, opts):
-        """<distribution> <package> [--source] [--reverse(d)]
+        """<distribution> <package> [--source] [--reverse]
 
         Fetches all available version of <package> in <distribution>, if
         such package exists. Supported entries for <distribution>
         include 'debian', 'ubuntu', 'derivatives', and 'all'. If
         --source is given, search for packages by source package
-        name. If --reverse or --reversed is given, show the newest package versions
+        name. If --reverse is given, show the newest package versions
         first."""
         pkg, distro = map(str.lower, (pkg, distro))
         supported = ("debian", "ubuntu", "derivatives", "all")
@@ -169,16 +212,19 @@ class PkgInfo(callbacks.Plugin):
             if distro is None:
                 irc.error("Unknown distribution.", Raise=True)
         opts = dict(opts)
-        reverse = 'reverse' in opts or 'reversed' in opts
-        d = self.MadisonParse(pkg, distro, useSource='source' in opts, reverse=reverse)
-        if not d: irc.error("No results found.",Raise=True)
+        reverse = 'reverse' in opts
+        d = self.MadisonParse(pkg, distro, useSource='source' in opts,
+                              reverse=reverse)
+        if not d:
+            irc.error("No results found.", Raise=True)
         try:
-            d += " View more at: {}search?keywords={}".format(self.addrs[distro], pkg)
+            url = "{}search?keywords={}".format(self.addrs[distro], pkg)
+            d += format(" View more at: %u", url)
         except KeyError:
             pass
         irc.reply(d)
-    vlist = wrap(vlist, ['somethingWithoutSpaces', 'somethingWithoutSpaces', getopts({'source':'',
-        'reverse':'','reversed':''})])
+    vlist = wrap(vlist, ['somethingWithoutSpaces', 'somethingWithoutSpaces',
+                 getopts({'source': '', 'reverse': ''})])
 
     def archpkg(self, irc, msg, args, pkg, opts):
         """<package> [--exact]
@@ -189,25 +235,30 @@ class PkgInfo(callbacks.Plugin):
         pkg = pkg.lower()
         baseurl = 'https://www.archlinux.org/packages/search/json/?'
         if 'exact' in dict(opts):
-            fd = utils.web.getUrl(baseurl + urlencode({'name':pkg}))
+            url = baseurl + urlencode({'name': pkg})
         else:
-            fd = utils.web.getUrl(baseurl + urlencode({'q':pkg}))
+            url = baseurl + urlencode({'q': pkg})
+        self.log.debug("PkgInfo: using url %s for 'archpkg' command", url)
+        fd = utils.web.getUrl(url)
         data = json.loads(fd.decode("utf-8"))
         if data['valid'] and data['results']:
-            f = set()
+            # We want one entry per package, but the API gives one
+            # entry per architecture! Remove duplicates with a set:
+            results = set()
             archs = defaultdict(list)
             for x in data['results']:
-                s = "{} - {} \x02({})\x02".format(x['pkgname'],x['pkgdesc'],x['pkgver'])
-                f.add(s)
+                s = "\x02{name}\x02 - {desc} \x02({version})\x02".format(
+                    name=x['pkgname'], desc=x['pkgdesc'], version=x['pkgver'])
+                results.add(s)
                 archs[s].append(x['arch'])
-            count = len(f)
-            if self.registryValue("verbose"):
-                irc.reply('Found %s results: ' % count + ', ' \
-                .join("{} \x02[{!s}]\x02".format(s, ', '.join(archs[s])) for s in f))
-            else:
-                irc.reply('Found {} results: {}'.format(count,', '.join(f)))
-        else: irc.error("No results found.",Raise=True)
-    archpkg = wrap(archpkg, ['somethingWithoutSpaces', getopts({'exact':''})])
+            count = len(results)
+            items = [format("%s \x02[%s]\x02", s, ', '.join(archs[s])) for s
+                     in results]
+            irc.reply(format('Found %n: %L', (len(results), 'result'),
+                             list(results)))
+        else:
+            irc.error("No results found.", Raise=True)
+    archpkg = wrap(archpkg, ['somethingWithoutSpaces', getopts({'exact': ''})])
 
     def archaur(self, irc, msg, args, pkg):
         """<package>
@@ -215,7 +266,9 @@ class PkgInfo(callbacks.Plugin):
         Looks up <package> in the Arch Linux AUR."""
         pkg = pkg.lower()
         baseurl = 'https://aur.archlinux.org/rpc.php?type=search&'
-        fd = utils.web.getUrl(baseurl + urlencode({'arg':pkg}))
+        url = baseurl + urlencode({'arg': pkg})
+        self.log.debug("PkgInfo: using url %s for 'archaur' command", url)
+        fd = utils.web.getUrl(url)
         data = json.loads(fd.decode("utf-8"))
         if data["type"] == "error":
             irc.error(data["results"], Raise=True)
@@ -225,14 +278,16 @@ class PkgInfo(callbacks.Plugin):
             # in the bot.
             if count > 150:
                 count = '150+'
-            s = "Found {} result{}: ".format(count,
-                's' if data["resultcount"] != 1 else '')
+            s = format("Found %n: ", (data["resultcount"], 'result'))
             for x in data['results'][:150]:
                 verboseInfo = ''
                 if self.registryValue("verbose"):
-                    verboseInfo = " [ID:{} Votes:{}]".format(x['ID'], x['NumVotes'])
-                s += "{} - {} \x02({}{})\x02, ".format(x['Name'],x['Description'],x['Version'], verboseInfo)
-            irc.reply(s[:-2]) # cut off the ", " at the end
+                    verboseInfo = format("[ID: %s Votes: %s]", x['ID'],
+                                         x['NumVotes'])
+                s += "{name} - {desc} \x02({version} {verbose})\x02, " \
+                    .format(name=x['Name'], desc=x['Description'],
+                            version=x['Version'], verbose=verboseInfo)
+            irc.reply(s[:-2])  # cut off the ", " at the end
         else:
             irc.error("No results found.", Raise=True)
     archaur = wrap(archaur, ['somethingWithoutSpaces'])
@@ -241,10 +296,6 @@ class PkgInfo(callbacks.Plugin):
         """<distro> <query>
 
         Looks up <query> in <distro>'s website (for Debian/Ubuntu)."""
-        if not bs4Present:
-            irc.error("This command requires the Beautiful Soup 4 library. See"
-                " https://github.com/GLolol/SupyPlugins/blob/master/README.md"
-                "#pkginfo for instructions on how to install it.", Raise=True)
         distro = distro.lower()
         if distro not in ("debian", "ubuntu"):
             distro = self._getDistro(distro)
@@ -260,34 +311,36 @@ class PkgInfo(callbacks.Plugin):
         # Debian/Ubuntu use h3 for result names in the format 'Package abcd'
         results = [pkg.string.split()[1] for pkg in soup.find_all('h3')]
         if results:
-            s = "Found %s results: \x02%s\x02; View more at %s" % (len(results),
-                utils.str.commaAndify(results), url)
+            s = format("Found %n: \x02%L\x02, View more at: %u",
+                       (len(results), 'result'), results, url)
             irc.reply(s)
         else:
-            e = "No results found."
             try:
+                # Look for "too many results" errors and others reported by the
+                # web interface.
                 if distro == "debian":
                     errorParse = soup.find("div", class_="note").p
                 else:
-                    errorParse = soup.find("p", attrs={"id": "psearchtoomanyhits"})
+                    errorParse = soup.find("p", attrs={"id":
+                                                       "psearchtoomanyhits"})
                 if errorParse:
                     for br in errorParse.findAll('br'):
                         br.replace_with(" ")
                     e = errorParse.text.strip()
             except AttributeError:
-                pass
+                e = "No results found."
             irc.error(e)
-    pkgsearch = wrap(pkgsearch, ['somethingWithoutSpaces', 'somethingWithoutSpaces'])
+    pkgsearch = wrap(pkgsearch, ['somethingWithoutSpaces',
+                                 'somethingWithoutSpaces'])
 
     def mintpkg(self, irc, msg, args, release, query, opts):
         """<release> <package> [--exact]
 
-        Looks up <package> in Linux Mint's repositories."""
-        if not bs4Present:
-            irc.error("This command requires the Beautiful Soup 4 library. See"
-                " https://github.com/GLolol/SupyPlugins/blob/master/README.md"
-                "#pkginfo for instructions on how to install it.", Raise=True)
-        addr = 'http://packages.linuxmint.com/list.php?release=' + quote(release)
+        Looks up <package> in Linux Mint's repositories. If --exact is given,
+        look up packages by the exact package name. Otherwise, look it up
+        as a simple glob pattern."""
+        addr = 'http://packages.linuxmint.com/list.php?release=' + \
+            quote(release)
         try:
             fd = utils.web.getUrl(addr).decode("utf-8")
         except utils.web.Error as e:
@@ -299,28 +352,33 @@ class PkgInfo(callbacks.Plugin):
         query = query.lower()
         exact = 'exact' in dict(opts)
         for result in results:
-            name = result.contents[0].string # Package name
+            name = result.contents[0].string  # Package name
             if query == name or (query in name and not exact):
                 # This feels like really messy code, but we have to find tags
                 # relative to our results.
                 # Ascend to find the section name (in <h2>):
                 section = result.parent.parent.parent.previous_sibling.\
                     previous_sibling.string
-                # Find the package version in the next <td>; for some reason we have
-                # to go two siblings further, as the first .next_sibling returns '\n'.
-                # This is mentioned briefly in Beautiful Soup 4's documentation...
+                # Find the package version in the next <td>; for some reason we
+                # have to go two siblings further, as the first .next_sibling
+                # returns '\n'. This is mentioned briefly in Beautiful Soup 4's
+                # documentation...
                 version = result.next_sibling.next_sibling.string
+                # We format our found dictionary this way because the same
+                # package can exist multiple times in different sections of
+                # the repository (e.g. one in Main, one in Backports, etc.)
                 found['%s [\x02%s\x02]' % (name, section)] = version
         if found:
-            s = 'Found %s results: ' % len(found)
-            for x in found:
-                s += '%s \x02(%s)\x02, ' % (x, found[x])
-            s += 'View more at: %s' % addr
+            items = [format('%s \x02(%s)\x02', pkg, found[pkg]) for pkg in
+                     found]
+            s = format('Found %n: %L, %s %u', (len(found), 'result'), items,
+                       _('View more at: '), addr)
             irc.reply(s)
         else:
             irc.error('No results found.')
-    mintpkg = wrap(mintpkg, ['somethingWithoutSpaces', 'somethingWithoutSpaces',
-        getopts({'exact':''})])
+    mintpkg = wrap(mintpkg, ['somethingWithoutSpaces',
+                             'somethingWithoutSpaces',
+                             getopts({'exact': ''})])
 
 Class = PkgInfo
 

@@ -64,4 +64,13 @@ class SupyMiscTestCase(PluginTestCase):
         self.assertResponse('mreplace hi,there hello,ok hmm, hi there everyone',
             'hmm, hello ok everyone')
 
+    def testSPsourceFetch(self):
+        self.assertNotError('supyplugins')
+        self.assertRegexp('supyplugins SupyMisc//plugin.py', \
+            '.*?blob\/master\/SupyMisc\/plugin\.py.*?')
+        self.assertRegexp('supyplugins SupyMisc/', \
+            '.*?tree\/master\/SupyMisc.*?')
+        self.assertError('supyplugins asfswfuiahfawfawefawe')
+
+
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:

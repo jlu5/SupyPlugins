@@ -42,52 +42,75 @@ try:
 except ImportError:
     # Placeholder that allows to run the plugin on a bot
     # without the i18n module
-    _ = lambda x:x
+    _ = lambda x: x
+
 
 class NoTrigger(callbacks.Plugin):
     """Mods outFilter to prevent the bot from triggering other bots."""
-    
+
+    def __init__(self, irc):
+        self.__parent = super(NoTrigger, self)
+        self.__parent.__init__(irc)
+        # This uses Unicode Character 'ZERO WIDTH SPACE' (U+200B) for
+        # padding, which looks nicer (it's invisible) and does the trick.
+        if version_info[0] >= 3:
+            self.padchar = "\u200B"
+        else:
+            from codecs import unicode_escape_decode as u
+            self.padchar = u('\u200B')[0]
+
     def isChanStripColor(self, irc, channel):
-        c = irc.state.channels[channel]
-        for item in self.registryValue('colorAware.modes'):
-            if item in c.modes:
-                return True
+        try:
+            c = irc.state.channels[channel]
+            for item in self.registryValue('colorAware.modes'):
+                if item in c.modes:
+                    return True
+        except KeyError:
+            return True
         return False
-    
+
     def outFilter(self, irc, msg):
         if msg.command == 'PRIVMSG' and \
-            ircutils.isChannel(msg.args[0]) and \
-            self.registryValue('enable', msg.args[0]):
+                ircutils.isChannel(msg.args[0]) and \
+                self.registryValue('enable', msg.args[0]):
             s = msg.args[1]
-            prefixes = list(string.punctuation)
-            rpairs = {"\007":""
-                     }
+            prefixes = string.punctuation
+            rpairs = {"\007": ""}
             suffixes = ("moo")
             if self.registryValue('colorAware') and \
-                self.isChanStripColor(irc, msg.args[0]):
+                    self.isChanStripColor(irc, msg.args[0]) and \
+                    s.startswith(("\003", "\002", "\017", "\037", "\026")):
                 # \003 = Colour (Ctrl+K), \002 = Bold (Ctrl+B), \017 =
                 # Reset Formatting (Ctrl+O), \037 = Underline,
                 # \026 = Italic/Reverse video
-                prefixes += ["\003", "\002", "\017", "\037", "\026"]
-            if self.registryValue('spaceBeforeNicks', msg.args[0]):
+                self.log.debug("NoTrigger (%s/%s): prepending message with "
+                               "a space since our message begins with a "
+                               "formatting code and the channel seems to be "
+                               "blocking colors.", msg.args[0], irc.network)
+                s = self.padchar + s
+            elif self.registryValue('spaceBeforeNicks', msg.args[0]) and \
+                    s.split()[0].endswith((",", ":")):
                 # If the last character of the first word ends with a ',' or
                 # ':', prepend a space.
-                if s.split()[0].endswith((",", ":")):
-                    s = " " + s
-            # Handle actions properly but destroy any other \001 (CTCP) messages
+                s = self.padchar + s
+                self.log.debug("NoTrigger (%s/%s): prepending message with "
+                               "a space due to config plugins.notrigger."
+                               "spaceBeforeNicks.", msg.args[0], irc.network)
+            # Handle actions properly but destroy any other \001 (CTCP)
+            # messages
             if self.registryValue('blockCtcp', msg.args[0]) and \
-                s.startswith("\001") and not s.startswith("\001ACTION"):
+                    s.startswith("\001") and not s.startswith("\001ACTION"):
                 s = s[1:-1]
+                self.log.debug("NoTrigger (%s/%s): blocking non-ACTION "
+                               "CTCP due to config "
+                               "plugins.notrigger.blockCtcp.", msg.args[0],
+                               irc.network)
             for k, v in rpairs.items():
                 s = s.replace(k, v)
             if s.startswith(tuple(prefixes)):
-                s = " " + s
+                s = self.padchar + s
             if s.endswith(suffixes):
-                if version_info[0] >= 3:
-                    s += "\u00A0"
-                else:
-                    from codecs import unicode_escape_decode as u
-                    s += u('\u00A0')[0]
+                s += self.padchar
             msg = ircmsgs.privmsg(msg.args[0], s, msg=msg)
         return msg
 

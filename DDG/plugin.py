@@ -27,70 +27,72 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 ###
-import random
-import os.path
-from sys import version_info
 
 import supybot.utils as utils
 from supybot.commands import *
 import supybot.plugins as plugins
 import supybot.ircutils as ircutils
 import supybot.callbacks as callbacks
-
 try:
     from supybot.i18n import PluginInternationalization
-    _ = PluginInternationalization('Namegen')
+    _ = PluginInternationalization('DDG')
 except ImportError:
     # Placeholder that allows to run the plugin on a bot
     # without the i18n module
     _ = lambda x: x
 
 
-class Namegen(callbacks.Plugin):
-    """Simple random name generator."""
+try:  # Python 3
+    from urllib.parse import urlencode
+except ImportError:  # Python 2
+    from urllib import urlencode
+try:
+    from bs4 import BeautifulSoup
+except ImportError:
+    raise ImportError("Beautiful Soup 4 is required for this plugin: get it"
+                      " at http://www.crummy.com/software/BeautifulSoup/bs4"
+                      "/doc/#installing-beautiful-soup")
+
+
+class DDG(callbacks.Plugin):
+    """Searches for results on DuckDuckGo."""
     threaded = True
 
-    def __init__(self, irc):
-        self.__parent = super(Namegen, self)
-        self.__parent.__init__(irc)
-        self.names = {}
-        for fn in ('starts', 'middles', 'ends'):
-            with open(os.path.join(os.path.dirname(__file__), '%s.txt') % fn) \
-                    as f:
-                self.names[fn] = f.read().splitlines()
+    def search(self, irc, msg, args, text):
+        """<query>
 
-    def _namegen(self, syl):
-        """Generates a random name."""
-        numSyl = random.randint(0, syl)
-        starts = random.choice(self.names['starts'])
-        middles = random.sample(self.names['middles'], numSyl)
-        ends = random.choice(self.names['ends'])
-        name = "{}{}{}".format(starts, middles, ends)
-        return name
+        Searches for <query> on DuckDuckGo (web search)."""
+        url = "https://duckduckgo.com/lite?" + urlencode({"q": text})
+        try:
+            data = utils.web.getUrl(url).decode("utf-8")
+        except utils.web.Error as e:
+            self.log.info(url)
+            irc.error(str(e), Raise=True)
+        soup = BeautifulSoup(data)
+        res = ''
+        for t in soup.find_all('td'):
+            if "1." in t.text:
+                res = t.next_sibling.next_sibling
+            if not res:
+                continue
+            try:
+                # 1) Get a result snippet.
+                snippet = res.parent.next_sibling.next_sibling.\
+                    find_all("td")[-1]
+                # 2) Fetch the result link.
+                link = res.a.get('href')
+                snippet = snippet.text.strip()
 
-    def namegen(self, irc, msg, args, count, syl):
-        """[<count>] [<syllables>]
+                s = format("%s - %u", snippet, link)
+                irc.reply(s)
+                return
+            except AttributeError:
+                continue
+        else:
+            irc.error("No results found.")
+    search = wrap(search, ['text'])
 
-        Generates random names. If not specified, [<count>] defaults to 10.
-        [<syllables>] specifies the maximum number of syllables a name can
-        have, and defaults to the value set in 'config
-        plugins.namegen.syllables'."""
-        confsyl = self.registryValue("syllables")
-        maxsyl = max(confsyl, 10)
-        if not count:
-            count = 10
-        elif count > 100:
-            irc.error("Too many names to count!", Raise=True)
-        elif syl and syl > maxsyl:
-            irc.error("Too many syllables specified.", Raise=True)
-        syl = syl or confsyl
-        r = range if version_info[0] >= 3 else xrange
-        s = ', '.join([self._namegen(syl) for _ in r(count)])
-        irc.reply(s)
-    namegen = wrap(namegen, [optional('positiveInt'), optional('positiveInt')])
-
-
-Class = Namegen
+Class = DDG
 
 
 # vim:set shiftwidth=4 softtabstop=4 expandtab textwidth=79:

@@ -1,5 +1,5 @@
 ###
-# Copyright (c) 2014, James Lu (GLolol)
+# Copyright (c) 2015, James Lu
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -30,8 +30,7 @@
 
 from supybot.test import *
 
-class RandomnessTestCase(PluginTestCase):
-    plugins = ('Randomness',)
-
+class RelayNextTestCase(PluginTestCase):
+    plugins = ('RelayNext',)
 
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:

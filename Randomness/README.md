@@ -1,1 +1,0 @@
-Random commands for my own personal use, including a silly voting mechanism amongst other things.

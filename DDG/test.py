@@ -31,12 +31,12 @@
 from supybot.test import *
 
 
-class NamegenTestCase(PluginTestCase):
-    plugins = ('Namegen',)
+class DDGTestCase(PluginTestCase):
+    plugins = ('DDG',)
 
-    def testNamegen(self):
-        self.assertNotError('namegen')
-        self.assertNotError('namegen 2')
+    def testSearch(self):
+        self.assertRegexp(
+            'ddg search wikipedia', 'Wikipedia.*? - .*?https?\:\/\/')
 
 
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:

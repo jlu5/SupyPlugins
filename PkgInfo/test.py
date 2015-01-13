@@ -33,37 +33,36 @@ from supybot.test import *
 
 class PkgInfoTestCase(PluginTestCase):
     plugins = ('PkgInfo',)
-    def testPkgCommand(self):
-        self.assertRegexp('pkg sid bash', 'Package: .*?bash'
-        ' .*?; View more at: .*?packages.debian.org/sid/bash')
-        self.assertRegexp('pkg trusty apt', 'Package: .*?apt'
-        ' .*?; View more at: .*?packages.ubuntu.com/trusty/apt')
-        self.assertError('pkg afdsfsadf asfasfasf')
-        self.assertRegexp('pkg sid afsadfasfsa', 'no such package', re.I)
+    if network:
+        def testPkgCommand(self):
+            self.assertRegexp('pkg sid bash', 'Package: .*?bash .*?')
+            self.assertRegexp('pkg trusty apt', 'Package: .*?apt .*?')
+            self.assertError('pkg afdsfsadf asfasfasf')
+            self.assertRegexp('pkg sid afsadfasfsa', 'no such package', re.I)
 
-    def testVlistCommandBasics(self):
-        self.assertError('vlist all afdsafas')
-        self.assertError('vlist invalid-distro firefox')
-        self.assertRegexp('vlist debian bash', 'Found [1-9][0-9]* results: (.*?\(.*?\))+')
-        self.assertRegexp('vlist debian bash --source', 'Found [1-9][0-9]* results: .*?: bash.*?\(.*?\).*?')
+        def testVlistCommandBasics(self):
+            self.assertError('vlist all afdsafas')
+            self.assertError('vlist invalid-distro firefox')
+            self.assertRegexp('vlist debian bash', 'Found [1-9][0-9]* '
+                              'results: (.*?\(.*?\))+')
+            self.assertRegexp('vlist debian bash --source', 'Found [1-9]*'
+                              ' results: .*?bash')
 
-    def testArchpkg(self):
-        self.assertError('archpkg afdsfbjeiog')
-        try:
+        def testArchpkg(self):
+            self.assertError('archpkg afdsfbjeiog')
             self.assertNotError('archpkg bash')
-            self.assertRegexp('archpkg pacman --exact', 'Found 1.*?pacman -.*?')
-        except AssertionError as e:
-            if "HTTP Error 50" in str(e): # It's not our fault; the API is down.
-                raise unittest.SkipTest("HTTP error 50x; the API's probably down again")
+            self.assertRegexp('archpkg pacman --exact',
+                              'Found 1.*?pacman')
 
-    def testArchaur(self):
-        self.assertError('archaur wjoitgjwotgjv')
-        self.assertRegexp('archaur yaourt', 'Found [1-9][0-9]* results: .*?yaourt.*?')
+        def testArchaur(self):
+            self.assertError('archaur wjoitgjwotgjv')
+            self.assertRegexp('archaur yaourt', 'Found [1-9][0-9]* results:'
+                              '.*?yaourt.*?')
 
-    def testMintPkg(self):
-        self.assertNotError('mintpkg qiana cinnamon')
+        def testMintPkg(self):
+            self.assertNotError('mintpkg qiana cinnamon')
 
-    def testPkgsearch(self):
-        self.assertNotError('pkgsearch debian python')
+        def testPkgsearch(self):
+            self.assertNotError('pkgsearch debian python')
 
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:

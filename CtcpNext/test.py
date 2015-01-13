@@ -1,5 +1,5 @@
 ###
-# Copyright (c) 2014, James Lu
+# Copyright (c) 2015, James Lu
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -30,13 +30,8 @@
 
 from supybot.test import *
 
-
-class NamegenTestCase(PluginTestCase):
-    plugins = ('Namegen',)
-
-    def testNamegen(self):
-        self.assertNotError('namegen')
-        self.assertNotError('namegen 2')
+class CtcpNextTestCase(PluginTestCase):
+    plugins = ('CtcpNext',)
 
 
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:

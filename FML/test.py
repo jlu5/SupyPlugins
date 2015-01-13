@@ -31,12 +31,13 @@
 from supybot.test import *
 
 
-class NamegenTestCase(PluginTestCase):
-    plugins = ('Namegen',)
+class FMLTestCase(PluginTestCase):
+    plugins = ('FML',)
 
-    def testNamegen(self):
-        self.assertNotError('namegen')
-        self.assertNotError('namegen 2')
-
+    if network:
+        def testFML(self):
+            self.assertNotError('fml')
+            self.assertNotError('fml 13273746')
+            self.assertError('fml 1') # This one doesn't exist
 
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:

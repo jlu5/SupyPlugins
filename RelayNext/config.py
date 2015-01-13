@@ -1,5 +1,5 @@
 ###
-# Copyright (c) 2014, James Lu (GLolol)
+# Copyright (c) 2015, James Lu
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -32,34 +32,40 @@ import supybot.conf as conf
 import supybot.registry as registry
 try:
     from supybot.i18n import PluginInternationalization
-    _ = PluginInternationalization('OperUp')
+    _ = PluginInternationalization('RelayNext')
 except:
     # Placeholder that allows to run the plugin on a bot
     # without the i18n module
-    _ = lambda x:x
+    _ = lambda x: x
+
 
 def configure(advanced):
     # This will be called by supybot to configure this module.  advanced is
-    # a bool that specifies whether the user identified himself as an advanced
+    # a bool that specifies whether the user identified themself as an advanced
     # user or not.  You should effect your configuration by manipulating the
     # registry as appropriate.
     from supybot.questions import expect, anything, something, yn
-    conf.registerPlugin('OperUp', True)
+    conf.registerPlugin('RelayNext', True)
 
-OperUp = conf.registerPlugin('OperUp')
-conf.registerGlobalValue(OperUp, 'operName',
-    registry.String("", _("""Specifies the name of the Oper block the bot will
-        use."""), private=True))
-conf.registerGlobalValue(OperUp, 'operPass',
-    registry.String("", _("""Specifies the password of the Oper block the bot
-        will use."""), private=True))
-conf.registerGlobalValue(OperUp, 'operNets',
-    registry.SpaceSeparatedListOfStrings("", _("""Space separated list of
-        network names to Oper up on (denoted by 005 name)"""), private=True))
-conf.registerGlobalValue(OperUp, 'operModes',
-    registry.SpaceSeparatedListOfStrings("", _("""Specifies the mode(s) the
-        bot will set on itself when it Opers up."""), private=True)) 
-conf.registerGlobalValue(OperUp, 'autoOper',
-    registry.Boolean(True, _("""Specifies whether the bot should automatically
-        oper up on connect.""")))
+
+RelayNext = conf.registerPlugin('RelayNext')
+
+conf.registerChannelValue(RelayNext, 'color',
+    registry.Boolean(True, _("""Determines whether the bot will color relayed
+    PRIVMSGs so as to make the messages easier to read.""")))
+conf.registerChannelValue(RelayNext, 'hostmasks',
+    registry.Boolean(True, _("""Determines whether the bot will relay the
+    hostmask of the person joining or parting the channel when he or she joins
+    or parts.""")))
+conf.registerChannelValue(RelayNext, 'noHighlight',
+    registry.Boolean(False, _("""Determines whether the bot should prefix nicks
+    with a hyphen (-) to prevent excess highlights (in PRIVMSGs and actions).""")))
+
+conf.registerGroup(RelayNext, 'events')
+
+_events = ('quit', 'join', 'part', 'nick', 'mode', 'kick')
+for ev in _events:
+    conf.registerChannelValue(RelayNext.events, 'relay%ss' % ev,
+        registry.Boolean(True, """Determines whether the bot should relay %ss.""" % ev))
+
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:

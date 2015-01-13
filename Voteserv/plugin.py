@@ -36,6 +36,7 @@ import supybot.plugins as plugins
 import supybot.ircutils as ircutils
 import supybot.ircdb as ircdb
 import supybot.callbacks as callbacks
+import supybot.world as world
 try:
     from supybot.i18n import PluginInternationalization
     _ = PluginInternationalization('Voteserv')
@@ -56,34 +57,36 @@ class Voteserv(callbacks.Plugin):
         self.__parent = super(Voteserv, self)
         self.__parent.__init__(irc)
         self.vfilename = conf.supybot.directories.data.dirize("votes.db")
+        self.loadVoteDB()
+        world.flushers.append(self.exportVoteDB)
+
+    def loadVoteDB(self):
+        self.log.debug("Voteserv: loading votes database from "+self.vfilename)
         try:
             with open(self.vfilename, "r") as f:
                 self.votedb = json.load(f)
         except IOError:
-            self.log.debug("Voteserv: failed to load votes database %s"
-                ", creating a new one..." % self.vfilename)
+            self.log.error("Voteserv: failed to load votes database %s"
+                ", creating a new one in memory...", self.vfilename)
             self.votedb = {}
         except ValueError:
-            self.log.warning("Voteserv: Invalid JSON found in votes database "
-                "%s, replacing it with a new one!" % self.vfilename)
-
-    def loadVoteDB(self):
-        self.log.debug("Voteserv: loading votes database "+self.vfilename)
-        with open(self.vfilename, "r") as f:
-            self.votedb = json.load(f)
+            self.log.error("Voteserv: Invalid JSON found in votes database "
+                "%s, creating a new one in memory...", self.vfilename)
+            self.votedb = {}
 
     def exportVoteDB(self):
-        self.log.debug("Voteserv: exporting votes database "+self.vfilename)
+        self.log.debug("Voteserv: exporting votes database to "+self.vfilename)
         with open(self.vfilename, 'w') as f:
             json.dump(self.votedb, f, indent=4, separators=(',', ': '))
             f.write("\n")
 
     def die(self):
-        self.__parent.die()
         try:
             self.exportVoteDB()
         except IOError as e:
             self.log.error("Failed to export votes database: " + str(e))
+        world.flushers.remove(self.exportVoteDB)
+        self.__parent.die()
 
     def _lazyhostmask(self, host):
         return "*!"+host.split("!",1)[1]
@@ -117,32 +120,6 @@ class Voteserv(callbacks.Plugin):
         irc.reply("%s voted to %s" % (msg.nick,self._formatAction(action)))
         self.votedb[action].append(self._lazyhostmask(msg.prefix))
     vote = wrap(vote, ['text'])
-
-    def voteexport(self, irc, msg, args):
-        """takes no arguments.
-
-        Exports votes stored in memory to file: data/votes.db
-        This is also done automatically when the plugin is unloaded or
-        reloaded."""
-        try:
-            self.exportVoteDB()
-        except IOError as e:
-            irc.error("IOError caught exporting DB: "+str(e))
-        else:
-            irc.replySuccess()
-    voteexport = wrap(voteexport, ['admin'])
-
-    def voteimport(self, irc, msg, args):
-        """takes no arguments.
-
-        Imports the vote database for the current network."""
-        try:
-            self.loadVoteDB()
-        except IOError as e:
-            irc.error("IOError caught importing DB: "+str(e))
-        else:
-            irc.replySuccess()
-    voteimport = wrap(voteimport, ['admin'])
 
     def voteclear(self, irc, msg, args):
         """takes no arguments.
@@ -200,9 +177,13 @@ class Voteserv(callbacks.Plugin):
 
         Returns the list of things that have been voted for, along
         with the number of votes for each."""
-        s = "; ".join(['"%s": \x02%s\x02 vote%s' % (k, v[0], self._pluralize(v[0]))
-            for k, v in self.votedb.items()])
-        irc.reply(s)
+        items = self.votedb.items()
+        if items:
+            s = "; ".join(['"%s": \x02%s\x02 vote%s' % (k, v[0], self._pluralize(v[0]))
+                for k, v in items])
+            irc.reply(s)
+        else:
+            irc.error("The vote database is empty!")
     listallvotes = wrap(listallvotes)
 
 Class = Voteserv

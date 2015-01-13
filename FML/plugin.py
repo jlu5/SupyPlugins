@@ -27,70 +27,61 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 ###
-import random
-import os.path
-from sys import version_info
 
+from __future__ import unicode_literals
+from xml.etree import ElementTree
 import supybot.utils as utils
 from supybot.commands import *
 import supybot.plugins as plugins
 import supybot.ircutils as ircutils
 import supybot.callbacks as callbacks
-
 try:
     from supybot.i18n import PluginInternationalization
-    _ = PluginInternationalization('Namegen')
+    _ = PluginInternationalization('FML')
 except ImportError:
     # Placeholder that allows to run the plugin on a bot
     # without the i18n module
     _ = lambda x: x
 
 
-class Namegen(callbacks.Plugin):
-    """Simple random name generator."""
+class FML(callbacks.Plugin):
+    """Displays entries from fmylife.com."""
     threaded = True
 
-    def __init__(self, irc):
-        self.__parent = super(Namegen, self)
-        self.__parent.__init__(irc)
-        self.names = {}
-        for fn in ('starts', 'middles', 'ends'):
-            with open(os.path.join(os.path.dirname(__file__), '%s.txt') % fn) \
-                    as f:
-                self.names[fn] = f.read().splitlines()
+    def fml(self, irc, msg, args, query):
+        """[<id>]
 
-    def _namegen(self, syl):
-        """Generates a random name."""
-        numSyl = random.randint(0, syl)
-        starts = random.choice(self.names['starts'])
-        middles = random.sample(self.names['middles'], numSyl)
-        ends = random.choice(self.names['ends'])
-        name = "{}{}{}".format(starts, middles, ends)
-        return name
+        Displays an entry from fmylife.com. If <id>
+        is not given, fetch a random entry from the API."""
+        query = query or 'random'
+        url = ('http://api.betacie.com/view/%s/nocomment'
+              '?key=4be9c43fc03fe&language=en' % query)
+        try:
+            data = utils.web.getUrl(url)
+        except utils.web.Error as e:
+            irc.error(str(e), Raise=True)
+        tree = ElementTree.fromstring(data.decode('utf-8'))
+        tree = tree.find('items/item')
 
-    def namegen(self, irc, msg, args, count, syl):
-        """[<count>] [<syllables>]
-
-        Generates random names. If not specified, [<count>] defaults to 10.
-        [<syllables>] specifies the maximum number of syllables a name can
-        have, and defaults to the value set in 'config
-        plugins.namegen.syllables'."""
-        confsyl = self.registryValue("syllables")
-        maxsyl = max(confsyl, 10)
-        if not count:
-            count = 10
-        elif count > 100:
-            irc.error("Too many names to count!", Raise=True)
-        elif syl and syl > maxsyl:
-            irc.error("Too many syllables specified.", Raise=True)
-        syl = syl or confsyl
-        r = range if version_info[0] >= 3 else xrange
-        s = ', '.join([self._namegen(syl) for _ in r(count)])
+        try:
+            category = tree.find('category').text
+            text = tree.find('text').text
+            fmlid = tree.attrib['id']
+            url = tree.find('short_url').text
+        except AttributeError as e:
+            self.log.debug("FML: Error fetching FML %s from URL %s: %s",
+                           query, url, e)
+            irc.error("That FML does not exist or there was an error "
+                      "fetching data from the API.", Raise=True)
+        votes = ircutils.bold("[Agreed: %s / Deserved: %s]" %
+                              (tree.find('agree').text,
+                              tree.find('deserved').text))
+        s = format('\x02#%i [%s]\x02: %s - %s %u', fmlid,
+                   category, text, votes, url)
         irc.reply(s)
-    namegen = wrap(namegen, [optional('positiveInt'), optional('positiveInt')])
+    fml = wrap(fml, [additional('positiveInt')])
 
-
-Class = Namegen
+Class = FML
 
 
 # vim:set shiftwidth=4 softtabstop=4 expandtab textwidth=79:

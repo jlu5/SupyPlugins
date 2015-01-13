@@ -29,14 +29,18 @@
 ###
 
 from supybot.test import *
+from sys import version_info
+import unittest
 
+class WTETestCase(PluginTestCase):
+    plugins = ('WTE',)
 
-class NamegenTestCase(PluginTestCase):
-    plugins = ('Namegen',)
-
-    def testNamegen(self):
-        self.assertNotError('namegen')
-        self.assertNotError('namegen 2')
-
+    @unittest.skipIf(version_info[0] < 3, 
+        "Not supported on Python 2 (severe Unicode handling problems)")
+    def testWTE(self):
+        m = self.getMsg("wte The quick brown fox jumps over "
+            "the lazy dog.")
+        print('\nResponse: %s' % m.args[1])
+        assert m, 'No response found.'
 
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:

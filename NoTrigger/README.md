@@ -3,13 +3,13 @@ NoTrigger is an anti-abuse script that modifies outFilter to prevent triggering 
 ## Short description
 In short, NoTrigger works by:
 
- - Prepending messages that start with a symbol (```!"#$%&'()*+,-./:;<=>?@[\]^_`{|}~```) with a space, since these are often used as prefixes for bots.
- - Prepending messages with a space if the channel is set to block colors and a message begins with a formatting code (sneaky attackers can otherwise do something like `\x02!echo hello` to bypass filters).
- - Optionally, prepending messages with a space if they match `<something>: ` or `<something>, `, since some bots are thought to respond to their nicks.
+ - Prepending messages that start with a symbol (```!"#$%&'()*+,-./:;<=>?@[\]^_`{|}~```) with a [zero width space](https://en.wikipedia.org/wiki/Zero-width_space) (ZWSP), since these are often used as prefixes for bots. This has the effect of being completely invisible, and tricks most bots into ignoring yours!
+ - Prepending messages with a ZWSP if the channel is set to block colors and a message begins with a formatting code (sneaky attackers can otherwise do something like `\x02!echo hello` to bypass filters).
+ - Optionally, prepending messages with a ZWSP if they match `<something>: ` or `<something>, `, since some bots are tought to respond to their nicks.
  - Optionally, blocking all channel-wide CTCPs (except for ACTION).
 
-## Longer description/Backstory on why I made this
-Sometimes if you have a public development channel with many bots residing in it, someone will come along and do something really evil: that is, create a huge message loop by chaining all your innocent bots together!
+## Longer description/Backstory on why I wrote this
+Sometimes when you have a public development channel with many bots residing in it, someone will come along and do something really evil: that is, create a huge message loop by chaining all your innocent bots together!
 
 For example:
 
@@ -21,7 +21,8 @@ For example:
 ...
 ```
 
-NoTrigger aims to solve some of these issues by prepending messages that start with commonly-used bot triggers with a space.
+NoTrigger aims to solve some of these issues by prepending messages that start with commonly-used bot triggers with a [zero-width space](https://en.wikipedia.org/wiki/Zero-width_space) or ZWSP. These are non-printing characters, which are essentially invisible to most people's clients. (We're going to use a space to represent the ZWSP in the examples below, so you can see a difference.)
+
 For example:
 
 ```
@@ -45,7 +46,7 @@ This is slightly harder to parse, so we have to check if a message matches `<som
 
 OKAY OKAY, now our bot is really foolproof, right?
 
-**ALMOST!** Then there are the truly evil ops (shoutout to @jacob1) that start messing with your bot by introducing colour stripping! :D
+**ALMOST!** Then there are the truly evil ops (shoutout to [@jacob1](https://github.com/jacob1)) that start messing with your bot by introducing colour stripping! :D
 
 Fortunately, we'll append these message with a space too! (when the channel is set to strip colours, of course.)
 
@@ -67,3 +68,5 @@ Channel is set +c.
 ```
 
 That's all! Find any more ways to abuse a poor, innocent bot? Let me know on the issue tracker! :stuck_out_tongue_closed_eyes:
+
+(and no, not all bots use a hostmask matching `*!*@*/bot/*`, not even on freenode!)

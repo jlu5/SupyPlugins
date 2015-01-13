@@ -14,15 +14,12 @@ install:
     - pip install -vr requirements.txt
 # Run supybot-test
 script:
-  - if [ "$TRAVIS_PYTHON_VERSION" = "pypy" ]; then export DISABLED_PLUGINS="--exclude=./RelayLink"; fi
-  - supybot-test -c --plugins-dir=. $DISABLED_PLUGINS --exclude=./LastFM
+  - supybot-test -c --plugins-dir=. --no-network --exclude=./LastFM --exclude=./Weather
 notifications:
     email: false
 matrix:
     fast_finish: true
     allow_failures:
-        - python: "3.2"
-        - python: "3.3"
         - python: "pypy"
         - python: "pypy3"
 branches:

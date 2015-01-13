@@ -1,5 +1,5 @@
 ###
-# Copyright (c) 2010, quantumlemur
+# Copyright (c) 2015, James Lu
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -25,10 +25,11 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
+
 ###
 
 """
-Handles relaying between arbitrary channels on any network.
+CtcpNext: Alternative to the official Ctcp plugin, with configurable replies.
 """
 
 import supybot
@@ -38,30 +39,23 @@ import supybot.world as world
 # in here if you're keeping the plugin in CVS or some similar system.
 __version__ = ""
 
-__author__ = supybot.Author('quantumlemur', 'quantumlemur',
-        'quantumlemur@users.sourceforge.net')
+# XXX Replace this with an appropriate author or supybot.Author instance.
+__author__ = supybot.Author('James Lu', 'GLolol',
+                            'GLolol@overdrive.pw')
 
 # This is a dictionary mapping supybot.Author instances to lists of
 # contributions.
-if not hasattr(supybot.authors, 'progval'):
-    supybot.authors.progval = supybot.Author('Valentin Lorentz', 'ProgVal',
-                                             'progval@gmail.com')
-__contributors__ = {supybot.authors.progval: ['enhance configurability',
-                                              'many bug fixes',
-                                              'code enhancement',
-                                              'optional colors'],
-                    supybot.Author('James Lu', 'GLolol',
-                        'GLolol@overdrive.pw'):
-                        ['more configurability/bugfixes',
-                        'custom text events/colour scheme',
-                        'addall/removeall functions']}
+__contributors__ = {}
 
-__url__ = ""
+# This is a url where the most recent plugin package can be downloaded.
+__url__ = 'https://github.com/GLolol/SupyPlugins/'
 
 from . import config
 from . import plugin
 from imp import reload
-reload(plugin) # In case we're being reloaded.
+# In case we're being reloaded.
+reload(config)
+reload(plugin)
 # Add more reloads here if you add third-party modules and want them to be
 # reloaded when this plugin is reloaded.  Don't forget to import them as well!
 
@@ -72,4 +66,4 @@ Class = plugin.Class
 configure = config.configure
 
 
-# vim:set shiftwidth=4 softtabstop=4 expandtab textwidth=79:
+# vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:
