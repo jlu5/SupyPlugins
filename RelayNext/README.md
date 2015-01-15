@@ -19,7 +19,7 @@ Once a relay is created, you can manipulate these entries further using the `set
 * `relaynext add Your-relay-name #somewhere@overTheRainbow`
 * `relaynext remove Your-relay-name #channel1@networkOne`
 
-**All entries (channels and networks) are case-insensitive, duplicate blocking, and require at least 2 channels to relay between.** When the last two channels are removed, the relay is automatically deleted. **However, relay names ARE case-sensitive!**
+Relays are case-insensitive and require at least two channels to relay between. When the last two channels are removed, the relay is automatically deleted.
 
 Note: The `set` command **replaces** the relay in question, while `add` **adds** channels to it. Both will create a new relay if the name you specify doesn't already exist.
 
@@ -31,4 +31,4 @@ The `list` command will list all relays defined.
 
 ### Removing/clearing relays
 
-The `unset` command removes a relay name, while the `clear` command clears all relays. The `remove` command removes individual channels from a relay, deleting it when the number of channels left is `< 2`.
+The `unset` command removes a relay name, while the `clear` command clears all relays. The `remove` command removes individual channels from a relay, deleting it completely when the amount of channels is less than 2.
