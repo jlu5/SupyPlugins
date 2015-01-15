@@ -67,6 +67,10 @@ class PkgInfo(callbacks.Plugin):
         self.__parent.__init__(irc)
         self.addrs = {'ubuntu': 'http://packages.ubuntu.com/',
                       'debian': "https://packages.debian.org/"}
+        self.unknowndist = _("This command only supports package lookup "
+                             "for Debian and Ubuntu. For Arch Linux packages, "
+                             "see the 'archpkg' and 'archaur' commands. For "
+                             "Linux Mint, use the 'mintpkg' command.")
 
     def _getDistro(self, release):
         """<release>
@@ -130,14 +134,13 @@ class PkgInfo(callbacks.Plugin):
         Fetches information for <package> from Debian or Ubuntu's repositories.
         <release> is the codename/release name (e.g. 'trusty', 'squeeze'). If
         --depends, --recommends, or --suggests is given, fetches dependency
-        info for <package>.
-        For Arch Linux packages, please use 'archpkg' and 'archaur' instead."""
+        info for <package>."""
         pkg = pkg.lower()
         distro = self._getDistro(release)
         try:
             url = self.addrs[distro] + "{}/{}".format(release, pkg)
         except KeyError:
-            irc.error('Unknown distribution.', Raise=True)
+            irc.error("Unknown distribution. " + self.unknowndist, Raise=True)
         try:
             fd = utils.web.getUrl(url).decode("utf-8")
         except utils.web.Error as e:
@@ -210,7 +213,8 @@ class PkgInfo(callbacks.Plugin):
         if distro not in supported:
             distro = self._getDistro(distro)
             if distro is None:
-                irc.error("Unknown distribution.", Raise=True)
+                e = "Unknown distribution. " + self.unknowndist
+                irc.error(e, Raise=True)
         opts = dict(opts)
         reverse = 'reverse' in opts
         d = self.MadisonParse(pkg, distro, useSource='source' in opts,
@@ -302,7 +306,7 @@ class PkgInfo(callbacks.Plugin):
         try:
             url = '%ssearch?keywords=%s' % (self.addrs[distro], quote(query))
         except KeyError:
-            irc.error('Unknown distribution.', Raise=True)
+            irc.error('Unknown distribution. ' + self.unknowndist, Raise=True)
         try:
             fd = utils.web.getUrl(url).decode("utf-8")
         except utils.web.Error as e:
