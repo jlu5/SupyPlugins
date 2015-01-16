@@ -31,6 +31,7 @@
 from copy import deepcopy
 import pickle
 import re
+import traceback
 
 import supybot.world as world
 import supybot.irclib as irclib
@@ -41,6 +42,7 @@ from supybot.commands import *
 import supybot.plugins as plugins
 import supybot.ircutils as ircutils
 import supybot.callbacks as callbacks
+from supybot.utils.structures import TimeoutQueue
 try:
     from supybot.i18n import PluginInternationalization
     _ = PluginInternationalization('RelayNext')
@@ -90,6 +92,10 @@ class RelayNext(callbacks.Plugin):
         # because the user in question has already quit.
         self.ircstates = {}
         self.lastmsg = {}
+
+        # This part facilitates flood protection
+        self.msgcounters = {}
+        self.floodTriggered = False
 
         self.db = {}
         self.loadDB()
@@ -144,7 +150,7 @@ class RelayNext(callbacks.Plugin):
                     results.append(cn[0])
         return results
 
-    def _format(self, irc, msg):
+    def _format(self, irc, msg, announcement=False):
         s = ''
         nick = msg.nick
         userhost = ''
@@ -166,38 +172,47 @@ class RelayNext(callbacks.Plugin):
                 userhost = ' (%s)' % msg.prefix.split('!', 1)[1]
             except:
                 pass
-
-        if msg.command == 'NICK':
-            newnick = msg.args[0]
-            if color:
-                newnick = self.simpleHash(newnick)
-            s = '- %s is now known as %s' % (nick, newnick)
-        elif msg.command == 'PRIVMSG':
-            text = msg.args[1]
-            if re.match('^\x01ACTION .*\x01$', text):
-                text = text[8:-1]
-                s = '* %s %s' % (nick, text)
-            else:
-                s = '<%s> %s' % (nick, msg.args[1])
-        elif msg.command == 'JOIN':
-            s = '- %s%s has joined %s' % (nick, userhost, channel)
-        elif msg.command == 'PART':
-            # Part message isn't a required field and can be empty sometimes
-            try:
-                partmsg = ' (%s)' % msg.args[1]
-            except:
-                partmsg = ''
-            s = '- %s%s has left %s%s' % (nick, userhost, channel, partmsg)
-        elif msg.command == 'QUIT':
-            s = '- %s has quit (%s)' % (nick, msg.args[0])
-        elif msg.command == 'MODE':
-            modes = ' '.join(msg.args[1:])
-            s = '- %s%s set mode %s on %s' % (nick, userhost, modes, channel)
+        if announcement:
+            # Announcements use a special syntax
+            s = '*** %s' % announcement
+        else:
+            if msg.command == 'NICK':
+                newnick = msg.args[0]
+                if color:
+                    newnick = self.simpleHash(newnick)
+                s = '- %s is now known as %s' % (nick, newnick)
+            elif msg.command == 'PRIVMSG':
+                text = msg.args[1]
+                if re.match('^\x01ACTION .*\x01$', text):
+                    text = text[8:-1]
+                    s = '* %s %s' % (nick, text)
+                else:
+                    s = '<%s> %s' % (nick, msg.args[1])
+            elif msg.command == 'JOIN':
+                s = '- %s%s has joined %s' % (nick, userhost, channel)
+            elif msg.command == 'PART':
+                # Part message isn't a required field and can be empty sometimes
+                try:
+                    partmsg = ' (%s)' % msg.args[1]
+                except:
+                    partmsg = ''
+                s = '- %s%s has left %s%s' % (nick, userhost, channel, partmsg)
+            elif msg.command == 'QUIT':
+                s = '- %s has quit (%s)' % (nick, msg.args[0])
+            elif msg.command == 'MODE':
+                modes = ' '.join(msg.args[1:])
+                s = '- %s%s set mode %s on %s' % (nick, userhost, modes, channel)
 
         if s:  # Add the network name and some final touch-ups
             s = "\x02[%s]\x02 %s" % (netname, s)
             s = s.replace("- -", "-", 1)
         return s
+
+    def checkFlood(self, channel, source, command):
+        maximum = self.registryValue("antiflood.maximum", channel)
+        enabled = self.registryValue("antiflood.enable", channel)
+        if enabled and len(self.msgcounters[(source, command)]) > maximum:
+            return True
 
     def relay(self, irc, msg, channel=None):
         channel = channel or msg.args[0]
@@ -206,6 +221,29 @@ class RelayNext(callbacks.Plugin):
         source = source.lower()
         out_s = self._format(irc, msg)
         if out_s:
+            ### Begin Flood checking clause
+            timeout = self.registryValue("antiflood.timeout", channel)
+            seconds = self.registryValue("antiflood.seconds", channel)
+            maximum = self.registryValue("antiflood.maximum", channel)
+            try:
+                self.msgcounters[(source, msg.command)].enqueue(msg.prefix)
+            except KeyError:
+                self.msgcounters[(source, msg.command)] = TimeoutQueue(seconds)
+            if self.checkFlood(channel, source, msg.command):
+                self.log.debug("RelayNext (%s): message from %s blocked by "
+                               "flood preotection.", irc.network, channel)
+                if self.floodTriggered:
+                    return
+                c = msg.command.lower()
+                e = format("Flood detected on %s (%s %ss/%s seconds), "
+                           "not relaying %ss for %s seconds!", channel,
+                           maximum, c, seconds, c, timeout)
+                out_s = self._format(irc, msg, announcement=e)
+                self.log.info("RelayNext (%s): %s", irc.network, e)
+                self.floodTriggered = True
+            else:
+                self.floodTriggered = False
+            ### End Flood checking clause
             for relay in self.db.values():
                 if source in relay:  # If our channel is in a relay
                     # Remove ourselves so we don't get duplicated messages
@@ -255,12 +293,18 @@ class RelayNext(callbacks.Plugin):
     def outFilter(self, irc, msg):
         # Catch our own messages and send them into the relay (this is
         # useful because Supybot is often a multi-purpose bot!)
-        if msg.command == 'PRIVMSG' and not msg.relayedMsg:
-                if msg.args[0] in self._getAllRelaysForNetwork(irc):
-                    new_msg = deepcopy(msg)
-                    new_msg.nick = irc.nick
-                    self.relay(irc, new_msg, channel=msg.args[0])
-        return msg
+        try:
+            if msg.command == 'PRIVMSG' and not msg.relayedMsg:
+                    if msg.args[0] in self._getAllRelaysForNetwork(irc):
+                        new_msg = deepcopy(msg)
+                        new_msg.nick = irc.nick
+                        self.relay(irc, new_msg, channel=msg.args[0])
+        except Exception as e:
+            # We want to log errors, but not block the bot's output
+            traceback.print_exc()
+            log.error(str(e))
+        finally:
+            return msg
 
     ### User commands
 

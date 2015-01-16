@@ -61,6 +61,20 @@ conf.registerChannelValue(RelayNext, 'noHighlight',
     registry.Boolean(False, _("""Determines whether the bot should prefix nicks
     with a hyphen (-) to prevent excess highlights (in PRIVMSGs and actions).""")))
 
+conf.registerGroup(RelayNext, 'antiflood')
+conf.registerChannelValue(RelayNext.antiflood, 'enable',
+    registry.Boolean(False, _("""Determines whether flood prevention should be enabled
+    for the given channel.""")))
+conf.registerChannelValue(RelayNext.antiflood, 'seconds',
+    registry.PositiveInteger(20, _("""Determines how many seconds messages should be queued
+        for flood protection.""")))
+conf.registerChannelValue(RelayNext.antiflood, 'maximum',
+    registry.PositiveInteger(15, _("""Determines the maximum amount of incoming messages
+        the bot will allow from a relay channel before flood protection is triggered.""")))
+conf.registerChannelValue(RelayNext.antiflood, 'timeout',
+    registry.PositiveInteger(60, _("""Determines the amount of time in seconds the bot should
+        block messages if flood protection is triggered.""")))
+
 conf.registerGroup(RelayNext, 'events')
 
 _events = ('quit', 'join', 'part', 'nick', 'mode', 'kick')
