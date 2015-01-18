@@ -77,10 +77,12 @@ conf.registerChannelValue(RelayNext.antiflood, 'timeout',
 
 conf.registerGroup(RelayNext, 'events')
 
-_events = ('quit', 'join', 'part', 'nick', 'mode', 'kick')
+_events = {'quit': True, 'join': True, 'part': True,
+           'nick': True, 'mode': True, 'kick': True,
+           'topic': False}
 for ev in _events:
     conf.registerChannelValue(RelayNext.events, 'relay%ss' % ev,
-        registry.Boolean(True, """Determines whether the bot should relay %ss.""" % ev))
+        registry.Boolean(_events[ev], """Determines whether the bot should relay %ss.""" % ev))
 conf.registerChannelValue(RelayNext.events, 'userIgnored',
     registry.SpaceSeparatedListOfStrings(['PRIVMSG', 'MODE'], ("""Determines what events
         the relay should ignore from ignored users. Ignores are added using

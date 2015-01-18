@@ -203,6 +203,8 @@ class RelayNext(callbacks.Plugin):
             elif msg.command == 'MODE':
                 modes = ' '.join(msg.args[1:])
                 s = '- %s%s set mode %s on %s' % (nick, userhost, modes, channel)
+            elif msg.command == 'TOPIC':
+                s = '- %s set topic on %s to: %s' % (nick, channel, msg.args[1])
 
         if s:  # Add the network name and some final touch-ups
             s = "\x02[%s]\x02 %s" % (netname, s)
@@ -276,7 +278,7 @@ class RelayNext(callbacks.Plugin):
         if self.registryValue("events.relay%ss" % msg.command, msg.args[0]):
             self.relay(irc, msg)
 
-    doPart = doKick = doMode = doJoin
+    doTopic = doPart = doKick = doMode = doJoin
 
     # NICK and QUIT aren't channel specific, so they require a bit
     # of extra handling
