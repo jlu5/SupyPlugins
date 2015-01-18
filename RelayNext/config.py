@@ -81,5 +81,8 @@ _events = ('quit', 'join', 'part', 'nick', 'mode', 'kick')
 for ev in _events:
     conf.registerChannelValue(RelayNext.events, 'relay%ss' % ev,
         registry.Boolean(True, """Determines whether the bot should relay %ss.""" % ev))
-
+conf.registerChannelValue(RelayNext.events, 'userIgnored',
+    registry.SpaceSeparatedListOfStrings(['PRIVMSG', 'MODE'], ("""Determines what events
+        the relay should ignore from ignored users. Ignores are added using
+        Supybot's global ignore system.""")))
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:

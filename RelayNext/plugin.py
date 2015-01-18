@@ -36,6 +36,7 @@ import traceback
 import supybot.world as world
 import supybot.irclib as irclib
 import supybot.ircmsgs as ircmsgs
+import supybot.ircdb as ircdb
 import supybot.conf as conf
 import supybot.utils as utils
 from supybot.commands import *
@@ -216,6 +217,11 @@ class RelayNext(callbacks.Plugin):
 
     def relay(self, irc, msg, channel=None):
         channel = channel or msg.args[0]
+        ignoredevents = map(str.upper, self.registryValue('events.userIgnored'))
+        if msg.command in ignoredevents and ircdb.checkIgnored(msg.prefix):
+            self.log.debug("RelayNext (%s): ignoring message from %s",
+                           irc.network, msg.prefix)
+            return
         # Get the source channel
         source = "%s@%s" % (channel, irc.network)
         source = source.lower()
