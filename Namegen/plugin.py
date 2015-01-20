@@ -63,7 +63,7 @@ class Namegen(callbacks.Plugin):
         """Generates a random name."""
         numSyl = random.randint(0, syl)
         starts = random.choice(self.names['starts'])
-        middles = random.sample(self.names['middles'], numSyl)
+        middles = ''.join(random.sample(self.names['middles'], numSyl))
         ends = random.choice(self.names['ends'])
         name = "{}{}{}".format(starts, middles, ends)
         return name
