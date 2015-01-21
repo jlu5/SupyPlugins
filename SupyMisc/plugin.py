@@ -119,7 +119,7 @@ class SupyMisc(callbacks.Plugin):
     mreplace = wrap(mreplace, [commalist('something'), commalist('something'), 'text'])
 
     def colors(self, irc, msg, args, opts):
-        """[--{colors,all}]
+        """[--{long,all}]
 
         Replies with a display of IRC colour codes."""
         opts = dict(opts)
@@ -127,7 +127,7 @@ class SupyMisc(callbacks.Plugin):
             s = ['\x03%s,%s %s,%s \x0F' % (x,y,x,y) for (x, y) in
                  product(range(16), range(16))]
             s = ''.join(s)
-        if 'long' in opts:
+        elif 'long' in opts:
             s = ("\x0301,00 0 White \x0300,01 1 Black \x0300,02 2 Blue "
                  "\x0300,03 3 Green \x0300,04 4 Red \x0300,05 5 Brown "
                  "\x0300,06 6 Purple \x0301,07 7 Orange \x0301,08 8 Yellow "
