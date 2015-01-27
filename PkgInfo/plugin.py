@@ -77,16 +77,14 @@ class PkgInfo(callbacks.Plugin):
 
         Guesses the distribution from the release name."""
         release = release.lower()
-        if release.startswith(("oldstable", "squeeze", "wheezy", "stable",
-                               "jessie", "testing", "sid", "unstable")):
-            distro = "debian"
-        elif release.startswith(("hardy", "lucid", "maverick", "natty",
-                                 "oneiric", "precise", "quantal", "raring",
-                                 "saucy", "trusty", "utopic", "vivid")):
-            distro = "ubuntu"
-        else:
-            distro = None
-        return distro
+        debian = ("oldstable", "squeeze", "wheezy", "stable", "jessie",
+                  "testing", "sid", "unstable", "stretch", "buster")
+        ubuntu = ("hardy", "lucid", "maverick", "natty", "oneiric", "precise",
+                  "quantal", "raring", "saucy", "trusty", "utopic", "vivid")
+        if release.startswith(debian):
+            return "debian"
+        elif release.startswith(ubuntu):
+            return "ubuntu"
 
     def MadisonParse(self, pkg, dist, codenames='', suite='', useSource=False,
                      reverse=False):
