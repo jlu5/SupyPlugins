@@ -294,13 +294,17 @@ class PkgInfo(callbacks.Plugin):
             irc.error("No results found.", Raise=True)
     archaur = wrap(archaur, ['somethingWithoutSpaces'])
 
-    def pkgsearch(self, irc, msg, args, distro, query):
-        """<distro> <query>
+    def pkgsearch(self, irc, msg, args, opts, query):
+        """[--distro <distro>] <query>
 
         Looks up <query> in <distro>'s website (for Debian/Ubuntu)."""
-        distro = distro.lower()
-        if distro not in ("debian", "ubuntu"):
-            distro = self._getDistro(distro)
+        opts = dict(opts)
+        if 'distro' not in opts:
+            distro = 'debian'
+        else:
+            distro = opts['distro'].lower()
+            if distro not in ("debian", "ubuntu"):
+                distro = self._getDistro(distro)
         try:
             url = '%ssearch?keywords=%s' % (self.addrs[distro], quote(query))
         except KeyError:
@@ -332,7 +336,7 @@ class PkgInfo(callbacks.Plugin):
             except AttributeError:
                 e = "No results found."
             irc.error(e)
-    pkgsearch = wrap(pkgsearch, ['somethingWithoutSpaces',
+    pkgsearch = wrap(pkgsearch, [getopts({'distro': 'somethingWithoutSpaces'}),
                                  'somethingWithoutSpaces'])
 
     def mintpkg(self, irc, msg, args, release, query, opts):

@@ -63,6 +63,7 @@ class PkgInfoTestCase(PluginTestCase):
             self.assertNotError('mintpkg qiana cinnamon')
 
         def testPkgsearch(self):
-            self.assertNotError('pkgsearch debian python')
+            self.assertNotError('pkgsearch --distro ubuntu python')
+            self.assertNotError('pkgsearch python')
 
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:
