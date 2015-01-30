@@ -205,6 +205,15 @@ class RelayNext(callbacks.Plugin):
                 s = '- %s%s set mode %s on %s' % (nick, userhost, modes, channel)
             elif msg.command == 'TOPIC':
                 s = '- %s set topic on %s to: %s' % (nick, channel, msg.args[1])
+            elif msg.command == 'KICK':
+                kicked = msg.args[1]
+                userhost = irc.state.nickToHostmask(kicked).split('!', 1)[1]
+                if color:
+                    kicked = self.simpleHash(kicked)
+                if noHighlight:
+                    kicked = '-' + kicked
+                s = '- %s (%s) has been kicked from %s by %s (%s)' % (kicked,
+                    userhost, channel, nick, msg.args[2])
 
         if s:  # Add the network name and some final touch-ups
             s = "\x02[%s]\x02 %s" % (netname, s)
