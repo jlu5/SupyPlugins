@@ -79,7 +79,7 @@ class LastFMParser:
         return (user, isNowPlaying, artist, track, album, time)
 
 class LastFM(callbacks.Plugin):
-
+    threaded = True
     def __init__(self, irc):
         self.__parent = super(LastFM, self)
         self.__parent.__init__(irc)
