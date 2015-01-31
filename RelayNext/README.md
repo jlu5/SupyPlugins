@@ -32,3 +32,23 @@ The `list` command will list all relays defined.
 ### Removing/clearing relays
 
 The `unset` command removes a relay name, while the `clear` command clears all relays. The `remove` command removes individual channels from a relay, deleting it completely when the amount of channels is less than 2.
+
+
+## Configuration
+### Relaying non-PRIVMSG events
+
+RelayNext supports relaying the following non-PRIVMSG events: joins, kicks, mode changes, nick changes, parts, quits, and topic changes. Each of these can be turned on and off using configuration variables, and have the following defaults:
+
+- `config plugins.RelayNext.events.relayjoins`: True
+- `config plugins.RelayNext.events.relaykicks`: True
+- `config plugins.RelayNext.events.relaymodes`: True
+- `config plugins.RelayNext.events.relaynicks`: True
+- `config plugins.RelayNext.events.relayparts`: True
+- `config plugins.RelayNext.events.relayquits`: True
+- `config plugins.RelayNext.events.relaytopics`: False
+
+Note: Topic relaying will only show topic *changes* in a channel. **It does not, and can not sync topics between channels!**
+### Ignoring users
+RelayNext uses Supybot's built in ignore system, but you can set which kinds of messages you want to ignore from ignored users using `config plugins.RelayNext.events.userignored`.
+
+This key takes a space separated list, and defaults to ignoring `PRIVMSG` and `MODE`. **If you want to disable this ignore feature, simply set the value blank: `config plugins.RelayNext.events.userignored ""`**
