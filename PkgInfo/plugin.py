@@ -86,8 +86,7 @@ class PkgInfo(callbacks.Plugin):
         elif release.startswith(ubuntu):
             return "ubuntu"
 
-    def MadisonParse(self, pkg, dist, codenames='', suite='', useSource=False,
-                     reverse=False):
+    def MadisonParse(self, pkg, dist, codenames='', suite='', reverse=False):
         """Parser for the madison API at https://qa.debian.org/madison.php."""
         # This arch value implies 'all' (architecture-independent packages)
         # and 'source' (source packages), in order to prevent misleading
@@ -96,8 +95,6 @@ class PkgInfo(callbacks.Plugin):
         arch = ','.join(set(arch))
         self.arg = {'package': pkg, 'table': dist, 'a': arch, 'c': codenames,
                     's': suite}
-        if useSource:
-            self.arg['S'] = 'on'
         self.arg = urlencode(self.arg)
         url = 'https://qa.debian.org/madison.php?text=on&' + self.arg
         self.log.debug("PkgInfo: Using url %s for 'vlist' command", url)
@@ -107,10 +104,7 @@ class PkgInfo(callbacks.Plugin):
             L = line.decode("utf-8").split("|")
             L = map(str.strip, L)
             name, version, release, archs = L
-            if useSource:
-                d['%s: %s' % (release, name)] = (version, archs)
-            else:
-                d[release] = (version, archs)
+            d[release] = (version, archs)
         if d:
             if reverse:
                 # *sigh*... I wish there was a better way to do this
@@ -198,14 +192,12 @@ class PkgInfo(callbacks.Plugin):
                getopts({'depends': '', 'recommends': '', 'suggests': ''})])
 
     def vlist(self, irc, msg, args, distro, pkg, opts):
-        """<distribution> <package> [--source] [--reverse]
+        """<distribution> <package>[--reverse]
 
         Fetches all available version of <package> in <distribution>, if
         such package exists. Supported entries for <distribution>
         include 'debian', 'ubuntu', 'derivatives', and 'all'. If
-        --source is given, search for packages by source package
-        name. If --reverse is given, show the newest package versions
-        first."""
+        --reverse is given, show the newest package versions first."""
         pkg, distro = map(str.lower, (pkg, distro))
         supported = ("debian", "ubuntu", "derivatives", "all")
         if distro not in supported:
@@ -215,8 +207,7 @@ class PkgInfo(callbacks.Plugin):
                 irc.error(e, Raise=True)
         opts = dict(opts)
         reverse = 'reverse' in opts
-        d = self.MadisonParse(pkg, distro, useSource='source' in opts,
-                              reverse=reverse)
+        d = self.MadisonParse(pkg, distro, reverse=reverse)
         if not d:
             irc.error("No results found.", Raise=True)
         try:
@@ -226,7 +217,7 @@ class PkgInfo(callbacks.Plugin):
             pass
         irc.reply(d)
     vlist = wrap(vlist, ['somethingWithoutSpaces', 'somethingWithoutSpaces',
-                 getopts({'source': '', 'reverse': ''})])
+                 getopts({'reverse': ''})])
 
     def archpkg(self, irc, msg, args, pkg, opts):
         """<package> [--exact]

@@ -34,19 +34,17 @@ from supybot.test import *
 class PkgInfoTestCase(PluginTestCase):
     plugins = ('PkgInfo',)
     if network:
-        def testPkgCommand(self):
+        def testPkg(self):
             self.assertRegexp('pkg sid bash', 'Package: .*?bash .*?')
             self.assertRegexp('pkg trusty apt', 'Package: .*?apt .*?')
             self.assertError('pkg afdsfsadf asfasfasf')
             self.assertRegexp('pkg sid afsadfasfsa', 'no such package', re.I)
 
-        def testVlistCommandBasics(self):
+        def testVlist(self):
             self.assertError('vlist all afdsafas')
             self.assertError('vlist invalid-distro firefox')
             self.assertRegexp('vlist debian bash', 'Found [1-9][0-9]* '
                               'results: (.*?\(.*?\))+')
-            self.assertRegexp('vlist debian bash --source', 'Found [1-9]*'
-                              ' results: .*?bash')
 
         def testArchpkg(self):
             self.assertError('archpkg afdsfbjeiog')
