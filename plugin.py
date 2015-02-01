@@ -190,9 +190,7 @@ class LastFM(callbacks.Plugin):
         """
 
         self.db.set(msg.nick, newId)
-
         irc.reply("LastFM ID changed.")
-        self.profile(irc, msg, args)
 
     set = wrap(setUserId, ["something"])
 
