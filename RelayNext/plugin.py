@@ -115,26 +115,11 @@ class RelayNext(callbacks.Plugin):
 
         Returns a colorized version of <text> based on a simple hash algorithm
         (sum of all characters)."""
-        colors = ("05", "04", "03", "09", "02", "12", "06", "13", "10", "11",
-                  "07")
-        num = 0
-        for i in s:
-            num += ord(i)
+        colors = ('02', '03', '04', '05', '06', '07', '08', '09', '10', '11',
+                  '12', '13')
+        num = sum([ord(char) for char in s])
         num = num % len(colors)
         return "\x03%s%s\x03" % (colors[num], s)
-
-    # This part keeps track of the IrcStates as mentioned above
-    def __call__(self, irc, msg):
-        if irc not in self.ircstates:
-            self.ircstates[irc] = irclib.IrcState()
-        try:
-            self.ircstates[irc].addMsg(irc, self.lastmsg[irc])
-        except KeyError:
-            self.ircstates[irc].addMsg(irc,
-                                       ircmsgs.ping("placeholder message"))
-        finally:
-            self.lastmsg[irc] = msg
-        self.__parent.__call__(irc, msg)
 
     def initializeNetworks(self):
         for IRC in world.ircs:
@@ -222,11 +207,19 @@ class RelayNext(callbacks.Plugin):
 
     def checkFlood(self, channel, source, command):
         maximum = self.registryValue("antiflood.maximum", channel)
-        enabled = self.registryValue("antiflood.enable", channel)
-        if enabled and len(self.msgcounters[(source, command)]) > maximum:
-            return True
+        return len(self.msgcounters[(source, command)]) > maximum
 
     def relay(self, irc, msg, channel=None):
+        # Keep track of our IRC state files
+        if irc not in self.ircstates:
+            self.ircstates[irc] = irclib.IrcState()
+        try:
+            self.ircstates[irc].addMsg(irc, self.lastmsg[irc])
+        except KeyError:
+            self.ircstates[irc].addMsg(irc,
+                                       ircmsgs.ping("placeholder message"))
+        finally:
+            self.lastmsg[irc] = msg
         channel = channel or msg.args[0]
         ignoredevents = map(str.upper, self.registryValue('events.userIgnored'))
         if msg.command in ignoredevents and ircdb.checkIgnored(msg.prefix):
@@ -239,37 +232,36 @@ class RelayNext(callbacks.Plugin):
         out_s = self._format(irc, msg)
         if out_s:
             ### Begin Flood checking clause
-            timeout = self.registryValue("antiflood.timeout", channel)
-            seconds = self.registryValue("antiflood.seconds", channel)
-            maximum = self.registryValue("antiflood.maximum", channel)
-            try:
-                self.msgcounters[(source, msg.command)].enqueue(msg.prefix)
-            except KeyError:
-                self.msgcounters[(source, msg.command)] = TimeoutQueue(seconds)
-            if self.checkFlood(channel, source, msg.command):
-                self.log.debug("RelayNext (%s): message from %s blocked by "
-                               "flood preotection.", irc.network, channel)
-                if self.floodTriggered:
-                    return
-                c = msg.command.lower()
-                e = format("Flood detected on %s (%s %ss/%s seconds), "
-                           "not relaying %ss for %s seconds!", channel,
-                           maximum, c, seconds, c, timeout)
-                out_s = self._format(irc, msg, announcement=e)
-                self.log.info("RelayNext (%s): %s", irc.network, e)
-                self.floodTriggered = True
-            else:
-                self.floodTriggered = False
+            if self.registryValue("antiflood.enable", channel):
+                timeout = self.registryValue("antiflood.timeout", channel)
+                seconds = self.registryValue("antiflood.seconds", channel)
+                maximum = self.registryValue("antiflood.maximum", channel)
+                try:
+                    self.msgcounters[(source, msg.command)].enqueue(msg.prefix)
+                except KeyError:
+                    self.msgcounters[(source, msg.command)] = TimeoutQueue(seconds)
+                if self.checkFlood(channel, source, msg.command):
+                    self.log.debug("RelayNext (%s): message from %s blocked by "
+                                   "flood preotection.", irc.network, channel)
+                    if self.floodTriggered:
+                        return
+                    c = msg.command.lower()
+                    e = format("Flood detected on %s (%s %ss/%s seconds), "
+                               "not relaying %ss for %s seconds!", channel,
+                               maximum, c, seconds, c, timeout)
+                    out_s = self._format(irc, msg, announcement=e)
+                    self.log.info("RelayNext (%s): %s", irc.network, e)
+                    self.floodTriggered = True
+                else:
+                    self.floodTriggered = False
             ### End Flood checking clause
             for relay in self.db.values():
                 if source in relay:  # If our channel is in a relay
                     # Remove ourselves so we don't get duplicated messages
-                    targets = deepcopy(relay)
+                    targets = list(relay)
                     targets.remove(source)
                     for cn in targets:
                         target, net = cn.split("@")
-                        if net not in self.networks.keys():
-                            self.initializeNetworks()
                         try:
                             otherIrc = self.networks[net]
                         except KeyError:
@@ -283,11 +275,16 @@ class RelayNext(callbacks.Plugin):
     def doPrivmsg(self, irc, msg):
         self.relay(irc, msg)
 
-    def doJoin(self, irc, msg):
+    def doNonPrivmsg(self, irc, msg):
         if self.registryValue("events.relay%ss" % msg.command, msg.args[0]):
             self.relay(irc, msg)
 
-    doTopic = doPart = doKick = doMode = doJoin
+    def doJoin(self, irc, msg):
+        if msg.nick == irc.nick:
+            self.initializeNetworks()
+        self.doNonPrivmsg(irc, msg)
+
+    doTopic = doPart = doKick = doMode = doNonPrivmsg
 
     # NICK and QUIT aren't channel specific, so they require a bit
     # of extra handling
