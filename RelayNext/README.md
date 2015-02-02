@@ -31,7 +31,7 @@ The `list` command will list all relays defined.
 
 ### Removing/clearing relays
 
-Once a relay is created, you can remove the relays (or channels within them) using the `remove` command. There is also a `clear` command which clears all relays.
+You can remove relays (or channels within them) using the `remove` command. There is also a `clear` command which clears all relays.
 
 To remove channels from an existing relay:
 
