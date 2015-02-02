@@ -440,21 +440,23 @@ class RelayNext(callbacks.Plugin):
                      many('somethingWithoutSpaces')])
 
     def remove(self, irc, msg, args, rid, relays):
-        """<id> <relays>
+        """<id> [<relays>]
 
         Removes <relays> from relay <id>. <relays> is a space separated
         list of #channel@network combinations, where <network> is the name
         of your network. <id> is the name of your relay, which can be a
-        number, string, etc.
+        number, string, etc. If <relays> is not given, removes the entire
+        relay.
         """
         try:
             current_relays = self.db[rid]
         except KeyError:
             irc.error("No such relay '%s' exists." % rid, Raise=True)
-        if type(relays) == list:
-            relays = list(map(str.lower, relays))
-        else:
-            relays = [relays.lower()]
+        if not relays:
+            del self.db[rid]
+            irc.replySuccess()
+            return
+        relays = list(map(str.lower, relays))
         self.checkRelays(irc, relays)
         for relay in relays:
             current_relays.discard(relay)
@@ -462,20 +464,7 @@ class RelayNext(callbacks.Plugin):
             del self.db[rid]
         irc.replySuccess()
     remove = wrap(remove, ['admin', 'somethingWithoutSpaces',
-                           many('somethingWithoutSpaces')])
-
-    def unset(self, irc, msg, args, rid):
-        """<id>
-
-        Removes relay <id>.
-        """
-        try:
-            del self.db[rid]
-        except KeyError:
-            irc.error("No such relay '%s' exists." % rid, Raise=True)
-        else:
-            irc.replySuccess()
-    unset = wrap(unset, ['admin', 'somethingWithoutSpaces'])
+                           any('somethingWithoutSpaces')])
 
     def list(self, irc, msg, args):
         """takes no arguments.

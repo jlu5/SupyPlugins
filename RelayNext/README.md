@@ -31,8 +31,17 @@ The `list` command will list all relays defined.
 
 ### Removing/clearing relays
 
-The `unset` command removes a relay name, while the `clear` command clears all relays. The `remove` command removes individual channels from a relay, deleting it completely when the amount of channels is less than 2.
+Once a relay is created, you can remove the relays (or channels within them) using the `remove` command. There is also a `clear` command which clears all relays.
 
+To remove channels from an existing relay:
+
+* `relaynext remove Your-relay-name #channel1@networkone #blah@networktwo`
+
+Or, to delete an entire relay:
+
+* `relaynext remove Your-relay-name`
+
+Relays require at least two channels to relay between. When the last two channels are removed, the relay is automatically deleted.
 
 ## Configuration
 ### Relaying non-PRIVMSG events
