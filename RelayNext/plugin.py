@@ -377,7 +377,7 @@ class RelayNext(callbacks.Plugin):
             s = format('%s users in %s on %s: %L', len(c.users),
                        channel, net, users)
             if 'count' not in opts:
-                irc.reply(s, private=True)
+                irc.reply(s, private=True, notice=True)
         if 'count' in opts:
             irc.reply(totalUsers)
         else:
@@ -391,15 +391,14 @@ class RelayNext(callbacks.Plugin):
             r = relay.split("@")
             if len(r) != 2 or not (ircutils.isChannel(r[0]) and r[1]):
                 irc.error("Channels must be given in the form "
-                          "#channel@networkname", Raise=True)
+                          "#channel@networkname.", Raise=True)
 
     def set(self, irc, msg, args, rid, relays):
-        """<id> <relays>
+        """<relay name> <#channel1>@<network1> <#channel2>@<network2> [<#channel3>@<network3>] ...
 
-        Sets relay <id> to relay between <relays>. <relays> is a space
-        separated list of #channel@network combinations, where <network> is the
-        name of your network. <id> is the name of your relay, which can be a
-        number, string, etc.
+        Sets <relay name> to relay between the specified channels,
+        replacing it if it already exists. Each relay requires at least
+        two channels to relay between.
         """
         relays = set(map(str.lower, relays))
         if len(relays) < 2:
@@ -412,12 +411,10 @@ class RelayNext(callbacks.Plugin):
                      many('somethingWithoutSpaces')])
 
     def add(self, irc, msg, args, rid, relays):
-        """<id> <relays>
+        """<relay name> [<#channel1>@<network1>] [<#channel2>@<network2>] ...
 
-        Adds <relays> to relay <id>, creating it if it does not already
-        exist. <relays> is a space separated list of #channel@network
-        combinations, where <network> is the name of your network.
-        <id> is the name of your relay, which can be a number, string, etc.
+        Adds the specified channels to an existing relay <relay name>,
+        creating it if it does not already exist.
         """
         # Supybot's internals are terribly inconsistent here, only
         # returning a list IF there are more than one items. Otherwise,
@@ -440,13 +437,10 @@ class RelayNext(callbacks.Plugin):
                      many('somethingWithoutSpaces')])
 
     def remove(self, irc, msg, args, rid, relays):
-        """<id> [<relays>]
+        """<relay name> [<#channel1>@<network1>] [<#channel2>@<network2>] ...
 
-        Removes <relays> from relay <id>. <relays> is a space separated
-        list of #channel@network combinations, where <network> is the name
-        of your network. <id> is the name of your relay, which can be a
-        number, string, etc. If <relays> is not given, removes the entire
-        relay.
+        Removes the specified channels from <relay name>. If no channels
+        are given, removes the entire relay.
         """
         try:
             current_relays = self.db[rid]
@@ -477,7 +471,7 @@ class RelayNext(callbacks.Plugin):
         irc.reply(', '.join(items))
 
     def clear(self, irc, msg, args):
-        """<takes no arguments.
+        """takes no arguments.
 
         Clears all relays defined.
         """
