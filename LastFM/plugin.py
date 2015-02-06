@@ -49,7 +49,6 @@ except ImportError:
 from .LastFMDB import *
 
 class LastFMParser:
-
     def parseRecentTracks(self, stream):
         """
         <stream>
@@ -80,6 +79,7 @@ class LastFMParser:
 
 class LastFM(callbacks.Plugin):
     threaded = True
+
     def __init__(self, irc):
         self.__parent = super(LastFM, self)
         self.__parent.__init__(irc)
@@ -96,179 +96,234 @@ class LastFM(callbacks.Plugin):
         self.db.close()
         self.__parent.die()
 
-    def lastfm(self, irc, msg, args, method, optionalId):
-        """<method> [<id>]
+    def lastfm(self, irc, msg, args, method, user):
+        """<method> [<user>]
 
         Lists LastFM info where <method> is in
         [friends, neighbours, profile, recenttracks, tags, topalbums,
         topartists, toptracks].
-        Set your LastFM ID with the set method (default is your current nick)
-        or specify <id> to switch for one call.
         """
         if not self.apiKey:
-            irc.error("The API Key is not set for this plugin. Please set it via"
-                      "config plugins.lastfm.apikey and reload the plugin. "
+            irc.error("The API Key is not set. Please set it via "
+                      "'config plugins.lastfm.apikey' and reload the plugin. "
                       "You can sign up for an API Key using "
                       "http://www.last.fm/api/account/create", Raise=True)
-        method = method.lower()
         knownMethods = {'friends': 'user.getFriends',
                         'neighbours': 'user.getNeighbours',
-                        'profile': 'user.getInfo',
-                        'recenttracks': 'user.getRecentTracks',
                         'tags': 'user.getTopTags',
                         'topalbums': 'user.getTopAlbums',
                         'topartists': 'user.getTopArtists',
-                        'toptracks': 'user.getTopTracks'}
-        if method not in knownMethods:
-            irc.error("Unsupported method '%s'" % method, Raise=True)
-        id = (optionalId or self.db.getId(msg.nick) or msg.nick)
+                        'toptracks': 'user.getTopTracks',
+                        'recenttracks': 'user.getRecentTracks'}
+        user = (user or self.db.getId(msg.nick) or msg.nick)
         channel = msg.args[0]
         maxResults = self.registryValue("maxResults", channel)
 
         url = "%sapi_key=%s&method=%s&user=%s" % (self.APIURL,
-            self.apiKey, knownMethods[method], id)
+            self.apiKey, knownMethods[method], user)
         try:
             f = utils.web.getUrlFd(url)
         except utils.web.Error:
-            irc.error("Unknown ID (%s) or unknown method (%s)"
-                    % (msg.nick, method), Raise=True)
+            irc.error("Unknown user '%s'." % user, Raise=True)
 
         xml = minidom.parse(f).getElementsByTagName("lfm")[0]
+        # Grab a list of item names
         content = xml.childNodes[1].getElementsByTagName("name")
-        results = [res.firstChild.nodeValue.strip() for res in content[0:maxResults*2]]
-        if method in ('topalbums', 'toptracks'):
+        # Fetch their values, strip leading/trailing spaces, and add bolding
+        results = [ircutils.bold(res.firstChild.nodeValue.strip()) for res in
+                   content[0:maxResults*2]]
+        if method in ('topalbums', 'toptracks', 'recenttracks'):
             # Annoying, hackish way of grouping artist+album/track items
-            results = ["%s - %s" % (thing, artist) for thing, artist in izip(results[1::2], results[::2])]
+            results = ["%s - %s" % (thing, artist) for thing, artist in
+                       izip(results[1::2], results[::2])]
+        if len(content) < 1:
+            irc.error("%s doesn't seem to have any %s on LastFM." % (user,
+                      method), Raise=True)
         irc.reply("%s's %s: %s (with a total number of %i entries)"
-                % (id, method, ", ".join(results[0:maxResults]),
-                    len(content)))
+                  % (ircutils.bold(user), method,
+                     ", ".join(results[0:maxResults]), len(content)))
 
-    lastfm = wrap(lastfm, ["something", optional("something")])
+    @wrap([additional("something")])
+    def friends(self, irc, msg, args, user):
+        """[<user>]
+
+        Shows friends for <user>. If <user> is not given, defaults
+        to the LastFM user configured for your current nick."""
+        self.lastfm(irc, msg, args, 'friends', user)
+
+    @wrap([additional("something")])
+    def neighbours(self, irc, msg, args, user):
+        """[<user>]
+
+        Shows friends for <user>. If <user> is not given, defaults
+        to the LastFM user configured for your current nick."""
+        self.lastfm(irc, msg, args, 'neighbours', user)
+
+    @wrap([additional("something")])
+    def toptags(self, irc, msg, args, user):
+        """[<user>]
+
+        Shows the top tags for <user>. If <user> is not given, defaults
+        to the LastFM user configured for your current nick."""
+        self.lastfm(irc, msg, args, 'tags', user)
+
+    @wrap([additional("something")])
+    def topalbums(self, irc, msg, args, user):
+        """[<user>]
+
+        Shows the top albums for <user>. If <user> is not given, defaults
+        to the LastFM user configured for your current nick."""
+        self.lastfm(irc, msg, args, 'topalbums', user)
+
+    @wrap([additional("something")])
+    def toptracks(self, irc, msg, args, user):
+        """[<user>]
+
+        Shows the top tracks for <user>. If <user> is not given, defaults
+        to the LastFM user configured for your current nick."""
+        self.lastfm(irc, msg, args, 'toptracks', user)
+
+    @wrap([additional("something")])
+    def topartists(self, irc, msg, args, user):
+        """[<user>]
+
+        Shows the top artists for <user>. If <user> is not given, defaults
+        to the LastFM user configured for your current nick."""
+        self.lastfm(irc, msg, args, 'topartists', user)
+
+    @wrap([additional("something")])
+    def recenttracks(self, irc, msg, args, user):
+        """[<user>]
+
+        Shows the recent tracks for <user>. If <user> is not given, defaults
+        to the LastFM user configured for your current nick."""
+        self.lastfm(irc, msg, args, 'recenttracks', user)
 
     def nowPlaying(self, irc, msg, args, optionalId):
-        """[<id>]
+        """[<user>]
 
-        Announces the now playing track of the specified LastFM ID.
-        Set your LastFM ID with the set method (default is your current nick)
-        or specify <id> to switch for one call.
+        Announces the track currently being played by <user>. If <user>
+        is not given, defaults to the LastFM user configured for your
+        current nick.
         """
-
         if not self.apiKey:
-            irc.error("The API Key is not set for this plugin. Please set it via"
-                      "config plugins.lastfm.apikey and reload the plugin. "
+            irc.error("The API Key is not set. Please set it via "
+                      "'config plugins.lastfm.apikey' and reload the plugin. "
                       "You can sign up for an API Key using "
                       "http://www.last.fm/api/account/create", Raise=True)
-        id = (optionalId or self.db.getId(msg.nick) or msg.nick)
+        user = (optionalId or self.db.getId(msg.nick) or msg.nick)
 
         # see http://www.lastfm.de/api/show/user.getrecenttracks
-        url = "%sapi_key=%s&method=user.getrecenttracks&user=%s" % (self.APIURL, self.apiKey, id)
+        url = "%sapi_key=%s&method=user.getrecenttracks&user=%s" % (self.APIURL, self.apiKey, user)
         try:
             f = utils.web.getUrlFd(url)
         except utils.web.Error:
-            irc.error("Unknown ID (%s)" % id, Raise=True)
+            irc.error("Unknown user '%s'." % user, Raise=True)
 
         parser = LastFMParser()
         (user, isNowPlaying, artist, track, album, time) = parser.parseRecentTracks(f)
         if track is None:
-            irc.reply("%s doesn't seem to have listened to anything." % id)
+            irc.reply("%s doesn't seem to have listened to anything." % user)
             return
         albumStr = ("[%s]" % album) if album else ""
+        track, artist, albumStr = map(ircutils.bold, (track, artist, albumStr))
         if isNowPlaying:
-            irc.reply('%s is listening to "%s" by %s %s'
+            irc.reply('%s is listening to %s by %s %s'
                     % (user, track, artist, albumStr))
         else:
-            irc.reply('%s listened to "%s" by %s %s more than %s'
+            irc.reply('%s listened to %s by %s %s more than %s'
                     % (user, track, artist, albumStr,
                         self._formatTimeago(time)))
 
     np = wrap(nowPlaying, [optional("something")])
 
     def setUserId(self, irc, msg, args, newId):
-        """<id>
+        """<user>
 
-        Sets the LastFM ID for the caller and saves it in a database.
+        Sets the LastFM username for the caller and saves it in a database.
         """
 
         self.db.set(msg.nick, newId)
-
-        irc.reply("LastFM ID changed.")
-        self.profile(irc, msg, args)
+        irc.replySuccess()
 
     set = wrap(setUserId, ["something"])
 
     def profile(self, irc, msg, args, optionalId):
-        """[<id>]
+        """[<user>]
 
-        Prints the profile info for the specified LastFM ID.
-        Set your LastFM ID with the set method (default is your current nick)
-        or specify <id> to switch for one call.
+        Prints the profile info for the specified LastFM user. If <user>
+        is not given, defaults to the LastFM user configured for your
+        current nick.
         """
         if not self.apiKey:
-            irc.error("The API Key is not set for this plugin. Please set it via"
-                      "config plugins.lastfm.apikey and reload the plugin. "
+            irc.error("The API Key is not set. Please set it via "
+                      "'config plugins.lastfm.apikey' and reload the plugin. "
                       "You can sign up for an API Key using "
                       "http://www.last.fm/api/account/create", Raise=True)
-        id = (optionalId or self.db.getId(msg.nick) or msg.nick)
+        user = (optionalId or self.db.getId(msg.nick) or msg.nick)
 
-        url = "%sapi_key=%s&method=user.getInfo&user=%s" % (self.APIURL, self.apiKey, id)
+        url = "%sapi_key=%s&method=user.getInfo&user=%s" % (self.APIURL, self.apiKey, user)
         try:
             f = utils.web.getUrlFd(url)
         except utils.web.Error:
-            irc.error("Unknown user (%s)" % id, Raise=True)
+            irc.error("Unknown user '%s'." % user, Raise=True)
 
         xml = minidom.parse(f).getElementsByTagName("user")[0]
         keys = ("realname", "registered", "age", "gender", "country", "playcount")
-        profile = {"id": id}
+        profile = {"id": ircutils.bold(user)}
         for tag in keys:
             try:
-                profile[tag] = xml.getElementsByTagName(tag)[0].firstChild.data.strip()
+                profile[tag] = ircutils.bold(xml.getElementsByTagName(tag)[0].firstChild.data.strip())
             except AttributeError: # empty field
-                profile[tag] = 'unknown'
+                profile[tag] = ircutils.bold('unknown')
         irc.reply(("%(id)s (realname: %(realname)s) registered on %(registered)s; age: %(age)s / %(gender)s; "
                   "Country: %(country)s; Tracks played: %(playcount)s") % profile)
 
     profile = wrap(profile, [optional("something")])
 
     def compareUsers(self, irc, msg, args, user1, optionalUser2):
-        """user1 [<user2>]
+        """<user1> [<user2>]
 
-        Compares the taste from two users
-        If <user2> is ommitted, the taste is compared against the ID of the calling user.
+        Compares the music tastes of <user1> and <user2>. If <user2>
+        is not given, defaults to the LastFM user configured for your
+        current nick.
         """
         if not self.apiKey:
-            irc.error("The API Key is not set for this plugin. Please set it via"
-                      "config plugins.lastfm.apikey and reload the plugin. "
+            irc.error("The API Key is not set. Please set it via "
+                      "'config plugins.lastfm.apikey' and reload the plugin. "
                       "You can sign up for an API Key using "
                       "http://www.last.fm/api/account/create", Raise=True)
         user2 = (optionalUser2 or self.db.getId(msg.nick) or msg.nick)
 
         channel = msg.args[0]
         maxResults = self.registryValue("maxResults", channel)
-        # see http://www.lastfm.de/api/show/tasteometer.compare
-        url = "%sapi_key=%s&method=tasteometer.compare&type1=user&type2=user&value1=%s&value2=%s&limit=%s" % (
-            self.APIURL, self.apiKey, user1, user2, maxResults)
+        url = ("%sapi_key=%s&method=tasteometer.compare&type1=user&type2=user"
+               "&value1=%s&value2=%s&limit=%s" % (self.APIURL, self.apiKey,
+               user1, user2, maxResults))
         try:
             f = utils.web.getUrlFd(url)
         except utils.web.Error as e:
-            irc.error("Failure: %s" % (e), Raise=True)
+            irc.error(str(e), Raise=True)
 
         xml = minidom.parse(f)
         resultNode = xml.getElementsByTagName("result")[0]
-        score = float(self._parse(resultNode, "score"))
-        scoreStr = "%s (%s)" % (round(score, 2), self._formatRating(score))
-        # Note: XPath would be really cool here...
-        artists = [el for el in resultNode.getElementsByTagName("artist")]
-        artistNames = [el.getElementsByTagName("name")[0].firstChild.data for el in artists]
-        irc.reply("Result of comparison between %s and %s: score: %s, common artists: %s" \
-                % (user1, user2, scoreStr, ", ".join(artistNames)))
+        try:
+            score = resultNode.getElementsByTagName('score')[0].firstChild.data
+            score = round(float(score), 3)
+        except (IndexError, ValueError):
+            scoreStr = "unknown"
+        else:
+            scoreStr = "%s (%s)" % (ircutils.bold(self._formatRating(score)),
+                                    score)
+        artists = resultNode.getElementsByTagName("artist")
+        artistNames = [ircutils.bold(el.getElementsByTagName("name")[0].firstChild.data)
+                       for el in artists]
+        s = ("Result of comparison between %s and %s: score: %s, common "
+             "artists: %s" % (ircutils.bold(user1), ircutils.bold(user2),
+             scoreStr, ", ".join(artistNames)))
+        irc.reply(s)
 
     compare = wrap(compareUsers, ["something", optional("something")])
-
-    def _parse(self, node, tagName, exceptMsg="not specified"):
-            try:
-                return node.getElementsByTagName(tagName)[0].firstChild.data
-            except IndexError:
-                return exceptMsg
 
     def _formatTimeago(self, unixtime):
         t = int(time()-unixtime)
