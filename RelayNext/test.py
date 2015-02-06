@@ -33,4 +33,75 @@ from supybot.test import *
 class RelayNextTestCase(PluginTestCase):
     plugins = ('RelayNext',)
 
+    def testAdd(self):
+        self.assertNotError("relaynext add test #channel1@somenet #channel2@othernet")
+        self.assertRegexp("relaynext list", "#channel1@somenet")
+        self.assertRegexp("relaynext list", "#channel2@othernet")
+        # Incorrect amount of arguments
+        self.assertError("relaynext add test")
+        self.assertError("relaynext add test afdasfader agkajeoig #validchannel@othernet")
+        self.assertError("relaynext add nonexistant-relay #channel1@somenet")
+
+    def testSet(self):
+        self.assertNotError("relaynext set test #channel1@somenet #channel2@othernet")
+        self.assertRegexp("relaynext list", "#channel1@somenet")
+        self.assertRegexp("relaynext list", "#channel2@othernet")
+        self.assertError("relaynext set test")
+        self.assertError("relaynext set test #channel1@somenet")
+    
+    def testList(self):
+        # This should error if no relays are defined
+        self.assertError("relaynext list")
+        self.assertNotError("relaynext set abcd #moo@moo #test@test")
+        self.assertRegexp("relaynext list", "#moo@moo")
+        self.assertRegexp("relaynext list", "#test@test")
+
+    def testSetCaseInsensitive(self):
+        self.assertError("relaynext set derp #dev@overdrive-irc #DEV@OVERdrive-IRC")
+        self.assertNotError("relaynext set abcd #moo@moo #MOO@mOO #test@test")
+        self.assertRegexp("relaynext list", "#moo@moo")
+        self.assertRegexp("relaynext list", "#test@test")
+
+    def testAddCaseInsensitive(self):
+        self.assertError("relaynext add derp #dev@overdrive-irc #DEV@OVERdrive-IRC")
+        self.assertNotError("relaynext add abcd #moo@moo #MOO@mOO #test@test")
+        self.assertRegexp("relaynext list", "#moo@moo")
+        self.assertRegexp("relaynext list", "#test@test")
+
+    def testRemoveEntireRelay(self):
+        self.assertError("relaynext remove some-relay")
+        self.assertNotError("relaynext add some-relay #channel1@somenet #channel2@othernet #abcd@test123")
+        # 'remove' without arguments removes an entire relay
+        self.assertNotError("relaynext remove some-relay")
+        # No relays should be defined now.
+        self.assertError("relaynext list")
+
+    def testRemoveChannelsFromExistingRelay(self):
+        self.assertNotError("relaynext add some-relay #channel1@somenet #channel2@othernet #abcd@test123")
+        # This should give a warning (removing a channel that's not in the specified relay)
+        self.assertRegexp("relaynext remove some-relay #asfdafaergea@random",
+                          'not found in the original relay: '
+                          '#asfdafaergea@random')
+        self.assertNotError("relaynext remove some-relay #abcd@test123")
+        self.assertRegexp("relaynext list", "#channel1@somenet")
+        self.assertRegexp("relaynext list", "#channel2@othernet")
+        self.assertNotRegexp("relaynext list", "#abcd@test123")
+
+    def testAutoremoveWhenLessThanTwoChannels(self):
+        self.assertNotError("relaynext add some-relay #channel1@somenet #channel2@othernet #abcd@test123")
+        self.assertNotError("relaynext remove some-relay #abcd@test123 #channel2@othernet")
+        self.assertError("relaynext list")
+
+    def testAddChannelsToExistingRelay(self):
+        self.assertNotError("relaynext add test #channel1@somenet #channel2@othernet")
+        self.assertNotError("relaynext add test #somewhereElse@mynet")
+        self.assertRegexp("relaynext list", "#channel1@somenet")
+        self.assertRegexp("relaynext list", "#channel2@otherne")
+        self.assertRegexp("relaynext list", "#somewhereelse@mynet")
+
+    def testClear(self):
+        self.assertNotError("relaynext set test #channel1@somenet #channel2@othernet")
+        self.assertNotError("relaynext clear")
+        self.assertError("relaynext list")
+
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:

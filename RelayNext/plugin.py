@@ -420,9 +420,9 @@ class RelayNext(callbacks.Plugin):
         # returning a list IF there are more than one items. Otherwise,
         # the object is returned alone.
         if type(relays) == list:
-            relays = list(map(str.lower, relays))
+            relays = set(map(str.lower, relays))
         else:
-            relays = [relays.lower()]
+            relays = set(relays.lower())
         self.checkRelays(irc, relays)
         if rid not in self.db.keys() and len(relays) < 2:
             irc.error("Not enough channels to relay between (need at least "
@@ -452,10 +452,19 @@ class RelayNext(callbacks.Plugin):
             return
         relays = list(map(str.lower, relays))
         self.checkRelays(irc, relays)
+        missing = []
         for relay in relays:
+            if relay not in current_relays:
+                missing.append(relay)
             current_relays.discard(relay)
         if len(current_relays) < 2:
             del self.db[rid]
+        if missing:
+            s = format("However, the following channels were not removed "
+                       "because they were not found in the original relay: %L",
+                       missing)
+            irc.replySuccess(s)
+            return
         irc.replySuccess()
     remove = wrap(remove, ['admin', 'somethingWithoutSpaces',
                            any('somethingWithoutSpaces')])
