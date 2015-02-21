@@ -309,18 +309,16 @@ class LastFM(callbacks.Plugin):
         resultNode = xml.getElementsByTagName("result")[0]
         try:
             score = resultNode.getElementsByTagName('score')[0].firstChild.data
-            score = round(float(score), 3)
+            score = round(float(score) * 100, 1)
+            score = ircutils.bold("%s%%" % score)
         except (IndexError, ValueError):
-            scoreStr = "unknown"
-        else:
-            scoreStr = "%s (%s)" % (ircutils.bold(self._formatRating(score)),
-                                    score)
+            score = "unknown"
         artists = resultNode.getElementsByTagName("artist")
         artistNames = [ircutils.bold(el.getElementsByTagName("name")[0].firstChild.data)
                        for el in artists]
         s = ("Result of comparison between %s and %s: score: %s, common "
              "artists: %s" % (ircutils.bold(user1), ircutils.bold(user2),
-             scoreStr, ", ".join(artistNames)))
+             score, ", ".join(artistNames)))
         irc.reply(s)
 
     compare = wrap(compareUsers, ["something", optional("something")])
@@ -335,25 +333,6 @@ class LastFM(callbacks.Plugin):
             return "%i minutes ago" % (t/60)
         if t > 0:
             return "%i seconds ago" % (t)
-
-    def _formatRating(self, score):
-        """<score>
-
-        Formats <score> values to text. <score> should be a float
-        between 0 and 1.
-        """
-        if score >= 0.9:
-            return "Super"
-        elif score >= 0.7:
-            return "Very High"
-        elif score >= 0.5:
-            return "High"
-        elif score >= 0.3:
-            return "Medium"
-        elif score >= 0.1:
-            return "Low"
-        else:
-            return "Very Low"
 
 dbfilename = conf.supybot.directories.data.dirize("LastFM.db")
 
