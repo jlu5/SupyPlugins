@@ -78,7 +78,8 @@ class PkgInfo(callbacks.Plugin):
         Guesses the distribution from the release name."""
         release = release.lower()
         debian = ("oldstable", "squeeze", "wheezy", "stable", "jessie",
-                  "testing", "sid", "unstable", "stretch", "buster")
+                  "testing", "sid", "unstable", "stretch", "buster",
+                  "experimental")
         ubuntu = ("hardy", "lucid", "maverick", "natty", "oneiric", "precise",
                   "quantal", "raring", "saucy", "trusty", "utopic", "vivid")
         if release.startswith(debian):
