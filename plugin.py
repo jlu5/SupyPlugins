@@ -260,10 +260,10 @@ class LastFM(callbacks.Plugin):
         track, artist, albumStr = map(ircutils.bold, (track, artist, albumStr))
         if isNowPlaying:
             irc.reply('%s is listening to %s by %s %s'
-                    % (user, track, artist, albumStr))
+                    % (ircutils.bold(user), track, artist, albumStr))
         else:
             irc.reply('%s listened to %s by %s %s more than %s'
-                    % (user, track, artist, albumStr,
+                    % (ircutils.bold(user), track, artist, albumStr,
                         self._formatTimeago(time)))
 
     np = wrap(nowPlaying, [optional("something")])
@@ -324,7 +324,7 @@ class LastFM(callbacks.Plugin):
                       "'config plugins.lastfm.apikey' and reload the plugin. "
                       "You can sign up for an API Key using "
                       "http://www.last.fm/api/account/create", Raise=True)
-        user = (user2 or self.db.get(msg.prefix) or msg.nick)
+        user2 = (user2 or self.db.get(msg.prefix) or msg.nick)
 
         channel = msg.args[0]
         maxResults = self.registryValue("maxResults", channel)
