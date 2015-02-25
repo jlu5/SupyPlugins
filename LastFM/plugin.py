@@ -45,8 +45,40 @@ try:
     from itertools import izip # Python 2
 except ImportError:
     izip = zip # Python 3
+import pickle
 
-from .LastFMDB import *
+class LastFMDB():
+    """Holds the LastFM IDs of all known nicks
+
+    (This database is case insensitive and channel independent)
+    """
+
+    def __init__(self, *args, **kwargs):
+        self.db = {}
+        try:
+            with open(filename, 'rb') as f:
+               self.db = pickle.load(f)
+        except Exception as e:
+            log.debug('LastFM: Unable to load database, creating '
+                      'a new one: %s', e)
+
+    def flush(self):
+        try:
+            with open(filename, 'wb') as f:
+                pickle.dump(self.db, f, 2)
+        except Exception as e:
+            log.warning('LastFM: Unable to write database: %s', e)
+
+    def set(self, prefix, newId):
+        user = prefix.split('!', 1)[1]
+        self.db[user] = newId
+
+    def get(self, prefix):
+        user = prefix.split('!', 1)[1]
+        try:
+            return self.db[user]
+        except:
+            return # entry does not exist
 
 class LastFMParser:
     def parseRecentTracks(self, stream):
@@ -83,7 +115,7 @@ class LastFM(callbacks.Plugin):
     def __init__(self, irc):
         self.__parent = super(LastFM, self)
         self.__parent.__init__(irc)
-        self.db = LastFMDB(dbfilename)
+        self.db = LastFMDB(filename)
         world.flushers.append(self.db.flush)
 
         # 2.0 API (see http://www.lastfm.de/api/intro)
@@ -91,9 +123,8 @@ class LastFM(callbacks.Plugin):
         self.APIURL = "http://ws.audioscrobbler.com/2.0/?"
 
     def die(self):
-        if self.db.flush in world.flushers:
-            world.flushers.remove(self.db.flush)
-        self.db.close()
+        world.flushers.remove(self.db.flush)
+        self.db.flush()
         self.__parent.die()
 
     def lastfm(self, irc, msg, args, method, user):
@@ -115,7 +146,7 @@ class LastFM(callbacks.Plugin):
                         'topartists': 'user.getTopArtists',
                         'toptracks': 'user.getTopTracks',
                         'recenttracks': 'user.getRecentTracks'}
-        user = (user or self.db.getId(msg.nick) or msg.nick)
+        user = (user or self.db.get(msg.prefix) or msg.nick)
         channel = msg.args[0]
         maxResults = self.registryValue("maxResults", channel)
 
@@ -199,7 +230,7 @@ class LastFM(callbacks.Plugin):
         to the LastFM user configured for your current nick."""
         self.lastfm(irc, msg, args, 'recenttracks', user)
 
-    def nowPlaying(self, irc, msg, args, optionalId):
+    def nowPlaying(self, irc, msg, args, user):
         """[<user>]
 
         Announces the track currently being played by <user>. If <user>
@@ -211,7 +242,7 @@ class LastFM(callbacks.Plugin):
                       "'config plugins.lastfm.apikey' and reload the plugin. "
                       "You can sign up for an API Key using "
                       "http://www.last.fm/api/account/create", Raise=True)
-        user = (optionalId or self.db.getId(msg.nick) or msg.nick)
+        user = (user or self.db.get(msg.prefix) or msg.nick)
 
         # see http://www.lastfm.de/api/show/user.getrecenttracks
         url = "%sapi_key=%s&method=user.getrecenttracks&user=%s" % (self.APIURL, self.apiKey, user)
@@ -229,10 +260,10 @@ class LastFM(callbacks.Plugin):
         track, artist, albumStr = map(ircutils.bold, (track, artist, albumStr))
         if isNowPlaying:
             irc.reply('%s is listening to %s by %s %s'
-                    % (user, track, artist, albumStr))
+                    % (ircutils.bold(user), track, artist, albumStr))
         else:
             irc.reply('%s listened to %s by %s %s more than %s'
-                    % (user, track, artist, albumStr,
+                    % (ircutils.bold(user), track, artist, albumStr,
                         self._formatTimeago(time)))
 
     np = wrap(nowPlaying, [optional("something")])
@@ -243,12 +274,12 @@ class LastFM(callbacks.Plugin):
         Sets the LastFM username for the caller and saves it in a database.
         """
 
-        self.db.set(msg.nick, newId)
+        self.db.set(msg.prefix, newId)
         irc.replySuccess()
 
     set = wrap(setUserId, ["something"])
 
-    def profile(self, irc, msg, args, optionalId):
+    def profile(self, irc, msg, args, user):
         """[<user>]
 
         Prints the profile info for the specified LastFM user. If <user>
@@ -260,7 +291,7 @@ class LastFM(callbacks.Plugin):
                       "'config plugins.lastfm.apikey' and reload the plugin. "
                       "You can sign up for an API Key using "
                       "http://www.last.fm/api/account/create", Raise=True)
-        user = (optionalId or self.db.getId(msg.nick) or msg.nick)
+        user = (user or self.db.get(msg.prefix) or msg.nick)
 
         url = "%sapi_key=%s&method=user.getInfo&user=%s" % (self.APIURL, self.apiKey, user)
         try:
@@ -281,7 +312,7 @@ class LastFM(callbacks.Plugin):
 
     profile = wrap(profile, [optional("something")])
 
-    def compareUsers(self, irc, msg, args, user1, optionalUser2):
+    def compareUsers(self, irc, msg, args, user1, user2):
         """<user1> [<user2>]
 
         Compares the music tastes of <user1> and <user2>. If <user2>
@@ -293,7 +324,7 @@ class LastFM(callbacks.Plugin):
                       "'config plugins.lastfm.apikey' and reload the plugin. "
                       "You can sign up for an API Key using "
                       "http://www.last.fm/api/account/create", Raise=True)
-        user2 = (optionalUser2 or self.db.getId(msg.nick) or msg.nick)
+        user2 = (user2 or self.db.get(msg.prefix) or msg.nick)
 
         channel = msg.args[0]
         maxResults = self.registryValue("maxResults", channel)
@@ -309,18 +340,16 @@ class LastFM(callbacks.Plugin):
         resultNode = xml.getElementsByTagName("result")[0]
         try:
             score = resultNode.getElementsByTagName('score')[0].firstChild.data
-            score = round(float(score), 3)
+            score = round(float(score) * 100, 1)
+            score = ircutils.bold("%s%%" % score)
         except (IndexError, ValueError):
-            scoreStr = "unknown"
-        else:
-            scoreStr = "%s (%s)" % (ircutils.bold(self._formatRating(score)),
-                                    score)
+            score = "unknown"
         artists = resultNode.getElementsByTagName("artist")
         artistNames = [ircutils.bold(el.getElementsByTagName("name")[0].firstChild.data)
                        for el in artists]
         s = ("Result of comparison between %s and %s: score: %s, common "
              "artists: %s" % (ircutils.bold(user1), ircutils.bold(user2),
-             scoreStr, ", ".join(artistNames)))
+             score, ", ".join(artistNames)))
         irc.reply(s)
 
     compare = wrap(compareUsers, ["something", optional("something")])
@@ -336,26 +365,7 @@ class LastFM(callbacks.Plugin):
         if t > 0:
             return "%i seconds ago" % (t)
 
-    def _formatRating(self, score):
-        """<score>
-
-        Formats <score> values to text. <score> should be a float
-        between 0 and 1.
-        """
-        if score >= 0.9:
-            return "Super"
-        elif score >= 0.7:
-            return "Very High"
-        elif score >= 0.5:
-            return "High"
-        elif score >= 0.3:
-            return "Medium"
-        elif score >= 0.1:
-            return "Low"
-        else:
-            return "Very Low"
-
-dbfilename = conf.supybot.directories.data.dirize("LastFM.db")
+filename = conf.supybot.directories.data.dirize("LastFM.db")
 
 Class = LastFM
 

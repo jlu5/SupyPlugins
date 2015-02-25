@@ -43,6 +43,7 @@ class LastFMTestCase(PluginTestCase):
 
     def setUp(self):
         PluginTestCase.setUp(self)
+        self.prefix = "a!b@c.d"
         apiKey = os.environ.get('lastfm_apikey')
         if not apiKey:
             e = ("The LastFM API key has not been set. "
@@ -59,8 +60,8 @@ class LastFMTestCase(PluginTestCase):
         self.assertNotError("np krf")
 
     def testLastfmDB(self):
-        self.assertNotError("set nick") # test db
-        self.assertNotError("set test") # test db unset
+        self.assertNotError("set GLolol") # test db
+        self.assertNotError("np")
 
     def testProfile(self):
         self.assertNotError("profile czshadow")

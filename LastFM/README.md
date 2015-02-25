@@ -2,20 +2,21 @@ supybot-lastfm (GLolol's fork)
 ==============
 
 [![Build Status](https://travis-ci.org/GLolol/supybot-lastfm.svg?branch=devel)](https://travis-ci.org/GLolol/supybot-lastfm)
-A plugin for Supybot that displays various information about LastFM IDs on IRC. 
 
-### Changes made in this fork:
+A Supybot plugin for LastFM.
+
+### Summary of changes:
 
 - Native Python 3 support.
-- Code cleanup (use Supybot's built in URL fetcher instead of urllib/urllib2).
-- Various bugfixes.
+- Code cleanup and various bugfixes.
+- Migration to a new LastFM API (v2).
 
-A full list of changes can be found [here](https://github.com/GLolol/supybot-lastfm/compare/krf:master...devel). 
+The full diff can be found [here](https://github.com/GLolol/supybot-lastfm/compare/krf:master...devel). 
 
 ### Support
 You may find me on IRC at `irc.overdrive.pw #dev` ([webchat](http://webchat.overdrive.pw/?channels=dev)).
 
-Feel free to suggest enhancements on the [issue tracker](https://github.com/GLolol/supybot-lastfm/issues); pull requests are welcome. 
+Feel free to suggest enhancements on the [issue tracker](https://github.com/GLolol/supybot-lastfm/issues). Pull requests are welcome. 
 
 ### Usage
 
