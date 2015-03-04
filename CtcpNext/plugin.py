@@ -29,7 +29,6 @@
 ###
 
 import pickle
-from time import ctime
 
 import supybot.utils as utils
 import supybot.world as world
@@ -52,7 +51,7 @@ filename = conf.supybot.directories.data.dirize("CtcpNext.db")
 class CtcpNext(callbacks.PluginRegexp):
     """Alternative to the official Ctcp plugin, with configurable replies."""
     regexps = ("ctcp", "ctcpPing")
-    
+
     def loadDB(self):
         try:
             with open(filename, 'rb') as f:
@@ -66,14 +65,15 @@ class CtcpNext(callbacks.PluginRegexp):
                 pickle.dump(self.db, f, 2)
         except Exception as e:
              self.log.warning('CtcpNext: Unable to write pickled database: %s', e)
-    
+
     def __init__(self, irc):
         self.__parent = super(CtcpNext, self)
         self.__parent.__init__(irc)
-        self.db = {'VERSION': 'Supybot %v', 'TIME': '%t'}
+        self.defaultdb = {'VERSION': '$version', 'TIME': '$now'}
+        self.db = self.defaultdb
         self.loadDB()
         world.flushers.append(self.exportDB)
-        
+
     def die(self):
         self.exportDB()
         world.flushers.remove(self.exportDB)
@@ -101,8 +101,7 @@ class CtcpNext(callbacks.PluginRegexp):
                 return
             try:
                 response = self.db[payload]
-                response = response.replace("%v", conf.version)
-                response = response.replace("%t", ctime())
+                response = ircutils.standardSubstitute(irc, msg, response)
                 self._reply(irc, msg, payload, response)
                 self.log.info('CtcpNext: Received CTCP %s from %s', payload,
                               msg.prefix)
@@ -112,10 +111,10 @@ class CtcpNext(callbacks.PluginRegexp):
 
     def set(self, irc, msg, args, ctcp, response):
         """<ctcp> <response>
-        
+
         Sets the response for <ctcp> to <response>. Exceptions include
-        ACTION and PING, which are handled accordingly. %v will be expanded
-        to the bot's version. %t expands to the current time.
+        ACTION and PING, which are handled accordingly. All the standard
+        substitutes ($version, $now, $nick, etc.) are handled properly.
         """
         self.db[ctcp.upper()] = response
         irc.replySuccess()
@@ -123,7 +122,7 @@ class CtcpNext(callbacks.PluginRegexp):
 
     def unset(self, irc, msg, args, ctcp):
         """<ctcp>
-        
+
         Unsets the response for <ctcp>.
         """
         ctcp = ctcp.upper()
@@ -134,13 +133,20 @@ class CtcpNext(callbacks.PluginRegexp):
         else:
             irc.replySuccess()
     unset = wrap(unset, ['admin', 'somethingWithoutSpaces'])
-    
+
     def list(self, irc, msg, args):
         """takes no arguments.
-        
+
         Lists the CTCP responses currently configured."""
         items = [format("%s: %s", k, ircutils.bold(v)) for (k, v) in self.db.items()]
         irc.reply(format('%L', items))
+
+    def reset(self, irc, msg, args):
+        """takes no arguments.
+
+        Resets all custom CTCP responses to defaults."""
+        self.db = self.defaultdb
+        irc.replySuccess()
 
 Class = CtcpNext
 
