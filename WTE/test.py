@@ -30,17 +30,18 @@
 
 from supybot.test import *
 from sys import version_info
-import unittest
 
 class WTETestCase(PluginTestCase):
     plugins = ('WTE',)
 
     @unittest.skipIf(version_info[0] < 3, 
         "Not supported on Python 2 (severe Unicode handling problems)")
+    @unittest.skipUnless(network, "Network-based tests have been disabled via "
+                         "--no-network")
     def testWTE(self):
-        m = self.getMsg("wte The quick brown fox jumps over "
-            "the lazy dog.")
-        print('\nResponse: %s' % m.args[1])
+        inp = "The quick brown fox jumps over the lazy dog."
+        m = self.getMsg("wte %s" % inp)
+        print('\nWTE Input: %s\nWTE Response: %s' % (inp, m.args[1]))
         assert m, 'No response found.'
 
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:

@@ -34,10 +34,11 @@ from supybot.test import *
 class FMLTestCase(PluginTestCase):
     plugins = ('FML',)
 
-    if network:
-        def testFML(self):
-            self.assertNotError('fml')
-            self.assertNotError('fml 13273746')
-            self.assertError('fml 1') # This one doesn't exist
+    @unittest.skipUnless(network, "Network-based tests have been disabled via "
+                         "--no-network")
+    def testFML(self):
+        self.assertNotError('fml')
+        self.assertNotError('fml 13273746')
+        self.assertError('fml 1') # This one doesn't exist
 
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:

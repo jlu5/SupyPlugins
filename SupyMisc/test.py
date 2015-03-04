@@ -38,9 +38,13 @@ class SupyMiscTestCase(PluginTestCase):
         PluginTestCase.setUp(self)
         self.prefix = 'foo!bar@baz.not'
 
+    @unittest.skipUnless(network, "Network-based tests have been disabled via "
+                         "--no-network")
     def testTld(self):
         self.assertNotError('tld .com')
 
+    @unittest.skipUnless(network, "Network-based tests have been disabled via "
+                         "--no-network")
     def testTldInternationalTLDs(self):
         # https://www.iana.org/domains/root/db/xn--io0a7i
         # Chinese internationalized domain for 'network' (similar to .net)
@@ -72,5 +76,7 @@ class SupyMiscTestCase(PluginTestCase):
             '.*?tree\/master\/SupyMisc.*?')
         self.assertError('supyplugins asfswfuiahfawfawefawe')
 
+    def testServerlist(self):
+        self.assertNotError('serverlist')
 
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:

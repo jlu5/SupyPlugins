@@ -28,7 +28,6 @@
 
 ###
 
-import unittest
 from supybot.test import *
 
 class PkgInfoTestCase(PluginTestCase):
