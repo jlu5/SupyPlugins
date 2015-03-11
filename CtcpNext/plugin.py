@@ -141,7 +141,7 @@ class CtcpNext(callbacks.PluginRegexp):
         items = [format("%s: %s", k, ircutils.bold(v)) for (k, v) in self.db.items()]
         irc.reply(format('%L', items))
 
-    def reset(self, irc, msg, args):
+    def clear(self, irc, msg, args):
         """takes no arguments.
 
         Resets all custom CTCP responses to defaults."""
