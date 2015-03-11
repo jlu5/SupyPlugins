@@ -23,7 +23,7 @@ conf.registerGlobalValue(Weather, 'apiKey',
 conf.registerChannelValue(Weather, 'useImperial',
     registry.Boolean(True, ("""Determines whether imperial units (Fahrenheit, etc.) will be used.""")))
 conf.registerChannelValue(Weather, 'disableColoredTemp',
-    registry.Boolean(False, """Determines whether colors will be used for displaying temperatures.""")))
+    registry.Boolean(False, ("""Determines whether colors will be used for displaying temperatures.""")))
 conf.registerGlobalValue(Weather,'forecast',
     registry.Boolean(True, ("""Determines whether forecasts will be displayed by default.""")))
 conf.registerGlobalValue(Weather,'alerts',
@@ -38,8 +38,6 @@ conf.registerGlobalValue(Weather, 'showWind',
     registry.Boolean(False, ("""Determines whether winde will be displayed by default.""")))
 conf.registerGlobalValue(Weather, 'showUpdated',
     registry.Boolean(False, ("""Determines whether the bot will show the data's "last updated" time by default.""")))
-conf.registerChannelValue(Weather,'showImperialAndMetric',
-    registry.Boolean(True, ("""Determines whether both imperial and metric units will shown where applicable.""")))
 conf.registerGlobalValue(Weather, 'lang',
     registry.String('EN', ("""Determines the language used by the plugin.""")))
 

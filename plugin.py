@@ -129,8 +129,7 @@ class WeatherDB():
 
 
 class Weather(callbacks.Plugin):
-    """Add the help for "@plugin help Weather" here
-    This should describe *how* to use this plugin."""
+    """This plugin provides access to information from Weather Underground."""
     threaded = True
 
     def __init__(self, irc):
@@ -138,9 +137,6 @@ class Weather(callbacks.Plugin):
         self.__parent.__init__(irc)
         self.APIKEY = self.registryValue('apiKey')
         self.db = WeatherDB()
-
-    def die(self):
-        self.__parent.die()
 
     ##############
     # FORMATTING #
@@ -152,9 +148,6 @@ class Weather(callbacks.Plugin):
     def _bu(self, string):
         return ircutils.underline(ircutils.bold(string))
 
-    def _strip(self, string):
-        return ircutils.stripFormatting(string)
-
     ############################
     # INTERNAL WEATHER HELPERS #
     ############################
@@ -162,24 +155,24 @@ class Weather(callbacks.Plugin):
     def _weatherSymbol(self, code):
         """Return a unicode symbol based on weather status."""
 
-        table = {'partlycloudy':'~☁',
-                 'cloudy':'☁',
-                 'tstorms':'⚡',
-                 'sunny':'☀',
-                 'snow':'❄',
-                 'sleet':'☄',
-                 'rain':'☔',
-                 'mostlysunny':'~☀',
-                 'mostlycloudy':'~☁',
-                 'hazy':'♒',
-                 'fog':'♒',
-                 'flurries':'❄',
-                 'clear':'☼',
-                 'chanceflurries':'?❄',
-                 'chancerain':'?☔',
-                 'chancesleet':'?❄',
-                 'chancesnow':'?❄',
-                 'chancetstorms':'?☔' }
+        table = {'partlycloudy': '~☁',
+                 'cloudy': '☁',
+                 'tstorms': '⚡',
+                 'sunny': '☀',
+                 'snow': '❄',
+                 'sleet': '☄',
+                 'rain': '☔',
+                 'mostlysunny': '~☀',
+                 'mostlycloudy': '~☁',
+                 'hazy': '♒',
+                 'fog': '♒',
+                 'flurries': '❄',
+                 'clear': '☼',
+                 'chanceflurries': '?❄',
+                 'chancerain': '?☔',
+                 'chancesleet': '?❄',
+                 'chancesnow': '?❄',
+                 'chancetstorms': '?☔'}
         # return symbol from table.
         try:
             return table[code]
@@ -209,58 +202,40 @@ class Weather(callbacks.Plugin):
         # return.
         return symbol
 
-    def _temp(self, x):
+    def _temp(self, f, c=None):
         """Returns a colored string based on the temperature."""
 
         # lets be safe and wrap in a try/except because we can't always trust data purity.
         try:
-            if x.startswith('NA'): # Wunderground sends a field that's not available
-                return x
-            # first, convert into F so we only have one table.
-            if x.endswith('C'):  # c.
-                x = float(x[:-1]) * 9 / 5 + 32  # remove C + math into float(F).
-                unit = "C"
-            else:  # f.
-                x = float(x[:-1])  # remove F. str->float.
-                unit = "F"
+            if str(f).startswith('NA'): # Wunderground sends a field that's not available
+                return f
+            f = int(f)
+            if not c:
+                c = int((f - 32) * 5/9)
             # determine color.
-            if x < 10.0:
+            if f < 10.0:
                 color = 'light blue'
-            elif 10.0 <= x <= 32.0:
+            elif 10.0 <= f <= 32.0:
                 color = 'teal'
-            elif 32.1 <= x <= 50.0:
+            elif 32.1 <= f <= 50.0:
                 color = 'blue'
-            elif 50.1 <= x <= 60.0:
+            elif 50.1 <= f <= 60.0:
                 color = 'light green'
-            elif 60.1 <= x <= 70.0:
+            elif 60.1 <= f <= 70.0:
                 color = 'green'
-            elif 70.1 <= x <= 80.0:
+            elif 70.1 <= f <= 80.0:
                 color = 'yellow'
-            elif 80.1 <= x <= 90.0:
+            elif 80.1 <= f <= 90.0:
                 color = 'orange'
-            elif x > 90.0:
+            elif f > 90.0:
                 color = 'red'
             else:
                 color = 'light grey'
             # return.
-            if unit == "F":  # no need to convert back.
-                return ircutils.mircColor(("{0:.0f}F".format(x)), color)
-            else:  # temp is in F and we need to go back to C.
-                return ircutils.mircColor(("{0:.0f}C".format((x - 32) * 5 / 9)),color)
+            return ircutils.mircColor(("{0}F/{1}C".format(f, c)), color)
         except Exception as e:  # rutroh. something went wrong.
-            self.log.info("_temp: ERROR trying to convert temp: {0} message: {1}".format(x, e))
-            return x
-
-    def _tw(self, bol, x):
-        """This is a convenience handle that wraps _temp."""
-
-        # make sure we have 'bol', which should come in from args['nocolortemp'].
-        # since the option is a negation, we assume NO.
-        if not bol:  # COLOR IT.
-            x = self._temp(x)
-            return x
-        else:
-            return x
+            self.log.info("Weather: Error trying to convert temp: {0} message: {1}".format(f, e))
+            return f
 
     def _wind(self, angle, useSymbols=False):
         """Converts degrees to direction for wind. Can optionally return a symbol."""
@@ -294,19 +269,18 @@ class Weather(callbacks.Plugin):
         # grab a list of valid settings.
         validset = self.db.getsettings()
         if optset not in validset:
-            irc.error("'{0}' is an invalid setting. Must be one of: {1}".format(optset, " | ".join(sorted([i for i in validset]))), Raise=True)
-            return
-        # setting value True/False
+            irc.error(format("%r is an invalid setting. Must be one of: %L.", optset,
+                      sorted(validset)), Raise=True)
         if optbool:  # True.
             value = 1
         else:  # False.
             value = 0
         # check user first.
         if not self.db.getuser(msg.nick.lower()):  # user exists
-            irc.error("You're not in the database. You must setweather first.", Raise=True)
+            irc.error("You are not in the database; you must use 'setweather' first.", Raise=True)
         else:  # user is valid. perform the op.
             self.db.setsetting(msg.nick.lower(), optset, value)
-            irc.reply("I have changed {0}'s {1} setting to {2}".format(msg.nick, optset, value))
+            irc.replySuccess()
 
     setuser = wrap(setuser, [('somethingWithoutSpaces'), ('boolean')])
 
@@ -317,10 +291,8 @@ class Weather(callbacks.Plugin):
         Use your zip/postal code to keep it simple.
         Ex: setweather 10012
         """
-
-        # set the weather id based on nick. This will update or set.
         self.db.setweather(msg.nick.lower(), optlocation)
-        irc.reply("I have changed {0}'s weather ID to {1}".format(msg.nick.lower(), optlocation))
+        irc.replySuccess()
 
     setweather = wrap(setweather, [('text')])
 
@@ -332,28 +304,33 @@ class Weather(callbacks.Plugin):
         """Internal helper to find a location via Wunderground's autocomplete API."""
 
         url = 'http://autocomplete.wunderground.com/aq?query=%s' % utils.web.urlquote(q)
-        #self.log.info("WUAC URL: {0}".format(url))
-        # try and fetch.
+        self.log.debug("Autocomplete URL: %s", url)
         try:
             page = utils.web.getUrl(url)
-        except Exception as e:  # something didn't work.
-            self.log.info("_wuac: ERROR: Trying to open {0} message: {1}".format(url, e))
+        except Exception as e:
+            self.log.info("Weather: (_wuac) Error trying to open {0} message: {1}".format(url, e))
             return None
-        # now process json and return.
         try:
             data = json.loads(page.decode('utf-8'))
-            loc = data['RESULTS'][0]['zmw']  # find the first zmw.
-            loc = "zmw:%s" % loc  # return w/zmw: attached.
+            # ZMW is in some ways a lot like Wunderground's location ID Codes, for when locations
+            # are too ambiguous. (e.g. looking up "France", which is a country with many different
+            # locations!)
+            for item in data['RESULTS']:
+                # Sometimes the autocomplete will lead us to more disambiguation pages...
+                # which cause lots of errors in processing!
+                if item['tz'] != 'MISSING':
+                    loc = "zmw:%s" % item['zmw']
+                    break
             return loc
         except Exception as e:
-            self.log.info("_wuac: ERROR processing json in {0} :: {1}".format(url, e))
+            self.log.info("Weather: (_wuac) Error processing JSON in {0} :: {1}".format(url, e))
             return None
 
     def _wunderjson(self, url, location):
         """Fetch wunderground JSON and return."""
 
         # first, construct the url properly.
-        if url.endswith('/'):  # cheap way to strip the tailing /
+        if url.endswith('/'):  # cheap way to strip the trailing /
             url = '%sq/%s.json' % (url, utils.web.urlquote(location))
         else:
             url = '%s/q/%s.json' % (url, utils.web.urlquote(location))
@@ -363,184 +340,98 @@ class Weather(callbacks.Plugin):
             page = utils.web.getUrl(url)
             return page
         except Exception as e:  # something didn't work.
-            self.log.info("_wunderjson: ERROR Trying to open {0} message: {1}".format(url, e))
+            self.log.info("Weather: (_wunderjson) Error trying to open {0} message: {1}".format(url, e))
             return None
 
     ####################
     # PUBLIC FUNCTIONS #
     ####################
 
-    def wunderground(self, irc, msg, args, optlist, optinput):
+    def wunderground(self, irc, msg, args, optinput):
         """[--options] <location>
 
-        Fetch weather and forcast information for <location>
+        Fetches weather and forecast information for <location>.
 
-        Location must be one of: US state/city (CA/San_Francisco), zipcode, country/city (Australia/Sydney), airport code (KJFK)
-        Use --help to list all options.
+        Location must be one of: US state/city (CA/San_Francisco), zip code, country/city (Australia/Sydney), or an airport code (KJFK).
         Ex: 10021 or Sydney, Australia or KJFK
         """
 
-        # first, check if we have an API key. Useless w/o this.
-        if len(self.APIKEY) < 1 or not self.APIKEY or self.APIKEY == "Not set":
-            irc.error("Need a Wunderground API key. Set config plugins.Weather.apiKey and reload Weather.", Raise=True)
+        if not self.APIKEY:
+            irc.error("No Wunderground API key was defined. Set 'config plugins.Weather.apiKey' and reload the plugin.",
+                      Raise=True)
 
         # urlargs will be used to build the url to query the API.
         # besides lang, these are unmutable values that should not be changed.
-        urlArgs = {'features':['conditions', 'forecast'],
-                   'lang':self.registryValue('lang'),
-                   'bestfct':'1',
-                   'pws':'0' }
-        # now, figure out the rest of the options for fetching and displaying weather.
-        # some of these are for the query and the others are for output.
-        # the order will always go global->channel (supybot config) -> user.
+        urlArgs = {'features': ['conditions', 'forecast'],
+                   'lang': self.registryValue('lang'),
+                   'bestfct': '1',
+                   'pws': '0' }
         loc = None
-        args = {'imperial':self.registryValue('useImperial', msg.args[0]),
-                'nocolortemp':self.registryValue('disableColoredTemp', msg.args[0]),
-                'alerts':self.registryValue('alerts'),
-                'almanac':self.registryValue('almanac'),
-                'astronomy':self.registryValue('astronomy'),
-                'pressure':self.registryValue('showPressure'),
-                'wind':self.registryValue('showWind'),
-                'updated':self.registryValue('showUpdated'),
-                'showImperialAndMetric':self.registryValue('showImperialAndMetric', msg.args[0]),
-                'forecast':False,
-                'humidity':False,
-                'strip':False,
-                'uv':False,
-                'visibility':False,
-                'dewpoint':False }
+        args = {'imperial': self.registryValue('useImperial', msg.args[0]),
+                'nocolortemp': self.registryValue('disableColoredTemp', msg.args[0]),
+                'alerts': self.registryValue('alerts'),
+                'almanac': self.registryValue('almanac'),
+                'astronomy': self.registryValue('astronomy'),
+                'pressure': self.registryValue('showPressure'),
+                'wind': self.registryValue('showWind'),
+                'updated': self.registryValue('showUpdated'),
+                'forecast': False,
+                'humidity': False,
+                'uv': False,
+                'visibility': False,
+                'dewpoint': False}
 
-        # instead of doing optlist, we need to handle the location/options to set initially.
-        # first, check if there is a user so we can grab their settings.
-        usersetting = self.db.getweather(msg.nick.lower())  # check the db.
-        if usersetting:  # user is found. lets grab their location and settings.
-                for (k, v) in usersetting.items():  # iterate over settings dict returned from getweather row.
-                     # set specific settings based on keys that won't 1:1 match.
-                    if k == 'location':  # location. look down below this for how the logic is handled.
-                        loc = v  # copy over their location from the DB to loc.
-                    elif k == 'metric':  # metric
-                        if v == 1:  # true.
-                            args['imperial'] = False
-                        else:  # 0 = false.
-                            args['imperial'] = True
-                    elif k == 'colortemp':  # colortemp.
-                        if v == 1:  # true.
-                            args['nocolortemp'] = False
-                        else:  # false. the 'nocolortemp' values are inverse.
-                            args['nocolortemp'] = True
-                    else:  # rest of them are 1:1.
-                        if v == 1:  # if value is 1, or true.
-                            args[k] = True
-                        else:  # argument is 0 or False.
-                            args[k] = False
-        else:  # user was not found.
+        usersetting = self.db.getweather(msg.nick.lower())
+        if usersetting:
+            for (k, v) in usersetting.items():
+                args[k] = v
+            loc = usersetting["location"]
+            args['imperial'] = (not usersetting["metric"])
+            args['nocolortemp'] = (not usersetting["colortemp"])
+        else:
             if not optinput:  # location was also not specified, so we must bail.
-                irc.error("I did not find a preset location for you. Set via setweather <location>", Raise=True)
+                irc.error("I did not find a preset location for you. Set one via 'setweather <location>'.", Raise=True)
 
-        # handle optlist (getopts). this will manipulate output via args dict.
-        # we must do this after the dblookup for users as it would always override.
-        if optlist:
-            for (key, value) in optlist:
-                if key == "metric":
-                    args['imperial'] = False
-                if key == 'alerts':
-                    args['alerts'] = True
-                if key == 'forecast':
-                    args['forecast'] = True
-                if key == 'almanac':
-                    args['almanac'] = True
-                if key == 'pressure':
-                    args['pressure'] = True
-                if key == 'humidity':
-                    args['humidity'] = True
-                if key == 'wind':
-                    args['wind'] = True
-                if key == 'uv':
-                    args['uv'] = True
-                if key == 'visibility':
-                    args['visibility'] = True
-                if key == 'dewpoint':
-                    args['dewpoint'] = True
-                if key == 'astronomy':
-                    args['astronomy'] = True
-                if key == 'nocolortemp':
-                    args['nocolortemp'] = True
-                if key == 'help':  # make shift help because the docstring is overloaded above.
-                    irc.reply("Options: --metric --alerts --forecast --almanac --pressure --wind --uv --visibility --dewpoint --astronomy --nocolortemp")
-                    irc.reply("WeatherDB options: setweather <location> (set user's location). setmetric True/False (set metric option) setcolortemp True/False (display color temp?")
-                    return
-
-        # now that we're done with 'input things'
-        # we need to decide on how to handle the location.
-        # optinput = user specified location, regardless if they're known or not.
-        # loc = the location that can come back if a user is known and this is set.
-        # both of these might not be valid locations. however, if a user specifies a location, we should look it up.
-        if optinput:  # if we have optinput, regardless if the user is known or not, autocomplete it.
+        if optinput:
             wloc = self._wuac(optinput)
-            if not wloc:  # error looking up the location.
+            if not wloc:
                 irc.error("I could not find a valid location for: {0}".format(optinput), Raise=True)
-        elif loc and not optinput:  # user is known. location is set. no optinput.
-            wloc = loc   # set wloc as their location. worst case, the user gets an error for setting it wrong.
+        elif loc:  # user is known. location is set. no optinput.
+            wloc = loc
         else:  # no optinput. no location. error out. this should happen above but lets be redundant.
             irc.error("You must specify a city to search for weather.", Raise=True)
 
-        # build url now. first, apikey. then, iterate over urlArgs and insert.
-        url = 'http://api.wunderground.com/api/%s/' % (self.APIKEY) # first part of url, w/APIKEY
-        # now we need to set certain things for urlArgs based on args.
+        url = 'http://api.wunderground.com/api/%s/' % (self.APIKEY)
         for check in ['alerts', 'almanac', 'astronomy']:
-            if args[check]: # if args['value'] is True, either via config or getopts.
+            if args[check]:
                 urlArgs['features'].append(check) # append to dict->key (list)
         # now, we use urlArgs dict to append to url.
         for (key, value) in urlArgs.items():
             if key == "features": # will always be at least conditions.
                 url += "".join([item + '/' for item in value]) # listcmp the features/
-            if key == "lang" or key == "bestfct" or key == "pws": # rest added with key:value
+            if key in ("lang", "bestfct", "pws"): # rest added with key:value
                 url += "{0}:{1}/".format(key, value)
 
-        # now that we're done, lets finally make our API call.
         page = self._wunderjson(url, wloc)
-        if not page:
-            irc.error("Failed to load Wunderground API. Check the logs for more information.", Raise=True)
-
-        # process json.
         try:
             data = json.loads(page.decode('utf-8'))
         except Exception as e:
-            self.log.error("ERROR: could not process JSON from: {0} :: {1}".format(url, e))
+            self.log.error("Weather: Error processing JSON from: {0} :: {1}".format(url, e))
             irc.error("Could not process JSON from Weather Underground. Check the logs.", Raise=True)
 
-        # now, a series of sanity checks before we process.
-        if 'error' in data['response']:  # check if there are errors.
-            errortype = data['response']['error']['type']  # type. description is below.
-            errordesc = data['response']['error'].get('description', 'no description')
-            irc.error("I got an error searching '{0}'. ({1}: {2})".format(loc, errortype, errordesc), Raise=True)
-        # if there is more than one city matching (Ambiguous Results).  we now go with the first (best?) match.
-        # this should no longer be the case with our autocomplete routine above but we'll keep this anyways.
-        if 'results' in data['response']:  # we grab the first location's "ZMW" which then gets constructed as location.
-            first = 'zmw:%s' % data['response']['results'][0]['zmw']  # grab the "first" location and create the
-            # grab this first location and search again.
-            page = self._wunderjson(url, first)
-            if not page:
-                irc.error("Failed to load Wunderground API.", Raise=True)
-            # we're here if we got the second search (best?) now lets reload the json and continue.
-            data = json.loads(page.decode('utf-8'))
+        outdata = {'weather': data['current_observation']['weather'],
+                   'location': data['current_observation']['display_location']['full'],
+                   'humidity': data['current_observation']['relative_humidity'],
+                   'uv': data['current_observation']['UV']}
 
-        # no errors so we start the main part of processing.
-        outdata = {}
-        outdata['weather'] = data['current_observation']['weather']
-        outdata['location'] = data['current_observation']['display_location']['full']
-        outdata['humidity'] = data['current_observation']['relative_humidity']
-        outdata['uv'] = data['current_observation']['UV']
-
-        # handle wind. check if there is none first.
         if data['current_observation']['wind_mph'] < 1:  # no wind.
             outdata['wind'] = "None"
-        else:  # we do have wind. process differently.
-            if args['imperial']:  # imperial units for wind.
+        else:
+            if args['imperial']:
                 outdata['wind'] = "{0}@{1}mph".format(self._wind(data['current_observation']['wind_degrees']), data['current_observation']['wind_mph'])
                 if int(data['current_observation']['wind_gust_mph']) > 0:   # gusts?
                     outdata['wind'] += " ({0}mph gusts)".format(data['current_observation']['wind_gust_mph'])
-            else:  # handle metric units for wind.
+            else:
                 outdata['wind'] = "{0}@{1}kph".format(self._wind(data['current_observation']['wind_degrees']),data['current_observation']['wind_kph'])
                 if int(data['current_observation']['wind_gust_kph']) > 0:  # gusts?
                     outdata['wind'] += " ({0}kph gusts)".format(data['current_observation']['wind_gust_kph'])
@@ -565,106 +456,59 @@ class Weather(callbacks.Plugin):
                 outdata['observation'] = '1hr ago'
             else:
                 outdata['observation'] = '{0}hrs ago'.format(s/3600)
-
-        # handle basics like temp/pressure/dewpoint. big conditional here
-        # as we can display Imperial + Metric, or one or the other.
-        if args['showImperialAndMetric']:
-            # lets put C and F into strings to make it easier.
-            tf = str(data['current_observation']['temp_f']) + 'F'
-            tc = str(data['current_observation']['temp_c']) + 'C'
-            outdata['temp'] = "{0}/{1}".format(self._tw(args['nocolortemp'], tf), self._tw(args['nocolortemp'], tc))
-            # now lets do pressure.
-            pin = str(data['current_observation']['pressure_in']) + 'in'
-            pmb = str(data['current_observation']['pressure_mb']) + 'mb'
-            outdata['pressure'] = "{0}/{1}".format(pin, pmb)
-            # dewpoint.
-            dpf = str(data['current_observation']['dewpoint_f']) + 'F'
-            dpc = str(data['current_observation']['dewpoint_c']) + 'C'
-            outdata['dewpoint'] = "{0}/{1}".format(self._tw(args['nocolortemp'], dpf), self._tw(args['nocolortemp'], dpc))
-            # heatindex.
-            hif = str(data['current_observation']['heat_index_f']) + 'F'
-            hic = str(data['current_observation']['heat_index_c']) + 'C'
-            outdata['heatindex'] = "{0}/{1}".format(self._tw(args['nocolortemp'], hif), self._tw(args['nocolortemp'], hic))
-            # windchill.
-            wcf = str(data['current_observation']['windchill_f']) + 'F'
-            wcc = str(data['current_observation']['windchill_c']) + 'C'
-            outdata['windchill'] = "{0}/{1}".format(self._tw(args['nocolortemp'], wcf), self._tw(args['nocolortemp'], wcc))
-            # feels like
-            flf = str(data['current_observation']['feelslike_f']) + 'F'
-            flc = str(data['current_observation']['feelslike_c']) + 'C'
-            outdata['feelslike'] = "{0}/{1}".format(self._tw(args['nocolortemp'], flf), self._tw(args['nocolortemp'], flc))
-            # visibility.
-            vmi = str(data['current_observation']['visibility_mi']) + 'mi'
-            vkm = str(data['current_observation']['visibility_km']) + 'km'
-            outdata['visibility'] = "{0}/{1}".format(vmi, vkm)
-        else:  # don't display both (default)
-            if args['imperial']:  # assigns the symbol based on metric.
-                outdata['temp'] = self._tw(args['nocolortemp'], str(data['current_observation']['temp_f']) + 'F')
-                outdata['pressure'] = str(data['current_observation']['pressure_in']) + 'in'
-                outdata['dewpoint'] = self._tw(args['nocolortemp'], str(data['current_observation']['dewpoint_f']) + 'F')
-                outdata['heatindex'] = self._tw(args['nocolortemp'], str(data['current_observation']['heat_index_f']) + 'F')
-                outdata['windchill'] = self._tw(args['nocolortemp'], str(data['current_observation']['windchill_f']) + 'F')
-                outdata['feelslike'] = self._tw(args['nocolortemp'], str(data['current_observation']['feelslike_f']) + 'F')
-                outdata['visibility'] = str(data['current_observation']['visibility_mi']) + 'mi'
-            else:  # metric.
-                outdata['temp'] = self._tw(args['nocolortemp'], str(data['current_observation']['temp_c']) + 'C')
-                outdata['pressure'] = str(data['current_observation']['pressure_mb']) + 'mb'
-                outdata['dewpoint'] = self._tw(args['nocolortemp'], str(data['current_observation']['dewpoint_c']) + 'C')
-                outdata['heatindex'] = self._tw(args['nocolortemp'], str(data['current_observation']['heat_index_c']) + 'C')
-                outdata['windchill'] = self._tw(args['nocolortemp'], str(data['current_observation']['windchill_c']) + 'C')
-                outdata['feelslike'] = self._tw(args['nocolortemp'], str(data['current_observation']['feelslike_c']) + 'C')
-                outdata['visibility'] = str(data['current_observation']['visibility_km']) + 'km'
+        outdata['temp'] = self._temp(data['current_observation']['temp_f'])
+        # pressure.
+        pin = str(data['current_observation']['pressure_in']) + 'in'
+        pmb = str(data['current_observation']['pressure_mb']) + 'mb'
+        outdata['pressure'] = "{0}/{1}".format(pin, pmb)
+        # dewpoint.
+        outdata['dewpoint'] = self._temp(data['current_observation']['dewpoint_f'])
+        # heatindex.
+        outdata['heatindex'] = self._temp(data['current_observation']['heat_index_f'])
+        # windchill.
+        outdata['windchill'] = self._temp(data['current_observation']['windchill_f'])
+        # feels like
+        outdata['feelslike'] = self._temp(data['current_observation']['feelslike_f'])
+        # visibility.
+        vmi = str(data['current_observation']['visibility_mi']) + 'mi'
+        vkm = str(data['current_observation']['visibility_km']) + 'km'
+        outdata['visibility'] = "{0}/{1}".format(vmi, vkm)
 
         # handle forecast data part. output will be below. (not --forecast)
         forecastdata = {}  # key = int(day), value = forecast dict.
         for forecastday in data['forecast']['txt_forecast']['forecastday']:
-            tmpdict = {}
-            tmpdict['day'] = forecastday['title']
-            # tmpdict['symbol'] = self._weatherSymbol(forecastday['icon'])
-            if args['imperial']:   # imperial.
-                tmpdict['text'] = forecastday['fcttext']
-            else:  # metric.
-                tmpdict['text'] = forecastday['fcttext_metric']
-            forecastdata[int(forecastday['period'])] = tmpdict
+            if args['imperial']:
+                text = forecastday['fcttext']
+            else:
+                text = forecastday['fcttext_metric']
+            forecastdata[int(forecastday['period'])] = {'day': forecastday['title'],
+                                                        'text': text}
 
         # now this is the --forecast part.
-        if args['forecast']:  # only if we get this in getopts.
+        if args['forecast']:
             fullforecastdata = {}  # key = day (int), value = dict of forecast data.
             for forecastday in data['forecast']['simpleforecast']['forecastday']:
-                tmpdict = {}
-                tmpdict['day'] = forecastday['date']['weekday_short']
-                tmpdict['symbol'] = self._weatherSymbol(forecastday['icon'])
-                tmpdict['text'] = forecastday['conditions']
-                if args['imperial']:  # imperial.
-                    tmpdict['high'] = forecastday['high']['fahrenheit'] + "F"
-                    tmpdict['low'] = forecastday['low']['fahrenheit'] + "F"
-                else:  # metric.
-                    tmpdict['high'] = forecastday['high']['celsius'] + "C"
-                    tmpdict['low'] = forecastday['low']['celsius'] + "C"
+                high = self._temp(forecastday['high']['fahrenheit'])
+                low = self._temp(forecastday['low']['fahrenheit'])
+                tmpdict = {'day': forecastday['date']['weekday_short'],
+                           'symbol': self._weatherSymbol(forecastday['icon']),
+                           'text': forecastday['conditions'],
+                           'low': low,
+                           'high': high}
                 fullforecastdata[int(forecastday['period'])] = tmpdict
 
         # handle almanac
         if args['almanac']:
             outdata['highyear'] = data['almanac']['temp_high'].get('recordyear', 'NA')
             outdata['lowyear'] = data['almanac']['temp_low'].get('recordyear', 'NA')
-            if args['imperial']:  # imperial.
-                outdata['highnormal'] = data['almanac']['temp_high']['normal']['F'] + "F"
-                outdata['lownormal'] = data['almanac']['temp_low']['normal']['F'] + "F"
-                if outdata['highyear'] != "NA" and outdata['lowyear'] != "NA":
-                    outdata['highrecord'] = data['almanac']['temp_high']['record']['F']
-                    outdata['lowrecord'] = data['almanac']['temp_low']['record']['F']
-                else:
-                    outdata['highrecord'] = "NA"
-                    outdata['lowrecord'] = "NA"
-            else:  # metric.
-                outdata['highnormal'] = data['almanac']['temp_high']['normal']['C'] + "C"
-                outdata['lownormal'] = data['almanac']['temp_low']['normal']['C'] + "C"
-                if outdata['highyear'] != "NA" and outdata['lowyear'] != "NA":
-                    outdata['highrecord'] = data['almanac']['temp_high']['record']['C']
-                    outdata['lowrecord'] = data['almanac']['temp_low']['record']['C']
-                else:
-                    outdata['highrecord'] = "NA"
-                    outdata['lowrecord'] = "NA"
+            outdata['highnormal'] = self._temp(data['almanac']['temp_high']['normal']['F'])
+            outdata['highlow'] = self._temp(data['almanac']['temp_low']['normal']['F'])
+            outdata['highnormal'] = self._temp(data['almanac']['temp_high']['normal']['F'])
+            if outdata['highyear'] != "NA" and outdata['lowyear'] != "NA":
+                outdata['highrecord'] = self._temp(data['almanac']['temp_high']['record']['F'])
+                outdata['lowrecord'] = self._temp(data['almanac']['temp_low']['record']['F'])
+            else:
+                outdata['highrecord'] = outdata['lowrecord'] = "NA"
 
         # handle astronomy
         if args['astronomy']:
@@ -753,19 +597,7 @@ class Weather(callbacks.Plugin):
             # now output to irc.
             irc.reply(output)
 
-    wunderground = wrap(wunderground, [getopts({'alerts':'',
-                                                'almanac':'',
-                                                'astronomy':'',
-                                                'forecast':'',
-                                                'pressure':'',
-                                                'wind':'',
-                                                'uv':'',
-                                                'visibility':'',
-                                                'dewpoint':'',
-                                                'humidity':'',
-                                                'metric':'',
-                                                'nocolortemp':'',
-                                                'help':''}), optional('text')])
+    wunderground = wrap(wunderground, [optional('text')])
 
 Class = Weather
 
