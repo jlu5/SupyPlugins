@@ -1,21 +1,38 @@
 # -*- coding: utf-8 -*-
 ###
 # Copyright (c) 2012-2014, spline
+# Copyright (c) 2014-2015, James Lu
 # All rights reserved.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy of
+# this software and associated documentation files (the "Software"), to deal in
+# the Software without restriction, including without limitation the rights to
+# use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+# the Software, and to permit persons to whom the Software is furnished to do so,
+# subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+# FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+# COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+# IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+# CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ###
-# my libs
+
+
 from __future__ import unicode_literals
-import json  # json.
-from math import floor  # for wind.
-import sqlite3  # userdb.
+import json
+from math import floor
+import sqlite3
 try:
     from itertools import izip
-except ImportError:  # python3
+except ImportError:  # Python 3
     izip = zip
-# extra supybot libs
 import supybot.conf as conf
 import supybot.log as log
-# supybot libs
 import supybot.utils as utils
 from supybot.commands import *
 import supybot.plugins as plugins
@@ -43,14 +60,13 @@ class WeatherDB():
     def makeDb(self):
         """Create our DB."""
 
-        self.log.info("WeatherDB: Checking/Creating DB.")
+        self.log.info("Weather: Checking/Creating DB.")
         with self._conn as conn:
             cursor = conn.cursor()
             cursor.execute("""CREATE TABLE IF NOT EXISTS users (
                           nick TEXT PRIMARY KEY,
                           location TEXT NOT NULL,
                           metric INTEGER DEFAULT 0,
-                          colortemp INTEGER DEFAULT 1,
                           alerts INTEGER DEFAULT 0,
                           almanac INTEGER DEFAULT 0,
                           astronomy INTEGER DEFAULT 0,
@@ -67,7 +83,7 @@ class WeatherDB():
             cursor = conn.cursor()  # the old table is 4.
             tablelength = len([l[1] for l in cursor.execute("pragma table_info('users')").fetchall()])
             if tablelength == 4:  # old table is 4: users, location, metric, colortemp.
-                self.log.info("Table length is 4. We need to upgrade.")
+                self.log.info("Weather: Upgrading database version.")
                 columns = ['alerts', 'almanac', 'astronomy', 'forecast', 'pressure', 'wind', 'uv', 'visibility', 'dewpoint', 'humidity', 'updated']
                 for column in columns:
                     try:
@@ -179,29 +195,6 @@ class Weather(callbacks.Plugin):
         except KeyError:
             return "unknown"
 
-    def _moonphase(self, phase):
-        """Returns a moon phase based on the %."""
-
-        # depending on the phase float, we have an ascii picture+text to represent it.
-        if phase < 0.05:
-            symbol = "[ (  ) ] (fullmoon)"
-        elif phase < 0.20:
-            symbol = "[ C   ] (decreasing moon)"
-        elif phase < 0.30:
-            symbol = "[ C   ] (half moon)"
-        elif phase < 0.45:
-            symbol = "[ (   ] (decreasing moon)"
-        elif phase < 0.65:
-            symbol = "[     ] (new moon)"
-        elif phase < 0.80:
-            symbol = "[   ) ] (waxing moon)"
-        elif phase < 0.80:
-            symbol = "[   D ] (half moon)"
-        else:
-            symbol = "[   D ] (waxing moon)"
-        # return.
-        return symbol
-
     def _temp(self, f, c=None):
         """Returns a colored string based on the temperature."""
 
@@ -233,8 +226,8 @@ class Weather(callbacks.Plugin):
                 color = 'light grey'
             # return.
             return ircutils.mircColor(("{0}F/{1}C".format(f, c)), color)
-        except Exception as e:  # rutroh. something went wrong.
-            self.log.info("Weather: Error trying to convert temp: {0} message: {1}".format(f, e))
+        except ValueError as e:
+            self.log.info("Weather: ValueError trying to convert temp: {0} message: {1}".format(f, e))
             return f
 
     def _wind(self, angle, useSymbols=False):
@@ -260,8 +253,8 @@ class Weather(callbacks.Plugin):
         """<setting> <True|False>
 
         Sets a user's <setting> to True or False.
-        Settings: alerts, almanac, astronomy, forecast, pressure, wind, uv, visibility, dewpoint, humidity, updated
-        Ex: metric True or colortemp False
+        Valid settings include: alerts, almanac, astronomy, forecast, pressure,
+        wind, uv, visibility, dewpoint, humidity, and updated.
         """
 
         # first, lower
@@ -336,7 +329,7 @@ class Weather(callbacks.Plugin):
             url = '%s/q/%s.json' % (url, utils.web.urlquote(location))
         # now actually fetch the url.
         try:
-            self.log.info("URL: {0}".format(url))
+            self.log.debug("Weather URL: {0}".format(url))
             page = utils.web.getUrl(url)
             return page
         except Exception as e:  # something didn't work.
@@ -368,7 +361,6 @@ class Weather(callbacks.Plugin):
                    'pws': '0' }
         loc = None
         args = {'imperial': self.registryValue('useImperial', msg.args[0]),
-                'nocolortemp': self.registryValue('disableColoredTemp', msg.args[0]),
                 'alerts': self.registryValue('alerts'),
                 'almanac': self.registryValue('almanac'),
                 'astronomy': self.registryValue('astronomy'),
@@ -387,7 +379,6 @@ class Weather(callbacks.Plugin):
                 args[k] = v
             loc = usersetting["location"]
             args['imperial'] = (not usersetting["metric"])
-            args['nocolortemp'] = (not usersetting["colortemp"])
         else:
             if not optinput:  # location was also not specified, so we must bail.
                 irc.error("I did not find a preset location for you. Set one via 'setweather <location>'.", Raise=True)
@@ -429,11 +420,11 @@ class Weather(callbacks.Plugin):
         else:
             if args['imperial']:
                 outdata['wind'] = "{0}@{1}mph".format(self._wind(data['current_observation']['wind_degrees']), data['current_observation']['wind_mph'])
-                if int(data['current_observation']['wind_gust_mph']) > 0:   # gusts?
+                if int(data['current_observation']['wind_gust_mph']) > 0:
                     outdata['wind'] += " ({0}mph gusts)".format(data['current_observation']['wind_gust_mph'])
             else:
                 outdata['wind'] = "{0}@{1}kph".format(self._wind(data['current_observation']['wind_degrees']),data['current_observation']['wind_kph'])
-                if int(data['current_observation']['wind_gust_kph']) > 0:  # gusts?
+                if int(data['current_observation']['wind_gust_kph']) > 0:
                     outdata['wind'] += " ({0}kph gusts)".format(data['current_observation']['wind_gust_kph'])
 
         # handle the time. concept/method from WunderWeather plugin.
@@ -484,7 +475,76 @@ class Weather(callbacks.Plugin):
             forecastdata[int(forecastday['period'])] = {'day': forecastday['title'],
                                                         'text': text}
 
-        # now this is the --forecast part.
+        output = "{0} :: {1} ::".format(self._bold(outdata['location']), outdata['weather'])
+        output += " {0} ".format(outdata['temp'])
+        # humidity.
+        if args['humidity']:
+            output += " (Humidity: {0}) ".format(outdata['humidity'])
+        # windchill/heatindex are conditional on season but test with startswith to see what to include
+        if not outdata['windchill'].startswith("NA"):
+            output += "| {0} {1} ".format(self._bold('Wind Chill:'), outdata['windchill'])
+        if not outdata['heatindex'].startswith("NA"):
+            output += "| {0} {1} ".format(self._bold('Heat Index:'), outdata['heatindex'])
+        # now get into the args dict for what to include (extras)
+        for k in ('wind', 'visibility', 'uv', 'pressure', 'dewpoint'):
+            if args[k]:
+                output += "| {0}: {1} ".format(self._bold(k.title()), outdata[k])
+        # add in the first two forecast item in conditions + updated time.
+        output += "| {0}: {1}".format(self._bold(forecastdata[0]['day']), forecastdata[0]['text'])
+        output += " {0}: {1}".format(self._bold(forecastdata[1]['day']), forecastdata[1]['text'])
+        if args['updated']:
+            output += " | {0} {1}".format(self._bold('Updated:'), outdata['observation'])
+        # finally, output the basic weather.
+        irc.reply(output)
+
+        # handle alerts
+        if args['alerts']:  # only look for alerts if there.
+            if data['alerts']:  # alerts is a list. it can also be empty.
+                outdata['alerts'] = data['alerts'][0]['message']  # need to do some formatting below.
+                outdata['alerts'] = outdata['alerts'].replace('\n', ' ')[:300]  # \n->' ' and max 300 chars.
+                outdata['alerts'] = utils.str.normalizeWhitespace(outdata['alerts'])  # fix pesky double whitespacing.
+            else:  # no alerts found (empty).
+                outdata['alerts'] = "No alerts."
+            irc.reply("{0} {1}".format(self._bu("Alerts:"), outdata['alerts']))
+
+        # handle almanac
+        if args['almanac']:
+            try:
+                outdata['highyear'] = data['almanac']['temp_high'].get('recordyear')
+                outdata['lowyear'] = data['almanac']['temp_low'].get('recordyear')
+                outdata['highnormal'] = self._temp(data['almanac']['temp_high']['normal']['F'])
+                outdata['lownormal'] = self._temp(data['almanac']['temp_low']['normal']['F'])
+                if outdata['highyear'] != "NA" and outdata['lowyear'] != "NA":
+                    outdata['highrecord'] = self._temp(data['almanac']['temp_high']['record']['F'])
+                    outdata['lowrecord'] = self._temp(data['almanac']['temp_low']['record']['F'])
+                else:
+                    outdata['highrecord'] = outdata['lowrecord'] = "NA"
+            except KeyError:
+                output = "%s Not available." % self._bu('Almanac:')
+            else:
+                output = ("{0} Normal High: {1} (Record: {2} in {3}) | Normal Low: {4} (Record: {5} in {6})".format(
+                          self._bu('Almanac:'), outdata['highnormal'], outdata['highrecord'], outdata['highyear'],
+                          outdata['lownormal'], outdata['lowrecord'], outdata['lowyear']))
+            irc.reply(output)
+        # handle astronomy
+        if args['astronomy']:
+            sunriseh = data['moon_phase']['sunrise']['hour']
+            sunrisem = data['moon_phase']['sunrise']['minute']
+            sunseth = data['moon_phase']['sunset']['hour']
+            sunsetm = data['moon_phase']['sunset']['minute']
+            sunrise = "{0}:{1}".format(sunriseh, sunrisem)
+            sunset = "{0}:{1}".format(sunseth, sunsetm)
+            # Oh god, this one-liner... -GLolol
+            lengthofday = "%dh%dm" % divmod((((int(sunseth)-int(sunriseh))+float((int(sunsetm)-int(sunrisem))/60.0))*60 ),60)
+            astronomy = {'Moon illum:': str(data['moon_phase']['percentIlluminated']) + "%",
+                         'Moon age:': str(data['moon_phase']['ageOfMoon']) + "d",
+                         'Sunrise:': sunrise,
+                         'Sunset:': sunset,
+                         'Length of Day:': lengthofday}
+            output = [format('%s %s', self._bold(k), v) for k, v in sorted(astronomy.items())]
+            output = format("%s %s", self._bu('Astronomy:'), " | ".join(output))
+            irc.reply(output)
+        # handle forecast
         if args['forecast']:
             fullforecastdata = {}  # key = day (int), value = dict of forecast data.
             for forecastday in data['forecast']['simpleforecast']['forecastday']:
@@ -496,105 +556,11 @@ class Weather(callbacks.Plugin):
                            'low': low,
                            'high': high}
                 fullforecastdata[int(forecastday['period'])] = tmpdict
-
-        # handle almanac
-        if args['almanac']:
-            outdata['highyear'] = data['almanac']['temp_high'].get('recordyear', 'NA')
-            outdata['lowyear'] = data['almanac']['temp_low'].get('recordyear', 'NA')
-            outdata['highnormal'] = self._temp(data['almanac']['temp_high']['normal']['F'])
-            outdata['highlow'] = self._temp(data['almanac']['temp_low']['normal']['F'])
-            outdata['highnormal'] = self._temp(data['almanac']['temp_high']['normal']['F'])
-            if outdata['highyear'] != "NA" and outdata['lowyear'] != "NA":
-                outdata['highrecord'] = self._temp(data['almanac']['temp_high']['record']['F'])
-                outdata['lowrecord'] = self._temp(data['almanac']['temp_low']['record']['F'])
-            else:
-                outdata['highrecord'] = outdata['lowrecord'] = "NA"
-
-        # handle astronomy
-        if args['astronomy']:
-            outdata['moonilluminated'] = data['moon_phase']['percentIlluminated']
-            outdata['moonage'] = data['moon_phase']['ageOfMoon']
-            sunriseh = data['moon_phase']['sunrise']['hour']
-            sunrisem = data['moon_phase']['sunrise']['minute']
-            sunseth = data['moon_phase']['sunset']['hour']
-            sunsetm = data['moon_phase']['sunset']['minute']
-            outdata['sunrise'] = "{0}:{1}".format(sunriseh, sunrisem)  # construct sunrise.
-            outdata['sunset'] = "{0}:{1}".format(sunseth, sunsetm)  # construct sunset. calc "time of day" below.
-            outdata['lengthofday'] = "%dh%dm" % divmod((((int(sunseth)-int(sunriseh))+float((int(sunsetm)-int(sunrisem))/60.0))*60),60)
-
-        # handle alerts
-        if args['alerts']:  # only look for alerts if there.
-            if data['alerts']:  # alerts is a list. it can also be empty.
-                outdata['alerts'] = data['alerts'][0]['message']  # need to do some formatting below.
-                outdata['alerts'] = outdata['alerts'].replace('\n', ' ')[:300]  # \n->' ' and max 300 chars.
-                outdata['alerts'] = utils.str.normalizeWhitespace(outdata['alerts'])  # fix pesky double whitespacing.
-            else:  # no alerts found (empty).
-                outdata['alerts'] = "No alerts."
-
-        # OUTPUT.
-        # we go step-by-step to build the proper string. ° u" \u00B0C"
-        output = "{0} :: {1} ::".format(self._bold(outdata['location']), outdata['weather'])
-        # add in temperature.
-        output += " {0}".format(outdata['temp'])
-        # humidity.
-        if args['humidity']:  # display humidity?
-            output += " (Humidity: {0}) ".format(outdata['humidity'])
-        else:
-            output += " "
-        # windchill/heatindex are conditional on season but test with startswith to see what to include
-        if not outdata['windchill'].startswith("NA"):  # windchill.
-            output += "| {0} {1} ".format(self._bold('Wind Chill:'), outdata['windchill'])
-        if not outdata['heatindex'].startswith("NA"):  # heatindex.
-            output += "| {0} {1} ".format(self._bold('Heat Index:'), outdata['heatindex'])
-        # now get into the args dict for what to include (extras)
-        for (k, v) in args.items():
-            if k in ['wind', 'visibility', 'uv', 'pressure', 'dewpoint']: # if key is in extras
-                if v: # if that key's value is True, we add it.
-                    output += "| {0}: {1} ".format(self._bold(k.title()), outdata[k])
-        # add in the first two forecast item in conditions + updated time.
-        output += "| {0}: {1}".format(self._bold(forecastdata[0]['day']), forecastdata[0]['text'])
-        output += " {0}: {1}".format(self._bold(forecastdata[1]['day']), forecastdata[1]['text'])
-         # show Updated?
-        if args['updated']:
-            output += " | {0} {1}".format(self._bold('Updated:'), outdata['observation'])
-        # finally, output the basic weather.
-        irc.reply(output)
-
-        # next, for outputting, handle the extras like alerts, almanac, astronomy, forecast.
-        if args['alerts']:  # if --alerts issued.
-            irc.reply("{0} :: {1}".format(self._bu("Alerts:"), outdata['alerts']))
-        # handle almanac if --almanac is given.
-        if args['almanac']:
-            if args['nocolortemp']:  # disable colored temp?
-                output = "{0} :: Normal High: {1} (Record: {2} in {3}) | Normal Low: {4} (Record: {5} in {6})".format(\
-                    self._bu('Almanac:'), outdata['highnormal'], outdata['highrecord'], outdata['highyear'],\
-                    outdata['lownormal'], outdata['lowrecord'], outdata['lowyear'])
-            else:  # colored temp.
-                output = "{0} :: Normal High: {1} (Record: {2} in {3}) | Normal Low: {4} (Record: {5} in {6})".format(\
-                    self._bu('Almanac:'), self._temp(outdata['highnormal']), self._temp(outdata['highrecord']),\
-                    outdata['highyear'], self._temp(outdata['lownormal']), self._temp(outdata['lowrecord']), outdata['lowyear'])
-            # now output to irc.
-            irc.reply(output)
-        # handle astronomy if --astronomy is given.
-        if args['astronomy']:
-            output = "{0} :: Moon illum: {1}%   Moon age: {2}d   Sunrise: {3}  Sunset: {4}  Length of Day: {5}".format(\
-                self._bu('Astronomy:'), outdata['moonilluminated'], outdata['moonage'],outdata['sunrise'],\
-                outdata['sunset'], outdata['lengthofday'])
-            # irc output now.
-            irc.reply(output)
-        # handle main forecast if --forecast is given.
-        if args['forecast']:
             outforecast = [] # prep string for output.
             for (k, v) in fullforecastdata.items(): # iterate through forecast data.
-                if args['nocolortemp']:
-                    outforecast.append("{0}: {1} ({2}/{3})".format(self._bold(v['day']),\
+                outforecast.append("{0}: {1} (High: {2} Low: {3})".format(self._bold(v['day']),
                         v['text'], v['high'], v['low']))
-                else:
-                    outforecast.append("{0}: {1} ({2}/{3})".format(self._bold(v['day']),\
-                        v['text'], self._temp(v['high']), self._temp(v['low'])))
-            # construct our string to output.
-            output = "{0} :: {1}".format(self._bu('Forecast:'), " | ".join(outforecast))
-            # now output to irc.
+            output = "{0} {1}".format(self._bu('Forecast:'), " | ".join(outforecast))
             irc.reply(output)
 
     wunderground = wrap(wunderground, [optional('text')])
