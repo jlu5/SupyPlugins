@@ -151,7 +151,6 @@ class Weather(callbacks.Plugin):
     def __init__(self, irc):
         self.__parent = super(Weather, self)
         self.__parent.__init__(irc)
-        self.APIKEY = self.registryValue('apiKey')
         self.db = WeatherDB()
 
     ##############
@@ -349,7 +348,8 @@ class Weather(callbacks.Plugin):
         Ex: 10021 or Sydney, Australia or KJFK
         """
 
-        if not self.APIKEY:
+        apikey = self.registryValue('apiKey')
+        if not apikey:
             irc.error("No Wunderground API key was defined. Set 'config plugins.Weather.apiKey' and reload the plugin.",
                       Raise=True)
 
@@ -392,7 +392,7 @@ class Weather(callbacks.Plugin):
         else:  # no optinput. no location. error out. this should happen above but lets be redundant.
             irc.error("You must specify a city to search for weather.", Raise=True)
 
-        url = 'http://api.wunderground.com/api/%s/' % (self.APIKEY)
+        url = 'http://api.wunderground.com/api/%s/' % (apikey)
         for check in ['alerts', 'almanac', 'astronomy']:
             if args[check]:
                 urlArgs['features'].append(check) # append to dict->key (list)
@@ -512,8 +512,8 @@ class Weather(callbacks.Plugin):
             try:
                 outdata['highyear'] = data['almanac']['temp_high'].get('recordyear')
                 outdata['lowyear'] = data['almanac']['temp_low'].get('recordyear')
-                outdata['highnormal'] = self._temp(data['almanac']['temp_high']['normal']['F'])
-                outdata['lownormal'] = self._temp(data['almanac']['temp_low']['normal']['F'])
+                outdata['highaverage'] = self._temp(data['almanac']['temp_high']['average']['F'])
+                outdata['lowaverage'] = self._temp(data['almanac']['temp_low']['average']['F'])
                 if outdata['highyear'] != "NA" and outdata['lowyear'] != "NA":
                     outdata['highrecord'] = self._temp(data['almanac']['temp_high']['record']['F'])
                     outdata['lowrecord'] = self._temp(data['almanac']['temp_low']['record']['F'])
@@ -522,9 +522,9 @@ class Weather(callbacks.Plugin):
             except KeyError:
                 output = "%s Not available." % self._bu('Almanac:')
             else:
-                output = ("{0} Normal High: {1} (Record: {2} in {3}) | Normal Low: {4} (Record: {5} in {6})".format(
-                          self._bu('Almanac:'), outdata['highnormal'], outdata['highrecord'], outdata['highyear'],
-                          outdata['lownormal'], outdata['lowrecord'], outdata['lowyear']))
+                output = ("{0} Average High: {1} (Record: {2} in {3}) | Average Low: {4} (Record: {5} in {6})".format(
+                          self._bu('Almanac:'), outdata['highaverage'], outdata['highrecord'], outdata['highyear'],
+                          outdata['lowaverage'], outdata['lowrecord'], outdata['lowyear']))
             irc.reply(output)
         # handle astronomy
         if args['astronomy']:

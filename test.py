@@ -22,7 +22,6 @@ class WeatherTestCase(PluginTestCase):
         conf.supybot.plugins.Weather.apiKey.setValue(apiKey)
 
     def testWeather(self):
-        self.assertNotError('reload Weather')
         self.assertRegexp('wunderground 10002', 'New York, NY')
         self.assertNotError('setweather 10002')
         self.assertNotError('setuser metric True')
