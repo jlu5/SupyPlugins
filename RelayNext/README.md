@@ -48,16 +48,35 @@ Relays require at least two channels to relay between. When the last two channel
 
 RelayNext supports relaying the following non-PRIVMSG events: joins, kicks, mode changes, nick changes, parts, quits, and topic changes. Each of these can be turned on and off using configuration variables, and have the following defaults:
 
-- `config plugins.RelayNext.events.relayjoins`: True
-- `config plugins.RelayNext.events.relaykicks`: True
-- `config plugins.RelayNext.events.relaymodes`: True
-- `config plugins.RelayNext.events.relaynicks`: True
-- `config plugins.RelayNext.events.relayparts`: True
-- `config plugins.RelayNext.events.relayquits`: True
-- `config plugins.RelayNext.events.relaytopics`: False
+- `config plugins.RelayNext.events.relayjoins`: `True`
+- `config plugins.RelayNext.events.relaykicks`: `True`
+- `config plugins.RelayNext.events.relaymodes`: `True`
+- `config plugins.RelayNext.events.relaynicks`: `True`
+- `config plugins.RelayNext.events.relayparts`: `True`
+- `config plugins.RelayNext.events.relayquits`: `True`
+- `config plugins.RelayNext.events.relaytopics`: `False`
 
 Note: Topic relaying will only show topic *changes* in a channel. **It does not, and can not sync topics between channels!**
-### Ignoring users
-RelayNext uses Supybot's built in ignore system, but you can set which kinds of messages you want to ignore from ignored users using `config plugins.RelayNext.events.userignored`.
 
-This key takes a space separated list, and defaults to ignoring `PRIVMSG` and `MODE`. **If you want to disable this ignore feature, simply set the value blank: `config plugins.RelayNext.events.userignored ""`**
+### Ignoring users
+RelayNext uses Supybot's built in ignore system. However, you can set which messages you want to ignore using `config plugins.RelayNext.events.userignored`.
+
+This key takes a space separated list, and defaults to ignoring `PRIVMSG` and `MODE`. **If you want to disable ignore, simply set this value blank: `config plugins.RelayNext.events.userignored ""`**
+
+### Highlight prevention
+One annoying aspect of relays is that when someone is on multiple relayed channels with the same nick, they will be spammed with highlights whenever they speak. RelayNext can mitigate this behavior (for some clients) by prefixing all nicks with a hyphen (`-`). We don't know why this works, but it just does!
+
+You can turn this prefixing on via:
+* `config plugins.RelayNext.noHighlight True`
+
+### Flood prevention *(experimental)*
+RelayNext has experimental flood prevention built in, though it's not quite reliable yet.
+
+To turn it on:
+* `config plugins.RelayNext.antiflood.enable True`
+
+You can then configure various the various options: `plugins.RelayNext.antiflood.maximum`, `plugins.RelayNext.antiflood.seconds`, and `plugins.RelayNext.antiflood.timeout`
+
+### Toggling colors and hostmask display
+
+You can enable/disable colors via the configuration variable `plugins.RelayNext.color`, and hostmask display via `plugins.RelayNext.hostmasks`.
