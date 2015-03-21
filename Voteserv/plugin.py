@@ -112,13 +112,14 @@ class Voteserv(callbacks.Plugin):
         if not action: # It must be just whitespace or formatting codes
             irc.error("You must specify a proper action!", Raise=True)
         try:
-            if self._lazyhostmask(msg.prefix) in self.votedb[action] and not override:
+            votedhosts = map(self._lazyhostmask, self.votedb[action][1:])
+            if self._lazyhostmask(msg.prefix) in votedhosts and not override:
                 irc.error("You have already voted to %s." % action, Raise=True)
         except KeyError:
             self.votedb[action] = [0]
         self.votedb[action][0] += 1
         irc.reply("%s voted to %s" % (msg.nick,self._formatAction(action)))
-        self.votedb[action].append(self._lazyhostmask(msg.prefix))
+        self.votedb[action].append(msg.prefix)
     vote = wrap(vote, ['text'])
 
     def voteclear(self, irc, msg, args):
@@ -151,7 +152,7 @@ class Voteserv(callbacks.Plugin):
                 (n, 'person has' if n == 1 else 'people have', \
                 self._formatAction(action))
             if 'hosts' in opts and n:
-                s += " (%s)" % ", ".join(set(hosts))
+                s += format(" [%L]", list(set(hosts)))
             irc.reply(s)
     votes = wrap(votes, [getopts({'hosts':'', 'number':''}), 'text'])
 
