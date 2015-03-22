@@ -32,6 +32,7 @@ from copy import deepcopy
 import pickle
 import re
 import traceback
+import textwrap
 
 import supybot.world as world
 import supybot.irclib as irclib
@@ -376,8 +377,16 @@ class RelayNext(callbacks.Plugin):
             allUsers += c.users
             s = format('%s users in %s on %s: %L', len(c.users),
                        channel, net, users)
+            # Ugh, this is ugly, but https://github.com/ProgVal/Limnoria/issues/1080
+            # means we have to chop off the (XX more messages) part too.
+            # Unfortunately, this plugin isn't localized yet and won't work in other languages.
+            allowedLength = 466 - len(irc.prefix) - len(irc.nick) - len(msg.nick) - \
+                len(_('(XX more messages)'))
+            replies = textwrap.wrap(s, allowedLength)
             if 'count' not in opts:
-                irc.reply(s, private=True, notice=True)
+                irc.reply(replies[0], private=True, notice=True)
+                for s in replies[1:]:
+                    irc.reply("... %s" % s, private=True, notice=True)
         if 'count' in opts:
             irc.reply(totalUsers)
         else:
