@@ -292,31 +292,29 @@ class Weather(callbacks.Plugin):
     # WUNDERGROUND API CALLS #
     ##########################
 
-    def _wuac(self, q):
+    def _wuac(self, irc, q):
         """Internal helper to find a location via Wunderground's autocomplete API."""
 
         url = 'http://autocomplete.wunderground.com/aq?query=%s' % utils.web.urlquote(q)
-        self.log.debug("Autocomplete URL: %s", url)
+        self.log.debug("Weather: Autocomplete URL: %s", url)
         try:
             page = utils.web.getUrl(url)
-        except Exception as e:
-            self.log.info("Weather: (_wuac) Error trying to open {0} message: {1}".format(url, e))
-            return None
-        try:
-            data = json.loads(page.decode('utf-8'))
-            # ZMW is in some ways a lot like Wunderground's location ID Codes, for when locations
-            # are too ambiguous. (e.g. looking up "France", which is a country with many different
-            # locations!)
-            for item in data['RESULTS']:
-                # Sometimes the autocomplete will lead us to more disambiguation pages...
-                # which cause lots of errors in processing!
-                if item['tz'] != 'MISSING':
-                    loc = "zmw:%s" % item['zmw']
-                    break
-            return loc
-        except Exception as e:
-            self.log.info("Weather: (_wuac) Error processing JSON in {0} :: {1}".format(url, e))
-            return None
+        except utils.web.Error as e:
+            irc.error("Failed to load location data for %r." % q, Raise=True)
+        data = json.loads(page.decode('utf-8'))
+        loc = ''
+        # ZMW is in some ways a lot like Wunderground's location ID Codes, for when locations
+        # are too ambiguous. (e.g. looking up "France", which is a country with many different
+        # locations!)
+        for item in data['RESULTS']:
+            # Sometimes the autocomplete will lead us to more disambiguation pages...
+            # which cause lots of errors in processing!
+            if item['tz'] != 'MISSING':
+                loc = "zmw:%s" % item['zmw']
+                break
+        else:
+            irc.error("Failed to find a valid location for: %r" % q, Raise=True)
+        return loc
 
     def _wunderjson(self, url, location):
         """Fetch wunderground JSON and return."""
@@ -383,15 +381,7 @@ class Weather(callbacks.Plugin):
             if not optinput:  # location was also not specified, so we must bail.
                 irc.error("I did not find a preset location for you. Set one via 'setweather <location>'.", Raise=True)
 
-        if optinput:
-            wloc = self._wuac(optinput)
-            if not wloc:
-                irc.error("I could not find a valid location for: {0}".format(optinput), Raise=True)
-        elif loc:  # user is known. location is set. no optinput.
-            wloc = loc
-        else:  # no optinput. no location. error out. this should happen above but lets be redundant.
-            irc.error("You must specify a city to search for weather.", Raise=True)
-
+        loc = self._wuac(irc, optinput or loc)
         url = 'http://api.wunderground.com/api/%s/' % (apikey)
         for check in ['alerts', 'almanac', 'astronomy']:
             if args[check]:
@@ -403,7 +393,7 @@ class Weather(callbacks.Plugin):
             if key in ("lang", "bestfct", "pws"): # rest added with key:value
                 url += "{0}:{1}/".format(key, value)
 
-        page = self._wunderjson(url, wloc)
+        page = self._wunderjson(url, loc)
         try:
             data = json.loads(page.decode('utf-8'))
         except Exception as e:
