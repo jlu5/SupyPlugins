@@ -22,9 +22,9 @@ class WeatherTestCase(PluginTestCase):
         conf.supybot.plugins.Weather.apiKey.setValue(apiKey)
 
     def testWeather(self):
-        self.assertRegexp('wunderground 10002', 'New York, NY')
+        self.assertRegexp('weather 10002', 'New York, NY')
         self.assertNotError('setweather 10002')
         self.assertNotError('setuser metric True')
-        self.assertRegexp('wunderground', 'New York, NY')
+        self.assertRegexp('weather', 'New York, NY')
 
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:
