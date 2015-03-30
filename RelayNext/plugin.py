@@ -103,6 +103,10 @@ class RelayNext(callbacks.Plugin):
         self.loadDB()
         world.flushers.append(self.exportDB)
         self.initializeNetworks()
+        if irc.afterConnect:
+            for channel in self._getAllRelaysForNetwork(irc):
+                # irc.queueMsg(ircmsgs.who(channel))
+                irc.queueMsg(ircmsgs.names(channel))
 
     def die(self):
         self.exportDB()
@@ -210,17 +214,23 @@ class RelayNext(callbacks.Plugin):
         maximum = self.registryValue("antiflood.maximum", channel)
         return len(self.msgcounters[(source, command)]) > maximum
 
-    def relay(self, irc, msg, channel=None):
-        # Keep track of our IRC state files
+    def __call__(self, irc, msg):
+        self.keepState(irc, msg)
+        self.__parent.__call__(irc, msg)
+
+    def keepState(self, irc, msg=None):
+        placeholder = ircmsgs.ping("placeholder message")
         if irc not in self.ircstates:
             self.ircstates[irc] = irclib.IrcState()
         try:
             self.ircstates[irc].addMsg(irc, self.lastmsg[irc])
         except KeyError:
-            self.ircstates[irc].addMsg(irc,
-                                       ircmsgs.ping("placeholder message"))
+            self.ircstates[irc].addMsg(irc, placeholder)
         finally:
-            self.lastmsg[irc] = msg
+            self.lastmsg[irc] = msg or placeholder
+
+    def relay(self, irc, msg, channel=None):
+        self.keepState(irc, msg)
         channel = channel or msg.args[0]
         ignoredevents = map(str.upper, self.registryValue('events.userIgnored'))
         if msg.command in ignoredevents and ircdb.checkIgnored(msg.prefix):
@@ -431,16 +441,17 @@ class RelayNext(callbacks.Plugin):
         if type(relays) == list:
             relays = set(map(str.lower, relays))
         else:
-            relays = set(relays.lower())
+            relays = set([relays.lower()])
         self.checkRelays(irc, relays)
         if rid not in self.db.keys() and len(relays) < 2:
             irc.error("Not enough channels to relay between (need at least "
                       "2).", Raise=True)
         try:
-            new_relays = self.db[rid]
+            new_relays = set(self.db[rid])
         except KeyError:
             self.db[rid] = new_relays = set()
         new_relays.update(relays)
+        self.db[rid] = new_relays
         irc.replySuccess()
     add = wrap(add, ['admin', 'somethingWithoutSpaces',
                      many('somethingWithoutSpaces')])
