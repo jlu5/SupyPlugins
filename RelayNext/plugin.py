@@ -230,6 +230,7 @@ class RelayNext(callbacks.Plugin):
 
     def relay(self, irc, msg, channel=None):
         self.keepState(irc, msg)
+        self.initializeNetworks()
         channel = channel or msg.args[0]
         ignoredevents = map(str.upper, self.registryValue('events.userIgnored'))
         if msg.command in ignoredevents and ircdb.checkIgnored(msg.prefix):
