@@ -84,7 +84,6 @@ class RelayNext(callbacks.Plugin):
         # We need to create a dict of the networks we're connected to and their
         # associated IRC objects, so we know where our messages should go
         self.networks = {}
-        self.log.debug("RelayNext network index: %s" % self.networks)
         # This part is partly taken from the Relay plugin, and is used to
         # keep track of quitting users. Since quit messages aren't
         # channel-specific, we need to keep a cached copy of our IRC state
@@ -290,12 +289,7 @@ class RelayNext(callbacks.Plugin):
         if self.registryValue("events.relay%ss" % msg.command, msg.args[0]):
             self.relay(irc, msg)
 
-    def doJoin(self, irc, msg):
-        if msg.nick == irc.nick:
-            self.initializeNetworks()
-        self.doNonPrivmsg(irc, msg)
-
-    doTopic = doPart = doKick = doMode = doNonPrivmsg
+    doTopic = doPart = doKick = doMode = doJoin = doNonPrivmsg
 
     # NICK and QUIT aren't channel specific, so they require a bit
     # of extra handling
@@ -309,7 +303,8 @@ class RelayNext(callbacks.Plugin):
         for channel in self._getAllRelaysForNetwork(irc):
             try:
                 if self.registryValue("events.relayquits", channel) and \
-                        msg.nick in self.ircstates[irc].channels[channel].users:
+                        (msg.nick in self.ircstates[irc].channels[channel].users \
+                         or msg.nick == irc.nick):
                     self.relay(irc, msg, channel=channel)
             except Exception as e:
                 self.log.debug("RelayNext: something happened while handling a quit:"
