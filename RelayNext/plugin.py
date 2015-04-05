@@ -131,11 +131,10 @@ class RelayNext(callbacks.Plugin):
                     results.append(cn[0])
         return results
 
-    def _format(self, irc, msg, announcement=False):
+    def _format(self, irc, msg, channel, announcement=False):
         s = ''
         nick = msg.nick
         userhost = ''
-        channel = msg.args[0]
         noHighlight = self.registryValue('noHighlight', channel)
         useHostmask = self.registryValue('hostmasks', channel)
         color = self.registryValue('color', channel)
@@ -219,7 +218,7 @@ class RelayNext(callbacks.Plugin):
         # Get the source channel
         source = "%s@%s" % (channel, irc.network)
         source = source.lower()
-        out_s = self._format(irc, msg)
+        out_s = self._format(irc, msg, channel)
         if out_s:
             ### Begin Flood checking clause
             if self.registryValue("antiflood.enable", channel):
@@ -239,7 +238,7 @@ class RelayNext(callbacks.Plugin):
                     e = format("Flood detected on %s (%s %ss/%s seconds), "
                                "not relaying %ss for %s seconds!", channel,
                                maximum, c, seconds, c, timeout)
-                    out_s = self._format(irc, msg, announcement=e)
+                    out_s = self._format(irc, msg, channel, announcement=e)
                     self.log.info("RelayNext (%s): %s", irc.network, e)
                     self.floodTriggered = True
                 else:
