@@ -248,7 +248,7 @@ class RelayNext(callbacks.Plugin):
             for relay in self.db.values():
                 if source in relay:  # If our channel is in a relay
                     # Remove ourselves so we don't get duplicated messages
-                    targets = targets = list(relay)
+                    targets = list(relay)
                     targets.remove(source)
                     for cn in targets:
                         target, net = cn.split("@")
