@@ -337,8 +337,8 @@ class Weather(callbacks.Plugin):
     # PUBLIC FUNCTIONS #
     ####################
 
-    def wunderground(self, irc, msg, args, optinput):
-        """[--options] <location>
+    def weather(self, irc, msg, args, optinput):
+        """<location>
 
         Fetches weather and forecast information for <location>.
 
@@ -553,7 +553,7 @@ class Weather(callbacks.Plugin):
             output = "{0} {1}".format(self._bu('Forecast:'), " | ".join(outforecast))
             irc.reply(output)
 
-    wunderground = wrap(wunderground, [optional('text')])
+    weather = wrap(weather, [optional('text')])
 
 Class = Weather
 
