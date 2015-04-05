@@ -81,9 +81,6 @@ class RelayNext(callbacks.Plugin):
     def __init__(self, irc):
         self.__parent = super(RelayNext, self)
         self.__parent.__init__(irc)
-        # We need to create a dict of the networks we're connected to and their
-        # associated IRC objects, so we know where our messages should go
-        self.networks = {}
         # This part is partly taken from the Relay plugin, and is used to
         # keep track of quitting users. Since quit messages aren't
         # channel-specific, we need to keep a cached copy of our IRC state
@@ -92,7 +89,6 @@ class RelayNext(callbacks.Plugin):
         # 'irc.state.channels[channel]' won't work either,
         # because the user in question has already quit.
         self.ircstates = {}
-        self.lastmsg = {}
 
         # This part facilitates flood protection
         self.msgcounters = {}
@@ -101,7 +97,6 @@ class RelayNext(callbacks.Plugin):
         self.db = {}
         self.loadDB()
         world.flushers.append(self.exportDB)
-        self.initializeNetworks()
         if irc.afterConnect:
             for channel in self._getAllRelaysForNetwork(irc):
                 # irc.queueMsg(ircmsgs.who(channel))
@@ -124,10 +119,6 @@ class RelayNext(callbacks.Plugin):
         num = sum([ord(char) for char in s])
         num = num % len(colors)
         return "\x03%s%s\x03" % (colors[num], s)
-
-    def initializeNetworks(self):
-        for IRC in world.ircs:
-            self.networks[IRC.network.lower()] = IRC
 
     def _getAllRelaysForNetwork(self, irc):
         """Returns all the relays a network is involved with."""
@@ -213,24 +204,12 @@ class RelayNext(callbacks.Plugin):
         maximum = self.registryValue("antiflood.maximum", channel)
         return len(self.msgcounters[(source, command)]) > maximum
 
-    def __call__(self, irc, msg):
-        self.keepState(irc, msg)
-        self.__parent.__call__(irc, msg)
-
-    def keepState(self, irc, msg=None):
-        placeholder = ircmsgs.ping("placeholder message")
-        if irc not in self.ircstates:
-            self.ircstates[irc] = irclib.IrcState()
-        try:
-            self.ircstates[irc].addMsg(irc, self.lastmsg[irc])
-        except KeyError:
-            self.ircstates[irc].addMsg(irc, placeholder)
-        finally:
-            self.lastmsg[irc] = msg or placeholder
+    def keepstate(self):
+        for irc in world.ircs:
+            self.ircstates[irc.network] = deepcopy(irc.state.channels)
 
     def relay(self, irc, msg, channel=None):
-        self.keepState(irc, msg)
-        self.initializeNetworks()
+        self.keepstate()
         channel = channel or msg.args[0]
         ignoredevents = map(str.upper, self.registryValue('events.userIgnored'))
         if msg.command in ignoredevents and ircdb.checkIgnored(msg.prefix):
@@ -269,12 +248,12 @@ class RelayNext(callbacks.Plugin):
             for relay in self.db.values():
                 if source in relay:  # If our channel is in a relay
                     # Remove ourselves so we don't get duplicated messages
-                    targets = list(relay)
+                    targets = targets = list(relay)
                     targets.remove(source)
                     for cn in targets:
                         target, net = cn.split("@")
                         try:
-                            otherIrc = self.networks[net]
+                            otherIrc = world.getIrc(net)
                         except KeyError:
                             self.log.debug("RelayNext: message to %s dropped, we "
                                            "are not connected there!", net)
@@ -300,16 +279,13 @@ class RelayNext(callbacks.Plugin):
             if self.registryValue("events.relaynicks", channel) and \
                     newnick in irc.state.channels[channel].users:
                 self.relay(irc, msg, channel=channel)
+
     def doQuit(self, irc, msg):
         for channel in self._getAllRelaysForNetwork(irc):
-            try:
-                if self.registryValue("events.relayquits", channel) and \
-                        (msg.nick in self.ircstates[irc].channels[channel].users \
-                         or msg.nick == irc.nick):
-                    self.relay(irc, msg, channel=channel)
-            except Exception as e:
-                self.log.debug("RelayNext: something happened while handling a quit:"
-                               " %s", str(e))
+            if self.registryValue("events.relayquits", channel) and \
+                    (msg.nick in self.ircstates[irc.network][channel].users \
+                     or msg.nick == irc.nick):
+                self.relay(irc, msg, channel=channel)
 
     def outFilter(self, irc, msg):
         # Catch our own messages and send them into the relay (this is
@@ -365,7 +341,7 @@ class RelayNext(callbacks.Plugin):
             totalChans += 1
             channel, net = cn.split("@", 1)
             try:
-                c = self.networks[net].state.channels[channel]
+                c = world.getIrc(net).state.channels[channel]
             except KeyError:
                 continue
             totalUsers += len(c.users)
