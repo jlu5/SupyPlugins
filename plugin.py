@@ -469,7 +469,7 @@ class Weather(callbacks.Plugin):
         output += " {0} ".format(outdata['temp'])
         # humidity.
         if args['humidity']:
-            output += " (Humidity: {0}) ".format(outdata['humidity'])
+            output += "(Humidity: {0}) ".format(outdata['humidity'])
         # windchill/heatindex are conditional on season but test with startswith to see what to include
         if not outdata['windchill'].startswith("NA"):
             output += "| {0} {1} ".format(self._bold('Wind Chill:'), outdata['windchill'])
