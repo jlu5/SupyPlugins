@@ -251,11 +251,11 @@ class RelayNext(callbacks.Plugin):
                     targets.remove(source)
                     for cn in targets:
                         target, net = cn.split("@")
-                        try:
-                            otherIrc = world.getIrc(net)
-                        except KeyError:
-                            self.log.debug("RelayNext: message to %s dropped, we "
-                                           "are not connected there!", net)
+                        otherIrc = world.getIrc(net)
+                        if otherIrc is None:
+                            self.log.debug("RelayNext: message to network %r"
+                                           " dropped, we are not connected "
+                                           "there!", net)
                         else:
                             out_msg = ircmsgs.privmsg(target, out_s)
                             out_msg.tag('relayedMsg')
