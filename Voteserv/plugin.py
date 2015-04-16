@@ -114,7 +114,7 @@ class Voteserv(callbacks.Plugin):
         try:
             votedhosts = map(self._lazyhostmask, self.votedb[action][1:])
             if self._lazyhostmask(msg.prefix) in votedhosts and not override:
-                irc.error("You have already voted to %s." % action, Raise=True)
+                irc.error("You have already voted to %r." % action, Raise=True)
         except KeyError:
             self.votedb[action] = [0]
         self.votedb[action][0] += 1
