@@ -231,7 +231,7 @@ class RelayNext(callbacks.Plugin):
                     self.msgcounters[(source, msg.command)] = TimeoutQueue(seconds)
                 if self.checkFlood(channel, source, msg.command):
                     self.log.debug("RelayNext (%s): message from %s blocked by "
-                                   "flood preotection.", irc.network, channel)
+                                   "flood protection.", irc.network, channel)
                     if self.floodTriggered:
                         return
                     c = msg.command.lower()
