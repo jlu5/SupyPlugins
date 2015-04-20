@@ -220,35 +220,33 @@ class RelayNext(callbacks.Plugin):
         source = source.lower()
         out_s = self._format(irc, msg, channel)
         if out_s:
-            ### Begin Flood checking clause
-            if self.registryValue("antiflood.enable", channel):
-                timeout = self.registryValue("antiflood.timeout", channel)
-                seconds = self.registryValue("antiflood.seconds", channel)
-                maximum = self.registryValue("antiflood.maximum", channel)
-                try:
-                    self.msgcounters[(source, msg.command)].enqueue(msg.prefix)
-                except KeyError:
-                    self.msgcounters[(source, msg.command)] = TimeoutQueue(seconds)
-                if self.checkFlood(channel, source, msg.command):
-                    self.log.debug("RelayNext (%s): message from %s blocked by "
-                                   "flood protection.", irc.network, channel)
-                    if self.floodTriggered:
-                        return
-                    c = msg.command.lower()
-                    e = format("Flood detected on %s (%s %ss/%s seconds), "
-                               "not relaying %ss for %s seconds!", channel,
-                               maximum, c, seconds, c, timeout)
-                    out_s = self._format(irc, msg, channel, announcement=e)
-                    self.log.info("RelayNext (%s): %s", irc.network, e)
-                    self.floodTriggered = True
-                else:
-                    self.floodTriggered = False
-            ### End Flood checking clause
             for relay in self.db.values():
                 if source in relay:  # If our channel is in a relay
                     # Remove ourselves so we don't get duplicated messages
                     targets = list(relay)
                     targets.remove(source)
+                    if self.registryValue("antiflood.enable", channel):
+                        timeout = self.registryValue("antiflood.timeout", channel)
+                        seconds = self.registryValue("antiflood.seconds", channel)
+                        maximum = self.registryValue("antiflood.maximum", channel)
+                        try:
+                            self.msgcounters[(source, msg.command)].enqueue(msg.prefix)
+                        except KeyError:
+                            self.msgcounters[(source, msg.command)] = TimeoutQueue(seconds)
+                        if self.checkFlood(channel, source, msg.command):
+                            self.log.debug("RelayNext (%s): message from %s blocked by "
+                                           "flood protection.", irc.network, channel)
+                            if self.floodTriggered:
+                                return
+                            c = msg.command.lower()
+                            e = format("Flood detected on %s (%s %ss/%s seconds), "
+                                       "not relaying %ss for %s seconds!", channel,
+                                       maximum, c, seconds, c, timeout)
+                            out_s = self._format(irc, msg, channel, announcement=e)
+                            self.floodTriggered = True
+                            self.log.info("RelayNext (%s): %s", irc.network, e)
+                        else:
+                            self.floodTriggered = False
                     for cn in targets:
                         target, net = cn.split("@")
                         otherIrc = world.getIrc(net)
