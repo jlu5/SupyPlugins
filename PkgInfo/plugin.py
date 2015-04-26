@@ -160,12 +160,17 @@ class PkgInfo(callbacks.Plugin):
             res = []
             for item in items:
                 try:
-                    name = item.a.text
+                    # Get package name and related versions and architectures:
+                    # <packagename> (>= 1.0) [arch1, arch2]
+                    name = '%s %s' % (ircutils.bold(item.a.text),
+                         item.a.next_sibling.replace('\n', '').strip())
+                    name = utils.str.normalizeWhitespace(name).strip()
+                    # Format OR dependencies
                     if item.text.startswith("or") and keyw in \
                             item.find_previous_siblings("dt")[0].span.text:
-                        res[-1] = "%s or \x02%s\x02" % (res[-1], name)
+                        res[-1] = "%s or %s" % (res[-1], name)
                     elif keyw in item.span.text:
-                        res.append("\x02%s\x02" % name)
+                        res.append(name)
                 except AttributeError as e:
                     continue
             if res:
