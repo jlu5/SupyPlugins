@@ -66,26 +66,31 @@ class PkgInfo(callbacks.Plugin):
         self.__parent = super(PkgInfo, self)
         self.__parent.__init__(irc)
         self.addrs = {'ubuntu': 'http://packages.ubuntu.com/',
-                      'debian': "https://packages.debian.org/"}
-        self.unknowndist = _("This command only supports package lookup "
-                             "for Debian and Ubuntu. For Arch Linux packages, "
-                             "see the 'archpkg' and 'archaur' commands. For "
-                             "Linux Mint, use the 'mintpkg' command.")
+                      'debian': 'https://packages.debian.org/',
+                      # This site is very, VERY slow, but it still works..
+                      'debian-archive': 'http://archive.debian.net/'}
+        self.unknowndist = _("Unknown distribution. This command only supports "
+                             "package lookup for Debian and Ubuntu. For Arch "
+                             "Linux packages, see the 'archpkg' and 'archaur' "
+                             "commands. For Linux Mint, use the 'mintpkg' command.")
 
     def _getDistro(self, release):
         """<release>
 
         Guesses the distribution from the release name."""
         release = release.lower()
-        debian = ("oldstable", "squeeze", "wheezy", "stable", "jessie",
-                  "testing", "sid", "unstable", "stretch", "buster",
+        debian = ("oldoldstable", "squeeze", "oldstable", "wheezy", "stable",
+                  "jessie", "testing", "sid", "unstable", "stretch", "buster",
                   "experimental")
-        ubuntu = ("hardy", "lucid", "maverick", "natty", "oneiric", "precise",
-                  "quantal", "raring", "saucy", "trusty", "utopic", "vivid")
+        debian_archive = ("bo", "hamm", "slink", "potato", "woody", "sarge",
+                          "etch", "lenny")
+        ubuntu = ("lucid", "precise", "trusty", "utopic", "vivid")
         if release.startswith(debian):
             return "debian"
         elif release.startswith(ubuntu):
             return "ubuntu"
+        elif release.startswith(debian_archive):
+            return "debian-archive"
 
     def MadisonParse(self, pkg, dist, codenames='', suite='', reverse=False):
         """Parser for the madison API at https://qa.debian.org/madison.php."""
@@ -141,7 +146,7 @@ class PkgInfo(callbacks.Plugin):
         try:
             url = self.addrs[distro]
         except KeyError:
-            irc.error("Unknown distribution. " + self.unknowndist, Raise=True)
+            irc.error(self.unknowndist, Raise=True)
         if source:
             url += 'source/'
         url += "{}/{}".format(release, pkg)
@@ -208,7 +213,7 @@ class PkgInfo(callbacks.Plugin):
                getopts({'depends': '', 'source': ''})])
 
     def vlist(self, irc, msg, args, distro, pkg, opts):
-        """<distribution> <package>[--reverse]
+        """<distribution> <package> [--reverse]
 
         Fetches all available version of <package> in <distribution>, if
         such package exists. Supported entries for <distribution>
@@ -219,8 +224,7 @@ class PkgInfo(callbacks.Plugin):
         if distro not in supported:
             distro = self._getDistro(distro)
             if distro is None:
-                e = "Unknown distribution. " + self.unknowndist
-                irc.error(e, Raise=True)
+                irc.error(self.unknowndist, Raise=True)
         opts = dict(opts)
         reverse = 'reverse' in opts
         d = self.MadisonParse(pkg, distro, reverse=reverse)
@@ -304,18 +308,19 @@ class PkgInfo(callbacks.Plugin):
     def pkgsearch(self, irc, msg, args, opts, query):
         """[--distro <distro>] <query>
 
-        Looks up <query> in <distro>'s website (for Debian/Ubuntu)."""
+        Looks up <query> in <distro>'s website. Valid <distro>'s include
+        'debian', 'ubuntu', and 'debian-archive'."""
         opts = dict(opts)
         if 'distro' not in opts:
             distro = 'debian'
         else:
             distro = opts['distro'].lower()
-            if distro not in ("debian", "ubuntu"):
+            if distro not in self.addrs.keys():
                 distro = self._getDistro(distro)
         try:
             url = '%ssearch?keywords=%s' % (self.addrs[distro], quote(query))
         except KeyError:
-            irc.error('Unknown distribution. ' + self.unknowndist, Raise=True)
+            irc.error(self.unknowndist, Raise=True)
         try:
             fd = utils.web.getUrl(url).decode("utf-8")
         except utils.web.Error as e:
