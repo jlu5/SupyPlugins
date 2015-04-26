@@ -125,7 +125,7 @@ class PkgInfo(callbacks.Plugin):
                                                    'dep:': '\x0304dep:\x03',
                                                    'sug:': '\x0309sug:\x03',
                                                    'adep:': '\x0305adep:\x03',
-                                                   'idep': '\x0302idep:\x03',
+                                                   'idep:': '\x0302idep:\x03',
                                                    'enh:': '\x0308enh:\x03'})
     def package(self, irc, msg, args, release, pkg, opts):
         """<release> <package> [--depends] [--source]
