@@ -121,19 +121,30 @@ class PkgInfo(callbacks.Plugin):
         else:
             self.log.debug("PkgInfo: No results found for URL %s", url)
 
+    _dependencyColor = utils.str.MultipleReplacer({'rec:': '\x0312rec:\x03',
+                                                   'dep:': '\x0304dep:\x03',
+                                                   'sug:': '\x0309sug:\x03',
+                                                   'adep:': '\x0305adep:\x03',
+                                                   'idep': '\x0302idep:\x03',
+                                                   'enh:': '\x0308enh:\x03'})
     def package(self, irc, msg, args, release, pkg, opts):
-        """<release> <package> [--{depends|recommends|suggests}]
+        """<release> <package> [--depends] [--source]
 
         Fetches information for <package> from Debian or Ubuntu's repositories.
         <release> is the codename/release name (e.g. 'trusty', 'squeeze'). If
-        --depends, --recommends, or --suggests is given, fetches dependency
-        info for <package>."""
+        --depends is given, fetches dependency info for <package>. If --source
+        is given, look up the source package instead of a binary."""
         pkg = pkg.lower()
         distro = self._getDistro(release)
+        opts = dict(opts)
+        source = 'source' in opts
         try:
-            url = self.addrs[distro] + "{}/{}".format(release, pkg)
+            url = self.addrs[distro]
         except KeyError:
             irc.error("Unknown distribution. " + self.unknowndist, Raise=True)
+        if source:
+            url += 'source/'
+        url += "{}/{}".format(release, pkg)
         try:
             fd = utils.web.getUrl(url).decode("utf-8")
         except utils.web.Error as e:
@@ -145,57 +156,56 @@ class PkgInfo(callbacks.Plugin):
                 irc.error("Unknown distribution/release.", Raise=True)
             irc.reply(err)
             return
-        opts = dict(opts)
-        if opts:
-            items = soup.find_all('dt')
-            keyws = {'depends': 'dep:', 'recommends': 'rec:',
-                     'suggests': 'sug:'}
-            if 'depends' in opts:
-                lookup = 'depends'
-            elif 'recommends' in opts:
-                lookup = 'recommends'
-            elif 'suggests' in opts:
-                lookup = 'suggests'
-            keyw = keyws[lookup]
+        # If we're using the  --depends option, handle that separately.
+        if 'depends' in opts:
+            items = soup.find('div', {'id': 'pdeps'}).find_all('dt')
             res = []
             for item in items:
+                # Get package name and related versions and architectures:
+                # <packagename> (>= 1.0) [arch1, arch2]
                 try:
-                    # Get package name and related versions and architectures:
-                    # <packagename> (>= 1.0) [arch1, arch2]
-                    name = '%s %s' % (ircutils.bold(item.a.text),
-                         item.a.next_sibling.replace('\n', '').strip())
+                    deptype = item.span.text if item.find('span') else ''
+                    name = '%s %s %s' % (deptype, ircutils.bold(item.a.text),
+                            item.a.next_sibling.replace('\n', '').strip())
                     name = utils.str.normalizeWhitespace(name).strip()
-                    # Format OR dependencies
-                    if item.text.startswith("or") and keyw in \
-                            item.find_previous_siblings("dt")[0].span.text:
-                        res[-1] = "%s or %s" % (res[-1], name)
-                    elif keyw in item.span.text:
+                    if item.find('span'):
                         res.append(name)
-                except AttributeError as e:
+                    else:
+                        # OR dependency
+                        res[-1] += " or %s" % name
+                except AttributeError:
                     continue
             if res:
-                s = format("Package \x02%s\x02 %s: %L, View more at %u", pkg,
-                           lookup, res, url)
+                s = format("Package \x02%s\x02 dependencies: %s, View more at %u", pkg,
+                           ', '.join(res), url)
+                s = self._dependencyColor(s)
                 irc.reply(s)
             else:
-                irc.error("%s doesn't seem to have any %s." % (pkg, lookup))
+                irc.error("%s doesn't seem to have any dependencies." % pkg)
             return
         desc = soup.find('meta', attrs={"name": "Description"})["content"]
+        # Override description if we selected source lookup, since the meta
+        # tag Description should be empty for those. Replace this with a list
+        # of binary packages that the source package builds.
+        if source:
+            binaries = soup.find('div', {'id': "pbinaries"})
+            binaries = [ircutils.bold(obj.a.text) for obj in binaries.find_all('dt')]
+            desc = format('Built packages: %L', binaries)
         # Get package information from the meta tags
         keywords = soup.find('meta', attrs={"name": "Keywords"})["content"]
         keywords = keywords.replace(",", "").split()
         version = keywords[-1]
+        # Handle virtual packages, showing a list of packages that provide it
         if version == "virtual":
-            providing = [obj.a.text for obj in soup.find_all('dt')]
-            desc = ("Virtual package provided by: \x02%s\x02" %
-                    ', '.join(providing[:10]))
+            providing = [ircutils.bold(obj.a.text) for obj in soup.find_all('dt')]
+            desc = "Virtual package provided by: %s" % ', '.join(providing[:10])
             if len(providing) > 10:
-                desc += " and \x02%s\x02 others" % (len(providing) - 10)
+                desc += " and %s others" % (ircutils.bold(len(providing) - 10))
         s = format("Package: \x02%s (%s)\x02 in %s - %s, View more at: %u",
                    pkg, version, keywords[1], desc, url)
         irc.reply(s)
     pkg = wrap(package, ['somethingWithoutSpaces', 'somethingWithoutSpaces',
-               getopts({'depends': '', 'recommends': '', 'suggests': ''})])
+               getopts({'depends': '', 'source': ''})])
 
     def vlist(self, irc, msg, args, distro, pkg, opts):
         """<distribution> <package>[--reverse]

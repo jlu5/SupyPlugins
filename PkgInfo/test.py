@@ -36,6 +36,8 @@ class PkgInfoTestCase(PluginTestCase):
         def testPkg(self):
             self.assertRegexp('pkg sid bash', 'Package: .*?bash .*?')
             self.assertRegexp('pkg trusty apt', 'Package: .*?apt .*?')
+            self.assertNotError('pkg sid bash --depends')
+            self.assertNotError('pkg sid vlc --source --depends')
             self.assertError('pkg afdsfsadf asfasfasf')
             self.assertRegexp('pkg sid afsadfasfsa', 'no such package', re.I)
 
