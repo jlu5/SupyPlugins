@@ -34,6 +34,8 @@ from supybot.test import *
 class IsupTestCase(PluginTestCase):
     plugins = ('Isup',)
 
+    @unittest.skipUnless(network, "Network-based tests have been disabled via "
+                         "--no-network")
     def testBasics(self):
         self.assertRegexp('check google.com', "It's just you")
         self.assertRegexp('check dhjeheiaoij', "invalid|url|error", re.I)
