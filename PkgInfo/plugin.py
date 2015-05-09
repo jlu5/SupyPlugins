@@ -84,7 +84,7 @@ class PkgInfo(callbacks.Plugin):
                   "experimental")
         debian_archive = ("bo", "hamm", "slink", "potato", "woody", "sarge",
                           "etch", "lenny")
-        ubuntu = ("lucid", "precise", "trusty", "utopic", "vivid")
+        ubuntu = ("lucid", "precise", "trusty", "utopic", "vivid", "wily")
         if release.startswith(debian):
             return "debian"
         elif release.startswith(ubuntu):
