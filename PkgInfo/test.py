@@ -59,7 +59,7 @@ class PkgInfoTestCase(PluginTestCase):
                               '.*?yaourt.*?')
 
         def testMintPkg(self):
-            self.assertNotError('mintpkg qiana cinnamon')
+            self.assertNotError('linuxmint rebecca cinnamon')
 
         def testPkgsearch(self):
             self.assertNotError('pkgsearch debian python')

@@ -72,7 +72,7 @@ class PkgInfo(callbacks.Plugin):
         self.unknowndist = _("Unknown distribution. This command only supports "
                              "package lookup for Debian and Ubuntu. For Arch "
                              "Linux packages, see the 'archpkg' and 'archaur' "
-                             "commands. For Linux Mint, use the 'mintpkg' command.")
+                             "commands. For Linux Mint, use the 'linuxmint' command.")
 
     def _getDistro(self, release):
         """<release>
@@ -347,7 +347,7 @@ class PkgInfo(callbacks.Plugin):
     pkgsearch = wrap(pkgsearch, ['somethingWithoutSpaces',
                                  'somethingWithoutSpaces'])
 
-    def mintpkg(self, irc, msg, args, release, query, opts):
+    def linuxmint(self, irc, msg, args, release, query, opts):
         """<release> <package> [--exact]
 
         Looks up <package> in Linux Mint's repositories. If --exact is given,
@@ -390,7 +390,7 @@ class PkgInfo(callbacks.Plugin):
             irc.reply(s)
         else:
             irc.error('No results found.')
-    mintpkg = wrap(mintpkg, ['somethingWithoutSpaces',
+    linuxmint = wrap(linuxmint, ['somethingWithoutSpaces',
                              'somethingWithoutSpaces',
                              getopts({'exact': ''})])
 

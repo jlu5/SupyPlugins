@@ -64,6 +64,6 @@ Everything else is parsed as HTML using the Beautiful Soup 4 library.
 ### Linux Mint packages
 
 ```
-<GLolol> mintpkg Rebecca nemo
+<GLolol> linuxmint Rebecca nemo
 <Atlas> Found 22 results: gir1.2-nemo-3.0 [Main] (2.4.4+rebecca), libnemo-extension-dev [Main] (2.4.4+rebecca), libnemo-extension1 [Main] (2.4.4+rebecca), nemo [Main] (2.4.4+rebecca), nemo-compare [Main] (2.4.0+rebecca), nemo-data [Main] (2.4.4+rebecca), nemo-dbg [Main] (2.4.4+rebecca), nemo-dropbox [Main] (2.4.0+rebecca), nemo-emblems [Main] (2.4.3+rebecca), nemo-filename-repairer (2 more messages)
 ```
