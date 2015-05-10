@@ -50,7 +50,7 @@ Everything else is parsed as HTML using the Beautiful Soup 4 library.
 ### Arch Linux packages
 
 ```
-<GLolol> archpkg bash
+<GLolol> archlinux bash
 <Atlas> Found 8 results: bash-docs - Advanced Bash-Scripting Guide in HTML (10) [any], bash-completion - Programmable completion for the bash shell (2.1) [any], bashdb - A debugger for Bash scripts loosely modeled on the gdb command syntax (4.3_0.9) [any], screenfetch - CLI Bash script to show system/theme info in screenshots (3.6.5) [any], bash - The GNU Bourne Again shell (4.3.030) [i686, x86_64], (1 more message)
 ```
 

@@ -47,13 +47,13 @@ class PkgInfoTestCase(PluginTestCase):
             self.assertRegexp('vlist debian bash', 'Found [1-9][0-9]* '
                               'results: (.*?\(.*?\))+')
 
-        def testArchpkg(self):
-            self.assertError('archpkg afdsfbjeiog')
-            self.assertNotError('archpkg bash')
-            self.assertRegexp('archpkg pacman --exact',
+        def testArchLinux(self):
+            self.assertError('archlinux afdsfbjeiog')
+            self.assertNotError('archlinux bash')
+            self.assertRegexp('archlinux pacman --exact',
                               'Found 1.*?pacman')
 
-        def testArchaur(self):
+        def testArchAUR(self):
             self.assertError('archaur wjoitgjwotgjv')
             self.assertRegexp('archaur yaourt', 'Found [1-9][0-9]* results:'
                               '.*?yaourt.*?')

@@ -71,7 +71,7 @@ class PkgInfo(callbacks.Plugin):
                       'debian-archive': 'http://archive.debian.net/'}
         self.unknowndist = _("Unknown distribution. This command only supports "
                              "package lookup for Debian and Ubuntu. For Arch "
-                             "Linux packages, see the 'archpkg' and 'archaur' "
+                             "Linux packages, see the 'archlinux' and 'archaur' "
                              "commands. For Linux Mint, use the 'linuxmint' command.")
 
     def _getDistro(self, release):
@@ -239,7 +239,7 @@ class PkgInfo(callbacks.Plugin):
     vlist = wrap(vlist, ['somethingWithoutSpaces', 'somethingWithoutSpaces',
                  getopts({'reverse': ''})])
 
-    def archpkg(self, irc, msg, args, pkg, opts):
+    def archlinux(self, irc, msg, args, pkg, opts):
         """<package> [--exact]
 
         Looks up <package> in the Arch Linux package repositories.
@@ -251,7 +251,7 @@ class PkgInfo(callbacks.Plugin):
             url = baseurl + urlencode({'name': pkg})
         else:
             url = baseurl + urlencode({'q': pkg})
-        self.log.debug("PkgInfo: using url %s for 'archpkg' command", url)
+        self.log.debug("PkgInfo: using url %s for 'archlinux' command", url)
         fd = utils.web.getUrl(url)
         data = json.loads(fd.decode("utf-8"))
         if data['valid'] and data['results']:
@@ -271,7 +271,7 @@ class PkgInfo(callbacks.Plugin):
                              list(results)))
         else:
             irc.error("No results found.", Raise=True)
-    archpkg = wrap(archpkg, ['somethingWithoutSpaces', getopts({'exact': ''})])
+    archlinux = wrap(archlinux, ['somethingWithoutSpaces', getopts({'exact': ''})])
 
     def archaur(self, irc, msg, args, pkg):
         """<package>
