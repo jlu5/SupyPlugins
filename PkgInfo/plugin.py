@@ -34,6 +34,7 @@ from supybot.commands import *
 import supybot.plugins as plugins
 import supybot.ircutils as ircutils
 import supybot.callbacks as callbacks
+import supybot.log as log
 
 from collections import OrderedDict, defaultdict
 try:  # Python 3
@@ -55,6 +56,39 @@ except ImportError:
     # Placeholder that allows to run the plugin on a bot
     # without the i18n module
     _ = lambda x: x
+
+class MadisonParser():
+    def parse(self, pkg, dist, archs, codenames='', suite='', reverse=False, verbose=False):
+        """Parser for the madison API at https://qa.debian.org/madison.php."""
+        # This arch value implies 'all' (architecture-independent packages)
+        # and 'source' (source packages), in order to prevent misleading
+        # "Not found" errors.
+        self.arg = {'package': pkg, 'table': dist, 'a': archs, 'c': codenames,
+                    's': suite}
+        self.arg = urlencode(self.arg)
+        url = 'https://qa.debian.org/madison.php?text=on&' + self.arg
+        log.debug("PkgInfo: Using url %s for 'vlist' command", url)
+        d = OrderedDict()
+        fd = utils.web.getUrlFd(url)
+        for line in fd.readlines():
+            L = line.decode("utf-8").split("|")
+            L = map(str.strip, L)
+            name, version, release, archs = L
+            d[release] = (version, archs)
+        if d:
+            if reverse:
+                # *sigh*... I wish there was a better way to do this
+                d = OrderedDict(reversed(tuple(d.items())))
+            if verbose:
+                items = ["{name} \x02({version} [{archs}])\x02".format(name=k,
+                         version=v[0], archs=v[1]) for (k, v) in d.items()]
+            else:
+                items = ["{name} \x02({version})\x02".format(name=k,
+                         version=v[0]) for (k, v) in d.items()]
+            s = format('Found %n: %L', (len(d), 'result'), items)
+            return s
+        else:
+            log.debug("PkgInfo: No results found for URL %s", url)
 
 
 class PkgInfo(callbacks.Plugin):
@@ -91,40 +125,6 @@ class PkgInfo(callbacks.Plugin):
             return "ubuntu"
         elif release.startswith(debian_archive):
             return "debian-archive"
-
-    def MadisonParse(self, pkg, dist, codenames='', suite='', reverse=False):
-        """Parser for the madison API at https://qa.debian.org/madison.php."""
-        # This arch value implies 'all' (architecture-independent packages)
-        # and 'source' (source packages), in order to prevent misleading
-        # "Not found" errors.
-        arch = self.registryValue("archs") + ['all', 'source']
-        arch = ','.join(set(arch))
-        self.arg = {'package': pkg, 'table': dist, 'a': arch, 'c': codenames,
-                    's': suite}
-        self.arg = urlencode(self.arg)
-        url = 'https://qa.debian.org/madison.php?text=on&' + self.arg
-        self.log.debug("PkgInfo: Using url %s for 'vlist' command", url)
-        d = OrderedDict()
-        fd = utils.web.getUrlFd(url)
-        for line in fd.readlines():
-            L = line.decode("utf-8").split("|")
-            L = map(str.strip, L)
-            name, version, release, archs = L
-            d[release] = (version, archs)
-        if d:
-            if reverse:
-                # *sigh*... I wish there was a better way to do this
-                d = OrderedDict(reversed(tuple(d.items())))
-            if self.registryValue("verbose"):
-                items = ["{name} \x02({version} [{archs}])\x02".format(name=k,
-                         version=v[0], archs=v[1]) for (k, v) in d.items()]
-            else:
-                items = ["{name} \x02({version})\x02".format(name=k,
-                         version=v[0]) for (k, v) in d.items()]
-            s = format('Found %n: %L', (len(d), 'result'), items)
-            return s
-        else:
-            self.log.debug("PkgInfo: No results found for URL %s", url)
 
     _dependencyColor = utils.str.MultipleReplacer({'rec:': '\x0312rec:\x03',
                                                    'dep:': '\x0304dep:\x03',
@@ -227,7 +227,11 @@ class PkgInfo(callbacks.Plugin):
                 irc.error(self.unknowndist, Raise=True)
         opts = dict(opts)
         reverse = 'reverse' in opts
-        d = self.MadisonParse(pkg, distro, reverse=reverse)
+        archs = self.registryValue("archs") + ['all', 'source']
+        archs = ','.join(set(archs))
+        parser = MadisonParser()
+        d = parser.parse(pkg, distro, archs, reverse=reverse,
+                         verbose=self.registryValue("verbose"))
         if not d:
             irc.error("No results found.", Raise=True)
         try:
