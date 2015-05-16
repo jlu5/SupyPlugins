@@ -35,6 +35,11 @@ try:
     from itertools import izip
 except ImportError:
     izip = zip
+try:
+    from bs4 import BeautifulSoup
+except ImportError:
+    BeautifulSoup = None
+from codecs import unicode_escape_decode as u
 
 import supybot.conf as conf
 import supybot.utils as utils
@@ -69,10 +74,10 @@ class SupyMisc(callbacks.Plugin):
             L.append(word)
         irc.reply(' '.join(L))
     scramble = wrap(scramble, ['text'])
-    
+
     def repeat(self, irc, msg, args, num, text):
         """<num> <text>
-        Returns <text> repeated <num> times. <num> must be a positive integer. 
+        Returns <text> repeated <num> times. <num> must be a positive integer.
         To keep leading and trailing spaces, it is recommended to quote the <text>
         argument " like this ". """
         maxN = self.registryValue("maxLen")
@@ -82,10 +87,10 @@ class SupyMisc(callbacks.Plugin):
             irc.error("The <num> value given is too large. Current "
                 "maximum: {}".format(maxN), Raise=True)
     repeat = wrap(repeat, ['positiveInt', 'text'])
-    
+
     def uniform(self, irc, msg, args, a, b):
         """<a> <b>
-        Return a random floating point number N such that a <= N <= b for a <= b and b <= N 
+        Return a random floating point number N such that a <= N <= b for a <= b and b <= N
         <= a for b < a. A frontend to Python's random.uniform() command."""
         irc.reply(random.uniform(a,b))
     uniform = wrap(uniform, ['float', 'float'])
@@ -198,7 +203,7 @@ class SupyMisc(callbacks.Plugin):
         Counts the amount of networks the bot is on. """
         irc.reply(len(world.ircs))
     netcount = wrap(netcount)
-    
+
     def supyplugins(self, irc, msg, args, text):
         """[<file/folder>]
         Returns a URL for the source of this repository. If <file/folder>
@@ -243,7 +248,7 @@ class SupyMisc(callbacks.Plugin):
         else:
              irc.reply(None)
     getchan = wrap(getchan)
-        
+
     def me(self, irc, msg, args):
         """takes no arguments.
         Returns the nick of the person who called the command.
@@ -278,6 +283,59 @@ class SupyMisc(callbacks.Plugin):
         irc.reply(ircutils.hostFromHostmask(irc.state.nickToHostmask(nick)))
     gethost = wrap(gethost, [(additional('nick'))])
 
+    @wrap(['positiveInt'])
+    def port(self, irc, msg, args, port):
+        """<port number>
+
+        Looks up <port number> in Wikipedia's list of ports at
+        https://en.wikipedia.org/wiki/List_of_TCP_and_UDP_port_numbers.
+        """
+        if port > 65535:
+            irc.error('Port numbers cannot be greater than 65535.', Raise=True)
+        if BeautifulSoup is None:
+            irc.error("Beautiful Soup 4 is required for this plugin: get it"
+                      " at http://www.crummy.com/software/BeautifulSoup/bs4/"
+                      "doc/#installing-beautiful-soup", Raise=True)
+        url = "https://en.wikipedia.org/wiki/List_of_TCP_and_UDP_port_numbers"
+        fd = utils.web.getUrlFd(url)
+        soup = BeautifulSoup(fd)
+        if port >= 49152:
+            results = ['The range 49152–65535 (2^15+2^14 to 2^16−1)—above the '
+                       'registered ports—contains dynamic or private ports that '
+                       'cannot be registered with IANA. This range is used for '
+                       'custom or temporary purposes and for automatic '
+                       'allocation of ephemeral ports.']
+        else:
+            results = []
+            for tr in soup.find_all('tr'):
+                tds = tr.find_all('td')
+                if not tds:
+                    continue
+                portnum = tds[0].text
+                if '–' in portnum:
+                    startport, endport = map(int, portnum.split('–'))
+                    p = range(startport, endport+1)
+                else:
+                    try:
+                        p = [int(portnum)]
+                    except ValueError:
+                        continue
+                if port in p:
+                    text = tds[3].text
+                    # Remove inline citations (text[1][2][3]), citation needed tags, etc.
+                    text = re.sub('\[.*?]', '', text)
+                    tcp = tds[1].text
+                    udp = tds[2].text
+                    official = tds[4].text
+                    if tcp and udp:
+                        porttype = '/'.join((tcp, udp))
+                    else:
+                        porttype = tcp or udp
+                    results.append('%s [%s; %s]' % (ircutils.bold(text), official, porttype))
+        if results:
+            irc.reply(format('%s: %L', ircutils.bold(ircutils.underline(port)), results))
+        else:
+            irc.error(_('No results found.'))
 Class = SupyMisc
 
 # vim:set shiftwidth=4 softtabstop=4 expandtab textwidth=79:
