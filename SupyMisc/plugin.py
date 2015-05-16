@@ -28,6 +28,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 ###
+from __future__ import unicode_literals
+
 import random
 import re
 import json
