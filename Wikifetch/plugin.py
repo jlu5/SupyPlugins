@@ -158,12 +158,16 @@ class Wikifetch(callbacks.Plugin):
         disambig = tree.xpath('//table[@id="disambigbox"]') or \
             tree.xpath('//table[@id="setindexbox"]')
         if disambig:
-            disambig = tree.xpath('//div[@id="bodyContent"]/div/ul/li/a')
-            disambig = disambig[:5]
-            disambig = [item.text_content() for item in disambig]
-            r = utils.str.commaAndify(disambig)
+            disambig = tree.xpath('//div[@id="bodyContent"]/div/ul/li')
+            # Hackishly bold all <a> tags
+            r = []
+            for item in disambig:
+                for link in item.findall('a'):
+                    if link.text is not None:
+                        link.text = "&#x02;%s&#x02;" % link.text
+                r.append(item.text_content().replace('&#x02;', '\x02'))
             reply += format(_('%u is a disambiguation page. '
-                       'Possible results include: %s'), addr, r)
+                       'Possible results include: %L'), addr, r)
         # or just as bad, a page listing events in that year
         elif re.search(_('This article is about the year [\d]*\. '
                        'For the [a-zA-Z ]* [\d]*, see'), article):
