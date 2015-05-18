@@ -75,3 +75,6 @@ Most of these plugins also have their own READMEs in their folders; you can usua
 
 ##### [Weather](Weather/README.md)
 - My fork of [reticulatingspline's Weather](https://github.com/reticulatingspline/Weather) plugin. [Source](https://github.com/GLolol/Supybot-Weather)
+
+##### Wikifetch
+- Fork of [ProgVal's Wikipedia plugin](https://github.com/ProgVal/Supybot-plugins), with support for other wikis (via a `--site` option) and other improvements.
