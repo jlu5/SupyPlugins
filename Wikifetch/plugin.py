@@ -71,16 +71,13 @@ class Wikifetch(callbacks.Plugin):
         # such as filling in http:// and appending /wiki to links...
 
         # Try using '--site lyrics.wikia.com' or '--site wiki.archlinux.org'.
-        if 'site' in optlist:
-            baseurl = optlist['site']
-            if 'wikia.com' in baseurl:
-                baseurl += '/wiki'
-            elif 'wiki.archlinux.org' in baseurl:
-                baseurl += '/index.php'
-            if not baseurl.lower().startswith(('http://', 'https://')):
-                baseurl = 'http://' + baseurl
-        else:
-            baseurl = 'https://%s/wiki' % self.registryValue('url', msg.args[0])
+        baseurl = optlist.get('site') or self.registryValue('url', msg.args[0])
+        if 'wikia.com' in baseurl or 'wikipedia.org' in baseurl:
+            baseurl += '/wiki'
+        elif 'wiki.archlinux.org' in baseurl:
+            baseurl += '/index.php'
+        if not baseurl.lower().startswith(('http://', 'https://')):
+            baseurl = 'http://' + baseurl
         # first, we get the page
         addr = '%s/Special:Search?search=%s' % \
                     (baseurl, quote_plus(search))
