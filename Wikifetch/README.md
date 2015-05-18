@@ -10,7 +10,7 @@ Grabs data from Wikipedia and other MediaWiki-powered sites.
 You can also add other sites using the `--site` option:
 
 ```
-<GLolol> `wiki --site wiki.archlinux.org/index.php Bash
+<GLolol> `wiki --site wiki.archlinux.org Bash
 <Atlas> Bash (Bourne-again Shell) is a command-line shell/programming language by the GNU Project. Its name is a homaging reference to its predecessor: the long-deprecated Bourne shell. Bash can be run on most UNIX-like operating systems, including GNU/Linux. Retrieved from <https://wiki.archlinux.org/index.php?title=Bash>
 ```
 

@@ -33,9 +33,7 @@
 
 import re
 import sys
-import urllib
 import lxml.html
-from lxml import etree
 import supybot.utils as utils
 from supybot.commands import *
 import supybot.plugins as plugins
@@ -52,9 +50,9 @@ except:
     internationalizeDocstring = lambda x:x
 
 if sys.version_info[0] >= 3:
-    quote_plus = urllib.parse.quote_plus
+    from urllib.parse import quote_plus
 else:
-    quote_plus = urllib.quote_plus
+    from urllib import quote_plus
 
 
 class Wikifetch(callbacks.Plugin):
@@ -72,11 +70,13 @@ class Wikifetch(callbacks.Plugin):
         # to make the parser work for most sites, but still use resonable defaults
         # such as filling in http:// and appending /wiki to links...
 
-        # Try using '--site lyrics.wikia.com' or '--site wiki.archlinux.org/index.php'.
+        # Try using '--site lyrics.wikia.com' or '--site wiki.archlinux.org'.
         if 'site' in optlist:
             baseurl = optlist['site']
             if 'wikia.com' in baseurl:
                 baseurl += '/wiki'
+            elif 'wiki.archlinux.org' in baseurl:
+                baseurl += '/index.php'
             if not baseurl.lower().startswith(('http://', 'https://')):
                 baseurl = 'http://' + baseurl
         else:
@@ -178,7 +178,6 @@ class Wikifetch(callbacks.Plugin):
         elif 'ns-talk' in tree.find("body").attrib['class']:
             reply += format(_('This article appears to be a talk page: %u'), addr)
         else:
-            ##### etree!
             p = tree.xpath("//div[@id='mw-content-text']/p[1]")
             if len(p) == 0 or 'wiki/Special:Search' in addr:
                 if 'wikipedia:wikiproject' in addr.lower():
