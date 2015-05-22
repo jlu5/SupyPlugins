@@ -50,8 +50,8 @@ def configure(advanced):
 
 Namegen = conf.registerPlugin('Namegen')
 conf.registerGlobalValue(Namegen, 'syllables',
-                         registry.PositiveInteger(2, _("""Specifies the maximum
-                         amount of syllables a name can have.""")))
-
+                         registry.PositiveInteger(1, _("""Specifies the maximum
+                         amount of extra syllables (apart from a beginning and
+                         an ending) a name can have.""")))
 
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:

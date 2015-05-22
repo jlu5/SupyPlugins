@@ -38,5 +38,4 @@ class NamegenTestCase(PluginTestCase):
         self.assertNotError('namegen')
         self.assertNotError('namegen 2')
 
-
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:
