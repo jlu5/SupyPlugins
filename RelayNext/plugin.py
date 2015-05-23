@@ -199,10 +199,6 @@ class RelayNext(callbacks.Plugin):
             s = s.replace("- -", "-", 1)
         return s
 
-    def checkFlood(self, channel, source, command):
-        maximum = self.registryValue("antiflood.maximum", channel)
-        return len(self.msgcounters[(source, command)]) > maximum
-
     def keepstate(self):
         for irc in world.ircs:
             self.ircstates[irc.network] = deepcopy(irc.state.channels)
@@ -233,7 +229,11 @@ class RelayNext(callbacks.Plugin):
                             self.msgcounters[(source, msg.command)].enqueue(msg.prefix)
                         except KeyError:
                             self.msgcounters[(source, msg.command)] = TimeoutQueue(seconds)
-                        if self.checkFlood(channel, source, msg.command):
+                        if msg.command == "PRIVMSG":
+                            maximum = self.registryValue("antiflood.maximum", channel)
+                        else:
+                            maximum = self.registryValue("antiflood.maximum.nonPrivmsgs", channel)
+                        if len(self.msgcounters[(source, msg.command)]) > maximum:
                             self.log.debug("RelayNext (%s): message from %s blocked by "
                                            "flood protection.", irc.network, channel)
                             if self.floodTriggered:

@@ -71,6 +71,9 @@ conf.registerChannelValue(RelayNext.antiflood, 'seconds',
 conf.registerChannelValue(RelayNext.antiflood, 'maximum',
     registry.PositiveInteger(15, _("""Determines the maximum amount of incoming messages
         the bot will allow from a relay channel before flood protection is triggered.""")))
+conf.registerChannelValue(RelayNext.antiflood.maximum, 'nonPrivmsgs',
+    registry.PositiveInteger(10, _("""Determines the maximum amount of incoming non-PRIVMSG events
+        the bot will allow from a relay channel before flood protection is triggered.""")))
 conf.registerChannelValue(RelayNext.antiflood, 'timeout',
     registry.PositiveInteger(60, _("""Determines the amount of time in seconds the bot should
         block messages if flood protection is triggered.""")))
