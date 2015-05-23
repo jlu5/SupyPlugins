@@ -79,14 +79,4 @@ class SupyMiscTestCase(PluginTestCase):
     def testServerlist(self):
         self.assertNotError('serverlist')
 
-    def testPort(self):
-        self.assertRegexp('port 22', 'SSH.*?Official.*?TCP')
-        # Some entries in the list are defined as port ranges (i.e.
-        # 6665-6669); we have to split them manually.
-        self.assertRegexp('port 6667', 'Internet Relay Chat')
-        self.assertError('port 77777') # Port numbers can't be >65535
-        # Wikipedia notes that ports 49152-65535 cannot be registered
-        # with IANA, so we'll leave a note here too.
-        self.assertRegexp('port 65300', 'cannot be registered')
-
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:

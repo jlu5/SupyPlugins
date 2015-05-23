@@ -286,59 +286,6 @@ class SupyMisc(callbacks.Plugin):
         irc.reply(ircutils.hostFromHostmask(irc.state.nickToHostmask(nick)))
     gethost = wrap(gethost, [(additional('nick'))])
 
-    @wrap(['positiveInt'])
-    def port(self, irc, msg, args, port):
-        """<port number>
-
-        Looks up <port number> in Wikipedia's list of ports at
-        https://en.wikipedia.org/wiki/List_of_TCP_and_UDP_port_numbers.
-        """
-        if port > 65535:
-            irc.error('Port numbers cannot be greater than 65535.', Raise=True)
-        if BeautifulSoup is None:
-            irc.error("Beautiful Soup 4 is required for this plugin: get it"
-                      " at http://www.crummy.com/software/BeautifulSoup/bs4/"
-                      "doc/#installing-beautiful-soup", Raise=True)
-        url = "https://en.wikipedia.org/wiki/List_of_TCP_and_UDP_port_numbers"
-        fd = utils.web.getUrlFd(url)
-        soup = BeautifulSoup(fd)
-        if port >= 49152:
-            results = ['The range 49152–65535 (2^15+2^14 to 2^16−1)—above the '
-                       'registered ports—contains dynamic or private ports that '
-                       'cannot be registered with IANA. This range is used for '
-                       'custom or temporary purposes and for automatic '
-                       'allocation of ephemeral ports.']
-        else:
-            results = []
-            for tr in soup.find_all('tr'):
-                tds = tr.find_all('td')
-                if not tds:
-                    continue
-                portnum = tds[0].text
-                if '–' in portnum:
-                    startport, endport = map(int, portnum.split('–'))
-                    p = range(startport, endport+1)
-                else:
-                    try:
-                        p = [int(portnum)]
-                    except ValueError:
-                        continue
-                if port in p:
-                    text = tds[3].text
-                    # Remove inline citations (text[1][2][3]), citation needed tags, etc.
-                    text = re.sub('\[.*?]', '', text)
-                    tcp = tds[1].text
-                    udp = tds[2].text
-                    official = tds[4].text
-                    if tcp and udp:
-                        porttype = '/'.join((tcp, udp))
-                    else:
-                        porttype = tcp or udp
-                    results.append('%s [%s; %s]' % (ircutils.bold(text), official, porttype))
-        if results:
-            irc.reply(format('%s: %L', ircutils.bold(ircutils.underline(port)), results))
-        else:
-            irc.error(_('No results found.'))
 Class = SupyMisc
 
 # vim:set shiftwidth=4 softtabstop=4 expandtab textwidth=79:

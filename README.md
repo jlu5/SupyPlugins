@@ -60,6 +60,11 @@ Most of these plugins also have their own READMEs in their folders; you can usua
 - Fetches package information from Debian, Ubuntu, Arch Linux, and Linux Mint's repositories.
    - **Requires:** [Beautiful Soup 4](http://www.crummy.com/software/BeautifulSoup/bs4/doc/) - install it via `pip install beautifulsoup4` or `apt-get install python-bs4`/`python3-bs4` (Debian/Ubuntu)
 
+##### PortLookup
+- Looks up commonly used UDP and TCP port numbers from Wikipedia: https://en.wikipedia.org/wiki/List_of_TCP_and_UDP_port_numbers
+   - **Requires:** [Beautiful Soup 4](http://www.crummy.com/software/BeautifulSoup/bs4/doc/)
+
+
 ##### [RelayNext](RelayNext/README.md)
 - Next generation relayer plugin, designed with two-way relays in mind.
 
