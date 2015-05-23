@@ -116,7 +116,11 @@ class CtcpNext(callbacks.PluginRegexp):
         ACTION and PING, which are handled accordingly. All the standard
         substitutes ($version, $now, $nick, etc.) are handled properly.
         """
-        self.db[ctcp.upper()] = response
+        ctcp = ctcp.upper()
+        if ctcp in ('ACTION', 'PING'):
+            irc.error('Replies for CTCP ACTION and PING cannot be overridden.',
+                      Raise=True)
+        self.db[ctcp] = response
         irc.replySuccess()
     set = wrap(set, ['admin', 'somethingWithoutSpaces', 'text'])
 
@@ -138,8 +142,9 @@ class CtcpNext(callbacks.PluginRegexp):
         """takes no arguments.
 
         Lists the CTCP responses currently configured."""
-        items = [format("%s: %s", k, ircutils.bold(v)) for (k, v) in self.db.items()]
-        irc.reply(format('%L', items))
+        items = [format("%s: %s", k, ircutils.bold(v) + "\x0f")
+                 for (k, v) in self.db.items()]
+        irc.reply(format('%L', sorted(items)))
 
     def clear(self, irc, msg, args):
         """takes no arguments.
