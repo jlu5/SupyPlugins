@@ -1,1 +1,1 @@
-Displays entries from fmylife.com.
+Implements an **`fml`** command, displaying entries from [fmylife.com](https://www.fmylife.com/).

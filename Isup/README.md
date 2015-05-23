@@ -1,4 +1,4 @@
-Provides a simple command to check whether a website is up or down (using isup.me).
+Provides a simple command to check whether a website is up or down (using [isup.me](http://isup.me)).
 
 ### Usage
 ```

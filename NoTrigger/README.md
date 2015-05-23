@@ -5,7 +5,7 @@ In short, NoTrigger works by:
 
  - Prepending messages that start with a symbol (```!"#$%&'()*+,-./:;<=>?@[\]^_`{|}~```) with a [zero width space](https://en.wikipedia.org/wiki/Zero-width_space) (ZWSP), since these are often used as prefixes for bots. This has the effect of being completely invisible, and tricks most bots into ignoring yours!
  - Prepending messages with a ZWSP if the channel is set to block colors and a message begins with a formatting code (sneaky attackers can otherwise do something like `\x02!echo hello` to bypass filters).
- - Optionally, prepending messages with a ZWSP if they match `<something>: ` or `<something>, `, since some bots are tought to respond to their nicks.
+ - Optionally, prepending messages with a ZWSP if they match `<something>: ` or `<something>, `, since some bots are taught to respond to their nicks.
  - Optionally, blocking all channel-wide CTCPs (except for ACTION).
 
 ## Longer description/Backstory on why I wrote this
@@ -21,7 +21,7 @@ For example:
 ...
 ```
 
-NoTrigger aims to solve some of these issues by prepending messages that start with commonly-used bot triggers with a [zero-width space](https://en.wikipedia.org/wiki/Zero-width_space) or ZWSP. These are non-printing characters, which are essentially invisible to most people's clients. (We're going to use a space to represent the ZWSP in the examples below, so you can see a difference.)
+NoTrigger aims to solve some of these issues by prepending messages that start with commonly-used bot triggers with a [zero-width space](https://en.wikipedia.org/wiki/Zero-width_space) or ZWSP. These are non-printing characters, which are essentially invisible to people's clients. (We're going to use a space to represent the ZWSP in the examples below, just so you can see a difference.)
 
 For example:
 
