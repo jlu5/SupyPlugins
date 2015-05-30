@@ -83,6 +83,7 @@ To turn it on:
 You can then configure various the various options below:
 
 * `plugins.RelayNext.antiflood.maximum`: configure the maximum amount of messages (PRIVMSGs) allowed in *X* seconds before flood prevention is triggered.
+* `plugins.RelayNext.antiflood.maximum.nonPrivmsgs`: configure the maximum amount of each non-PRIVMSG events (joins, quits, etc.) allowed in *X* seconds before flood prevention is triggered.
 * `plugins.RelayNext.antiflood.seconds`: configure the *X* amount of seconds mentioned above.
 * `plugins.RelayNext.antiflood.timeout`: determines the amount of seconds the bot will wait before flood prevention expires (messages are relayed as normal again).
 
