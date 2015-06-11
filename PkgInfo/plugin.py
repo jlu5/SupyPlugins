@@ -72,7 +72,10 @@ class MadisonParser():
         fd = utils.web.getUrlFd(url)
         for line in fd.readlines():
             L = line.decode("utf-8").split("|")
-            L = map(str.strip, L)
+            try:
+                L = map(unicode.strip, L)
+            except:
+                L = map(str.strip, L)
             name, version, release, archs = L
             d[release] = (version, archs)
         if d:
