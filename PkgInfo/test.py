@@ -68,4 +68,10 @@ class PkgInfoTestCase(PluginTestCase):
             self.assertRegexp('fedora 22 bash*', 'bash')
             self.assertRegexp('fedora 22 sfasdfadsfasdfas', 'Try wrapping your query with \*')
 
+        def testCentOS(self):
+            self.assertRegexp('centos 7 os git-', 'git-all')
+            self.assertRegexp('centos 6 os bash --arch i386', 'i686.rpm')
+            self.assertNotError('centos 7 extras python')
+            # This should be stripped.
+            self.assertNotRegexp('centos 7 extras "a"', 'Parent Directory')
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:

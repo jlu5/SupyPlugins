@@ -97,7 +97,7 @@ class MadisonParser():
 
 class PkgInfo(callbacks.Plugin):
     """Fetches package information from the repositories of
-    Debian, Arch Linux, Linux Mint, and Ubuntu."""
+    Debian, Arch Linux, Linux Mint, Fedora, CentOS, and Ubuntu."""
     threaded = True
 
     def __init__(self, irc):
@@ -108,9 +108,9 @@ class PkgInfo(callbacks.Plugin):
                       # This site is very, VERY slow, but it still works..
                       'debian-archive': 'http://archive.debian.net/'}
         self.unknowndist = _("Unknown distribution. This command only supports "
-                             "package lookup for Debian and Ubuntu. For Arch "
-                             "Linux packages, see the 'archlinux' and 'archaur' "
-                             "commands. For Linux Mint, use the 'linuxmint' command.")
+                             "package lookup for Debian and Ubuntu. For "
+                             "commands for other distros' packages, use "
+                             "'list PkgInfo'.")
 
     def _getDistro(self, release):
         """<release>
@@ -411,7 +411,7 @@ class PkgInfo(callbacks.Plugin):
         url = 'https://admin.fedoraproject.org/pkgdb/api/packages/%s?' % quote(query)
         # Fedora uses f## in their API, where ## is the release version
         url += urlencode({'branches': 'f' + str(release), 'format': 'json'})
-        self.log.info(url)
+        self.log.debug("PkgInfo: using url %s for 'fedora' command", url)
         try:
             fd = utils.web.getUrl(url).decode("utf-8")
         except utils.web.Error as e:
@@ -431,6 +431,58 @@ class PkgInfo(callbacks.Plugin):
                    for pkg in data["packages"]]
         irc.reply('; '.join(results))
 
+    @wrap(['positiveInt', 'somethingWithoutSpaces', 'somethingWithoutSpaces',
+           getopts({'arch': 'somethingWithoutSpaces'})])
+    def centos(self, irc, msg, args, release, repo, query, opts):
+        """<release> <repository> <package name> [--arch <arch>]
+
+        Looks up <package> in CentOS's repositories. <release> is the release
+        version (6, 7, etc.), and <repository> is the repository name.
+        You can find a list of possible repository names here:
+        http://mirror.centos.org/centos/7/ (each folder is a repository).
+        Supported values for <arch> include x86_64 and i386 (prior to CentOS 7)"""
+        # CentOS doesn't have a package lookup interface, but only an autoindexed
+        # file server...
+        arch = dict(opts).get('arch') or 'x86_64'
+        query = query.lower()
+        # Different CentOS versions use different paths for their pool, ugh.
+        for folder in ('Packages', 'RPMS', 'openstack-juno', 'openstack-kilo'):
+            url = 'http://mirror.centos.org/centos/%s/%s/%s/%s/' % \
+                (release, repo, arch, folder)
+            self.log.debug("PkgInfo: trying url %s for 'centos' command", url)
+            try:
+                fd = utils.web.getUrl(url).decode("utf-8")
+            except utils.web.Error:
+                continue
+            else:
+                break
+        else:
+            irc.error('Unknown repository %r.' % repo, Raise=True)
+        soup = BeautifulSoup(fd)
+        # The first two tables are for the navigation bar; the third is the actual autoindex
+        # content.
+        res = []
+        packagetable = soup.find_all('table')[2]
+        exact = 'exact' in dict(opts)
+        for tr in packagetable.find_all('tr'):
+            try:
+                package = tr.find_all('td')[1].a.text
+            except IndexError:
+                continue
+            if not package.endswith('.rpm'):
+                # Prevent things like "Parent Directory" from appearing in results
+                continue
+            package = ircutils.bold(package)
+            if exact:
+                if query == package.lower():
+                    res.append(package)
+            else:
+                if query in package.lower():
+                    res.append(package)
+        if res:
+            irc.reply(format('Available RPMs: %L', res))
+        else:
+            irc.error('No results found.')
 
 Class = PkgInfo
 
