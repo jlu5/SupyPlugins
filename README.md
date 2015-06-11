@@ -57,7 +57,7 @@ Most of these plugins also have their own READMEs in their folders; you can usua
 - Generates random passwords on the fly!
 
 ##### [PkgInfo](PkgInfo/README.md)
-- Fetches package information from Debian, Ubuntu, Arch Linux, and Linux Mint's repositories.
+- Fetches package information from Debian, Arch Linux, Linux Mint, Fedora, CentOS, and Ubuntu's repositories.
    - **Requires:** [Beautiful Soup 4](http://www.crummy.com/software/BeautifulSoup/bs4/doc/) - install it via `pip install beautifulsoup4` or `apt-get install python-bs4`/`python3-bs4` (Debian/Ubuntu)
 
 ##### PortLookup

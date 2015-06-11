@@ -1,8 +1,9 @@
-Fetches package information from the repositories of Debian, Arch Linux, Linux Mint, and Ubuntu.
+Fetches package information from the repositories of Debian, Arch Linux, Linux Mint, Fedora, CentOS, and Ubuntu.
 
 This plugin uses the following APIs:
 - For Debian and Ubuntu, Debian's [madison.php](//qa.debian.org/madison.php) (used by the `vlist` command)
 - For Arch Linux and its AUR, [AurJson](//wiki.archlinux.org/index.php/AurJson) and the [Arch Linux Web Interface](//wiki.archlinux.org/index.php/Official_Repositories_Web_Interface)
+- For Fedora, the official PkgDB API: https://admin.fedoraproject.org/pkgdb/api/
 
 Everything else is parsed as HTML using the Beautiful Soup 4 library.
 
@@ -66,4 +67,22 @@ Everything else is parsed as HTML using the Beautiful Soup 4 library.
 ```
 <GLolol> linuxmint Rebecca nemo
 <Atlas> Found 22 results: gir1.2-nemo-3.0 [Main] (2.4.4+rebecca), libnemo-extension-dev [Main] (2.4.4+rebecca), libnemo-extension1 [Main] (2.4.4+rebecca), nemo [Main] (2.4.4+rebecca), nemo-compare [Main] (2.4.0+rebecca), nemo-data [Main] (2.4.4+rebecca), nemo-dbg [Main] (2.4.4+rebecca), nemo-dropbox [Main] (2.4.0+rebecca), nemo-emblems [Main] (2.4.3+rebecca), nemo-filename-repairer (2 more messages)
+```
+
+### CentOS packages
+
+```
+<GLolol> %centos 7 os zsh
+<Atlas> Available RPMs: zsh-5.0.2-7.el7.x86_64.rpm and zsh-html-5.0.2-7.el7.x86_64.rpm
+<GLolol> %centos 7 os python
+<Atlas> Available RPMs: MySQL-python-1.2.3-11.el7.x86_64.rpm, OpenIPMI-python-2.0.19-11.el7.x86_64.rpm, abrt-addon-python-2.1.11-19.el7.centos.0.3.x86_64.rpm, abrt-python-2.1.11-19.el7.centos.0.3.x86_64.rpm, abrt-python-doc-2.1.11-19.el7.centos.0.3.noarch.rpm, antlr-python-2.7.7-30.el7.noarch.rpm, at-spi-python-1.32.0-12.el7.x86_64.rpm, audit-libs-python-2.4.1-5.el7.x86_64.rpm, (25 more messages)
+```
+
+### Fedora packages
+
+```
+<GLolol> %fedora 22 *vorbis*
+<Atlas> libvorbis: Ogg Vorbis is a fully open, non-proprietary, patent- and royalty-free, general-purpose compressed audio format for audio and music at fixed and variable bitrates; python-vorbis: An object-oriented Python binding for the Ogg Vorbis libraries; vorbisspi: VorbisSPI is a Java Service Provider Interface that adds OGG Vorbis audio format support to Java platform; vorbis-tools: Ogg Vorbis is a fully (2 more messages)
+<GLolol> %fedora 22 bash
+<Atlas> bash: The GNU Bourne Again shell (Bash) is a shell or command language interpreter that is compatible with the Bourne shell (sh)
 ```
