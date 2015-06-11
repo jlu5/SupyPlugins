@@ -64,4 +64,8 @@ class PkgInfoTestCase(PluginTestCase):
         def testPkgsearch(self):
             self.assertNotError('pkgsearch debian python')
 
+        def testFedora(self):
+            self.assertRegexp('fedora 22 bash*', 'bash')
+            self.assertRegexp('fedora 22 sfasdfadsfasdfas', 'Try wrapping your query with \*')
+
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:

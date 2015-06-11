@@ -42,6 +42,7 @@ try:  # Python 3
 except ImportError:  # Python 2
     from urllib import urlencode, quote
 import json
+import re
 try:
     from bs4 import BeautifulSoup
 except ImportError:
@@ -400,6 +401,36 @@ class PkgInfo(callbacks.Plugin):
     linuxmint = wrap(linuxmint, ['somethingWithoutSpaces',
                              'somethingWithoutSpaces',
                              getopts({'exact': ''})])
+
+    @wrap(['positiveInt', 'somethingWithoutSpaces'])
+    def fedora(self, irc, msg, args, release, query):
+        """<release> <package name>
+
+        Looks up <package> in Fedora's repositories. Globs (*, ?, etc.)
+        are supported here. <release> is the release version (22, 21, etc.)"""
+        url = 'https://admin.fedoraproject.org/pkgdb/api/packages/%s?' % quote(query)
+        # Fedora uses f## in their API, where ## is the release version
+        url += urlencode({'branches': 'f' + str(release), 'format': 'json'})
+        self.log.info(url)
+        try:
+            fd = utils.web.getUrl(url).decode("utf-8")
+        except utils.web.Error as e:
+            if '404' in str(e):
+                e = 'No results found.'
+                if '*' not in query:
+                    e += " Try wrapping your query with *'s: '*%s*'" % query
+            irc.error(e, Raise=True)
+        data = json.loads(fd)
+        def formatdesc(s):
+            # Fedora's package descriptions have newlines inserted in them at strange positions,
+            # sometimes even inside sentences. We'll break at the first sentence here:
+            s = s.split('.')[0].strip()
+            s = re.sub('\n+', ' ', s)
+            return s
+        results = ['%s: %s' % (ircutils.bold(pkg['name']), formatdesc(pkg['description']))
+                   for pkg in data["packages"]]
+        irc.reply('; '.join(results))
+
 
 Class = PkgInfo
 
