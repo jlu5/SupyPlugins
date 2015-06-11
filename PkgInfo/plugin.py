@@ -446,7 +446,8 @@ class PkgInfo(callbacks.Plugin):
         arch = dict(opts).get('arch') or 'x86_64'
         query = query.lower()
         # Different CentOS versions use different paths for their pool, ugh.
-        for folder in ('Packages', 'RPMS', 'openstack-juno', 'openstack-kilo'):
+        for folder in ('Packages', 'RPMS', 'openstack-juno', 'openstack-kilo',
+                'CentOS'):
             url = 'http://mirror.centos.org/centos/%s/%s/%s/%s/' % \
                 (release, repo, arch, folder)
             self.log.debug("PkgInfo: trying url %s for 'centos' command", url)
