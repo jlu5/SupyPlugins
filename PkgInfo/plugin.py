@@ -485,7 +485,34 @@ class PkgInfo(callbacks.Plugin):
         else:
             irc.error('No results found.')
 
-Class = PkgInfo
+    @wrap(['somethingWithoutSpaces', getopts({'exact': ''})])
+    def freebsd(self, irc, msg, args, search, optlist):
+        """<query> [--exact]
 
+        Searches for <query> in FreeBSD's Ports database (case sensitive).
+        If --exact is given, only exact matches will be shown."""
+        search
+        url = 'https://www.freebsd.org/cgi/ports.cgi?' + urlencode({'query': search})
+        data = utils.web.getUrl(url)
+        soup = BeautifulSoup(data)
+        res = {}
+        exact = 'exact' in dict(optlist)
+        for dt in soup.find_all('dt'):
+            pkgname = dt.text
+            if exact and pkgname.rsplit('-', 1)[0] != search:
+                continue
+            # In this case, we only want the first line of the description, in order
+            # to keep things short.
+            desc = dt.next_sibling.next_sibling.text.split('\n')[0]
+            res[pkgname] = desc
+        if res:
+            # Output results in the form "pkg1: description; pkg2: description; ..."
+            s = ["%s: %s" % (ircutils.bold(pkg), desc) for pkg, desc in res.items()]
+            s = format('Found %i results: %s; View more at %u', len(res), '; '.join(s), url)
+            irc.reply(s)
+        else:
+            irc.error('No results found.')
+
+Class = PkgInfo
 
 # vim:set shiftwidth=4 softtabstop=4 expandtab textwidth=79:

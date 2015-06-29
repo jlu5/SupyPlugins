@@ -66,6 +66,9 @@ class PkgInfoTestCase(PluginTestCase):
 
         def testFedora(self):
             self.assertRegexp('fedora 22 bash*', 'bash')
+            # Not found queries that don't have any wildcards in them
+            # should tell the user to try wrapping the search with *'s, since
+            # Fedora's API always uses glob matches.
             self.assertRegexp('fedora 22 sfasdfadsfasdfas', 'Try wrapping your query with \*')
 
         def testCentOS(self):
@@ -74,4 +77,9 @@ class PkgInfoTestCase(PluginTestCase):
             self.assertNotError('centos 7 extras python')
             # This should be stripped.
             self.assertNotRegexp('centos 7 extras "a"', 'Parent Directory')
+
+        def testFreeBSD(self):
+            self.assertRegexp('freebsd lxterminal --exact', 'Found 1 result.*?LXDE')
+            self.assertNotError('freebsd bash')
+            self.assertError('freebsd asdfasjkfalewrghaekglae')
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:
