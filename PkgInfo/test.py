@@ -59,10 +59,10 @@ class PkgInfoTestCase(PluginTestCase):
                               '.*?yaourt.*?')
 
         def testMintPkg(self):
-            self.assertNotError('linuxmint rebecca cinnamon')
+            self.assertRegexp('linuxmint rebecca cinnamon', 'session')
 
         def testPkgsearch(self):
-            self.assertNotError('pkgsearch debian python')
+            self.assertRegexp('pkgsearch debian python', 'python')
 
         def testFedora(self):
             self.assertRegexp('fedora 22 bash*', 'bash')
@@ -79,7 +79,7 @@ class PkgInfoTestCase(PluginTestCase):
             self.assertNotRegexp('centos 7 extras "a"', 'Parent Directory')
 
         def testFreeBSD(self):
-            self.assertRegexp('freebsd lxterminal --exact', 'Found 1 result.*?LXDE')
+            self.assertRegexp('freebsd lxterminal --exact', 'Found 1 result:.*?LXDE')
             self.assertNotError('freebsd bash')
             self.assertError('freebsd asdfasjkfalewrghaekglae')
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:

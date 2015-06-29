@@ -97,7 +97,7 @@ class MadisonParser():
 
 class PkgInfo(callbacks.Plugin):
     """Fetches package information from the repositories of
-    Debian, Arch Linux, Linux Mint, Fedora, CentOS, and Ubuntu."""
+    Arch Linux, CentOS, Debian, Fedora, FreeBSD, Linux Mint, and Ubuntu."""
     threaded = True
 
     def __init__(self, irc):
@@ -108,7 +108,7 @@ class PkgInfo(callbacks.Plugin):
                       # This site is very, VERY slow, but it still works..
                       'debian-archive': 'http://archive.debian.net/'}
         self.unknowndist = _("Unknown distribution. This command only supports "
-                             "package lookup for Debian and Ubuntu. For "
+                             "package lookup for Debian and Ubuntu. For a list of"
                              "commands for other distros' packages, use "
                              "'list PkgInfo'.")
 
@@ -240,7 +240,7 @@ class PkgInfo(callbacks.Plugin):
             irc.error("No results found.", Raise=True)
         try:
             url = "{}search?keywords={}".format(self.addrs[distro], pkg)
-            d += format(" View more at: %u", url)
+            d += format("; View more at: %u", url)
         except KeyError:
             pass
         irc.reply(d)
@@ -254,11 +254,12 @@ class PkgInfo(callbacks.Plugin):
         If --exact is given, will output only exact matches.
         """
         pkg = pkg.lower()
-        baseurl = 'https://www.archlinux.org/packages/search/json/?'
         if 'exact' in dict(opts):
-            url = baseurl + urlencode({'name': pkg})
+            encoded = urlencode({'name': pkg})
         else:
-            url = baseurl + urlencode({'q': pkg})
+            encoded = urlencode({'q': pkg})
+        url = 'https://www.archlinux.org/packages/search/json/?' + encoded
+        friendly_url = 'https://www.archlinux.org/packages/?' + encoded
         self.log.debug("PkgInfo: using url %s for 'archlinux' command", url)
         fd = utils.web.getUrl(url)
         data = json.loads(fd.decode("utf-8"))
@@ -275,8 +276,9 @@ class PkgInfo(callbacks.Plugin):
             count = len(results)
             items = [format("%s \x02[%s]\x02", s, ', '.join(archs[s])) for s
                      in results]
-            irc.reply(format('Found %n: %L', (len(results), 'result'),
-                             list(results)))
+            irc.reply(format('Found %n: %L; View more at %u', (len(results),
+                                                               'result'),
+                             list(results), friendly_url))
         else:
             irc.error("No results found.", Raise=True)
     archlinux = wrap(archlinux, ['somethingWithoutSpaces', getopts({'exact': ''})])
@@ -308,7 +310,9 @@ class PkgInfo(callbacks.Plugin):
                 s += "{name} - {desc} \x02({version} {verbose})\x02, " \
                     .format(name=x['Name'], desc=x['Description'],
                             version=x['Version'], verbose=verboseInfo)
-            irc.reply(s[:-2])  # cut off the ", " at the end
+            friendly_url = 'https://aur.archlinux.org/packages/?' + \
+                urlencode({'K': pkg})
+            irc.reply(s + format('View more at: %u', friendly_url))
         else:
             irc.error("No results found.", Raise=True)
     archaur = wrap(archaur, ['somethingWithoutSpaces'])
@@ -429,7 +433,10 @@ class PkgInfo(callbacks.Plugin):
             return s
         results = ['%s: %s' % (ircutils.bold(pkg['name']), formatdesc(pkg['description']))
                    for pkg in data["packages"]]
-        irc.reply('; '.join(results))
+        friendly_url = 'https://apps.fedoraproject.org/packages/s/%s' % query
+        s = format('Found %n: %s; View more at %u', (len(results), 'result'), '; '.join(results),
+                   friendly_url)
+        irc.reply(s)
 
     @wrap(['positiveInt', 'somethingWithoutSpaces', 'somethingWithoutSpaces',
            getopts({'arch': 'somethingWithoutSpaces'})])
@@ -481,7 +488,7 @@ class PkgInfo(callbacks.Plugin):
                 if query in package.lower():
                     res.append(package)
         if res:
-            irc.reply(format('Available RPMs: %L', res))
+            irc.reply(format('Found %n: %L; View more at: %u', (len(res), 'result'), res, url))
         else:
             irc.error('No results found.')
 
@@ -508,7 +515,7 @@ class PkgInfo(callbacks.Plugin):
         if res:
             # Output results in the form "pkg1: description; pkg2: description; ..."
             s = ["%s: %s" % (ircutils.bold(pkg), desc) for pkg, desc in res.items()]
-            s = format('Found %i results: %s; View more at %u', len(res), '; '.join(s), url)
+            s = format('Found %n: %s; View more at %u', (len(res), 'result'), '; '.join(s), url)
             irc.reply(s)
         else:
             irc.error('No results found.')
