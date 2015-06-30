@@ -485,12 +485,12 @@ class PkgInfo(callbacks.Plugin):
         else:
             irc.error('No results found.')
 
-    @wrap(['somethingWithoutSpaces', getopts({'exact': ''})])
+    @wrap(['something', getopts({'exact': ''})])
     def freebsd(self, irc, msg, args, search, optlist):
         """<query> [--exact]
 
         Searches for <query> in FreeBSD's Ports database (case sensitive).
-        If --exact is given, only exact matches will be shown."""
+        If --exact is given, only exact port name matches will be shown."""
         search
         url = 'https://www.freebsd.org/cgi/ports.cgi?' + urlencode({'query': search})
         data = utils.web.getUrl(url)
