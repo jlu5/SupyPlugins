@@ -1,4 +1,4 @@
-Fetches package information from the repositories of Debian, Arch Linux, Linux Mint, Fedora, CentOS, and Ubuntu.
+Fetches package information from the repositories of Arch Linux, CentOS, Debian, Fedora, FreeBSD, Linux Mint, and Ubuntu.
 
 This plugin uses the following APIs:
 - For Debian and Ubuntu, Debian's [madison.php](//qa.debian.org/madison.php) (used by the `vlist` command)

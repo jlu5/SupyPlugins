@@ -269,9 +269,6 @@ class PkgInfo(callbacks.Plugin):
                     name=x['pkgname'], desc=x['pkgdesc'], version=x['pkgver'])
                 results.add(s)
                 archs[s].append(x['arch'])
-            count = len(results)
-            items = [format("%s \x02[%s]\x02", s, ', '.join(archs[s])) for s
-                     in results]
             irc.reply(format('Found %n: %L; View more at %u', (len(results),
                                                                'result'),
                              list(results), friendly_url))
