@@ -83,3 +83,7 @@ Most of these plugins also have their own READMEs in their folders; you can usua
 
 ##### Wikifetch
 - Fork of [ProgVal's Wikipedia plugin](https://github.com/ProgVal/Supybot-plugins), with support for other wikis (via a `--site` option) and other improvements.
+
+##### [WTE](WTE/README.md)
+- Worst Translations Ever! plugin. Translates text through multiple rounds of Google Translate to get some interesting results!
+   - **Note: This plugin requires Python 3!**
