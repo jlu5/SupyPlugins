@@ -1,5 +1,5 @@
 ###
-# Copyright (c) 2014, James Lu
+# Copyright (c) 2014-2015, James Lu
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -52,10 +52,10 @@ except ImportError:
     _ = lambda x:x
 
 class WTE(callbacks.Plugin):
-    """Worst Translations Ever! plugin. Translates text through 
+    """Worst Translations Ever! plugin. Translates text through
     multiple rounds of Google Translate to get amazing results!"""
     threaded = True
-    
+
     def __init__(self, irc):
         self.__parent = super(WTE, self)
         self.__parent.__init__(irc)
@@ -91,7 +91,7 @@ class WTE(callbacks.Plugin):
             args['q'] = filter(lambda x: x in printable, text)
         else:
             args['q'] = text
-        url = "https://translate.google.com/translate_a/t?"+ \
+        url = "https://translate.googleapis.com/translate_a/single?client=gtx&dt=t&"+ \
             urlencode(args)
         self.log.debug("WTE: Using URL %s", url)
         headers = {'User-Agent': ('Mozilla/5.0 (X11; Linux i586; rv:31.0) '
@@ -106,7 +106,7 @@ class WTE(callbacks.Plugin):
 
     def wte(self, irc, msg, args, text):
         """wte <text>
-        
+
         Worst Translations Ever! plugin. Translates <text> through
         multiple rounds of Google Translate to get amazing results!
         """
