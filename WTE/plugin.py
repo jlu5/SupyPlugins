@@ -114,7 +114,7 @@ class WTE(callbacks.Plugin):
         if outlang not in self.langs:
             irc.error("Unrecognized output language. Please set "
                 "'config plugins.wte.language' correctly.", Raise=True)
-        ll = random.sample(self.langs, random.randint(5,10))
+        ll = random.sample(self.langs, random.randint(4,8))
         self.log.debug(format("WTE: Using %i languages: %L "
             "(outlang %s)", len(ll), ll, outlang))
         for targetlang in ll:
