@@ -1,6 +1,6 @@
 ##WTE - Worst Translations Ever! 
 
-**Due to lingering issues with Unicode handling in Python 2, Python 3 is strongly recommended for those using this plugin!**
+**Note: This plugin requires Python 3!**
 
 WTE is a plugin that sticks text through multiple rounds of Google Translate, in order to get
 some interesting results. It automatically picks a list of languages to go through, and translates

@@ -39,9 +39,7 @@ import json
 try: # Python 3
     from urllib.parse import urlencode
 except ImportError: # Python 2
-    from urllib import urlencode
-    from string import printable
-from sys import version_info
+    raise callbacks.Error('This plugin requires Python 3!')
 
 try:
     from supybot.i18n import PluginInternationalization
@@ -59,11 +57,6 @@ class WTE(callbacks.Plugin):
     def __init__(self, irc):
         self.__parent = super(WTE, self)
         self.__parent.__init__(irc)
-        if version_info[0] < 3:
-            self.log.warning("WTE: Due to Unicode handling issues, "
-                "Unicode characters will be stripped from this plugin's "
-                "input/output. For optimal results, please upgrade the "
-                "bot to Python 3.")
         self.langs = ('sw', 'sv', 'is', 'et', 'te', 'tr', 'mr', 'nl', 'sl', 
         'id', 'gu', 'hi', 'az', 'hmn', 'ko', 'da', 'bg', 'lo', 'so', 'tl', 
         'hu', 'ca', 'cy', 'bs', 'ka', 'vi', 'eu', 'ms', 'fr', 'no', 'hy', 
@@ -81,16 +74,7 @@ class WTE(callbacks.Plugin):
         return data
 
     def getTranslation(self, irc, sourceLang, targetLang, text):
-        args = {"client": "t", "sl": sourceLang, "tl": targetLang}
-        if version_info[0] < 3:
-            # Python 2's Unicode handling is just horrible. I've tried a
-            # dozen different combinations of encoding and decoding and they
-            # all fail with a stupid, useless UnicodeDecodeError. We're
-            # just going to strip all non-ASCII characters until
-            # this stupid issue gets fixed. -GLolol
-            args['q'] = filter(lambda x: x in printable, text)
-        else:
-            args['q'] = text
+        args = {"sl": sourceLang, "tl": targetLang, 'q': text}
         url = "https://translate.googleapis.com/translate_a/single?client=gtx&dt=t&"+ \
             urlencode(args)
         self.log.debug("WTE: Using URL %s", url)
@@ -121,13 +105,6 @@ class WTE(callbacks.Plugin):
             text = self.getTranslation(irc, "auto", targetlang, text)
         text = self.getTranslation(irc, "auto", outlang, text)
         text = text.strip()
-        if not text:
-            s = ("Error encoding/decoding response. If you are using "
-                "Python 2, it is recommended to upgrade to "
-                "Python 3 to suppress these kinds of errors, as there "
-                "are some lingering issues handling Unicode on "
-                "versions of Python 2.")
-            irc.error(s, Raise=True)
         if self.registryValue("verbose", msg.args[0]):
             irc.reply(format("Translated through \x02%i\x02 languages: %L "
                 "(outlang %s)",
