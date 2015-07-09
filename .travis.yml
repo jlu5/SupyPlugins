@@ -7,23 +7,34 @@ python:
   - "pypy"
   - "pypy3"
   - "nightly"
+
+sudo: required
+
 # Fetch dependencies
 before_install:
     - sudo apt-get -qq update
 install:
     - sudo apt-get install -qq bind9-host
     - pip install -vr requirements.txt
-# Run supybot-test
+
+env:
+    - TEST_ARGS="--no-network"
+    - TEST_ARGS=""
+
 script:
-# Weather and LastFM are hosted in their own repositories and tested separately.
-  - supybot-test -c --plugins-dir=. --no-network --exclude=./LastFM --exclude=./Weather
+    # Weather and LastFM are hosted in their own repositories and tested separately.
+    - supybot-test -c --plugins-dir=. $TEST_ARGS --exclude=./LastFM --exclude=./Weather
+
 notifications:
     email: false
+
 matrix:
     fast_finish: true
     allow_failures:
         - python: "pypy"
         - python: "pypy3"
+        - env: TEST_ARGS=""
+
 branches:
   except:
     - /^archive-.*$/
