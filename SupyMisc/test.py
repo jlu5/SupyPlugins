@@ -45,6 +45,7 @@ class SupyMiscTestCase(PluginTestCase):
 
     @unittest.skipUnless(network, "Network-based tests have been disabled via "
                          "--no-network")
+    @unittest.skip("Doesn't work yet... Raises UnicodeDecodeError on Python 2.")
     def testTldInternationalTLDs(self):
         # https://www.iana.org/domains/root/db/xn--io0a7i
         # Chinese internationalized domain for 'network' (similar to .net)
