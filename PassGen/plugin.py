@@ -41,7 +41,7 @@ try:
 except ImportError:
     # Placeholder that allows to run the plugin on a bot
     # without the i18n module
-    _ = lambda x:x
+    _ = lambda x: x
 
 class PassGen(callbacks.Plugin):
     """Generates passwords on the fly!"""
@@ -49,7 +49,7 @@ class PassGen(callbacks.Plugin):
 
     def mkpasswd(self, irc, msg, args, len):
         """[<len>]
-        
+
         Makes a randomly generated password, [<len>] characters long if
         specified. Otherwise, uses the bot's configured default length.
         (see config plugins.PassGen.defaultLen)"""
@@ -58,7 +58,7 @@ class PassGen(callbacks.Plugin):
             len = self.registryValue('defaultLen')
         elif len > maxlen:
             irc.error("The specified length ({}) is longer than the maximum "
-                "allowed on this bot. Current maximum: {}".format(len, maxlen), \
+                "allowed on this bot. Current maximum: {}".format(len, maxlen),
                 Raise=True)
         rg = random.SystemRandom()
         letters = string.ascii_letters + string.digits + self.registryValue('symbols')
