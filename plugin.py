@@ -350,7 +350,7 @@ class Weather(callbacks.Plugin):
         """
         apikey = self.registryValue('apiKey')
         if not apikey:
-            irc.error("No Wunderground API key was defined. Set 'config plugins.Weather.apiKey' and reload the plugin.",
+            irc.error("No Wunderground API key was defined; set 'config plugins.Weather.apiKey'.",
                       Raise=True)
         channel = msg.args[0]
 
