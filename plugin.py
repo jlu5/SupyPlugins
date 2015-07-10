@@ -194,7 +194,7 @@ class Weather(callbacks.Plugin):
         except KeyError:
             return "unknown"
 
-    def _temp(self, f, c=None):
+    def _temp(self, channel, f, c=None):
         """Returns a colored string based on the temperature."""
 
         # lets be safe and wrap in a try/except because we can't always trust data purity.
@@ -204,27 +204,30 @@ class Weather(callbacks.Plugin):
             f = int(f)
             if not c:
                 c = int((f - 32) * 5/9)
+            s = "{0}F/{1}C".format(f, c)
             # determine color.
-            if f < 10.0:
-                color = 'light blue'
-            elif 10.0 <= f <= 32.0:
-                color = 'teal'
-            elif 32.1 <= f <= 50.0:
-                color = 'blue'
-            elif 50.1 <= f <= 60.0:
-                color = 'light green'
-            elif 60.1 <= f <= 70.0:
-                color = 'green'
-            elif 70.1 <= f <= 80.0:
-                color = 'yellow'
-            elif 80.1 <= f <= 90.0:
-                color = 'orange'
-            elif f > 90.0:
-                color = 'red'
-            else:
-                color = 'light grey'
+            if not self.registryValue('disableColoredTemp', channel):
+                if f < 10.0:
+                    color = 'light blue'
+                elif 10.0 <= f <= 32.0:
+                    color = 'teal'
+                elif 32.1 <= f <= 50.0:
+                    color = 'blue'
+                elif 50.1 <= f <= 60.0:
+                    color = 'light green'
+                elif 60.1 <= f <= 70.0:
+                    color = 'green'
+                elif 70.1 <= f <= 80.0:
+                    color = 'yellow'
+                elif 80.1 <= f <= 90.0:
+                    color = 'orange'
+                elif f > 90.0:
+                    color = 'red'
+                else:
+                    color = 'light grey'
+                s = ircutils.mircColor(s, color)
             # return.
-            return ircutils.mircColor(("{0}F/{1}C".format(f, c)), color)
+            return s
         except ValueError as e:
             self.log.info("Weather: ValueError trying to convert temp: {0} message: {1}".format(f, e))
             return f
@@ -345,11 +348,11 @@ class Weather(callbacks.Plugin):
         Location must be one of: US state/city (CA/San_Francisco), zip code, country/city (Australia/Sydney), or an airport code (KJFK).
         Ex: 10021 or Sydney, Australia or KJFK
         """
-
         apikey = self.registryValue('apiKey')
         if not apikey:
             irc.error("No Wunderground API key was defined. Set 'config plugins.Weather.apiKey' and reload the plugin.",
                       Raise=True)
+        channel = msg.args[0]
 
         # urlargs will be used to build the url to query the API.
         # besides lang, these are unmutable values that should not be changed.
@@ -437,19 +440,19 @@ class Weather(callbacks.Plugin):
                 outdata['observation'] = '1hr ago'
             else:
                 outdata['observation'] = '{0}hrs ago'.format(s/3600)
-        outdata['temp'] = self._temp(data['current_observation']['temp_f'])
+        outdata['temp'] = self._temp(channel, data['current_observation']['temp_f'])
         # pressure.
         pin = str(data['current_observation']['pressure_in']) + 'in'
         pmb = str(data['current_observation']['pressure_mb']) + 'mb'
         outdata['pressure'] = "{0}/{1}".format(pin, pmb)
         # dewpoint.
-        outdata['dewpoint'] = self._temp(data['current_observation']['dewpoint_f'])
+        outdata['dewpoint'] = self._temp(channel, data['current_observation']['dewpoint_f'])
         # heatindex.
-        outdata['heatindex'] = self._temp(data['current_observation']['heat_index_f'])
+        outdata['heatindex'] = self._temp(channel, data['current_observation']['heat_index_f'])
         # windchill.
-        outdata['windchill'] = self._temp(data['current_observation']['windchill_f'])
+        outdata['windchill'] = self._temp(channel, data['current_observation']['windchill_f'])
         # feels like
-        outdata['feelslike'] = self._temp(data['current_observation']['feelslike_f'])
+        outdata['feelslike'] = self._temp(channel, data['current_observation']['feelslike_f'])
         # visibility.
         vmi = str(data['current_observation']['visibility_mi']) + 'mi'
         vkm = str(data['current_observation']['visibility_km']) + 'km'
@@ -502,11 +505,11 @@ class Weather(callbacks.Plugin):
             try:
                 outdata['highyear'] = data['almanac']['temp_high'].get('recordyear')
                 outdata['lowyear'] = data['almanac']['temp_low'].get('recordyear')
-                outdata['highaverage'] = self._temp(data['almanac']['temp_high']['average']['F'])
-                outdata['lowaverage'] = self._temp(data['almanac']['temp_low']['average']['F'])
+                outdata['highaverage'] = self._temp(channel, data['almanac']['temp_high']['average']['F'])
+                outdata['lowaverage'] = self._temp(channel, data['almanac']['temp_low']['average']['F'])
                 if outdata['highyear'] != "NA" and outdata['lowyear'] != "NA":
-                    outdata['highrecord'] = self._temp(data['almanac']['temp_high']['record']['F'])
-                    outdata['lowrecord'] = self._temp(data['almanac']['temp_low']['record']['F'])
+                    outdata['highrecord'] = self._temp(channel, data['almanac']['temp_high']['record']['F'])
+                    outdata['lowrecord'] = self._temp(channel, data['almanac']['temp_low']['record']['F'])
                 else:
                     outdata['highrecord'] = outdata['lowrecord'] = "NA"
             except KeyError:
@@ -538,8 +541,8 @@ class Weather(callbacks.Plugin):
         if args['forecast']:
             fullforecastdata = {}  # key = day (int), value = dict of forecast data.
             for forecastday in data['forecast']['simpleforecast']['forecastday']:
-                high = self._temp(forecastday['high']['fahrenheit'])
-                low = self._temp(forecastday['low']['fahrenheit'])
+                high = self._temp(channel, forecastday['high']['fahrenheit'])
+                low = self._temp(channel, forecastday['low']['fahrenheit'])
                 tmpdict = {'day': forecastday['date']['weekday_short'],
                            'symbol': self._weatherSymbol(forecastday['icon']),
                            'text': forecastday['conditions'],

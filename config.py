@@ -38,6 +38,7 @@ conf.registerGlobalValue(Weather, 'showUpdated',
     registry.Boolean(False, ("""Determines whether the bot will show the data's "last updated" time by default.""")))
 conf.registerGlobalValue(Weather, 'lang',
     registry.String('EN', ("""Determines the language used by the plugin.""")))
-
+conf.registerChannelValue(Weather, 'disableColoredTemp',
+    registry.Boolean(False, """If True, this will disable coloring temperatures based on values."""))
 
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=250:
