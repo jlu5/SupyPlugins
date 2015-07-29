@@ -334,6 +334,7 @@ class PkgInfo(callbacks.Plugin):
                        (len(results), 'result'), results, url)
             irc.reply(s)
         else:
+            e = "No results found."
             try:
                 # Look for "too many results" errors and others reported by the
                 # web interface.
@@ -347,7 +348,7 @@ class PkgInfo(callbacks.Plugin):
                         br.replace_with(" ")
                     e = errorParse.text.strip()
             except AttributeError:
-                e = "No results found."
+                pass
             irc.error(e)
     pkgsearch = wrap(pkgsearch, ['somethingWithoutSpaces',
                                  'somethingWithoutSpaces'])
