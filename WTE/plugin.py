@@ -39,7 +39,7 @@ import json
 try: # Python 3
     from urllib.parse import urlencode
 except ImportError: # Python 2
-    raise callbacks.Error('This plugin requires Python 3!')
+    raise ImportError('This plugin requires Python 3!')
 
 try:
     from supybot.i18n import PluginInternationalization
