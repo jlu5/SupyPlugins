@@ -39,10 +39,8 @@ gitlog = subprocess.check_output(("git", "log"))
 
 try:
     version = sys.argv[1].lower()
-    if version in ("date", "tag", "today", "now"):
-        version = time.strftime("%Y.%m.%d")
 except IndexError:
-    version = subprocess.check_output(("git", "describe", "--tags")).decode("utf-8").strip('\n')
+    version = time.strftime("%Y.%m.%d")
 
 for line in gitlog.decode("utf-8").split('\n'):
     splitline = line.split("git-subtree-dir: ", 1)
@@ -61,3 +59,6 @@ for dir in filter(os.path.isdir, os.listdir()):
         contents = re.sub(r'__version__ = ".*?"', '__version__ = "%s"' % version, contents)
         f.seek(0)
         f.write(contents)
+
+subprocess.call(('git', 'commit', '-am', 'Bump version to ' + version))
+subprocess.call(('git', 'tag', version))
