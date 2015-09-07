@@ -31,6 +31,10 @@ Please note that this list may not always be up to date; your best bet is to act
 
 Most of these plugins also have their own READMEs in their folders; you can usually find a usage demonstration or further explanation of what they do.
 
+##### BonusLevel
+- Snarfer for various things on [BonusLevel.org](http://www.bonuslevel.org/).
+    - **Requires:** [Beautiful Soup 4](http://www.crummy.com/software/BeautifulSoup/bs4/doc/)
+
 ##### CtcpNext
 - Alternative to the official Ctcp plugin, with a database for configurable replies.
 
@@ -58,7 +62,7 @@ Most of these plugins also have their own READMEs in their folders; you can usua
 
 ##### [PkgInfo](PkgInfo/README.md)
 - Fetches package information from various Linux and BSD distros' software repositories.
-   - **Requires:** [Beautiful Soup 4](http://www.crummy.com/software/BeautifulSoup/bs4/doc/) - install it via `pip install beautifulsoup4` or `apt-get install python-bs4`/`python3-bs4` (Debian/Ubuntu)
+   - **Requires:** [Beautiful Soup 4](http://www.crummy.com/software/BeautifulSoup/bs4/doc/)
 
 ##### PortLookup
 - Looks up commonly used UDP and TCP port numbers from Wikipedia: https://en.wikipedia.org/wiki/List_of_TCP_and_UDP_port_numbers
@@ -73,7 +77,7 @@ Most of these plugins also have their own READMEs in their folders; you can usua
 
 ##### SysDNS
 - An alternative to Supybot's built-in DNS function, using the `host` DNS lookup utility on the host machine.
-    * **Requires:** `host` DNS lookup binary (as in `/usr/bin/host`, installable in Debian/Ubuntu via `apt-get install bind9-host`)
+    * **Requires:** `host` DNS lookup binary (as in `/usr/bin/host`)
 
 ##### Voteserv
 - A plugin for storing and manipulating votes/polls.
