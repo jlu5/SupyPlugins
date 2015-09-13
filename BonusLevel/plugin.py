@@ -56,9 +56,9 @@ class BonusLevel(callbacks.PluginRegexp):
 
     def _packid(self, irc, packid):
         url = 'http://www.bonuslevel.org/games/pack_-_%s.html' % packid
-        return self._fetch(irc, url)
+        return self._fetch(irc, url, itemname="Pack")
 
-    def _fetch(self, irc, url):
+    def _fetch(self, irc, url, itemname="Level"):
         self.log.debug('BonusLevel: fetching URL %s', url)
         data = utils.web.getUrl(url)
         soup = BeautifulSoup(data)
@@ -71,7 +71,7 @@ class BonusLevel(callbacks.PluginRegexp):
         gamelink = linkobj["href"].replace('..', 'http://www.bonuslevel.org')
         title = linkobj.find("span", class_="gtitle").text
         author = div.ul.find_all('li')[1].a.text.strip()
-        s = format("Level %s by %s: %u", ircutils.bold(title), ircutils.bold(author), gamelink)
+        s = format("%s %s by %s: %u", itemname, ircutils.bold(title), ircutils.bold(author), gamelink)
         irc.reply(s)
 
     def levelSnarfer(self, irc, msg, match):
