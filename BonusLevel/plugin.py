@@ -48,10 +48,17 @@ class BonusLevel(callbacks.PluginRegexp):
     """Snarfer for various things on BonusLevel.org."""
     threaded = True
     # Need this to specify levelSnarfer() as a regexp listener!
-    regexps = ("levelSnarfer",)
+    regexps = ("levelSnarfer", "packIDSnarfer")
 
     def _lvlid(self, irc, lvlid):
         url = 'http://www.bonuslevel.org/games/level_-_%s.html' % lvlid
+        return self._fetch(irc, url)
+
+    def _packid(self, irc, packid):
+        url = 'http://www.bonuslevel.org/games/pack_-_%s.html' % packid
+        return self._fetch(irc, url)
+
+    def _fetch(self, irc, url):
         self.log.debug('BonusLevel: fetching URL %s', url)
         data = utils.web.getUrl(url)
         soup = BeautifulSoup(data)
@@ -59,7 +66,7 @@ class BonusLevel(callbacks.PluginRegexp):
         div = soup.find("div", class_="ilbg").div
         linkobj = div.a
         if linkobj is None:
-            irc.error("No such level ID %r" % lvlid, Raise=True)
+            irc.error("No such level/pack.", Raise=True)
         # Get rid of the relative link.
         gamelink = linkobj["href"].replace('..', 'http://www.bonuslevel.org')
         title = linkobj.find("span", class_="gtitle").text
@@ -71,8 +78,15 @@ class BonusLevel(callbacks.PluginRegexp):
         r"\[?lvlid\=(\d+)\]?"
         payload = match.group(1)
         if payload and self.registryValue("enable", msg.args[0]):
-            self.log.info('BonusLevel: got level ID %s from levelSnarfer', payload)
+            self.log.info('BonusLevel: got level ID %s from levelSnarfer for %s', payload, msg.prefix)
             self._lvlid(irc, payload)
+
+    def packIDSnarfer(self, irc, msg, match):
+        r"\[?packid\=(\d+)\]?"
+        payload = match.group(1)
+        if payload and self.registryValue("enable", msg.args[0]):
+            self.log.info('BonusLevel: got level ID %s from packIDSnarfer for %s', payload, msg.prefix)
+            self._packid(irc, payload)
 
     @wrap(['positiveInt'])
     def level(self, irc, msg, args, lvlid):
@@ -80,6 +94,14 @@ class BonusLevel(callbacks.PluginRegexp):
 
         Finds and returns the game+link for <level id>, if it exists."""
         self._lvlid(irc, lvlid)
+
+    @wrap(['positiveInt'])
+    def pack(self, irc, msg, args, packid):
+        """<pack id>
+
+        Finds and returns the game+link for <pack id>, if it exists."""
+        self._packid(irc, packid)
+
 
 Class = BonusLevel
 
