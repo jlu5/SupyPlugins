@@ -46,8 +46,9 @@ class OperUp(callbacks.Plugin):
     """Simple plugin that allows Supybot to oper up on configured networks, on
         connect and manually."""
 
-    def do005(self, irc, msg):
-        """Oper up on connect."""
+    def do376(self, irc, msg):
+        """Oper up on connect. This listens on numerics 376 (end of MOTD) and
+        422 (MOTD not found)."""
         if not self.registryValue('autoOper'):
             return
         if irc.network in self.registryValue('operNets'):
@@ -59,6 +60,8 @@ class OperUp(callbacks.Plugin):
             else:
                 self.log.warning("OperUp: Bot is set to oper on network %s, but"
                     " operName and/or operPass are not defined!", irc.network)
+
+    do377 = do422 = do376
 
     def do381(self, irc, msg):
         self.log.info("OperUp: Received 381 (successfully opered up) from "
