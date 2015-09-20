@@ -34,9 +34,9 @@ import re
 try:
     from bs4 import BeautifulSoup
 except ImportError:
-    raise callbacks.error("Beautiful Soup 4 is required for this plugin: "
-                          "http://www.crummy.com/software/BeautifulSoup/bs4/"
-                          "doc/#installing-beautiful-soup")
+    raise ImportError("Beautiful Soup 4 is required for this plugin: "
+                      "http://www.crummy.com/software/BeautifulSoup/bs4/"
+                      "doc/#installing-beautiful-soup")
 import supybot.conf as conf
 import supybot.utils as utils
 from supybot.commands import *
