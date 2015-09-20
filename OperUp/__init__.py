@@ -1,6 +1,5 @@
 ###
-# Copyright (c) 2010, quantumlemur
-# Copyright (c) 2015, James Lu
+# Copyright (c) 2014, James Lu (GLolol)
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -30,7 +29,8 @@
 ###
 
 """
-Grabs data from Wikipedia and other MediaWiki-powered sites.
+Add a description of the plugin (to be presented to the user inside the wizard)
+here.  This should describe *what* the plugin does.
 """
 
 import supybot
@@ -41,27 +41,22 @@ import supybot.world as world
 __version__ = "2015.09.19"
 
 # XXX Replace this with an appropriate author or supybot.Author instance.
-__author__ = supybot.Author('quantumlemur', 'quantumlemur',
-        'quantumlemur@users.sourceforge.net')
+__author__ = supybot.Author('James Lu', 'GLolol',
+                            'GLolol@overdrive.pw')
 
 # This is a dictionary mapping supybot.Author instances to lists of
 # contributions.
-if not hasattr(supybot.authors, 'progval'):
-    supybot.authors.progval = supybot.Author('Valentin Lorentz', 'ProgVal',
-                                             'progval@gmail.com')
-__contributors__ = {supybot.authors.progval: ['enhance configurability',
-                                              'many bug fixes',
-                                              'internationalization'],
-                    supybot.Author('James Lu', 'GLolol', 'glolol1@hotmail.com'):
-                                             ['formatting updates',
-                                              'multiple wiki support']}
+__contributors__ = {}
 
-__url__ = 'https://github.com/GLolol/SupyPlugins'
+# This is a url where the most recent plugin package can be downloaded.
+__url__ = 'https://github.com/GLolol/SupyPlugins/'
 
 from . import config
 from . import plugin
 from imp import reload
-reload(plugin) # In case we're being reloaded.
+# In case we're being reloaded.
+reload(config)
+reload(plugin)
 # Add more reloads here if you add third-party modules and want them to be
 # reloaded when this plugin is reloaded.  Don't forget to import them as well!
 

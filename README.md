@@ -57,6 +57,9 @@ Most of these plugins also have their own READMEs in their folders; you can usua
 ##### [Namegen](Namegen/README.md)
 - A small random name generator.
 
+##### [OperUp](OperUp/README.md)
+- Allows Supybot to oper up automatically (on connect) and on demand.
+
 ##### PassGen
 - Generates random passwords on the fly!
 
