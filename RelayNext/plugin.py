@@ -92,7 +92,7 @@ class RelayNext(callbacks.Plugin):
 
         # This part facilitates flood protection
         self.msgcounters = {}
-        self.floodTriggered = False
+        self.floodTriggered = {}
 
         self.db = {}
         self.loadDB()
@@ -236,17 +236,17 @@ class RelayNext(callbacks.Plugin):
                         if len(self.msgcounters[(source, msg.command)]) > maximum:
                             self.log.debug("RelayNext (%s): message from %s blocked by "
                                            "flood protection.", irc.network, channel)
-                            if self.floodTriggered:
+                            if self.floodTriggered.get((source, msg.command)):
                                 return
                             c = msg.command.lower()
                             e = format("Flood detected on %s (%s %ss/%s seconds), "
                                        "not relaying %ss for %s seconds!", channel,
                                        maximum, c, seconds, c, timeout)
                             out_s = self._format(irc, msg, channel, announcement=e)
-                            self.floodTriggered = True
+                            self.floodTriggered[(source, msg.command)] = True
                             self.log.info("RelayNext (%s): %s", irc.network, e)
                         else:
-                            self.floodTriggered = False
+                            self.floodTriggered[(source, msg.command)] = False
                     for cn in targets:
                         target, net = cn.split("@")
                         otherIrc = world.getIrc(net)

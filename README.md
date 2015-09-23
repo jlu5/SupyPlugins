@@ -58,7 +58,7 @@ Most of these plugins also have their own READMEs in their folders; you can usua
 - A small random name generator.
 
 ##### [OperUp](OperUp/README.md)
-- Allows Supybot to oper up automatically (on connect) and on demand.
+- Allows Supybot to oper up on configured networks, automatically (on connect) and on demand.
 
 ##### PassGen
 - Generates random passwords on the fly!
@@ -70,7 +70,6 @@ Most of these plugins also have their own READMEs in their folders; you can usua
 ##### PortLookup
 - Looks up commonly used UDP and TCP port numbers from Wikipedia: https://en.wikipedia.org/wiki/List_of_TCP_and_UDP_port_numbers
    - **Requires:** [Beautiful Soup 4](http://www.crummy.com/software/BeautifulSoup/bs4/doc/)
-
 
 ##### [RelayNext](RelayNext/README.md)
 - Next generation relayer plugin, designed with two-way relays in mind.
