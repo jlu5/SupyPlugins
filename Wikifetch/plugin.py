@@ -165,7 +165,11 @@ class Wikifetch(callbacks.Plugin):
                 for link in item.findall('a'):
                     if link.text is not None:
                         link.text = "&#x02;%s&#x02;" % link.text
-                r.append(item.text_content().replace('&#x02;', '\x02'))
+                item = item.text_content().replace('&#x02;', '\x02')
+                # Normalize and strip whitespace, to prevent newlines and such
+                # from corrupting the display.
+                item = utils.str.normalizeWhitespace(item).strip()
+                r.append(item)
             reply += format(_('%u is a disambiguation page. '
                        'Possible results include: %L'), addr, r)
         # or just as bad, a page listing events in that year

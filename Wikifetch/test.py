@@ -61,4 +61,7 @@ class WikifetchTestCase(PluginTestCase):
         def testStripInlineCitations(self):
             self.assertNotRegexp('wiki UNICEF', '\[\d+\]')
 
+        def testDisambigStripSpaces(self):
+            self.assertNotRegexp('wiki Na', '\n')
+
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:
