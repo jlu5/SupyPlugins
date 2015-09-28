@@ -128,6 +128,7 @@ class RelayNext(callbacks.Plugin):
                 cn = cn.split("@")
                 if cn[1] == network:
                     results.append(cn[0])
+        self.log.debug('RelayNext: got %r for _getAllRelaysForNetwork for %r', results, network)
         return results
 
     def _format(self, irc, msg, channel, announcement=False):
@@ -204,15 +205,14 @@ class RelayNext(callbacks.Plugin):
 
     def relay(self, irc, msg, channel=None):
         self.keepstate()
-        channel = channel or msg.args[0]
+        channel = ircutils.toLower(channel or msg.args[0])
         ignoredevents = map(str.upper, self.registryValue('events.userIgnored'))
         if msg.command in ignoredevents and ircdb.checkIgnored(msg.prefix):
             self.log.debug("RelayNext (%s): ignoring message from %s",
                            irc.network, msg.prefix)
             return
         # Get the source channel
-        source = "%s@%s" % (channel, irc.network)
-        source = source.lower()
+        source = "%s@%s" % (channel, irc.network.lower())
         out_s = self._format(irc, msg, channel)
         if out_s:
             for relay in self.db.values():
@@ -288,10 +288,10 @@ class RelayNext(callbacks.Plugin):
         # useful because Supybot is often a multi-purpose bot!)
         try:
             if msg.command == 'PRIVMSG' and not msg.relayedMsg:
-                    if msg.args[0] in self._getAllRelaysForNetwork(irc):
-                        new_msg = deepcopy(msg)
-                        new_msg.nick = irc.nick
-                        self.relay(irc, new_msg, channel=msg.args[0])
+                if ircutils.toLower(msg.args[0]) in self._getAllRelaysForNetwork(irc):
+                    new_msg = deepcopy(msg)
+                    new_msg.nick = irc.nick
+                    self.relay(irc, new_msg, channel=msg.args[0])
         except Exception:
             # We want to log errors, but not block the bot's output
             log.exception("RelayNext: Caught error in outFilter:")
