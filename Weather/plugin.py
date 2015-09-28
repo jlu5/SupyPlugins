@@ -228,9 +228,9 @@ class Weather(callbacks.Plugin):
                 s = ircutils.mircColor(s, color)
             # return.
             return s
-        except ValueError as e:
+        except (TypeError, ValueError) as e:
             self.log.info("Weather: ValueError trying to convert temp: {0} message: {1}".format(f, e))
-            return f
+            return "N/A"
 
     def _wind(self, angle, useSymbols=False):
         """Converts degrees to direction for wind. Can optionally return a symbol."""
