@@ -31,7 +31,6 @@
 from copy import deepcopy
 import pickle
 import re
-import traceback
 import textwrap
 
 import supybot.world as world
@@ -293,10 +292,9 @@ class RelayNext(callbacks.Plugin):
                         new_msg = deepcopy(msg)
                         new_msg.nick = irc.nick
                         self.relay(irc, new_msg, channel=msg.args[0])
-        except Exception as e:
+        except Exception:
             # We want to log errors, but not block the bot's output
-            traceback.print_exc()
-            log.error(str(e))
+            log.exception("RelayNext: Caught error in outFilter:")
         finally:
             return msg
 
