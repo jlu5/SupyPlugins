@@ -1,1 +1,1 @@
-History Replacer - Sed Regex Syntax
+History replacer using sed-style expressions.

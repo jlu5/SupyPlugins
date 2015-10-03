@@ -1,7 +1,7 @@
 # SupyPlugins
 [![Build Status](https://travis-ci.org/GLolol/SupyPlugins.svg?branch=master)](https://travis-ci.org/GLolol/SupyPlugins)
 
-My collection of plugins for [Supybot/Limnoria](https://github.com/ProgVal/Limnoria). This repository is provided **AS IS**, **without any warranty**! It may glitch, break, or spontaneously combust at any time. You have been warned!
+My collection of plugins for [Limnoria](https://github.com/ProgVal/Limnoria). This repository is provided **AS IS**, **without any warranty**! It may glitch, break, or spontaneously combust at any time. You have been warned!
 
 ## Installation
 The recommended way of fetching plugins in this repository is to clone the git repository:
@@ -10,7 +10,7 @@ The recommended way of fetching plugins in this repository is to clone the git r
 
 and adding the folder to your bot's `config directories.plugins`.
 
-**You will need a working copy of [Limnoria](https://github.com/ProgVal/Limnoria) running on Python 2.7 or Python 3.2+.** Anything older will *not* work.
+**You will need a working copy of [Limnoria](https://github.com/ProgVal/Limnoria) running on Python 2.7 or Python 3.4+.** Anything older will *not* work.
 
 If you are using a recent version of Limnoria's PluginDownloader, you can also fetch [individual plugins](#list-of-plugins) by running:
 
@@ -73,6 +73,9 @@ Most of these plugins also have their own READMEs in their folders; you can usua
 
 ##### [RelayNext](RelayNext/README.md)
 - Next generation relayer plugin, designed with two-way relays in mind.
+
+##### Replacer
+- History replacer using sed-style expressions.
 
 ##### SupyMisc
 - Some assorted commands that don't seem to fit anywhere else.
