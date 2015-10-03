@@ -110,9 +110,9 @@ class CtcpNext(callbacks.PluginRegexp):
                               payload, msg.prefix)
 
     def set(self, irc, msg, args, ctcp, response):
-        """<ctcp> <response>
+        """<ctcp type> <response>
 
-        Sets the response for <ctcp> to <response>. Exceptions include
+        Sets the response for <ctcp type> to <response>. Exceptions include
         ACTION and PING, which are handled accordingly. All the standard
         substitutes ($version, $now, $nick, etc.) are handled properly.
         """
@@ -125,18 +125,30 @@ class CtcpNext(callbacks.PluginRegexp):
     set = wrap(set, ['admin', 'somethingWithoutSpaces', 'text'])
 
     def unset(self, irc, msg, args, ctcp):
-        """<ctcp>
+        """<ctcp type>
 
-        Unsets the response for <ctcp>.
+        Unsets the response for <ctcp type>.
         """
         ctcp = ctcp.upper()
         try:
             del self.db[ctcp]
         except KeyError:
-            irc.error("No such CTCP '%s' exists." % ctcp, Raise=True)
+            irc.error("No response is set for CTCP '%s'." % ctcp, Raise=True)
         else:
             irc.replySuccess()
     unset = wrap(unset, ['admin', 'somethingWithoutSpaces'])
+
+    def show(self, irc, msg, args, ctcp):
+        """<ctcp type>
+
+        Shows the configured response for <ctcp type>, if it exists.
+        """
+        ctcp = ctcp.upper()
+        try:
+            irc.reply(self.db[ctcp])
+        except KeyError:
+            irc.error("No response is set for CTCP '%s'." % ctcp, Raise=True)
+    show = wrap(show, ['somethingWithoutSpaces'])
 
     def list(self, irc, msg, args):
         """takes no arguments.
