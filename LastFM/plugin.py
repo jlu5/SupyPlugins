@@ -312,48 +312,6 @@ class LastFM(callbacks.Plugin):
 
     profile = wrap(profile, [optional("something")])
 
-    def compareUsers(self, irc, msg, args, user1, user2):
-        """<user1> [<user2>]
-
-        Compares the music tastes of <user1> and <user2>. If <user2>
-        is not given, defaults to the LastFM user configured for your
-        current nick.
-        """
-        if not self.apiKey:
-            irc.error("The API Key is not set. Please set it via "
-                      "'config plugins.lastfm.apikey' and reload the plugin. "
-                      "You can sign up for an API Key using "
-                      "http://www.last.fm/api/account/create", Raise=True)
-        user2 = (user2 or self.db.get(msg.prefix) or msg.nick)
-
-        channel = msg.args[0]
-        maxResults = self.registryValue("maxResults", channel)
-        url = ("%sapi_key=%s&method=tasteometer.compare&type1=user&type2=user"
-               "&value1=%s&value2=%s&limit=%s" % (self.APIURL, self.apiKey,
-               user1, user2, maxResults))
-        try:
-            f = utils.web.getUrlFd(url)
-        except utils.web.Error as e:
-            irc.error(str(e), Raise=True)
-
-        xml = minidom.parse(f)
-        resultNode = xml.getElementsByTagName("result")[0]
-        try:
-            score = resultNode.getElementsByTagName('score')[0].firstChild.data
-            score = round(float(score) * 100, 1)
-            score = ircutils.bold("%s%%" % score)
-        except (IndexError, ValueError):
-            score = "unknown"
-        artists = resultNode.getElementsByTagName("artist")
-        artistNames = [ircutils.bold(el.getElementsByTagName("name")[0].firstChild.data)
-                       for el in artists]
-        s = ("Result of comparison between %s and %s: score: %s, common "
-             "artists: %s" % (ircutils.bold(user1), ircutils.bold(user2),
-             score, ", ".join(artistNames)))
-        irc.reply(s)
-
-    compare = wrap(compareUsers, ["something", optional("something")])
-
     def _formatTimeago(self, unixtime):
         t = int(time()-unixtime)
         if t/86400 >= 1:

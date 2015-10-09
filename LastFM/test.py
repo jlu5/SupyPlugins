@@ -67,12 +67,6 @@ class LastFMTestCase(PluginTestCase):
         self.assertNotError("profile czshadow")
         self.assertNotError("profile test")
 
-    @unittest.skip("A weird bug in the test system prevents this from "
-                   "working (API key won't set).")
-    def testCompare(self):
-        self.assertNotError("compare krf czshadow")
-        self.assertNotError("compare krf")
-
     def testParseRecentTracks(self):
         """Parser tests"""
 
