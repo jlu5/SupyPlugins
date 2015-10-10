@@ -52,10 +52,6 @@ class LastFMTestCase(PluginTestCase):
             raise callbacks.Error(e)
         conf.supybot.plugins.LastFM.apiKey.setValue(apiKey)
 
-    def testRecentTracks(self):
-        self.assertNotError("recenttracks")
-        self.assertNotError("recenttracks czshadow")
-
     def testNowPlaying(self):
         self.assertNotError("np krf")
 
@@ -66,50 +62,5 @@ class LastFMTestCase(PluginTestCase):
     def testProfile(self):
         self.assertNotError("profile czshadow")
         self.assertNotError("profile test")
-
-    def testParseRecentTracks(self):
-        """Parser tests"""
-
-        # noalbum, nowplaying
-        data1 = """<recenttracks user="USER" page="1" perPage="10" totalPages="3019">
-  <track nowplaying="true">
-    <artist mbid="2f9ecbed-27be-40e6-abca-6de49d50299e">ARTIST</artist>
-    <name>TRACK</name>
-    <mbid/>
-    <album mbid=""/>
-    <url>www.last.fm/music/Aretha+Franklin/_/Sisters+Are+Doing+It+For+Themselves</url>
-    <date uts="1213031819">9 Jun 2008, 17:16</date>
-    <streamable>1</streamable>
-  </track>
-</recenttracks>"""
-
-        # album, not nowplaying
-        data2 = """<recenttracks user="USER" page="1" perPage="10" totalPages="3019">
-  <track nowplaying="false">
-    <artist mbid="2f9ecbed-27be-40e6-abca-6de49d50299e">ARTIST</artist>
-    <name>TRACK</name>
-    <mbid/>
-    <album mbid="">ALBUM</album>
-    <url>www.last.fm/music/Aretha+Franklin/_/Sisters+Are+Doing+It+For+Themselves</url>
-    <date uts="1213031819">9 Jun 2008, 17:16</date>
-    <streamable>1</streamable>
-  </track>
-</recenttracks>"""
-
-        parser = LastFMParser()
-        (user, isNowPlaying, artist, track, album, time) = \
-            parser.parseRecentTracks(StringIO(data1))
-        self.assertEqual(user, "USER")
-        self.assertEqual(isNowPlaying, True)
-        self.assertEqual(artist, "ARTIST")
-        self.assertEqual(track, "TRACK")
-        self.assertEqual(album, None)
-        self.assertEqual(time, None)
-
-        (user, isNowPlaying, artist, track, album, time) = \
-            parser.parseRecentTracks(StringIO(data2))
-        self.assertEqual(album, "ALBUM")
-        self.assertEqual(time, 1213031819)
-
 
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:
