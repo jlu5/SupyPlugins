@@ -51,7 +51,7 @@ __contributors__ = {
             ["misc"],
             supybot.Author('James Lu', 'GLolol',
                         'GLolol@overdrive.pw'):
-                        ['Python 3 support', 'bugfixes']
+                        ['Python 3 support', 'rewriting most of the plugin']
         }
 
 # This is a url where the most recent plugin package can be downloaded.

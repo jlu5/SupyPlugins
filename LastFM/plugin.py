@@ -1,6 +1,7 @@
 ###
 # Copyright (c) 2006, Ilya Kuznetsov
 # Copyright (c) 2008,2012 Kevin Funk
+# Copyright (c) 2014-2015 James Lu
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -120,7 +121,6 @@ class LastFM(callbacks.Plugin):
         world.flushers.append(self.db.flush)
 
         # 2.0 API (see http://www.lastfm.de/api/intro)
-        self.apiKey = self.registryValue("apiKey")
         self.APIURL = "http://ws.audioscrobbler.com/2.0/?"
 
     def die(self):
@@ -135,7 +135,8 @@ class LastFM(callbacks.Plugin):
         is not given, defaults to the LastFM user configured for your
         current nick.
         """
-        if not self.apiKey:
+        apiKey = self.registryValue("apiKey")
+        if not apiKey:
             irc.error("The API Key is not set. Please set it via "
                       "'config plugins.lastfm.apikey' and reload the plugin. "
                       "You can sign up for an API Key using "
@@ -143,27 +144,40 @@ class LastFM(callbacks.Plugin):
         user = (user or self.db.get(msg.prefix) or msg.nick)
 
         # see http://www.lastfm.de/api/show/user.getrecenttracks
-        url = "%sapi_key=%s&method=user.getrecenttracks&user=%s" % (self.APIURL, self.apiKey, user)
+        url = "%sapi_key=%s&method=user.getrecenttracks&user=%s&format=json" % (self.APIURL, apiKey, user)
         try:
-            f = utils.web.getUrlFd(url)
+            f = utils.web.getUrl(url).decode("utf-8")
         except utils.web.Error:
-            irc.error("Unknown user '%s'." % user, Raise=True)
-        self.log.debug("LastFM.profile: url %s", url)
+            irc.error("Unknown user %s." % user, Raise=True)
+        self.log.debug("LastFM.nowPlaying: url %s", url)
 
-        parser = LastFMParser()
-        (user, isNowPlaying, artist, track, album, time) = parser.parseRecentTracks(f)
-        if track is None:
-            irc.reply("%s doesn't seem to have listened to anything." % user)
-            return
-        albumStr = ("[%s]" % album) if album else ""
-        track, artist, albumStr = map(ircutils.bold, (track, artist, albumStr))
-        if isNowPlaying:
-            irc.reply('%s is listening to %s by %s %s'
-                    % (ircutils.bold(user), track, artist, albumStr))
-        else:
-            irc.reply('%s listened to %s by %s %s more than %s'
-                    % (ircutils.bold(user), track, artist, albumStr,
-                        self._formatTimeago(time)))
+        try:
+            data = json.loads(f)["recenttracks"]
+        except KeyError:
+            irc.error("Unknown user %s." % user, Raise=True)
+
+        user = data["@attr"]["user"]
+        tracks = data["track"]
+
+        # Work with only the first track.
+        try:
+            trackdata = tracks[0]
+        except IndexError:
+            irc.error("%s doesn't seem to have listened to anything." % user, Raise=True)
+
+        artist = ircutils.bold(trackdata["artist"]["#text"].strip())  # Artist name
+        track = ircutils.bold(trackdata["name"].strip())  # Track name
+        # Album name (may or may not be present)
+        album = trackdata["album"]["#text"].strip()
+        if album:
+            album = ircutils.bold("[%s] " % album)
+
+        time = int(trackdata["date"]["uts"])  # Time of last listen
+        # Format this using the preferred time format.
+        tformat = conf.supybot.reply.format.time()
+        time = datetime.fromtimestamp(time).strftime(tformat)
+        irc.reply('%s listened to %s by %s %sat %s' %
+                  (ircutils.bold(user), track, artist, album, time))
 
     np = wrap(nowPlaying, [optional("something")])
 
@@ -185,14 +199,15 @@ class LastFM(callbacks.Plugin):
         is not given, defaults to the LastFM user configured for your
         current nick.
         """
-        if not self.apiKey:
+        apiKey = self.registryValue("apiKey")
+        if not apiKey:
             irc.error("The API Key is not set. Please set it via "
                       "'config plugins.lastfm.apikey' and reload the plugin. "
                       "You can sign up for an API Key using "
                       "http://www.last.fm/api/account/create", Raise=True)
         user = (user or self.db.get(msg.prefix) or msg.nick)
 
-        url = "%sapi_key=%s&method=user.getInfo&user=%s&format=json" % (self.APIURL, self.apiKey, user)
+        url = "%sapi_key=%s&method=user.getInfo&user=%s&format=json" % (self.APIURL, apiKey, user)
         self.log.debug("LastFM.profile: url %s", url)
         try:
             f = utils.web.getUrl(url).decode("utf-8")
@@ -223,17 +238,6 @@ class LastFM(callbacks.Plugin):
                   "Country: %(country)s; Tracks played: %(playcount)s" % profile)
 
     profile = wrap(profile, [optional("something")])
-
-    def _formatTimeago(self, unixtime):
-        t = int(time()-unixtime)
-        if t/86400 >= 1:
-            return "%i days ago" % (t/86400)
-        if t/3600 >= 1:
-            return "%i hours ago" % (t/3600)
-        if t/60 >= 1:
-            return "%i minutes ago" % (t/60)
-        if t > 0:
-            return "%i seconds ago" % (t)
 
 filename = conf.supybot.directories.data.dirize("LastFM.db")
 

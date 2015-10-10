@@ -56,7 +56,7 @@ class LastFMTestCase(PluginTestCase):
         self.assertNotError("np krf")
 
     def testLastfmDB(self):
-        self.assertNotError("set GLolol") # test db
+        self.assertNotError("lastfm set GLolol") # test db
         self.assertNotError("np")
 
     def testProfile(self):
