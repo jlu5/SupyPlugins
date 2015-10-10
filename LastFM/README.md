@@ -9,7 +9,7 @@ A Supybot plugin for LastFM.
 
 - Native Python 3 support.
 - Code cleanup and various bugfixes.
-- Migration to a new LastFM API (v2).
+- Migration to the new LastFM API v2 (JSON).
 - Simpler DB implementation using pickle and hostmasks instead of nicks (requires DB reset).
 - Only `np` and `profile` commands - the others have since been broken by LastFM API changes and removed.
 

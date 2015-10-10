@@ -40,7 +40,8 @@ import supybot.world as world
 import supybot.log as log
 
 from xml.dom import minidom
-from time import time
+import json
+from datetime import datetime
 try:
     from itertools import izip # Python 2
 except ImportError:
@@ -147,6 +148,7 @@ class LastFM(callbacks.Plugin):
             f = utils.web.getUrlFd(url)
         except utils.web.Error:
             irc.error("Unknown user '%s'." % user, Raise=True)
+        self.log.debug("LastFM.profile: url %s", url)
 
         parser = LastFMParser()
         (user, isNowPlaying, artist, track, album, time) = parser.parseRecentTracks(f)
@@ -190,22 +192,35 @@ class LastFM(callbacks.Plugin):
                       "http://www.last.fm/api/account/create", Raise=True)
         user = (user or self.db.get(msg.prefix) or msg.nick)
 
-        url = "%sapi_key=%s&method=user.getInfo&user=%s" % (self.APIURL, self.apiKey, user)
+        url = "%sapi_key=%s&method=user.getInfo&user=%s&format=json" % (self.APIURL, self.apiKey, user)
+        self.log.debug("LastFM.profile: url %s", url)
         try:
-            f = utils.web.getUrlFd(url)
+            f = utils.web.getUrl(url).decode("utf-8")
         except utils.web.Error:
             irc.error("Unknown user '%s'." % user, Raise=True)
 
-        xml = minidom.parse(f).getElementsByTagName("user")[0]
-        keys = ("realname", "registered", "age", "gender", "country", "playcount")
+        data = json.loads(f)
+        keys = ("realname", "age", "gender", "country", "playcount")
         profile = {"id": ircutils.bold(user)}
         for tag in keys:
             try:
-                profile[tag] = ircutils.bold(xml.getElementsByTagName(tag)[0].firstChild.data.strip())
-            except AttributeError: # empty field
-                profile[tag] = ircutils.bold('unknown')
-        irc.reply(("%(id)s (realname: %(realname)s) registered on %(registered)s; age: %(age)s / %(gender)s; "
-                  "Country: %(country)s; Tracks played: %(playcount)s") % profile)
+                s = data["user"][tag].strip() or "N/A"
+            except KeyError: # empty field
+                s = "N/A"
+            finally:
+                profile[tag] = ircutils.bold(s)
+        try:
+            # LastFM sends the user registration time as a unix timestamp;
+            # Format it using the preferred time format.
+            time = int(data["user"]["registered"]["unixtime"])
+            tformat = conf.supybot.reply.format.time()
+            s = datetime.fromtimestamp(time).strftime(tformat)
+        except KeyError:
+            s = "N/A"
+        finally:
+            profile["registered"] = ircutils.bold(s)
+        irc.reply("%(id)s (realname: %(realname)s) registered on %(registered)s; age: %(age)s / %(gender)s; "
+                  "Country: %(country)s; Tracks played: %(playcount)s" % profile)
 
     profile = wrap(profile, [optional("something")])
 
