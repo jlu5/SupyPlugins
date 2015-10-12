@@ -1,6 +1,7 @@
 language: python
 python:
   - "2.7"
+  - "3.2"
   - "3.3"
   - "3.4"
   - "3.5"
@@ -18,6 +19,8 @@ install:
     - sudo apt-get install -qq bind9-host
     - pip install -vr requirements.txt
 
+# Some plugins use external APIs, and can cause tests to fail due to them being slow/down.
+# --no-network disables these, and we can still allow tests that have network access to fail.
 env:
     - TEST_ARGS="--no-network"
     - TEST_ARGS=""
