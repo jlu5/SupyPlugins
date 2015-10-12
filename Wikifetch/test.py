@@ -64,4 +64,10 @@ class WikifetchTestCase(PluginTestCase):
         def testDisambigStripSpaces(self):
             self.assertNotRegexp('wiki Na', '\n')
 
+        def testWikiBold(self):
+            self.assertRegexp('wiki Apple', '\x02')
+            # Complex combination of the <a> tag inside a <b> tag; we should always use
+            # empty bold content instead of the text "None".
+            self.assertNotRegexp('wiki Fallstreak hole', 'None')
+
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:
