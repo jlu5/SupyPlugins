@@ -1,12 +1,16 @@
-NoTrigger is an anti-abuse script that modifies outFilter to prevent triggering other bots.
+NoTrigger is an anti-abuse plugin that modifies outFilter to prevent triggering other bots.
 
 ## Short description
 In short, NoTrigger works by:
 
- - Prepending messages that start with a symbol (```!"#$%&'()*+,-./:;<=>?@[\]^_`{|}~```) with a [zero width space](https://en.wikipedia.org/wiki/Zero-width_space) (ZWSP), since these are often used as prefixes for bots. This has the effect of being completely invisible, and tricks most bots into ignoring yours!
+ - Prepending messages that start with a symbol (```!"#$%&'()*+,-./:;<=>?@[\]^_`{|}~```) or any configured prefixes with a [zero width space](https://en.wikipedia.org/wiki/Zero-width_space) (ZWSP), since these are often used as prefixes for bots. This has the effect of being completely invisible, and tricks most bots into ignoring yours!
  - Prepending messages with a ZWSP if the channel is set to block colors and a message begins with a formatting code (sneaky attackers can otherwise do something like `\x02!echo hello` to bypass filters).
  - Optionally, prepending messages with a ZWSP if they match `<something>: ` or `<something>, `, since some bots are taught to respond to their nicks.
  - Optionally, blocking all channel-wide CTCPs (except for ACTION).
+ - Optionally, stripping the bell character from any outgoing messages.
+ - Optionally, appending messages that end with any configured suffixes with a ZWSP.
+
+To enable NoTrigger, set the `plugins.NoTrigger.enable` config option `True` for the channels in question. You can find a list of NoTrigger's options (toggling the things mentioned above) by running `config list plugins.NoTrigger`.
 
 ## Longer description/Backstory on why I wrote this
 Sometimes when you have a public development channel with many bots residing in it, someone will come along and do something really evil: that is, create a huge message loop by chaining all your innocent bots together!

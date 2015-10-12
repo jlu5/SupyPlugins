@@ -46,13 +46,13 @@ except ImportError:
 
 
 class NoTrigger(callbacks.Plugin):
-    """Mods outFilter to prevent the bot from triggering other bots."""
+    """Modifies outFilter to prevent the bot from triggering other bots."""
 
     def __init__(self, irc):
         self.__parent = super(NoTrigger, self)
         self.__parent.__init__(irc)
-        # This uses Unicode Character 'ZERO WIDTH SPACE' (U+200B) for
-        # padding, which looks nicer (it's invisible) and does the trick.
+        # This appends the Unicode character 'ZERO WIDTH SPACE' (U+200B) for
+        # which is absolutely invisible and stops bots from being triggered by us.
         if version_info[0] >= 3:
             self.padchar = "\u200B"
         else:
@@ -60,6 +60,8 @@ class NoTrigger(callbacks.Plugin):
             self.padchar = u('\u200B')[0]
 
     def isChanStripColor(self, irc, channel):
+        """Returns whether the given channel has a color-stripping mode (usually
+        +c or +S, but configurable) set."""
         try:
             c = irc.state.channels[channel]
             for item in self.registryValue('colorAware.modes'):
@@ -74,9 +76,8 @@ class NoTrigger(callbacks.Plugin):
                 ircutils.isChannel(msg.args[0]) and \
                 self.registryValue('enable', msg.args[0]):
             s = msg.args[1]
-            prefixes = string.punctuation
-            rpairs = {"\007": ""}
-            suffixes = ("moo")
+            prefixes = self.registryValue('prefixes', msg.args[0])
+            suffixes = self.registryValue('suffixes', msg.args[0])
             if self.registryValue('colorAware') and \
                     self.isChanStripColor(irc, msg.args[0]) and \
                     s.startswith(("\003", "\002", "\017", "\037", "\026")):
@@ -105,11 +106,13 @@ class NoTrigger(callbacks.Plugin):
                                "CTCP due to config "
                                "plugins.notrigger.blockCtcp.", msg.args[0],
                                irc.network)
-            for k, v in rpairs.items():
-                s = s.replace(k, v)
+            if self.registryValue('blockBell', msg.args[0]):
+                self.log.debug("NoTrigger (%s/%s): removing bell character"
+                               "from outgoing message.", msg.args[0], irc.network)
+                s = s.replace('\x07', '')
             if s.startswith(tuple(prefixes)):
                 s = self.padchar + s
-            if s.endswith(suffixes):
+            if s.endswith(tuple(suffixes)):
                 s += self.padchar
             msg = ircmsgs.privmsg(msg.args[0], s, msg=msg)
         return msg
