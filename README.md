@@ -49,7 +49,7 @@ Most of these plugins also have their own READMEs in their folders; you can usua
 - Provides a simple command to check whether a website is up or down (using [isup.me](http://isup.me)).
 
 ##### LastFM
-- LastFM plugin, forked from [krf/supybot-lastfm](https://github.com/krf/supybot-lastfm). Also available as a [separate repository](https://github.com/GLolol/supybot-lastfm).
+- LastFM plugin, forked from [krf/supybot-lastfm](https://github.com/krf/supybot-lastfm).
 
 ##### [NoTrigger](NoTrigger/README.md)
 - Anti-abuse script; prevents the bot from triggering other bots by modifying its output slightly. For more information, see [NoTrigger/README.md](NoTrigger/README.md).

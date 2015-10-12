@@ -1,35 +1,27 @@
 supybot-lastfm (GLolol's fork)
 ==============
 
-[![Build Status](https://travis-ci.org/GLolol/supybot-lastfm.svg?branch=devel)](https://travis-ci.org/GLolol/supybot-lastfm)
+A Supybot plugin for LastFM, forked from [krf/supybot-lastfm](https://github.com/krf/supybot-lastfm).
 
-A Supybot plugin for LastFM.
-
-### Summary of changes:
+### Changes made in this fork
 
 - Native Python 3 support.
 - Code cleanup and various bugfixes.
-- Migration to the new LastFM API v2 (JSON).
-- Simpler DB implementation using pickle and hostmasks instead of nicks (requires DB reset).
-- Only `np` and `profile` commands - the others have since been broken by LastFM API changes and removed.
-
-The full diff can be found [here](https://github.com/GLolol/supybot-lastfm/compare/krf:master...devel).
-
-### Support
-You may find me on IRC at `irc.overdrive.pw #dev` ([webchat](http://webchat.overdrive.pw/?channels=dev)).
-
-Feel free to suggest enhancements on the [issue tracker](https://github.com/GLolol/supybot-lastfm/issues). Pull requests are welcome.
+- Migration to the newer (v2) LastFM API, using JSON instead of XML.
+- Simpler DB implementation using pickle, and storing hostmasks instead of nicks (requires DB reset).
+- Only the `np` and `profile` commands are present - the others have since been broken by LastFM API changes and removed.
+- Slight formatting enhancements for various commands.
 
 ### Usage
 
 Showing now playing information:
 ```
-[09:53:33] $np
-[09:53:34] KRF listened to “Behind Closed Doors” by Rise Against [The Sufferer & The Witness] more than 1 days ago
+<@GLolol> %np RJ
+<@Atlas> RJ listened to Apache by The Shadows [Back To Back] at 01:42 PM, October 10, 2015
 ```
 
 Showing profile information:
 ```
-[09:53:36] $profile
-[09:53:37] KRF (realname: Kevin Funk) registered on May 28, 2006; 23 years old / m; Country: Germany; Tracks played: 32870
+<@GLolol> %profile RJ
+<@Atlas> RJ (realname: Richard Jones) registered on 03:50 AM, November 20, 2002; age: 0 / m; Country: United Kingdom; Tracks played: 114896
 ```
