@@ -59,28 +59,25 @@ class Wikifetch(callbacks.Plugin):
     """Grabs data from Wikipedia and other MediaWiki-powered sites."""
     threaded = True
 
-    @internationalizeDocstring
-    def wiki(self, irc, msg, args, optlist, search):
-        """[--site <site>] <search term>
-
-        Returns the first paragraph of a Wikipedia article."""
+    def _wiki(self, irc, msg, search, baseurl):
+        """Fetches and replies content from a MediaWiki-powered website."""
         reply = ''
-        optlist = dict(optlist)
+
         # Different instances of MediaWiki use different URLs... This tries
         # to make the parser work for most sites, but still use resonable defaults
         # such as filling in http:// and appending /wiki to links...
-
-        # Try using '--site lyrics.wikia.com' or '--site wiki.archlinux.org'.
-        baseurl = optlist.get('site') or self.registryValue('url', msg.args[0])
+        # Special cases: Wikia, Wikipedia, Arch Linux Wiki
         if 'wikia.com' in baseurl or 'wikipedia.org' in baseurl:
             baseurl += '/wiki'
         elif 'wiki.archlinux.org' in baseurl:
             baseurl += '/index.php'
         if not baseurl.lower().startswith(('http://', 'https://')):
             baseurl = 'http://' + baseurl
+
         # first, we get the page
         addr = '%s/Special:Search?search=%s' % \
                     (baseurl, quote_plus(search))
+        self.log.debug('Wikifetch: using URL %s', addr)
         article = utils.web.getUrl(addr)
         if sys.version_info[0] >= 3:
             article = article.decode()
@@ -140,18 +137,11 @@ class Wikifetch(callbacks.Plugin):
                     reply += '"%s" (Redirected from "%s"): ' % (title, redirect)
                 except IndexError:
                     pass
-        # extract the address we got it from
-        # We only care about formatting this if we're actually on Wikipedia
-        # (i.e. not using --site <site>)
+        # extract the address we got it from - most sites have the perm link
+        # inside the page itself
         try:
-            if 'site' not in optlist:
-                addr = tree.find(".//link[@rel='canonical']")
-                addr = addr.attrib['href']
-                # force serving HTTPS links
-                addr = 'https://' + addr.split("//")[1]
-            else:
-                addr = tree.find(".//div[@class='printfooter']/a").attrib['href']
-                addr = re.sub('([&?]|(amp;)?)oldid=\d+$', '', addr)
+            addr = tree.find(".//div[@class='printfooter']/a").attrib['href']
+            addr = re.sub('([&?]|(amp;)?)oldid=\d+$', '', addr)
         except:
             pass
         # check if it's a disambiguation page
@@ -211,7 +201,18 @@ class Wikifetch(callbacks.Plugin):
         # Remove inline citations (text[1][2][3], etc.)
         reply = re.sub('\[\d+\]', '', reply)
         irc.reply(reply)
-    wiki = wrap(wiki, [getopts({'site': 'somethingWithoutSpaces'}), 'text'])
+
+    @internationalizeDocstring
+    @wrap([getopts({'site': 'somethingWithoutSpaces'}), 'text'])
+    def wiki(self, irc, msg, args, optlist, search):
+        """[--site <site>] <search term>
+
+        Returns the first paragraph of a Wikipedia article. Optionally, a site
+        argument can be given to override the default (usually Wikipedia) -
+        try using '--site lyrics.wikia.com' or '--site wiki.archlinux.org'."""
+        optlist = dict(optlist)
+        baseurl = optlist.get('site') or self.registryValue('url', msg.args[0])
+        self._wiki(irc, msg, search, baseurl)
 
 Class = Wikifetch
 
