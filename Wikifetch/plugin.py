@@ -198,6 +198,8 @@ class Wikifetch(callbacks.Plugin):
                     b_tag.text = "&#x02;%s&#x02;" % (b_tag.text or '')
                 p = p.text_content()
                 p = p.replace('&#x02;', '\x02')
+                # Get rid of newlines, etc., that can corrupt the output.
+                p = utils.str.normalizeWhitespace(p)
                 p = p.strip()
                 if sys.version_info[0] < 3:
                     if isinstance(p, unicode):
