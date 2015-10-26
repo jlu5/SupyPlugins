@@ -207,7 +207,7 @@ class Wikifetch(callbacks.Plugin):
     def wiki(self, irc, msg, args, optlist, search):
         """[--site <site>] <search term>
 
-        Returns the first paragraph of a Wikipedia article. Optionally, a site
+        Returns the first paragraph of a wiki article. Optionally, a site
         argument can be given to override the default (usually Wikipedia) -
         try using '--site lyrics.wikia.com' or '--site wiki.archlinux.org'."""
         optlist = dict(optlist)
