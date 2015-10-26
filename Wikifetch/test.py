@@ -70,4 +70,7 @@ class WikifetchTestCase(PluginTestCase):
             # empty bold content instead of the text "None".
             self.assertNotRegexp('wiki Fallstreak hole', 'None')
 
+        def testRandom(self):
+            self.assertNotError('random')
+
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:
