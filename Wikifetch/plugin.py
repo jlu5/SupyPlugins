@@ -54,6 +54,11 @@ if sys.version_info[0] >= 3:
 else:
     from urllib import quote_plus
 
+# Some smart person decided to override the any and all builtins, causing it to break on genexpr...
+if isinstance(__builtins__, dict):
+    any = __builtins__['any']
+else:
+    any = __builtins__.any
 
 class Wikifetch(callbacks.Plugin):
     """Grabs data from Wikipedia and other MediaWiki-powered sites."""
@@ -66,8 +71,8 @@ class Wikifetch(callbacks.Plugin):
         # Different instances of MediaWiki use different URLs... This tries
         # to make the parser work for most sites, but still use resonable defaults
         # such as filling in http:// and appending /wiki to links...
-        # Special cases: Wikia, Wikipedia, Arch Linux Wiki
-        if 'wikia.com' in baseurl or 'wikipedia.org' in baseurl:
+        # Special cases: Wikia, Wikipedia, Wikimedia (i.e. Wikimedia Commons), Arch Linux Wiki
+        if any(sitename in baseurl for sitename in ('wikia.com', 'wikipedia.org', 'wikimedia.org')):
             baseurl += '/wiki'
         elif 'wiki.archlinux.org' in baseurl:
             baseurl += '/index.php'
