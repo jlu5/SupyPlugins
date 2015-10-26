@@ -214,6 +214,16 @@ class Wikifetch(callbacks.Plugin):
         baseurl = optlist.get('site') or self.registryValue('url', msg.args[0])
         self._wiki(irc, msg, search, baseurl)
 
+    @internationalizeDocstring
+    @wrap([additional('somethingWithoutSpaces')])
+    def random(self, irc, msg, args, site):
+        """[<site>]
+
+        Returns the first paragraph of a random wiki article. Optionally, the site
+        argument can be given to override the default (usually Wikipedia)."""
+        baseurl = site or self.registryValue('url', msg.args[0])
+        self._wiki(irc, msg, 'Special:Random', baseurl)
+
 Class = Wikifetch
 
 
