@@ -1,5 +1,6 @@
 ###
 # Copyright (c) 2008, Kevin Funk
+# Copyright (c) 2014-2015 James Lu
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -43,9 +44,6 @@ def configure(advanced):
 LastFM = conf.registerPlugin('LastFM')
 conf.registerGlobalValue(LastFM, 'apiKey',
      registry.String('', """Sets the API key for this plugin: http://www.last.fm/api/account/create""", private=True))
-conf.registerChannelValue(LastFM, "maxResults",
-    registry.NonNegativeInteger(5, """Limits the number of results that will be
-        displayed in the channel."""))
 conf.registerChannelValue(LastFM, "fetchYouTubeLink",
     registry.Boolean(False, """Determines whether the bot will try to
         fetch a YouTube link for the track given in 'np'. This is an

@@ -1,5 +1,6 @@
 ###
 # Copyright (c) 2008,2012 Kevin Funk
+# Copyright (c) 2014-2015 James Lu
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -29,13 +30,6 @@
 ###
 
 from supybot.test import *
-from .plugin import LastFMParser
-import unittest
-
-try:
-    from StringIO import StringIO
-except ImportError:
-    from io import StringIO
 import os
 
 class LastFMTestCase(PluginTestCase):

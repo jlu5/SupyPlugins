@@ -40,13 +40,8 @@ import supybot.callbacks as callbacks
 import supybot.world as world
 import supybot.log as log
 
-from xml.dom import minidom
 import json
 from datetime import datetime
-try:
-    from itertools import izip # Python 2
-except ImportError:
-    izip = zip # Python 3
 import pickle
 
 class LastFMDB():
@@ -81,35 +76,6 @@ class LastFMDB():
             return self.db[user]
         except:
             return # entry does not exist
-
-class LastFMParser:
-    def parseRecentTracks(self, stream):
-        """
-        <stream>
-
-        Returns a tuple with the information of the last-played track.
-        """
-        xml = minidom.parse(stream).getElementsByTagName("recenttracks")[0]
-        user = xml.getAttribute("user")
-
-        try:
-            t = xml.getElementsByTagName("track")[0] # most recent track
-        except IndexError:
-            return [user] + [None]*5
-        isNowPlaying = (t.getAttribute("nowplaying") == "true")
-        if not isNowPlaying:
-            time = int(t.getElementsByTagName("date")[0].getAttribute("uts"))
-        else:
-            time = None
-
-        artist = t.getElementsByTagName("artist")[0].firstChild.data
-        track = t.getElementsByTagName("name")[0].firstChild.data
-        try:
-            albumNode = t.getElementsByTagName("album")[0].firstChild
-            album = albumNode.data
-        except (IndexError, AttributeError):
-            album = None
-        return (user, isNowPlaying, artist, track, album, time)
 
 class LastFM(callbacks.Plugin):
     threaded = True
