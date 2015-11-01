@@ -172,12 +172,14 @@ class LastFM(callbacks.Plugin):
         if album:
             album = ircutils.bold("[%s] " % album)
 
-        time = int(trackdata["date"]["uts"])  # Time of last listen
-        # Format this using the preferred time format.
-        tformat = conf.supybot.reply.format.time()
-        time = datetime.fromtimestamp(time).strftime(tformat)
-        irc.reply('%s listened to %s by %s %sat %s' %
-                  (ircutils.bold(user), track, artist, album, time))
+        try:
+            time = int(trackdata["date"]["uts"])  # Time of last listen
+            # Format this using the preferred time format.
+            tformat = conf.supybot.reply.format.time()
+            time = datetime.fromtimestamp(time).strftime(tformat)
+        except KeyError:  # Nothing given by the API?
+            time = "some point in time"
+
 
     np = wrap(nowPlaying, [optional("something")])
 
