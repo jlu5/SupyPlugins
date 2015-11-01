@@ -165,12 +165,12 @@ class LastFM(callbacks.Plugin):
         except IndexError:
             irc.error("%s doesn't seem to have listened to anything." % user, Raise=True)
 
-        artist = ircutils.bold(trackdata["artist"]["#text"].strip())  # Artist name
-        track = ircutils.bold(trackdata["name"].strip())  # Track name
+        artist = trackdata["artist"]["#text"].strip()  # Artist name
+        track = trackdata["name"].strip()  # Track name
         # Album name (may or may not be present)
         album = trackdata["album"]["#text"].strip()
         if album:
-            album = ircutils.bold("[%s] " % album)
+            album = "[%s] " % album
 
         try:
             time = int(trackdata["date"]["uts"])  # Time of last listen
@@ -180,6 +180,27 @@ class LastFM(callbacks.Plugin):
         except KeyError:  # Nothing given by the API?
             time = "some point in time"
 
+        public_url = ''
+        # If the DDG plugin from this repository is loaded, we can integrate
+        # that by finding a YouTube link for the track.
+        if self.registryValue("fetchYouTubeLink"):
+            ddg = irc.getCallback("DDG")
+            if ddg:
+                # Each valid result has a preceding heading in the format
+                # '<td valign="top">1.&nbsp;</td>', etc.
+                try:
+                    search = [td for td in ddg._ddgurl('site:youtube.com "%s - %s"' % (artist, track))
+                              if "1." in td.text]
+                    res = search[0].next_sibling.next_sibling
+                    public_url = format(' - %u', res.a.get('href'))
+                except:
+                    # If something breaks, log the error but don't cause the
+                    # entire np request to fail.
+                    log.exception("LastFM: failed to get YouTube link for track %s - %s", artist, track)
+
+        irc.reply('%s listened to %s by %s %sat %s%s' %
+                  (ircutils.bold(user), ircutils.bold(track),
+                   ircutils.bold(artist), ircutils.bold(album), time, public_url))
 
     np = wrap(nowPlaying, [optional("something")])
 

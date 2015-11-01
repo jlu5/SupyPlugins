@@ -46,5 +46,10 @@ conf.registerGlobalValue(LastFM, 'apiKey',
 conf.registerChannelValue(LastFM, "maxResults",
     registry.NonNegativeInteger(5, """Limits the number of results that will be
         displayed in the channel."""))
+conf.registerChannelValue(LastFM, "fetchYouTubeLink",
+    registry.Boolean(False, """Determines whether the bot will try to
+        fetch a YouTube link for the track given in 'np'. This is an
+        experimental feature, and requires the DDG plugin in this repository
+        to be loaded."""))
 
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:
