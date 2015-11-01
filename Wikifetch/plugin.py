@@ -184,7 +184,7 @@ class Wikifetch(callbacks.Plugin):
                     reply += format(_('This page appears to be a WikiProject page, '
                                'but it is too complex for us to parse: %u'), addr)
                 else:
-                    reply += _('Not found, or page malformed.')
+                    irc.error(_('Not found, or page malformed.'), Raise=True)
             else:
                 p = p[0]
                 # Replace <b> tags with IRC-style bold, this has to be
