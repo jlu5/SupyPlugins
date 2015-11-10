@@ -107,8 +107,6 @@ class NoTrigger(callbacks.Plugin):
                                "plugins.notrigger.blockCtcp.", msg.args[0],
                                irc.network)
             if self.registryValue('blockBell', msg.args[0]):
-                self.log.debug("NoTrigger (%s/%s): removing bell character"
-                               "from outgoing message.", msg.args[0], irc.network)
                 s = s.replace('\x07', '')
             if s.startswith(tuple(prefixes)):
                 s = self.padchar + s
