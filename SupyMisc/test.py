@@ -45,16 +45,12 @@ class SupyMiscTestCase(PluginTestCase):
 
     @unittest.skipUnless(network, "Network-based tests have been disabled via "
                          "--no-network")
-    @unittest.skip("Doesn't work yet... Raises UnicodeDecodeError on Python 2.")
+    @unittest.skipIf(version_info[0] <= 2, "Doesn't work (raises UnicodeDecodeError) on Python 2.")
     def testTldInternationalTLDs(self):
         # https://www.iana.org/domains/root/db/xn--io0a7i
         # Chinese internationalized domain for 'network' (similar to .net)
         self.assertNotError('tld xn--io0a7i')
-        if version_info[0] >= 3:
-            self.assertNotError('tld \u7f51\u7edc')
-        else:
-            from codecs import unicode_escape_decode as u
-            self.assertNotError('tld '+u('\u7f51\u7edc')[0])
+        self.assertNotError('tld \u7f51\u7edc')
 
     def testColorwheel(self):
         self.assertRegexp('colors', '.*\x03.*')
