@@ -26,7 +26,7 @@ env:
     - TEST_ARGS=""
 
 script:
-    - supybot-test -c --plugins-dir=. $TEST_ARGS --exclude=./Weather --exclude=./BonusLevel
+    - supybot-test -c --plugins-dir=. $TEST_ARGS --exclude=./Weather
 
 notifications:
     email: false
