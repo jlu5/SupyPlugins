@@ -35,7 +35,7 @@ import re
 import sys
 import lxml.html
 import supybot.utils as utils
-from supybot.commands import *
+from supybot.commands import wrap, getopts, additional
 import supybot.plugins as plugins
 import supybot.ircutils as ircutils
 import supybot.callbacks as callbacks
@@ -53,12 +53,6 @@ if sys.version_info[0] >= 3:
     from urllib.parse import quote_plus
 else:
     from urllib import quote_plus
-
-# Some smart person decided to override the any and all builtins, causing it to break on genexpr...
-if isinstance(__builtins__, dict):
-    any = __builtins__['any']
-else:
-    any = __builtins__.any
 
 class Wikifetch(callbacks.Plugin):
     """Grabs data from Wikipedia and other MediaWiki-powered sites."""
