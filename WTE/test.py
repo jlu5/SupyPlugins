@@ -40,8 +40,9 @@ class WTETestCase(PluginTestCase):
                          "--no-network")
     def testWTE(self):
         inp = "The quick brown fox jumps over the lazy dog."
-        m = self.getMsg("wte %s" % inp)
-        print('\nWTE Input: %s\nWTE Response: %s' % (inp, m.args[1]))
-        assert m, 'No response found.'
+        for _ in range(2):
+            m = self.getMsg("wte %s" % inp)
+            print('\nWTE Input: %s\nWTE Response: %s' % (inp, m.args[1]))
+            assert m, 'No response found.'
 
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:
