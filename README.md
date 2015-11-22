@@ -77,6 +77,9 @@ Most of these plugins also have their own READMEs in their folders; you can usua
 ##### Replacer
 - History replacer using sed-style expressions.
 
+##### RhymeZone
+- Fetches rhymes from http://rhymezone.com/.
+
 ##### SupyMisc
 - Some assorted commands that don't seem to fit anywhere else.
 
