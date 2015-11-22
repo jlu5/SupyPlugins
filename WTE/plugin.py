@@ -172,7 +172,8 @@ class WTE(callbacks.Plugin):
         try:
             data = utils.web.getUrlFd(url, headers).read().decode("utf-8")
         except utils.web.Error as e:
-            irc.error(str(e), Raise=True)
+            self.log.exception("WTE: getTranslation errored (probably malformed or too long text)")
+            return text
         data = self._jsonRepair(data)
         data = json.loads(data)
         return ''.join(x[0] for x in data[0])
