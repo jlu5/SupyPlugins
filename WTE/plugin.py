@@ -57,14 +57,99 @@ class WTE(callbacks.Plugin):
     def __init__(self, irc):
         self.__parent = super(WTE, self)
         self.__parent.__init__(irc)
-        self.langs = ('sw', 'sv', 'is', 'et', 'te', 'tr', 'mr', 'nl', 'sl', 
-        'id', 'gu', 'hi', 'az', 'hmn', 'ko', 'da', 'bg', 'lo', 'so', 'tl', 
-        'hu', 'ca', 'cy', 'bs', 'ka', 'vi', 'eu', 'ms', 'fr', 'no', 'hy', 
-        'ro', 'ru', 'th', 'it', 'ta', 'sq', 'ceb', 'bn', 'de', 'zh-CN', 
-        'be', 'lt', 'ne', 'fi', 'pa', 'iw', 'km', 'mt', 'ht', 'mi', 'lv', 
-        'jw', 'sr', 'ar', 'ig', 'ha', 'pt', 'ga', 'af', 'zu', 'la', 'el', 
-        'cs', 'uk', 'ja', 'hr', 'kn', 'gl', 'mk', 'fa', 'sk', 'mn', 'es', 
-        'ur', 'pl', 'eo', 'yo', 'en', 'yi')
+        self.langs = {
+            'af': 'Afrikaans',
+            'sq': 'Albanian',
+            'ar': 'Arabic',
+            'hy': 'Armenian',
+            'az': 'Azerbaijani',
+            'eu': 'Basque',
+            'be': 'Belarusian',
+            'bn': 'Bengali',
+            'bs': 'Bosnian',
+            'bg': 'Bulgarian',
+            'ca': 'Catalan',
+            'ceb': 'Cebuano',
+            'ny': 'Chichewa',
+            'zh-CN': 'Chinese Simplified',
+            'zh-TW': 'Chinese Traditional',
+            'hr': 'Croatian',
+            'cs': 'Czech',
+            'da': 'Danish',
+            'nl': 'Dutch',
+            'en': 'English',
+            'eo': 'Esperanto',
+            'et': 'Estonian',
+            'tl': 'Filipino',
+            'fi': 'Finnish',
+            'fr': 'French',
+            'gl': 'Galician',
+            'ka': 'Georgian',
+            'de': 'German',
+            'el': 'Greek',
+            'gu': 'Gujarati',
+            'ht': 'Haitian Creole',
+            'ha': 'Hausa',
+            'iw': 'Hebrew',
+            'hi': 'Hindi',
+            'hmn': 'Hmong',
+            'hu': 'Hungarian',
+            'is': 'Icelandic',
+            'ig': 'Igbo',
+            'id': 'Indonesian',
+            'ga': 'Irish',
+            'it': 'Italian',
+            'ja': 'Japanese',
+            'jw': 'Javanese',
+            'kn': 'Kannada',
+            'kk': 'Kazakh',
+            'km': 'Khmer',
+            'ko': 'Korean',
+            'lo': 'Lao',
+            'la': 'Latin',
+            'lv': 'Latvian',
+            'lt': 'Lithuanian',
+            'mk': 'Macedonian',
+            'mg': 'Malagasy',
+            'ms': 'Malay',
+            'ml': 'Malayalam',
+            'mt': 'Maltese',
+            'mi': 'Maori',
+            'mr': 'Marathi',
+            'mn': 'Mongolian',
+            'my': 'Myanmar (Burmese)',
+            'ne': 'Nepali',
+            'no': 'Norwegian',
+            'fa': 'Persian',
+            'pl': 'Polish',
+            'pt': 'Portuguese',
+            'ma': 'Punjabi',
+            'ro': 'Romanian',
+            'ru': 'Russian',
+            'sr': 'Serbian',
+            'st': 'Sesotho',
+            'si': 'Sinhala',
+            'sk': 'Slovak',
+            'sl': 'Slovenian',
+            'so': 'Somali',
+            'es': 'Spanish',
+            'su': 'Sudanese',
+            'sw': 'Swahili',
+            'sv': 'Swedish',
+            'tg': 'Tajik',
+            'ta': 'Tamil',
+            'te': 'Telugu',
+            'th': 'Thai',
+            'tr': 'Turkish',
+            'uk': 'Ukrainian',
+            'ur': 'Urdu',
+            'uz': 'Uzbek',
+            'vi': 'Vietnamese',
+            'cy': 'Welsh',
+            'yi': 'Yiddish',
+            'yo': 'Yoruba',
+            'zu': 'Zulu',
+        }
 
     def _jsonRepair(self, data):
         while ',,' in data:
@@ -74,6 +159,10 @@ class WTE(callbacks.Plugin):
         return data
 
     def getTranslation(self, irc, sourceLang, targetLang, text):
+        """
+        Fetches translations from Google Translate, given the source language,
+        target language, and text.
+        """
         args = {"sl": sourceLang, "tl": targetLang, 'q': text}
         url = "https://translate.googleapis.com/translate_a/single?client=gtx&dt=t&"+ \
             urlencode(args)
@@ -88,6 +177,7 @@ class WTE(callbacks.Plugin):
         data = json.loads(data)
         return ''.join(x[0] for x in data[0])
 
+    @wrap(['text'])
     def wte(self, irc, msg, args, text):
         """wte <text>
 
@@ -98,19 +188,30 @@ class WTE(callbacks.Plugin):
         if outlang not in self.langs:
             irc.error("Unrecognized output language. Please set "
                 "'config plugins.wte.language' correctly.", Raise=True)
-        ll = random.sample(self.langs, random.randint(4,8))
+
+        # Randomly choose 4 to 8 languages from the list of supported languages.
+        # The amount can be adjusted if you really wish - 4 to 8 is reasonable
+        # in that it gives interesting results but doesn't spam Google's API
+        # (and risk getting blocked) too much.
+        ll = random.sample(self.langs.keys(), random.randint(4,8))
         self.log.debug(format("WTE: Using %i languages: %L "
             "(outlang %s)", len(ll), ll, outlang))
+
+        # For every language in this list, translate the text given from
+        # auto-detect into the target language, and replace the original text
+        # with it.
         for targetlang in ll:
             text = self.getTranslation(irc, "auto", targetlang, text)
         text = self.getTranslation(irc, "auto", outlang, text)
         text = text.strip()
+
         if self.registryValue("verbose", msg.args[0]):
+            # Verbose output was requested, show the language codes AND
+            # names that we translated through.
+            languages = [ircutils.bold("%s [%s]" % (self.langs[lang], lang)) for lang in ll]
             irc.reply(format("Translated through \x02%i\x02 languages: %L "
-                "(outlang %s)",
-                len(ll), ll, outlang))
+                             "(output language %s)", len(ll), languages, outlang))
         irc.reply(text)
-    wte = wrap(wte, ['text'])
 
 Class = WTE
 
