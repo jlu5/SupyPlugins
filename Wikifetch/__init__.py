@@ -52,7 +52,7 @@ if not hasattr(supybot.authors, 'progval'):
 __contributors__ = {supybot.authors.progval: ['enhance configurability',
                                               'many bug fixes',
                                               'internationalization'],
-                    supybot.Author('James Lu', 'GLolol', 'glolol1@hotmail.com'):
+                    supybot.Author('James Lu', 'GLolol', 'glolol@overdrivenetworks.com'):
                                              ['formatting updates',
                                               'multiple wiki support']}
 
