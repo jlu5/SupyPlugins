@@ -21,7 +21,7 @@ on your bot.
 ## Support
 If you have any questions, concerns, or feature requests, please feel free to submit an issue. Pull requests are welcome.
 
-Or, you can find me on IRC at: `irc.overdrive.pw #dev` ([webchat](http://webchat.overdrive.pw/?channels=dev))
+Or, you can find me on IRC at: `irc.overdrivenetworks.com #dev` ([webchat](https://webchat.overdrivenetworks.com/?channels=dev))
 
 ## License
 Unless otherwise noted, all plugins are available under a 3 clause BSD license (inserted at the top of each file).
