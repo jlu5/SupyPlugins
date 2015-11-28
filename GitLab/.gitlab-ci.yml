@@ -1,0 +1,16 @@
+before_script:
+    - pip install limnoria
+
+Python 2:
+  image: python:2
+  script:
+    - supybot-test `pwd`
+  except:
+    - tags
+
+Python 3:
+  image: python:3
+  script:
+    - supybot-test `pwd`
+  except:
+    - tags
