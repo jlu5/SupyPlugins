@@ -249,10 +249,16 @@ class RelayNext(callbacks.Plugin):
                     for cn in targets:
                         target, net = cn.split("@")
                         otherIrc = world.getIrc(net)
+                        target_chanobj = otherIrc.state.channels.get(target)
                         if otherIrc is None:
                             self.log.debug("RelayNext: message to network %r"
                                            " dropped, we are not connected "
                                            "there!", net)
+                        elif (not target_chanobj) or otherIrc.nick not in target_chanobj.users:
+                            # We're not in the target relay channel!
+                            self.log.debug("RelayNext: message to %s@%s "
+                                           "dropped, we are not in that "
+                                           "channel!", target, net)
                         else:
                             out_msg = ircmsgs.privmsg(target, out_s)
                             out_msg.tag('relayedMsg')
