@@ -76,4 +76,9 @@ class SupyMiscTestCase(PluginTestCase):
     def testServerlist(self):
         self.assertNotError('serverlist')
 
+    def testAverage(self):
+        self.assertResponse('average 2 3 4', '3.0')
+        self.assertResponse('average -5 6', '0.5')
+        self.assertResponse('average 1337 -420 +42 +123456', '31103.75')
+
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:

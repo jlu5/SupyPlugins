@@ -286,6 +286,15 @@ class SupyMisc(callbacks.Plugin):
         irc.reply(ircutils.hostFromHostmask(irc.state.nickToHostmask(nick)))
     gethost = wrap(gethost, [(additional('nick'))])
 
+    @wrap([many("float")])
+    def average(self, irc, msg, args, nums):
+        """<number 1> [<number 2> <number 3> ...]
+        Returns the average of the numbers given.
+        """
+        average = sum(nums) / len(nums)
+        irc.reply(average)
+
+
 Class = SupyMisc
 
 # vim:set shiftwidth=4 softtabstop=4 expandtab textwidth=79:
