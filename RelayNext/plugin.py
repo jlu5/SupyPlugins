@@ -345,7 +345,8 @@ class RelayNext(callbacks.Plugin):
             channel, net = cn.split("@", 1)
             try:
                 c = world.getIrc(net).state.channels[channel]
-            except KeyError:
+            except (KeyError, AttributeError):
+                # Unknown network or network disconnected.
                 continue
             totalUsers += len(c.users)
             users = []
