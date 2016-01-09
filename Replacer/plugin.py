@@ -113,7 +113,7 @@ class Replacer(callbacks.PluginRegexp):
 
         next(iterable)
         for m in iterable:
-            if m.command == 'PRIVMSG' and \
+            if m.command in ('PRIVMSG', 'NOTICE') and \
                     m.args[0] == msg.args[0]:
                 target = regex.group('nick')
                 if not ircutils.isNick(str(target), strictRfc=True):
