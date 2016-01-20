@@ -350,7 +350,7 @@ class RelayNext(callbacks.Plugin):
                 continue
             totalUsers += len(c.users)
             users = []
-            for s in c.users:
+            for s in sorted(c.users):
                 s = s.strip()
                 if s in c.ops:
                     users.append('@%s' % s)
