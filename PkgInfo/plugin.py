@@ -250,28 +250,42 @@ class PkgInfo(callbacks.Plugin):
         If --exact is given, will output only exact matches.
         """
         pkg = pkg.lower()
+
         if 'exact' in dict(opts):
             encoded = urlencode({'name': pkg})
         else:
             encoded = urlencode({'q': pkg})
+
         url = 'https://www.archlinux.org/packages/search/json/?' + encoded
         friendly_url = 'https://www.archlinux.org/packages/?' + encoded
+
         self.log.debug("PkgInfo: using url %s for 'archlinux' command", url)
+
         fd = utils.web.getUrl(url)
         data = json.loads(fd.decode("utf-8"))
+
         if data['valid'] and data['results']:
             # We want one entry per package, but the API gives one
             # entry per architecture! Remove duplicates with a set:
             results = set()
+
+            # For each package, store the available architectures as
+            # a list.
             archs = defaultdict(list)
-            for x in data['results']:
-                s = "\x02{name}\x02 - {desc} \x02({version})\x02".format(
-                    name=x['pkgname'], desc=x['pkgdesc'], version=x['pkgver'])
+            for pkgdata in data['results']:
+                # Expand the package data dict into arguments for formatting
+                s = "\x02{pkgname}\x02 - {pkgdesc} \x02({pkgver})\x02".format(**pkgdata)
+
+                if self.registryValue("verbose"):
+                    # In verbose mode, also show the repo the package is in.
+                    s += " [\x02%s\x02]" % pkgdata['repo']
+
                 results.add(s)
-                archs[s].append(x['arch'])
-            irc.reply(format('Found %n: %L; View more at %u', (len(results),
-                                                               'result'),
-                             list(results), friendly_url))
+                archs[s].append(pkgdata['arch'])
+
+            irc.reply(format('Found %n: %L; View more at %u',
+                             (len(results), 'result'), sorted(results),
+                             friendly_url))
         else:
             irc.error("No results found.", Raise=True)
     archlinux = wrap(archlinux, ['somethingWithoutSpaces', getopts({'exact': ''})])
