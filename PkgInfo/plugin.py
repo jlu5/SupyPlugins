@@ -1,5 +1,5 @@
 ###
-# Copyright (c) 2014-2015, James Lu
+# Copyright (c) 2014-2016, James Lu
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -367,52 +367,60 @@ class PkgInfo(callbacks.Plugin):
     pkgsearch = wrap(pkgsearch, ['somethingWithoutSpaces',
                                  'somethingWithoutSpaces'])
 
+    @wrap(['somethingWithoutSpaces',
+           'somethingWithoutSpaces',
+           getopts({'exact': ''})])
     def linuxmint(self, irc, msg, args, release, query, opts):
         """<release> <package> [--exact]
 
         Looks up <package> in Linux Mint's repositories. If --exact is given,
         look up packages by the exact package name. Otherwise, look it up
         as a simple glob pattern."""
+
         addr = 'http://packages.linuxmint.com/list.php?release=' + \
             quote(release)
+
         try:
             fd = utils.web.getUrl(addr).decode("utf-8")
         except utils.web.Error as e:
             irc.error(str(e), Raise=True)
+
         soup = BeautifulSoup(fd)
         # Linux Mint puts their package lists in tables
         results = soup.find_all("td")
-        found = OrderedDict()
+
+        packages = []
         query = query.lower()
         exact = 'exact' in dict(opts)
+
         for result in results:
             name = result.contents[0].string  # Package name
+
             if query == name or (query in name and not exact):
                 # This feels like really messy code, but we have to find tags
                 # relative to our results.
                 # Ascend to find the section name (in <h2>):
                 section = result.parent.parent.parent.previous_sibling.\
                     previous_sibling.string
+
                 # Find the package version in the next <td>; for some reason we
                 # have to go two siblings further, as the first .next_sibling
                 # returns '\n'. This is mentioned briefly in Beautiful Soup 4's
                 # documentation...
                 version = result.next_sibling.next_sibling.string
+
                 # We format our found dictionary this way because the same
                 # package can exist multiple times in different sections of
                 # the repository (e.g. one in Main, one in Backports, etc.)
-                found['%s [\x02%s\x02]' % (name, section)] = version
-        if found:
-            items = [format('%s \x02(%s)\x02', pkg, found[pkg]) for pkg in
-                     found]
-            s = format('Found %n: %L, %s %u', (len(found), 'result'), items,
+                packages.append('%s \x02(%s)\x02 [\x02%s\x02]' % (name, version, section))
+
+        if packages:  # If we have results
+            s = format('Found %n: %L, %s %u', (len(packages), 'result'), packages,
                        _('View more at: '), addr)
             irc.reply(s)
         else:
             irc.error('No results found.')
-    linuxmint = wrap(linuxmint, ['somethingWithoutSpaces',
-                             'somethingWithoutSpaces',
-                             getopts({'exact': ''})])
+
 
     @wrap(['positiveInt', 'somethingWithoutSpaces'])
     def fedora(self, irc, msg, args, release, query):
