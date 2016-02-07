@@ -205,21 +205,29 @@ class RelayNext(callbacks.Plugin):
 
     def relay(self, irc, msg, channel=None):
         self.keepstate()
-        channel = ircutils.toLower(channel or msg.args[0])
+        channel = (channel or msg.args[0]).lower()
+
+        # Check for ignored events first
         ignoredevents = map(str.upper, self.registryValue('events.userIgnored'))
         if msg.command in ignoredevents and ircdb.checkIgnored(msg.prefix):
             self.log.debug("RelayNext (%s): ignoring message from %s",
                            irc.network, msg.prefix)
             return
+
         # Get the source channel
-        source = "%s@%s" % (channel, irc.network.lower())
+        source = "%s@%s".lower() % (channel, irc.network)
         out_s = self._format(irc, msg, channel)
         if out_s:
             for relay in self.db.values():
                 if source in relay:  # If our channel is in a relay
-                    # Remove ourselves so we don't get duplicated messages
+                    self.log.debug("RelayNext: found %s to be in relay %s", source, relay)
+
+                    # Remove ourselves from the target channels so we don't get duplicated messages
                     targets = list(relay)
                     targets.remove(source)
+
+                    self.log.debug("RelayNext: found targets %s for relay %s", targets, relay)
+
                     if self.registryValue("antiflood.enable", channel):
                         timeout = self.registryValue("antiflood.timeout", channel)
                         seconds = self.registryValue("antiflood.seconds", channel)
@@ -296,7 +304,7 @@ class RelayNext(callbacks.Plugin):
         # useful because Supybot is often a multi-purpose bot!)
         try:
             if msg.command == 'PRIVMSG' and not msg.relayedMsg:
-                if ircutils.toLower(msg.args[0]) in self._getAllRelaysForNetwork(irc):
+                if msg.args[0].lower() in self._getAllRelaysForNetwork(irc):
                     new_msg = deepcopy(msg)
                     new_msg.nick = irc.nick
                     self.relay(irc, new_msg, channel=msg.args[0])
