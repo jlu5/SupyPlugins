@@ -80,14 +80,6 @@ class RelayNext(callbacks.Plugin):
     def __init__(self, irc):
         self.__parent = super(RelayNext, self)
         self.__parent.__init__(irc)
-        # This part is partly taken from the Relay plugin, and is used to
-        # keep track of quitting users. Since quit messages aren't
-        # channel-specific, we need to keep a cached copy of our IRC state
-        # file and look at that to find whether we should send a quit
-        # message through the relay. The conventional check for
-        # 'irc.state.channels[channel]' won't work either,
-        # because the user in question has already quit.
-        self.ircstates = {}
 
         # This part facilitates flood protection
         self.msgcounters = {}
@@ -95,11 +87,10 @@ class RelayNext(callbacks.Plugin):
 
         self.db = {}
         self.loadDB()
+
+        # Add our database exporter to world.flushers, so it's automatically
+        # ran on every flush cycle.
         world.flushers.append(self.exportDB)
-        if irc.afterConnect:
-            for channel in self._getAllRelaysForNetwork(irc):
-                # irc.queueMsg(ircmsgs.who(channel))
-                irc.queueMsg(ircmsgs.names(channel))
 
     def die(self):
         self.exportDB()
@@ -109,29 +100,20 @@ class RelayNext(callbacks.Plugin):
     ### Relayer core
 
     def simpleHash(self, s):
-        """<text>
-
-        Returns a colorized version of <text> based on a simple hash algorithm
-        (sum of all characters)."""
+        """
+        Returns a colorized version of the given text based on a simple hash algorithm
+        (sum of all characters).
+        """
         colors = ('02', '03', '04', '05', '06', '07', '08', '09', '10', '11',
                   '12', '13')
         num = sum([ord(char) for char in s])
         num = num % len(colors)
         return "\x03%s%s\x03" % (colors[num], s)
 
-    def _getAllRelaysForNetwork(self, irc):
-        """Returns all the relays a network is involved with."""
-        network = irc.network.lower()
-        results = []
-        for relay in self.db.values():
-            for cn in relay:
-                cn = cn.split("@")
-                if cn[1] == network:
-                    results.append(cn[0])
-        self.log.debug('RelayNext: got %r for _getAllRelaysForNetwork for %r', results, network)
-        return results
-
     def _format(self, irc, msg, channel, announcement=False):
+        """
+        Formats a relay given the IRC object, msg object, and channel.
+        """
         s = ''
         nick = msg.nick
         userhost = ''
@@ -143,15 +125,20 @@ class RelayNext(callbacks.Plugin):
         if color:
             nick = self.simpleHash(nick)
             netname = self.simpleHash(netname)
+
+        # Attempt to mitigate highlights (for some clients) by adding
+        # a hyphen in front of the nick.
         if noHighlight:
             nick = '-' + nick
+
         # Skip hostmask checking if the sender is a server
-        # ('.') present in name
+        # (i.e. a '.' is present in their name)
         if useHostmask and '.' not in nick:
             try:
                 userhost = ' (%s)' % msg.prefix.split('!', 1)[1]
             except:
                 pass
+
         if announcement:
             # Announcements use a special syntax
             s = '*** %s' % announcement
@@ -161,6 +148,7 @@ class RelayNext(callbacks.Plugin):
                 if color:
                     newnick = self.simpleHash(newnick)
                 s = '- %s is now known as %s' % (nick, newnick)
+
             elif msg.command == 'PRIVMSG':
                 text = msg.args[1]
                 if re.match('^\x01ACTION .*\x01$', text):
@@ -168,24 +156,31 @@ class RelayNext(callbacks.Plugin):
                     s = '* %s %s' % (nick, text)
                 else:
                     s = '<%s> %s' % (nick, msg.args[1])
+
             elif msg.command == 'JOIN':
                 s = '- %s%s has joined %s' % (nick, userhost, channel)
+
             elif msg.command == 'PART':
-                # Part message isn't a required field and can be empty sometimes
+                # Part message isn't a required field and can be empty
                 try:
                     partmsg = ' (%s)' % msg.args[1]
                 except:
                     partmsg = ''
                 s = '- %s%s has left %s%s' % (nick, userhost, channel, partmsg)
+
             elif msg.command == 'QUIT':
                 s = '- %s has quit (%s)' % (nick, msg.args[0])
+
             elif msg.command == 'MODE':
                 modes = ' '.join(msg.args[1:])
                 s = '- %s%s set mode %s on %s' % (nick, userhost, modes, channel)
+
             elif msg.command == 'TOPIC':
                 s = '- %s set topic on %s to: %s' % (nick, channel, msg.args[1])
+
             elif msg.command == 'KICK':
                 kicked = msg.args[1]
+                # Show the host of the kicked user, not the kicker
                 userhost = irc.state.nickToHostmask(kicked).split('!', 1)[1]
                 if color:
                     kicked = self.simpleHash(kicked)
@@ -199,12 +194,7 @@ class RelayNext(callbacks.Plugin):
             s = s.replace("- -", "-", 1)
         return s
 
-    def keepstate(self):
-        for irc in world.ircs:
-            self.ircstates[irc.network] = deepcopy(irc.state.channels)
-
     def relay(self, irc, msg, channel=None):
-        self.keepstate()
         channel = (channel or msg.args[0]).lower()
 
         # Check for ignored events first
@@ -229,32 +219,57 @@ class RelayNext(callbacks.Plugin):
                     self.log.debug("RelayNext: found targets %s for relay %s", targets, relay)
 
                     if self.registryValue("antiflood.enable", channel):
+                        # Flood prevention timeout - how long commands of a certain type
+                        # should cease being relayed after flood prevention triggers
                         timeout = self.registryValue("antiflood.timeout", channel)
-                        seconds = self.registryValue("antiflood.seconds", channel)
+
+                        # If <maximum> messages of the same kind on one channel is
+                        # received in <seconds> seconds, flood prevention timeout is
+                        # triggered.
                         maximum = self.registryValue("antiflood.maximum", channel)
+                        seconds = self.registryValue("antiflood.seconds", channel)
+
+                        # Store the message in a counter, with the keys taking the
+                        # form of (source channel@network, command name). If the counter
+                        # doesn't already exist, create one here.
                         try:
                             self.msgcounters[(source, msg.command)].enqueue(msg.prefix)
                         except KeyError:
                             self.msgcounters[(source, msg.command)] = TimeoutQueue(seconds)
+
+                        # Two different limits: one for messages and one for all others
                         if msg.command == "PRIVMSG":
                             maximum = self.registryValue("antiflood.maximum", channel)
                         else:
-                            maximum = self.registryValue("antiflood.maximum.nonPrivmsgs", channel)
+                            maximum = self.registryValue("antiflood.maximum.nonPrivmsgs",
+                                                         channel)
+
                         if len(self.msgcounters[(source, msg.command)]) > maximum:
+                            # Amount of messages in the counter surpassed our limit,
+                            # announce the flood and block relaying messages of the
+                            # same type for X seconds
                             self.log.debug("RelayNext (%s): message from %s blocked by "
                                            "flood protection.", irc.network, channel)
+
                             if self.floodTriggered.get((source, msg.command)):
+                                # However, only send the announcement once.
                                 return
-                            c = msg.command.lower()
+
+                            c = msg.command
                             e = format("Flood detected on %s (%s %ss/%s seconds), "
                                        "not relaying %ss for %s seconds!", channel,
                                        maximum, c, seconds, c, timeout)
                             out_s = self._format(irc, msg, channel, announcement=e)
+
                             self.floodTriggered[(source, msg.command)] = True
                             self.log.info("RelayNext (%s): %s", irc.network, e)
                         else:
                             self.floodTriggered[(source, msg.command)] = False
+
                     for cn in targets:
+                        # Iterate over all the relay targets for this message:
+                        # each target is stored internally as a #channel@netname
+                        # string.
                         target, net = cn.split("@")
                         otherIrc = world.getIrc(net)
                         if otherIrc is None:
@@ -271,6 +286,9 @@ class RelayNext(callbacks.Plugin):
                                            "channel!", target, net)
                         else:
                             out_msg = ircmsgs.privmsg(target, out_s)
+
+                            # Tag the message as relayed so we (and other relayers) don't
+                            # try to relay it again.
                             out_msg.tag('relayedMsg')
                             otherIrc.queueMsg(out_msg)
 
@@ -286,17 +304,13 @@ class RelayNext(callbacks.Plugin):
     # NICK and QUIT aren't channel specific, so they require a bit
     # of extra handling
     def doNick(self, irc, msg):
-        newnick = msg.args[0]
-        for channel in self._getAllRelaysForNetwork(irc):
-            if self.registryValue("events.relaynicks", channel) and \
-                    newnick in irc.state.channels[channel].users:
+        for channel in msg.tagged('channels'):
+            if self.registryValue("events.relaynicks", channel):
                 self.relay(irc, msg, channel=channel)
 
     def doQuit(self, irc, msg):
-        for channel in self._getAllRelaysForNetwork(irc):
-            if self.registryValue("events.relayquits", channel) and \
-                    (msg.nick in self.ircstates[irc.network][channel].users \
-                     or msg.nick == irc.nick):
+        for channel in msg.tagged('channels'):
+            if self.registryValue("events.relayquits", channel):
                 self.relay(irc, msg, channel=channel)
 
     def outFilter(self, irc, msg):
@@ -304,10 +318,9 @@ class RelayNext(callbacks.Plugin):
         # useful because Supybot is often a multi-purpose bot!)
         try:
             if msg.command == 'PRIVMSG' and not msg.relayedMsg:
-                if msg.args[0].lower() in self._getAllRelaysForNetwork(irc):
-                    new_msg = deepcopy(msg)
-                    new_msg.nick = irc.nick
-                    self.relay(irc, new_msg, channel=msg.args[0])
+                new_msg = deepcopy(msg)
+                new_msg.nick = irc.nick
+                self.relay(irc, new_msg, channel=msg.args[0])
         except Exception:
             # We want to log errors, but not block the bot's output
             log.exception("RelayNext: Caught error in outFilter:")
@@ -323,12 +336,15 @@ class RelayNext(callbacks.Plugin):
         itself.
         If --count is specified, only the amount of users in the relay is given."""
         opts = dict(optlist)
+
         if irc.nested and 'count' not in keys:
             irc.error('This command cannot be nested.', Raise=True)
+
         try:
             c = irc.state.channels[channel]
         except KeyError:
             irc.error("Unknown channel '%s'." % channel, Raise=True)
+
         if msg.nick not in c.users:
             self.log.warning('RelayNext: %s on %s attempted to view'
                              ' nicks in %s without being in it.', msg.nick,
