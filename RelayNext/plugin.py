@@ -115,7 +115,7 @@ class RelayNext(callbacks.Plugin):
         Formats a relay given the IRC object, msg object, and channel.
         """
         s = ''
-        nick = msg.nick
+        nick = real_nick = msg.nick
         userhost = ''
         noHighlight = self.registryValue('noHighlight', channel)
         useHostmask = self.registryValue('hostmasks', channel)
@@ -151,6 +151,18 @@ class RelayNext(callbacks.Plugin):
 
             elif msg.command == 'PRIVMSG':
                 text = msg.args[1]
+
+                # Show status prefixes (@%+) in front of the nick if enabled,
+                # but only the highest prefix.
+                if self.registryValue("showPrefixes", channel):
+                    chobj = irc.state.channels[channel]
+                    if chobj.isOp(real_nick):
+                        nick = '@' + nick
+                    elif chobj.isHalfop(real_nick):
+                        nick = '%' + nick
+                    elif chobj.isVoice(real_nick):
+                        nick = '+' + nick
+
                 if re.match('^\x01ACTION .*\x01$', text):
                     text = text[8:-1]
                     s = '* %s %s' % (nick, text)

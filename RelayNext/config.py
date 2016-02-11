@@ -60,6 +60,9 @@ conf.registerChannelValue(RelayNext, 'hostmasks',
 conf.registerChannelValue(RelayNext, 'noHighlight',
     registry.Boolean(False, _("""Determines whether the bot should prefix nicks
     with a hyphen (-) to prevent excess highlights (in PRIVMSGs and actions).""")))
+conf.registerChannelValue(RelayNext, 'showPrefixes',
+    registry.Boolean(False, _("""Determines whether the bot should status prefixes
+    (@, %, +) when relaying.""")))
 
 conf.registerGroup(RelayNext, 'antiflood')
 conf.registerChannelValue(RelayNext.antiflood, 'enable',
