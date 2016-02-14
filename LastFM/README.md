@@ -10,9 +10,14 @@ A Supybot plugin for LastFM, forked from [krf/supybot-lastfm](https://github.com
 - Migration to the newer (v2) LastFM API, using JSON instead of XML.
 - Simpler DB implementation using pickle, and storing hostmasks instead of nicks (requires DB reset).
 - Only the `np` and `profile` commands are present - the others have since been broken by LastFM API changes and removed.
+- Optional integration with the DDG plugin in this repository, to provide YouTube links for tracks if available. Enable `plugins.LastFM.fetchYouTubeLink` for this to work.
 - Slight formatting enhancements for various commands.
 
-### Usage
+### Setup and Usage
+
+Before using any parts of this plugin, you must register on the LastFM website and obtain an API key for your bot: http://www.last.fm/api/account/create
+
+After doing so, you tell the bot to use this key by doing `/msg <botname> config plugins.LastFM.apiKey <your-api-key>`.
 
 Showing now playing information:
 ```
