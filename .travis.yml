@@ -43,5 +43,5 @@ matrix:
 
 branches:
   except:
-    - /^archive-.*$/
+    - /^archive(-|\/).*$/
     - /^wip\/.*$/
