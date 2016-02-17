@@ -340,12 +340,15 @@ class Weather(callbacks.Plugin):
     # PUBLIC FUNCTIONS #
     ####################
 
-    def weather(self, irc, msg, args, optinput):
-        """<location>
+    @wrap([getopts({'user': 'nick'}), optional('text')])
+    def weather(self, irc, msg, args, optlist, location):
+        """[<location>] [--user <othernick>]
 
-        Fetches weather and forecast information for <location>.
+        Fetches weather and forecast information for <location>. <location> can be left blank if you have a previously set location (via 'setweather').
 
-        Location must be one of: US state/city (CA/San_Francisco), zip code, country/city (Australia/Sydney), or an airport code (KJFK).
+        If the --user option is specified, show weather for the saved location of that nick, instead of the caller.
+
+        Location can take many forms, including a simple city name, US state/city (CA/San_Francisco), zip code, country/city (Australia/Sydney), or an airport code (KJFK).
         Ex: 10021 or Sydney, Australia or KJFK
         """
         apikey = self.registryValue('apiKey')
@@ -354,12 +357,17 @@ class Weather(callbacks.Plugin):
                       Raise=True)
         channel = msg.args[0]
 
+        optlist = dict(optlist)
+        # Default to looking at the caller's saved info, but optionally they can look at someone else's weather too.
+        nick = optlist.get('user') or msg.nick
+
         # urlargs will be used to build the url to query the API.
-        # besides lang, these are unmutable values that should not be changed.
+        # besides lang, these are preset values that should not be changed.
         urlArgs = {'features': ['conditions', 'forecast'],
                    'lang': self.registryValue('lang'),
                    'bestfct': '1',
                    'pws': '0' }
+
         loc = None
         args = {'imperial': self.registryValue('useImperial', msg.args[0]),
                 'alerts': self.registryValue('alerts'),
@@ -374,21 +382,22 @@ class Weather(callbacks.Plugin):
                 'visibility': False,
                 'dewpoint': False}
 
-        usersetting = self.db.getweather(msg.nick.lower())
+        usersetting = self.db.getweather(nick.lower())
         if usersetting:
             for (k, v) in usersetting.items():
                 args[k] = v
             loc = usersetting["location"]
             args['imperial'] = (not usersetting["metric"])
         else:
-            if not optinput:  # location was also not specified, so we must bail.
+            if not location:  # location was also not specified, so we must bail.
                 irc.error("I did not find a preset location for you. Set one via 'setweather <location>'.", Raise=True)
 
-        loc = self._wuac(irc, optinput or loc)
+        loc = self._wuac(irc, location or loc)
         url = 'http://api.wunderground.com/api/%s/' % (apikey)
         for check in ['alerts', 'almanac', 'astronomy']:
             if args[check]:
                 urlArgs['features'].append(check) # append to dict->key (list)
+
         # now, we use urlArgs dict to append to url.
         for (key, value) in urlArgs.items():
             if key == "features": # will always be at least conditions.
@@ -420,13 +429,13 @@ class Weather(callbacks.Plugin):
                 if int(data['current_observation']['wind_gust_kph']) > 0:
                     outdata['wind'] += " ({0}kph gusts)".format(data['current_observation']['wind_gust_kph'])
 
-        # handle the time. concept/method from WunderWeather plugin.
+        # Show the last updated time if available.
         observationTime = data['current_observation'].get('observation_epoch')
         localTime = data['current_observation'].get('local_epoch')
-        # if we don't have the epoches from above, default to obs_time
+
         if not observationTime or not localTime:
             outdata['observation'] = data.get('observation_time', 'unknown').lstrip('Last Updated on ')
-        else:  # we do have so format for relative time.
+        else:  # Prefer relative times, if available
             s = int(localTime) - int(observationTime)  # format into seconds.
             if s <= 1:
                 outdata['observation'] = 'just now'
@@ -440,27 +449,37 @@ class Weather(callbacks.Plugin):
                 outdata['observation'] = '1hr ago'
             else:
                 outdata['observation'] = '{0}hrs ago'.format(s/3600)
+
         outdata['temp'] = self._temp(channel, data['current_observation']['temp_f'])
+
         # pressure.
         pin = str(data['current_observation']['pressure_in']) + 'in'
         pmb = str(data['current_observation']['pressure_mb']) + 'mb'
         outdata['pressure'] = "{0}/{1}".format(pin, pmb)
+
         # dewpoint.
         outdata['dewpoint'] = self._temp(channel, data['current_observation']['dewpoint_f'])
+
         # heatindex.
         outdata['heatindex'] = self._temp(channel, data['current_observation']['heat_index_f'])
+
         # windchill.
         outdata['windchill'] = self._temp(channel, data['current_observation']['windchill_f'])
+
         # feels like
         outdata['feelslike'] = self._temp(channel, data['current_observation']['feelslike_f'])
+
         # visibility.
         vmi = str(data['current_observation']['visibility_mi']) + 'mi'
         vkm = str(data['current_observation']['visibility_km']) + 'km'
         outdata['visibility'] = "{0}/{1}".format(vmi, vkm)
 
-        # handle forecast data part. output will be below. (not --forecast)
-        forecastdata = {}  # key = int(day), value = forecast dict.
+        # handle forecast data. This is internally stored as a dict with integer keys (days from now)
+        # with the forecast text as values.
+        forecastdata = {}
         for forecastday in data['forecast']['txt_forecast']['forecastday']:
+            # Slightly different wording and results (e.g. rainfall for X inches vs. X cm) are given
+            # depending on whether imperial or metric units are the same.
             if args['imperial']:
                 text = forecastday['fcttext']
             else:
@@ -470,28 +489,35 @@ class Weather(callbacks.Plugin):
 
         output = "{0} :: {1} ::".format(self._bold(outdata['location']), outdata['weather'])
         output += " {0} ".format(outdata['temp'])
+
         # humidity.
         if args['humidity']:
             output += "(Humidity: {0}) ".format(outdata['humidity'])
+
         # windchill/heatindex are conditional on season but test with startswith to see what to include
+        # NA means not available, so ignore those fields
         if not outdata['windchill'].startswith("NA"):
             output += "| {0} {1} ".format(self._bold('Wind Chill:'), outdata['windchill'])
         if not outdata['heatindex'].startswith("NA"):
             output += "| {0} {1} ".format(self._bold('Heat Index:'), outdata['heatindex'])
-        # now get into the args dict for what to include (extras)
+
+        # Iterate over the args dict for what extra data to include
         for k in ('wind', 'visibility', 'uv', 'pressure', 'dewpoint'):
             if args[k]:
                 output += "| {0}: {1} ".format(self._bold(k.title()), outdata[k])
-        # add in the first two forecast item in conditions + updated time.
+
+        # Add in the first two forecasts item in conditions + the "last updated" time.
         output += "| {0}: {1}".format(self._bold(forecastdata[0]['day']), forecastdata[0]['text'])
         output += " {0}: {1}".format(self._bold(forecastdata[1]['day']), forecastdata[1]['text'])
+
         if args['updated']:
             output += " | {0} {1}".format(self._bold('Updated:'), outdata['observation'])
+
         # finally, output the basic weather.
         irc.reply(output)
 
-        # handle alerts
-        if args['alerts']:  # only look for alerts if there.
+        # handle alerts - everything here and below sends as separate replies if enabled
+        if args['alerts']:  # only look for alerts if present.
             if data['alerts']:  # alerts is a list. it can also be empty.
                 outdata['alerts'] = data['alerts'][0]['message']  # need to do some formatting below.
                 outdata['alerts'] = outdata['alerts'].replace('\n', ' ')
@@ -519,6 +545,7 @@ class Weather(callbacks.Plugin):
                           self._bu('Almanac:'), outdata['highaverage'], outdata['highrecord'], outdata['highyear'],
                           outdata['lowaverage'], outdata['lowrecord'], outdata['lowyear']))
             irc.reply(output)
+
         # handle astronomy
         if args['astronomy']:
             sunriseh = data['moon_phase']['sunrise']['hour']
@@ -537,6 +564,7 @@ class Weather(callbacks.Plugin):
             output = [format('%s %s', self._bold(k), v) for k, v in sorted(astronomy.items())]
             output = format("%s %s", self._bu('Astronomy:'), " | ".join(output))
             irc.reply(output)
+
         # handle forecast
         if args['forecast']:
             fullforecastdata = {}  # key = day (int), value = dict of forecast data.
@@ -550,13 +578,12 @@ class Weather(callbacks.Plugin):
                            'high': high}
                 fullforecastdata[int(forecastday['period'])] = tmpdict
             outforecast = [] # prep string for output.
+
             for (k, v) in fullforecastdata.items(): # iterate through forecast data.
                 outforecast.append("{0}: {1} (High: {2} Low: {3})".format(self._bold(v['day']),
                         v['text'], v['high'], v['low']))
             output = "{0} {1}".format(self._bu('Forecast:'), " | ".join(outforecast))
             irc.reply(output)
-
-    weather = wrap(weather, [optional('text')])
 
 Class = Weather
 
