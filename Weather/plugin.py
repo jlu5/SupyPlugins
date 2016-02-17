@@ -390,7 +390,10 @@ class Weather(callbacks.Plugin):
             args['imperial'] = (not usersetting["metric"])
         else:
             if not location:  # location was also not specified, so we must bail.
-                irc.error("I did not find a preset location for you. Set one via 'setweather <location>'.", Raise=True)
+                if nick != msg.nick:
+                    irc.error("I did not find a preset location for %s." % nick, Raise=True)
+                else:
+                    irc.error("I did not find a preset location for you. Set one via 'setweather <location>'.", Raise=True)
 
         loc = self._wuac(irc, location or loc)
         url = 'http://api.wunderground.com/api/%s/' % (apikey)
