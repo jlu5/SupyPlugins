@@ -208,6 +208,8 @@ class RelayNext(callbacks.Plugin):
 
     def relay(self, irc, msg, channel=None):
         channel = (channel or msg.args[0]).lower()
+        if not channel in irc.state.channels:
+            return
 
         # Check for ignored events first
         ignoredevents = map(str.upper, self.registryValue('events.userIgnored'))
