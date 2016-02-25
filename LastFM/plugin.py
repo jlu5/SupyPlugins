@@ -94,7 +94,8 @@ class LastFM(callbacks.Plugin):
         self.db.flush()
         self.__parent.die()
 
-    def nowPlaying(self, irc, msg, args, user):
+    @wrap([optional("something")])
+    def np(self, irc, msg, args, user):
         """[<user>]
 
         Announces the track currently being played by <user>. If <user>
@@ -168,9 +169,8 @@ class LastFM(callbacks.Plugin):
                   (ircutils.bold(user), ircutils.bold(track),
                    ircutils.bold(artist), ircutils.bold(album), time, public_url))
 
-    np = wrap(nowPlaying, [optional("something")])
-
-    def setUserId(self, irc, msg, args, newId):
+    @wrap(["something"])
+    def set(self, irc, msg, args, newId):
         """<user>
 
         Sets the LastFM username for the caller and saves it in a database.
@@ -179,8 +179,7 @@ class LastFM(callbacks.Plugin):
         self.db.set(msg.prefix, newId)
         irc.replySuccess()
 
-    set = wrap(setUserId, ["something"])
-
+    @wrap([optional("something")])
     def profile(self, irc, msg, args, user):
         """[<user>]
 
@@ -225,8 +224,6 @@ class LastFM(callbacks.Plugin):
             profile["registered"] = ircutils.bold(s)
         irc.reply("%(id)s (realname: %(realname)s) registered on %(registered)s; age: %(age)s / %(gender)s; "
                   "Country: %(country)s; Tracks played: %(playcount)s" % profile)
-
-    profile = wrap(profile, [optional("something")])
 
 filename = conf.supybot.directories.data.dirize("LastFM.db")
 
