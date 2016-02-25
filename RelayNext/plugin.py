@@ -163,9 +163,13 @@ class RelayNext(callbacks.Plugin):
                     elif chobj.isVoice(real_nick):
                         nick = '+' + nick
 
+                # Check for CTCP ACTION and format those properly.
                 if re.match('^\x01ACTION .*\x01$', text):
                     text = text[8:-1]
                     s = '* %s %s' % (nick, text)
+                elif text.startswith('\x01'):
+                    # Other CTCP messages should just be ignored
+                    return
                 else:
                     s = '<%s> %s' % (nick, msg.args[1])
 
