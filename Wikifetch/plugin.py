@@ -197,31 +197,37 @@ class Wikifetch(callbacks.Plugin):
                         reply = reply.encode('utf-8','replace')
                 reply += format('%s %s %u', p, _('Retrieved from'), addr)
         reply = reply.replace('&amp;','&')
+
         # Remove inline citations (text[1][2][3], etc.)
         reply = re.sub('\[\d+\]', '', reply)
-        irc.reply(reply)
+
+        return reply
 
     @internationalizeDocstring
     @wrap([getopts({'site': 'somethingWithoutSpaces'}), 'text'])
     def wiki(self, irc, msg, args, optlist, search):
         """[--site <site>] <search term>
 
-        Returns the first paragraph of a wiki article. Optionally, a site
+        Returns the first paragraph of a wiki article. Optionally, a --site
         argument can be given to override the default (usually Wikipedia) -
         try using '--site lyrics.wikia.com' or '--site wiki.archlinux.org'."""
         optlist = dict(optlist)
         baseurl = optlist.get('site') or self.registryValue('url', msg.args[0])
-        self._wiki(irc, msg, search, baseurl)
+        text = self._wiki(irc, msg, search, baseurl)
+
+        irc.reply(text)
 
     @internationalizeDocstring
     @wrap([additional('somethingWithoutSpaces')])
     def random(self, irc, msg, args, site):
         """[<site>]
 
-        Returns the first paragraph of a random wiki article. Optionally, the site
+        Returns the first paragraph of a random wiki article. Optionally, the --site
         argument can be given to override the default (usually Wikipedia)."""
         baseurl = site or self.registryValue('url', msg.args[0])
-        self._wiki(irc, msg, 'Special:Random', baseurl)
+        text = self._wiki(irc, msg, 'Special:Random', baseurl)
+
+        irc.reply(text)
 
 Class = Wikifetch
 
