@@ -92,7 +92,7 @@ class MCInfo(callbacks.Plugin):
 
         soup = BeautifulSoup(article)
 
-        # Find the "Crafting table" displayed in the Wiki fatch showing how to craft something.
+        # Find the "Crafting table" displayed in the Wiki page showing how to craft the item.
         crafting_table = soup.find('table', attrs={"data-description": 'Crafting recipes'})
         if not crafting_table:
             irc.error("No crafting information found.", Raise=True)
@@ -104,8 +104,6 @@ class MCInfo(callbacks.Plugin):
                 t = tag.contents[0].get_text().strip()
                 if t == 'Crafting ingredient':
                     irc.error("The item '%s' cannot be crafted." % item, Raise=True)
-
-
 
         # Get the first crafting result. TODO: optionally show all recipes if there are more than one.
         crafting_data = crafting_table.find_all('tr')[1]
