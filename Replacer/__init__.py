@@ -37,7 +37,7 @@ Allows you to make Shorthand Corrections to your Chat History
 import supybot
 import supybot.world as world
 
-__version__ = "0.6~supyplugins+2015.10.02"
+__version__ = "2016.02.28.1"
 __author__ = supybot.Author("Michael Daniel Telatynski", "t3chguy", "postmaster@webdevguru.co.uk")
 __contributors__ = {supybot.Author("James Lu", "GLolol", "glolol@overdrivenetworks.com"):
                     	["an option for bolding the replacement text"],
