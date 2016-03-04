@@ -52,6 +52,9 @@ from bs4 import BeautifulSoup
 
 mcwiki_url = 'http://minecraft.gamepedia.com'
 
+def format_text(text):
+    return utils.str.normalizeWhitespace(text).strip()
+
 class MCInfo(callbacks.Plugin):
     """Fetches crafting recipes and other interesting information from the Minecraft Wiki."""
     threaded = True
@@ -74,12 +77,8 @@ class MCInfo(callbacks.Plugin):
         else:
             irc.error("This command requires the Wikifetch plugin to be loaded.", Raise=True)
 
-    @wrap(['text'])
-    def craft(self, irc, msg, args, item):
-        """
-        Attempts to lookup crafting information from the Minecraft wiki.
-        """
-
+    def get_page(self, irc, item):
+        """Returns the wiki page for the given item."""
         url = '%s/%s' % (mcwiki_url, quote(item))
         self.log.debug("MCInfo: using url %s", url)
 
@@ -91,6 +90,16 @@ class MCInfo(callbacks.Plugin):
             irc.error(e, Raise=True)
 
         soup = BeautifulSoup(article)
+        return soup
+
+    @wrap(['text'])
+    def craft(self, irc, msg, args, item):
+        """<item>
+
+        Attempts to look up crafting information from the Minecraft wiki.
+        """
+
+        soup = self.get_page(irc, item)
 
         # Find the "Crafting table" displayed in the Wiki page showing how to craft the item.
         crafting_table = soup.find('table', attrs={"data-description": 'Crafting recipes'})
@@ -109,8 +118,7 @@ class MCInfo(callbacks.Plugin):
         crafting_data = crafting_table.find_all('tr')[1]
 
         # Shows the text of the ingredients used to craft (e.g. "Glass + Any dye")
-        ingredients = crafting_data.td.get_text()
-        ingredients = utils.str.normalizeWhitespace(ingredients.strip())
+        ingredients = format_text(crafting_data.td.get_text())
 
         recipe = []
 
@@ -152,6 +160,38 @@ class MCInfo(callbacks.Plugin):
                 items = [s.center(maxitemlength, '-') for s in row]
                 irc.reply('|%s|' % '|'.join(items))
 
+    @wrap(['text'])
+    def smelt(self, irc, msg, args, item):
+        """<item>
+
+        Attempts to look up smelting recipes from the Minecraft wiki.
+        """
+
+        soup = self.get_page(irc, item)
+
+        # Find the "smelting" table displayed in the Wiki page.
+        smelting_tables = soup.find_all('table', attrs={"data-description": 'Smelting recipes'})
+        if not smelting_tables:
+            irc.error("No smelting information found.", Raise=True)
+
+        irc.reply("Smelting recipes involving %s:" % ircutils.bold(item))
+
+        for table in smelting_tables:
+            print(list(table.children))
+
+            # Get the first smelting result.
+            smelt_data = table.find_all('tr')[1]
+
+            # Show the resulting item and the ingredients needed to smelt it.
+            ingredients = format_text(smelt_data.td.get_text())
+            try:
+                result = format_text(smelt_data.th.get_text())
+            except AttributeError:
+                # If the result item isn't explicitly shown, assume it's the
+                # item the user asked for.
+                result = item.title()
+
+            irc.reply("%s: %s" % (ircutils.bold(result), ingredients))
 
 Class = MCInfo
 
