@@ -50,12 +50,12 @@ __contributors__ = {
             supybot.Author("Pavel Dvořák", "czshadow", "czshadow@gmail.com"):
             ["misc"],
             supybot.Author('James Lu', 'GLolol',
-                        'GLolol@overdrive.pw'):
+                        'GLolol@overdrivenetworks.com'):
                         ['Python 3 support', 'rewriting most of the plugin']
         }
 
 # This is a url where the most recent plugin package can be downloaded.
-__url__ = 'https://github.com/GLolol/supybot-lastfm'
+__url__ = 'https://github.com/GLolol/SupyPlugins/tree/master/LastFM'
 
 from . import config
 from . import plugin
