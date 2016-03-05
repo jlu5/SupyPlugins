@@ -197,6 +197,41 @@ class MCInfo(callbacks.Plugin):
 
             irc.reply("%s: %s" % (ircutils.bold(result), ingredients))
 
+    @wrap(['text'])
+    def recipes(self, irc, msg, args, item):
+        """<item>
+
+        Returns Minecraft crafting recipes using the given item.
+        """
+
+        soup = self.get_page(irc, item)
+
+        # First, look for the "Crafting ingredient" header (usually under a
+        # section called "Usage"). Only here will we find the recipes for each
+        # item.
+        header = ''
+        for header in soup.find_all('h3'):
+            if header.span and header.span.get_text().strip() == 'Crafting ingredient':
+                break
+        else:
+            irc.error("No recipes found.", Raise=True)
+
+        for tag in header.next_siblings:
+            # Only look at crafting table UIs after this header.
+            if tag.name == 'table' and tag.get("data-description") == 'Crafting recipes':
+                recipes = []
+
+                # Iterate over all the recipes shown and get their names.
+                for crafting_data in tag.find_all('tr')[1:]:
+                    recipes.append(format_text(crafting_data.th.get_text()))
+
+                # After we've found these results, we can stop looking for
+                # crafting table UIs.
+                break
+
+        out_s = format('Recipes using %s include: %L', ircutils.bold(item), sorted(recipes))
+        irc.reply(out_s)
+
 Class = MCInfo
 
 
