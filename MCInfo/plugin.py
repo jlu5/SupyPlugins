@@ -211,14 +211,14 @@ class MCInfo(callbacks.Plugin):
         # item.
         header = ''
         for header in soup.find_all('h3'):
-            if header.span and header.span.get_text().strip() == 'Crafting ingredient':
+            if header.span and header.span.get_text().strip().lower() == 'crafting ingredient':
                 break
         else:
             irc.error("No recipes found.", Raise=True)
 
         for tag in header.next_siblings:
             # Only look at crafting table UIs after this header.
-            if tag.name == 'table' and tag.get("data-description") == 'Crafting recipes':
+            if tag.name == 'table' and tag.get("data-description").lower() == 'crafting recipes':
                 recipes = []
 
                 # Iterate over all the recipes shown and get their names.
