@@ -63,7 +63,7 @@ for dir in filter(os.path.isdir, args.folders):
             new_version = version
             # If the existing version doesn't follow our format (YYYY.mm.dd), append it with a +.
             # But only do this once...
-            if old_version and old_version.count('.') != 2 and version == default_version:
+            if old_version and old_version.count('.') < 2 and version == default_version:
                 old_version = old_version.split('+', 1)[0]
                 new_version = "%s+%s" % (old_version, version)
             print('Rewriting %s __version__: %s' % (name, new_version))
