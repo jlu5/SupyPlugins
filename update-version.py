@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 ###
-# Copyright (c) 2015, James Lu
+# Copyright (c) 2015-2016, James Lu
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -35,7 +35,6 @@ import re
 import time
 import argparse
 
-subtrees = []
 gitlog = subprocess.check_output(("git", "log"))
 
 default_version = time.strftime("%Y.%m.%d")
@@ -48,19 +47,14 @@ args = parser.parse_args()
 
 version = args.version
 
-for line in gitlog.decode("utf-8").split('\n'):
-    splitline = line.split("git-subtree-dir: ", 1)
-    if len(splitline) == 2:
-        subtrees.append(splitline[1])
-
 to_commit = []
 
 version_re = re.compile(r'__version__ = "(.*?)"')
+
+# Iterate over all the directories in the folder we're working in.
 for dir in filter(os.path.isdir, args.folders):
     name = os.path.join(dir, "__init__.py")
-    # Don't overwrite subtrees! Otherwise, we'll get sync problems really easily...
-    if dir in subtrees or not os.path.exists(name):
-        continue
+
     try:
         # Read, replace, go back to the file's beginning, and write out the updated contents.
         with open(name, 'r+') as f:
@@ -81,7 +75,7 @@ for dir in filter(os.path.isdir, args.folders):
             f.close()
     except:
         pass
-    else:
+    else:  # Finally, add the file to the list of files we need to commit.
         to_commit.append(name)
 
 if not args.no_commit:
