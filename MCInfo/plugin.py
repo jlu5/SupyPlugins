@@ -177,7 +177,6 @@ class MCInfo(callbacks.Plugin):
         irc.reply("Smelting recipes involving %s:" % ircutils.bold(item))
 
         for table in smelting_tables:
-            print(list(table.children))
 
             # Get the first smelting result.
             smelt_data = table.find_all('tr')[1]
@@ -187,9 +186,14 @@ class MCInfo(callbacks.Plugin):
             try:
                 result = format_text(smelt_data.th.get_text())
             except AttributeError:
-                # If the result item isn't explicitly shown, assume it's the
-                # item the user asked for.
-                result = item.title()
+                # If the text of the result item isn't explicitly shown, dig
+                # deeper to extract the item name from the smelting table UI.
+                smelting_ui = smelt_data.find_all('td')[1].div.span
+
+                output = smelting_ui.find('span', class_='mcui-output')
+
+                result = output.find('span', class_='sprite')
+                result = result.get('title')
 
             irc.reply("%s: %s" % (ircutils.bold(result), ingredients))
 
