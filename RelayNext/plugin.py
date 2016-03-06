@@ -364,10 +364,10 @@ class RelayNext(callbacks.Plugin):
             irc.error("Unknown channel '%s'." % channel, Raise=True)
 
         if msg.nick not in c.users:
-            self.log.warning('RelayNext: %s on %s attempted to view'
-                             ' nicks in %s without being in it.', msg.nick,
+            self.log.warning('RelayNext: %s on %s attempted to view '
+                             'nicks of %s without being in it.', msg.nick,
                              irc.network, channel)
-            irc.error(('You are not in %s.' % channel), Raise=True)
+            irc.error(("You are not in '%s'." % channel), Raise=True)
 
         source = "%s@%s" % (channel, irc.network)
         source = source.lower()
@@ -427,10 +427,12 @@ class RelayNext(callbacks.Plugin):
 
         if 'count' in opts:  # --count was specified; just reply with the amount of users.
             irc.reply(user_count)
-        else:
+        elif channel_count:
             irc.reply("Total users across %d channels: %d. Unique nicks: %d" %
                       (channel_count, user_count, len(set(all_users))),
                       private=True)
+        else:
+            irc.error("No relays for '%s' exist." % channel)
     nicks = wrap(nicks, ['Channel', getopts({'count': ''})])
 
     def checkRelays(self, irc, relays):
