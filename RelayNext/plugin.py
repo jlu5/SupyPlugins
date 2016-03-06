@@ -371,28 +371,32 @@ class RelayNext(callbacks.Plugin):
 
         source = "%s@%s" % (channel, irc.network)
         source = source.lower()
-        totalChans = 0
-        totalUsers = 0
-        allUsers = []
-        # Make a set to prevent duplicates since one channel
-        # can be part of many relays
-        Relays = set()
+        channel_count = 0
+        user_count = 0
+        all_users = []
+
+        # First, enumerate all the relays that the calling channel is it. Use a
+        # set to prevent duplicates since one channel can be part of many relays.
+        all_relays = set()
         for relay in self.db.values():
             if source in relay:
-                for cn in relay:
-                    Relays.add(cn)
+                for channelpair in relay:
+                    # Each channel pair is a "#chan@net" string in the DB.
+                    all_relays.add(channelpair)
 
-        for cn in Relays:
-            totalChans += 1
-            channel, net = cn.split("@", 1)
+        for channelpair in all_relays:
+            channel_count += 1
+            channel, net = channelpair.split("@", 1)
             try:
                 c = world.getIrc(net).state.channels[channel]
             except (KeyError, AttributeError):
                 # Unknown network or network disconnected.
                 continue
-            totalUsers += len(c.users)
+            user_count += len(c.users)
             users = []
-            for s in sorted(c.users):
+
+            # Sort users before listing them, but do so case-insensitively.
+            for s in sorted(c.users, key=ircutils.toLower):
                 s = s.strip()
                 if s in c.ops:
                     users.append('@%s' % s)
@@ -402,24 +406,30 @@ class RelayNext(callbacks.Plugin):
                     users.append('+%s' % s)
                 else:
                     users.append(s)
-            allUsers += c.users
+
+            all_users += c.users
             s = format('%s users in %s on %s: %L', len(c.users),
                        channel, net, users)
-            # Ugh, this is ugly, but https://github.com/ProgVal/Limnoria/issues/1080
+
+            # In outputting the user list, we need to make sure that the message fits,
+            # and if not, wrap it into multiple messages.
+            # XXX: This is ugly, but https://github.com/ProgVal/Limnoria/issues/1080
             # means we have to chop off the (XX more messages) part too.
-            # Unfortunately, this plugin isn't localized yet and won't work in other languages.
-            allowedLength = 466 - len(irc.prefix) - len(irc.nick) - len(msg.nick) - \
+            allowed_length = 466 - len(irc.prefix) - len(irc.nick) - len(msg.nick) - \
                 len(_('(XX more messages)'))
-            replies = textwrap.wrap(s, allowedLength)
+            replies = textwrap.wrap(s, allowed_length)
+
             if 'count' not in opts:
+                # Only bother doing this if we're not using --count.
                 irc.reply(replies[0], private=True, notice=True)
                 for s in replies[1:]:
                     irc.reply("... %s" % s, private=True, notice=True)
-        if 'count' in opts:
-            irc.reply(totalUsers)
+
+        if 'count' in opts:  # --count was specified; just reply with the amount of users.
+            irc.reply(user_count)
         else:
             irc.reply("Total users across %d channels: %d. Unique nicks: %d" %
-                      (totalChans, totalUsers, len(set(allUsers))),
+                      (channel_count, user_count, len(set(all_users))),
                       private=True)
     nicks = wrap(nicks, ['Channel', getopts({'count': ''})])
 
