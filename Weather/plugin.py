@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 ###
 # Copyright (c) 2012-2014, spline
-# Copyright (c) 2014-2015, James Lu
+# Copyright (c) 2014-2016, James Lu
 # All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy of
@@ -31,6 +31,7 @@ try:
     from itertools import izip
 except ImportError:  # Python 3
     izip = zip
+
 import supybot.conf as conf
 import supybot.log as log
 import supybot.utils as utils
@@ -534,8 +535,8 @@ class Weather(callbacks.Plugin):
             try:
                 outdata['highyear'] = data['almanac']['temp_high'].get('recordyear')
                 outdata['lowyear'] = data['almanac']['temp_low'].get('recordyear')
-                outdata['highaverage'] = self._temp(channel, data['almanac']['temp_high']['average']['F'])
-                outdata['lowaverage'] = self._temp(channel, data['almanac']['temp_low']['average']['F'])
+                outdata['highaverage'] = self._temp(channel, data['almanac']['temp_high']['normal']['F'])
+                outdata['lowaverage'] = self._temp(channel, data['almanac']['temp_low']['normal']['F'])
                 if outdata['highyear'] != "NA" and outdata['lowyear'] != "NA":
                     outdata['highrecord'] = self._temp(channel, data['almanac']['temp_high']['record']['F'])
                     outdata['lowrecord'] = self._temp(channel, data['almanac']['temp_low']['record']['F'])
