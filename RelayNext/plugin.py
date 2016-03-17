@@ -147,7 +147,7 @@ class RelayNext(callbacks.Plugin):
                 newnick = msg.args[0]
                 if color:
                     newnick = self.simpleHash(newnick)
-                s = '- %s is now known as %s' % (nick, newnick)
+                s = '%s is now known as %s' % (nick, newnick)
 
             elif msg.command == 'PRIVMSG':
                 text = msg.args[1]
@@ -174,25 +174,26 @@ class RelayNext(callbacks.Plugin):
                     s = '<%s> %s' % (nick, msg.args[1])
 
             elif msg.command == 'JOIN':
-                s = '- %s%s has joined %s' % (nick, userhost, channel)
+                s = '%s%s has joined %s' % (nick, userhost, channel)
 
             elif msg.command == 'PART':
                 # Part message isn't a required field and can be empty
                 try:
                     partmsg = ' (%s)' % msg.args[1]
-                except:
+                except IndexError:
                     partmsg = ''
-                s = '- %s%s has left %s%s' % (nick, userhost, channel, partmsg)
+
+                s = '%s%s has left %s%s' % (nick, userhost, channel, partmsg)
 
             elif msg.command == 'QUIT':
-                s = '- %s has quit (%s)' % (nick, msg.args[0])
+                s = '%s has quit (%s)' % (nick, msg.args[0])
 
             elif msg.command == 'MODE':
                 modes = ' '.join(msg.args[1:])
-                s = '- %s%s set mode %s on %s' % (nick, userhost, modes, channel)
+                s = '%s%s set mode %s on %s' % (nick, userhost, modes, channel)
 
             elif msg.command == 'TOPIC':
-                s = '- %s set topic on %s to: %s' % (nick, channel, msg.args[1])
+                s = '%s set topic on %s to: %s' % (nick, channel, msg.args[1])
 
             elif msg.command == 'KICK':
                 kicked = msg.args[1]
@@ -202,12 +203,11 @@ class RelayNext(callbacks.Plugin):
                     kicked = self.simpleHash(kicked)
                 if noHighlight:
                     kicked = '-' + kicked
-                s = '- %s (%s) has been kicked from %s by %s (%s)' % (kicked,
+                s = '%s (%s) has been kicked from %s by %s (%s)' % (kicked,
                     userhost, channel, nick, msg.args[2])
 
-        if s:  # Add the network name and some final touch-ups
+        if s:  # Then, prepend the source network name in bold.
             s = "\x02[%s]\x02 %s" % (netname, s)
-            s = s.replace("- -", "-", 1)
         return s
 
     def relay(self, irc, msg, channel=None):
