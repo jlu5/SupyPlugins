@@ -147,6 +147,10 @@ class RelayNext(callbacks.Plugin):
                 newnick = msg.args[0]
                 if color:
                     newnick = self.simpleHash(newnick)
+
+                if noHighlight:
+                    newnick = '-' + newnick
+
                 s = '%s is now known as %s' % (nick, newnick)
 
             elif msg.command == 'PRIVMSG':
