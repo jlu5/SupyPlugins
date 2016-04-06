@@ -221,7 +221,8 @@ class RelayNext(callbacks.Plugin):
 
         # Check for ignored events first
         ignoredevents = map(str.upper, self.registryValue('events.userIgnored', channel))
-        if msg.command in ignoredevents and msg.nick != irc.nick and ircdb.checkIgnored(msg.prefix, channel):
+        if msg.command in ignoredevents and msg.nick != irc.nick and irc.isNick(msg.nick) and\
+                ircdb.checkIgnored(msg.prefix, channel):
             self.log.debug("RelayNext (%s): ignoring message from %s",
                            irc.network, msg.prefix)
             return
