@@ -219,9 +219,10 @@ class RelayNext(callbacks.Plugin):
         if not channel in irc.state.channels:
             return
 
-        # Check for ignored events first
+        # Check for ignored events first. Checking for "'.' not in msg.nick" is for skipping
+        # ignore checks from servers.
         ignoredevents = map(str.upper, self.registryValue('events.userIgnored', channel))
-        if msg.command in ignoredevents and msg.nick != irc.nick and irc.isNick(msg.nick) and\
+        if msg.command in ignoredevents and msg.nick != irc.nick and '.' not in msg.nick and\
                 ircdb.checkIgnored(msg.prefix, channel):
             self.log.debug("RelayNext (%s): ignoring message from %s",
                            irc.network, msg.prefix)
