@@ -45,7 +45,7 @@ except ImportError:
     _ = lambda x: x
 
 
-SED_REGEX = re.compile(r"^(?:(?P<nick>.+?)[:,] )?s(?P<delim>[^\w])(?P<pattern>.*?)(?P=delim)"
+SED_REGEX = re.compile(r"^(?:(?P<nick>.+?)[:,] )?s(?P<delim>[^\w\s])(?P<pattern>.*?)(?P=delim)"
                        r"(?P<replacement>.*?)(?:(?P=delim)(?P<flags>[gi]*))?$")
 
 class Replacer(callbacks.PluginRegexp):
