@@ -108,11 +108,11 @@ def _getDistro(release):
 
     Guesses the distribution from the release name."""
     release = release.lower()
-    debian = ("oldoldstable", "squeeze", "oldstable", "wheezy", "stable",
+    debian = ("oldoldstable", "oldstable", "wheezy", "stable",
               "jessie", "testing", "sid", "unstable", "stretch", "buster",
               "experimental")
     debian_archive = ("bo", "hamm", "slink", "potato", "woody", "sarge",
-                      "etch", "lenny")
+                      "etch", "lenny", "squeeze")
     ubuntu = ("precise", "trusty", "vivid", "wily", "xenial")
     if release.startswith(debian):
         return "debian"
