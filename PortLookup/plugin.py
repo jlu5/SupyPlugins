@@ -95,14 +95,16 @@ class PortLookup(callbacks.Plugin):
                     text = tds[3].text
                     # Remove inline citations (text[1][2][3]), citation needed tags, etc.
                     text = re.sub('\[.*?]', '', text)
-                    tcp = tds[1].text
-                    udp = tds[2].text
-                    official = tds[4].text
-                    if tcp and udp:
-                        porttype = '/'.join((tcp, udp))
-                    else:
-                        porttype = tcp or udp
-                    results.append('%s [%s; %s]' % (ircutils.bold(text), official, porttype))
+
+                    # List the port notes (tags such as "Official", "TCP", "UDP", etc.)
+                    # This is every <td> tag except the 4th one, which is the description parsed
+                    # above.
+                    notes = [t.text.strip() for t in tds[:3]+tds[4:]]
+                    notes = '; '.join(filter(None, notes))
+
+                    # Remove \n, etc. in fields to prevent output corruption.
+                    s = utils.str.normalizeWhitespace('%s [%s]' % (ircutils.bold(text), notes))
+                    results.append(s)
         if results:
             irc.reply(format('%s: %L', ircutils.bold(ircutils.underline(port)), results))
         else:
