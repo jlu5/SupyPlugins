@@ -74,8 +74,8 @@ Most of these plugins also have their own READMEs in their folders; you can usua
 ##### [RelayNext](RelayNext/README.md)
 - Next generation relayer plugin, designed with two-way relays in mind.
 
-##### Replacer
-- History replacer using sed-style expressions.
+##### SedRegex
+- History replacer using sed-style expressions. Fork of [t3chguy's Replacer plugin](https://github.com/t3chguy/Limnoria-Plugins/tree/master/Replacer).
 
 ##### RhymeZone
 - Fetches rhymes from http://rhymezone.com/.

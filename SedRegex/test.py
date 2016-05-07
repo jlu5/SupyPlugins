@@ -28,35 +28,9 @@
 
 ###
 
-"""
-Replacer: History Replacer - Sed Regex Syntax
+from supybot.test import *
 
-Allows you to make Shorthand Corrections to your Chat History
-"""
-
-import supybot
-import supybot.world as world
-
-__version__ = "2016.02.28.1+git"
-__author__ = supybot.Author("Michael Daniel Telatynski", "t3chguy", "postmaster@webdevguru.co.uk")
-__contributors__ = {supybot.Author("James Lu", "GLolol", "glolol@overdrivenetworks.com"):
-                    	["an option for bolding the replacement text"],
-                    supybot.Author('nyuszika7h', 'nyuszika7h', 'nyuszika7h@openmailbox.org'):
-                    	["_unpack_sed method within plugin.py"]
-                   }
-__url__ = 'https://github.com/t3chguy/Limnoria-Plugins'
-
-from . import config
-from . import plugin
-from imp import reload
-
-reload(config)
-reload(plugin)
-
-if world.testing:
-    from . import test
-
-Class = plugin.Class
-configure = config.configure
+class SedRegexTestCase(PluginTestCase):
+    plugins = ('SedRegex',)
 
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:

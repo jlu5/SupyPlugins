@@ -33,28 +33,28 @@ import supybot.conf as conf
 import supybot.registry as registry
 try:
     from supybot.i18n import PluginInternationalization
-    _ = PluginInternationalization('Replacer')
+    _ = PluginInternationalization('SedRegex')
 except:
     _ = lambda x: x
 
 def configure(advanced):
     from supybot.questions import expect, anything, something, yn
-    conf.registerPlugin('Replacer', True)
+    conf.registerPlugin('SedRegex', True)
     if advanced:
-        output("""The Replacer Plugin allows you to make Perl/Sed-style regex
-               replacements to your chat history in the form of corrections.""")
+        output("""The SedRegex plugin allows you to make Perl/sed-style regex
+               replacements to your chat history.""")
 
-Replacer = conf.registerPlugin('Replacer')
+SedRegex = conf.registerPlugin('SedRegex')
 
-conf.registerChannelValue(Replacer, 'displayErrors',
+conf.registerChannelValue(SedRegex, 'displayErrors',
     registry.Boolean(True, _("""Should errors be displayed?""")))
-conf.registerChannelValue(Replacer, 'boldReplacementText',
+conf.registerChannelValue(SedRegex, 'boldReplacementText',
     registry.Boolean(True, _("""Should the replacement text be bolded?""")))
-conf.registerChannelValue(Replacer, 'enable',
-    registry.Boolean(False, _("""Should Perl/Sed regex replacing
+conf.registerChannelValue(SedRegex, 'enable',
+    registry.Boolean(False, _("""Should Perl/sed-style regex replacing
                      work in this channel?""")))
-conf.registerChannelValue(Replacer, 'ignoreRegex',
-    registry.Boolean(True, _("""Should Perl/Sed regex replacing
+conf.registerChannelValue(SedRegex, 'ignoreRegex',
+    registry.Boolean(True, _("""Should Perl/sed regex replacing
                      ignore messages which look like valid regex?""")))
 
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:

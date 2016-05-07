@@ -1,6 +1,6 @@
 ###
 # Copyright (c) 2015, Michael Daniel Telatynski <postmaster@webdevguru.co.uk>
-# Copyright (c) 2015, James Lu <glolol@overdrivenetworks.com>
+# Copyright (c) 2015-2016, James Lu <glolol@overdrivenetworks.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -40,7 +40,7 @@ import re
 
 try:
     from supybot.i18n import PluginInternationalization
-    _ = PluginInternationalization('Replacer')
+    _ = PluginInternationalization('SedRegex')
 except ImportError:
     _ = lambda x: x
 
@@ -48,8 +48,8 @@ except ImportError:
 SED_REGEX = re.compile(r"^(?:(?P<nick>.+?)[:,] )?s(?P<delim>[^\w\s])(?P<pattern>.*?)(?P=delim)"
                        r"(?P<replacement>.*?)(?:(?P=delim)(?P<flags>[gi]*))?$")
 
-class Replacer(callbacks.PluginRegexp):
-    """History replacer using sed regex syntax."""
+class SedRegex(callbacks.PluginRegexp):
+    """History replacer using sed-style regex syntax."""
     threaded = True
     public = True
     unaddressedRegexps = ['replacer']
@@ -106,9 +106,9 @@ class Replacer(callbacks.PluginRegexp):
         try:
             (pattern, replacement, count) = self._unpack_sed(msg.args[1])
         except (ValueError, re.error) as e:
-            self.log.warning(_("Replacer error: %s"), e)
+            self.log.warning(_("SedRegex error: %s"), e)
             if self.registryValue('displayErrors', msg.args[0]):
-                irc.error(_("Replacer error: %s" % e), Raise=True)
+                irc.error(_("SedRegex error: %s" % e), Raise=True)
             return
 
         next(iterable)
@@ -150,14 +150,14 @@ class Replacer(callbacks.PluginRegexp):
                               (messageprefix, subst), prefixNick=False)
                     return
 
-        self.log.debug(_("Replacer: Search %r not found in the last %i messages of %s."),
+        self.log.debug(_("SedRegex: Search %r not found in the last %i messages of %s."),
                          msg.args[1], len(irc.state.history), msg.args[0])
         if self.registryValue("displayErrors", msg.args[0]):
             irc.error(_("Search not found in the last %i messages.") %
                       len(irc.state.history), Raise=True)
     replacer.__doc__ = SED_REGEX.pattern
 
-Class = Replacer
+Class = SedRegex
 
 
 # vim:set shiftwidth=4 softtabstop=4 expandtab textwidth=79:

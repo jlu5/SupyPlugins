@@ -1,5 +1,6 @@
 ###
 # Copyright (c) 2015, Michael Daniel Telatynski <postmaster@webdevguru.co.uk>
+# Copyright (c) 2015-2016, James Lu <glolol@overdrivenetworks.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -28,9 +29,33 @@
 
 ###
 
-from supybot.test import *
+"""
+History replacer using sed-style expressions.
+"""
 
-class ReplacerTestCase(PluginTestCase):
-    plugins = ('Replacer',)
+import supybot
+import supybot.world as world
+
+__version__ = "2016.02.28.1+git"
+__author__ = supybot.Author("Michael Daniel Telatynski", "t3chguy", "postmaster@webdevguru.co.uk")
+__contributors__ = {supybot.Author("James Lu", "GLolol", "glolol@overdrivenetworks.com"):
+                    	["options bolding the replacement text", "misc. bug fixes and enhancements"],
+                    supybot.Author('nyuszika7h', 'nyuszika7h', 'nyuszika7h@openmailbox.org'):
+                    	["_unpack_sed method within plugin.py"]
+                   }
+__url__ = 'https://github.com/GLolol/SupyPlugins'
+
+from . import config
+from . import plugin
+from imp import reload
+
+reload(config)
+reload(plugin)
+
+if world.testing:
+    from . import test
+
+Class = plugin.Class
+configure = config.configure
 
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:
