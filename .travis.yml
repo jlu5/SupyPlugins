@@ -39,7 +39,7 @@ matrix:
         - python: "3.3"
         - python: "pypy"
         - python: "pypy3"
-        - env: TEST_ARGS=""
+        - env: SYSDNS_HOST_COMMAND="/usr/bin/unbound-host" TEST_ARGS=""
 
 branches:
   except:
