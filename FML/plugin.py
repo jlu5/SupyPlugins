@@ -73,6 +73,10 @@ class FML(callbacks.Plugin):
                            query, url, e)
             irc.error("That FML does not exist or there was an error "
                       "fetching data from the API.", Raise=True)
+
+        if not fmlid:
+            irc.error("That FML does not exist.", Raise=True)
+
         votes = ircutils.bold("[Agreed: %s / Deserved: %s]" %
                               (tree.find('agree').text,
                               tree.find('deserved').text))
