@@ -79,6 +79,7 @@ Most of these plugins also have their own READMEs in their folders; you can usua
 
 ##### RhymeZone
 - Fetches rhymes from http://rhymezone.com/.
+    - Unsupported on Python 2 due to string encoding issues.
 
 ##### SupyMisc
 - Some assorted commands that don't seem to fit anywhere else.

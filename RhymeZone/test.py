@@ -1,5 +1,5 @@
 ###
-# Copyright (c) 2015, James Lu
+# Copyright (c) 2015-2016, James Lu <glolol@overdrivenetworks.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -30,11 +30,13 @@
 
 from supybot.test import *
 import unittest
+import sys
 
 class RhymeZoneTestCase(PluginTestCase):
     plugins = ('RhymeZone',)
 
     @unittest.skipUnless(network, 'Network-based tests have been disabled via --no-network.')
+    @unittest.skipUnless(sys.version_info[0] >= 3, 'Not supported on Python 2.')
     def testRhymes(self):
         self.assertNotError('rhymes cat')
 
