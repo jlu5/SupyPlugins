@@ -1,5 +1,5 @@
 ###
-# Copyright (c) 2014-2015, James Lu
+# Copyright (c) 2014-2016, James Lu <glolol@overdrivenetworks.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,14 +27,25 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 ###
+import os
 
 from supybot.test import *
+from supybot import conf
 
 class SysDNSTestCase(PluginTestCase):
     plugins = ('SysDNS',)
+
+    # Make the 'host' binary that should be used configurable. This is useful in
+    # Travis-CI for example, where bind9-host (/usr/bin/host) isn't available, but
+    # unbound-host is via /usr/bin/unbound-host.
+    host_cmd = os.environ.get('SYSDNS_HOST_COMMAND', conf.supybot.plugins.SysDNS.command())
+
+    config = {'supybot.plugins.SysDNS.command': host_cmd}
+
+    print('SysDNS: using %r as host binary' % host_cmd)
     
     def testBasics(self):
         self.assertNotError('sysdns dns google.com')
-
+        self.assertRegexp('sysdns dns localhost', '127\.0\.0\.1')
 
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:
