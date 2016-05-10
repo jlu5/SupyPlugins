@@ -11,20 +11,20 @@ python:
   - "pypy3"
   - "nightly"
 
-sudo: required
+addons:
+  apt:
+    packages:
+    # For SysDNS tests
+    - unbound-host
 
-# Fetch dependencies
-before_install:
-    - sudo apt-get -qq update
 install:
-    - sudo apt-get install -qq bind9-host
     - pip install -vr requirements.txt
 
 # Some plugins use external APIs, and can cause tests to fail due to them being slow/down.
 # --no-network disables these, and we can still allow tests that have network access to fail.
 env:
-    - TEST_ARGS="--no-network"
-    - TEST_ARGS=""
+    - SYSDNS_HOST_COMMAND="/usr/bin/unbound-host" TEST_ARGS="--no-network"
+    - SYSDNS_HOST_COMMAND="/usr/bin/unbound-host" TEST_ARGS=""
 
 script:
     - supybot-test -c --plugins-dir=. $TEST_ARGS --exclude=./Weather
