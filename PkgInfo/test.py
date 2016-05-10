@@ -33,6 +33,9 @@ from supybot.test import *
 class PkgInfoTestCase(PluginTestCase):
     plugins = ('PkgInfo',)
     if network:
+
+        timeout = 12
+
         def testPkg(self):
             self.assertRegexp('pkg sid bash', 'Package: .*?bash .*?')
             self.assertRegexp('pkg trusty apt', 'Package: .*?apt .*?')
