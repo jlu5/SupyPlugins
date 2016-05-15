@@ -65,9 +65,11 @@ class SupyMiscTestCase(PluginTestCase):
         self.assertResponse('mreplace hi,there hello,ok hmm, hi there everyone',
             'hmm, hello ok everyone')
 
+    @unittest.skipUnless(network, "Network-based tests have been disabled via "
+                         "--no-network")
     def testSPsourceFetch(self):
         self.assertNotError('supyplugins')
-        self.assertRegexp('supyplugins SupyMisc//plugin.py', \
+        self.assertRegexp('supyplugins SupyMisc/plugin.py', \
             '.*?blob\/master\/SupyMisc\/plugin\.py.*?')
         self.assertRegexp('supyplugins SupyMisc/', \
             '.*?tree\/master\/SupyMisc.*?')
