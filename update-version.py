@@ -43,9 +43,13 @@ parser = argparse.ArgumentParser(description="Script to batch update plugins' ve
 parser.add_argument('-v', "--version", help='the version to upgrade to - if not defined, defaults to the current date (YYYY.MM.DD)"', default=default_version, nargs="?")
 parser.add_argument("-n", "--no-commit", help="Don't commit and tag after incrementing version", action='store_true')
 parser.add_argument("-f", "--folders", help="Sets the plugin folders to look through", nargs='*', default=os.listdir())
+parser.add_argument("-g", "--git", help="Bumps version to +git, skipping automatic tagging.", action='store_true')
 args = parser.parse_args()
 
 version = args.version
+
+if args.git:
+    version += '+git'
 
 to_commit = []
 
@@ -81,4 +85,6 @@ for dir in filter(os.path.isdir, args.folders):
 if not args.no_commit:
     print("Automatically committing and tagging as %s." % version)
     subprocess.call(['git', 'commit', '-m', 'Bump version to %s' % version] + to_commit)
-    subprocess.call(('git', 'tag', version))
+
+    if not args.git:
+        subprocess.call(('git', 'tag', version))
