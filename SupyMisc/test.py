@@ -59,7 +59,6 @@ class SupyMiscTestCase(PluginTestCase):
         self.assertResponse('me', 'foo')
         self.assertResponse('getident', 'bar')
         self.assertResponse('gethost', 'baz.not')
-        self.assertResponse('botnick', self.nick)
 
     def testmreplace(self):
         self.assertResponse('mreplace hi,there hello,ok hmm, hi there everyone',

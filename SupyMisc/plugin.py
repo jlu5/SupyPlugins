@@ -259,13 +259,6 @@ class SupyMisc(callbacks.Plugin):
         irc.reply(msg.nick)
     me = wrap(me)
 
-    def botnick(self, irc, msg, args):
-        """takes no arguments.
-        Returns the nick of the bot.
-        """
-        irc.reply(irc.nick)
-    botnick = wrap(botnick)
-
     def getident(self, irc, msg, args, nick):
         """[<nick>]
         Returns the ident of <nick>. If <nick> is not given, returns the host
