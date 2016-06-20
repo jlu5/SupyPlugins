@@ -159,15 +159,15 @@ class LastFM(callbacks.Plugin):
         # Album name (may or may not be present)
         album = trackdata["album"]["#text"].strip()
         if album:
-            album = "[%s] " % album
+            album = ircutils.bold("[%s]" % album)
 
         try:
             time = int(trackdata["date"]["uts"])  # Time of last listen
             # Format this using the preferred time format.
             tformat = conf.supybot.reply.format.time()
-            time = datetime.fromtimestamp(time).strftime(tformat)
+            time = "at %s" % datetime.fromtimestamp(time).strftime(tformat)
         except KeyError:  # Nothing given by the API?
-            time = "some point in time"
+            time = "right now"
 
         public_url = ''
         # If the DDG plugin from this repository is loaded, we can integrate
@@ -181,15 +181,15 @@ class LastFM(callbacks.Plugin):
                     search = [td for td in ddg._ddgurl('site:youtube.com "%s - %s"' % (artist, track))
                               if "1." in td.text]
                     res = search[0].next_sibling.next_sibling
-                    public_url = format(' - %u', res.a.get('href'))
+                    public_url = format('%u', res.a.get('href'))
                 except:
                     # If something breaks, log the error but don't cause the
                     # entire np request to fail.
                     log.exception("LastFM: failed to get YouTube link for track %s - %s", artist, track)
 
-        irc.reply('%s listened to %s by %s %sat %s%s' %
-                  (ircutils.bold(user), ircutils.bold(track),
-                   ircutils.bold(artist), ircutils.bold(album), time, public_url))
+        s = '%s listened to %s by %s %s %s. %s' % (ircutils.bold(user), ircutils.bold(track),
+            ircutils.bold(artist), album, time, public_url)
+        irc.reply(utils.str.normalizeWhitespace(s))
 
     @wrap(["something"])
     def set(self, irc, msg, args, newId):
