@@ -77,6 +77,10 @@ Most of these plugins also have their own READMEs in their folders; you can usua
 ##### SedRegex
 - History replacer using sed-style expressions. Fork of [t3chguy's Replacer plugin](https://github.com/t3chguy/Limnoria-Plugins/tree/master/Replacer).
 
+##### [TranslateParty](TranslateParty/README.md)
+- Translates text through Google Translate multiple times in order to get amusing results.
+   - **Note: This plugin requires Python 3!**
+
 ##### RhymeZone
 - Fetches rhymes from http://rhymezone.com/.
     - Unsupported on Python 2 due to string encoding issues.
@@ -96,7 +100,3 @@ Most of these plugins also have their own READMEs in their folders; you can usua
 
 ##### Wikifetch
 - Fork of [ProgVal's Wikipedia plugin](https://github.com/ProgVal/Supybot-plugins), with support for other wikis (via a `--site` option) and other improvements.
-
-##### [WTE](WTE/README.md)
-- Worst Translations Ever! plugin. Translates text through multiple rounds of Google Translate to get some interesting results!
-   - **Note: This plugin requires Python 3!**
