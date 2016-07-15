@@ -32,7 +32,7 @@ import supybot.conf as conf
 import supybot.registry as registry
 try:
     from supybot.i18n import PluginInternationalization
-    _ = PluginInternationalization('WTE')
+    _ = PluginInternationalization('TranslateParty')
 except:
     # Placeholder that allows to run the plugin on a bot
     # without the i18n module
@@ -44,14 +44,14 @@ def configure(advanced):
     # user or not.  You should effect your configuration by manipulating the
     # registry as appropriate.
     from supybot.questions import expect, anything, something, yn
-    conf.registerPlugin('WTE', True)
+    conf.registerPlugin('TranslateParty', True)
 
 
-WTE = conf.registerPlugin('WTE')
-conf.registerChannelValue(WTE, 'verbose',
+TranslateParty = conf.registerPlugin('TranslateParty')
+conf.registerChannelValue(TranslateParty, 'verbose',
      registry.Boolean(True, _("""Determines whether
      verbose output (list of languages used, etc.) will be used.""")))
-conf.registerChannelValue(WTE, 'language',
+conf.registerChannelValue(TranslateParty, 'language',
      registry.String('en', _("""Determines what the output language
      of 'wte' will be. This should be one of Google Translate's supported
      language  codes as listed at:

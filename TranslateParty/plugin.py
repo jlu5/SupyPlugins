@@ -43,19 +43,19 @@ except ImportError: # Python 2
 
 try:
     from supybot.i18n import PluginInternationalization
-    _ = PluginInternationalization('WTE')
+    _ = PluginInternationalization('TranslateParty')
 except ImportError:
     # Placeholder that allows to run the plugin on a bot
     # without the i18n module
     _ = lambda x:x
 
-class WTE(callbacks.Plugin):
+class TranslateParty(callbacks.Plugin):
     """Worst Translations Ever! plugin. Translates text through
     multiple rounds of Google Translate to get amazing results!"""
     threaded = True
 
     def __init__(self, irc):
-        self.__parent = super(WTE, self)
+        self.__parent = super(TranslateParty, self)
         self.__parent.__init__(irc)
         self.langs = {
             'af': 'Afrikaans',
@@ -166,24 +166,23 @@ class WTE(callbacks.Plugin):
         args = {"sl": sourceLang, "tl": targetLang, 'q': text}
         url = "https://translate.googleapis.com/translate_a/single?client=gtx&dt=t&"+ \
             urlencode(args)
-        self.log.debug("WTE: Using URL %s", url)
+        self.log.debug("TranslateParty: Using URL %s", url)
         headers = {'User-Agent': ('Mozilla/5.0 (X11; Linux i586; rv:31.0) '
                                  'Gecko/20100101 Firefox/31.0')}
         try:
             data = utils.web.getUrlFd(url, headers).read().decode("utf-8")
         except utils.web.Error as e:
-            self.log.exception("WTE: getTranslation errored (probably malformed or too long text)")
+            self.log.exception("TranslateParty: getTranslation errored (probably malformed or too long text)")
             return text
         data = self._jsonRepair(data)
         data = json.loads(data)
         return ''.join(x[0] for x in data[0])
 
     @wrap(['text'])
-    def wte(self, irc, msg, args, text):
-        """wte <text>
+    def tp(self, irc, msg, args, text):
+        """tp <text>
 
-        Worst Translations Ever! plugin. Translates <text> through
-        multiple rounds of Google Translate to get amazing results!
+        Translates <text> through multiple rounds of Google Translate to get amusing results.
         """
         outlang = self.registryValue('language', msg.args[0])
         if outlang not in self.langs:
@@ -195,7 +194,7 @@ class WTE(callbacks.Plugin):
         # in that it gives interesting results but doesn't spam Google's API
         # (and risk getting blocked) too much.
         ll = random.sample(self.langs.keys(), random.randint(4,8))
-        self.log.debug(format("WTE: Using %i languages: %L "
+        self.log.debug(format("TranslateParty: Using %i languages: %L "
             "(outlang %s)", len(ll), ll, outlang))
 
         # For every language in this list, translate the text given from
@@ -214,6 +213,6 @@ class WTE(callbacks.Plugin):
                              "(output language %s)", len(ll), languages, outlang))
         irc.reply(text)
 
-Class = WTE
+Class = TranslateParty
 
 # vim:set shiftwidth=4 softtabstop=4 expandtab textwidth=79:

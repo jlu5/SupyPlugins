@@ -1,13 +1,13 @@
-##WTE - Worst Translations Ever! 
+## Translate Party
 
 **Note: This plugin requires Python 3!**
 
-WTE is a plugin that sticks text through multiple rounds of Google Translate, in order to get
-some interesting results. It automatically picks a list of languages to go through, and translates
+Translate party sticks text through multiple rounds of Google Translate, in order to get
+some amusing results. It automatically picks a list of languages to go through, and translates
 back and forth between them quite a few times. This guarantees that the result will be different
 every time.
 
-Any source language [supported by Google Translate](https://translate.google.com/about/intl/en_ALL/#supportedLangs)
+Any source language [supported by Google Translate](https://cloud.google.com/translate/v2/translate-reference#supported_languages)
 is allowed, since auto-detection is used to translate text back to your desired language. This can be set via `config plugins.wte.language`, and defaults to English (`en`).
 
 Samples:
