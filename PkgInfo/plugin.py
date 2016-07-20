@@ -113,7 +113,7 @@ def _getDistro(release):
               "experimental")
     debian_archive = ("bo", "hamm", "slink", "potato", "woody", "sarge",
                       "etch", "lenny", "squeeze")
-    ubuntu = ("precise", "trusty", "vivid", "wily", "xenial")
+    ubuntu = ("precise", "trusty", "wily", "xenial", "yakkety")
     if release.startswith(debian):
         return "debian"
     elif release.startswith(ubuntu):
