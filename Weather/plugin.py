@@ -515,7 +515,9 @@ class Weather(callbacks.Plugin):
         output += " {0}: {1}".format(self._bold(forecastdata[1]['day']), forecastdata[1]['text'])
 
         if args['updated']:
-            output += " | {0} {1}".format(self._bold('Updated:'), outdata['observation'])
+            # Round updated time (given as a string) to the nearest minute.
+            updated_time = outdata['observation'].split('.')[0] + 'm'
+            output += " | Updated %s ago" % ircutils.bold(updated_time)
 
         # finally, output the basic weather.
         irc.reply(output)
