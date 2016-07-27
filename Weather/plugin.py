@@ -515,9 +515,13 @@ class Weather(callbacks.Plugin):
         output += " {0}: {1}".format(self._bold(forecastdata[1]['day']), forecastdata[1]['text'])
 
         if args['updated']:
-            # Round updated time (given as a string) to the nearest minute.
-            updated_time = outdata['observation'].split('.')[0] + 'm'
-            output += " | Updated %s ago" % ircutils.bold(updated_time)
+            # Round updated time (given as a string) to the nearest unit.
+            # This is annoying because Wunderground sends these as raw strings, in the form
+            # "1hr ago" or "2.7666666666666666m ago"
+            tailstr = outdata['observation'][-5:]
+            updated_time = outdata['observation'][:-5]
+            updated_time = round(float(updated_time))
+            output += " | Updated %s%s" % (ircutils.bold(updated_time), tailstr)
 
         # finally, output the basic weather.
         irc.reply(output)
