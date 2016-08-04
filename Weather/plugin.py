@@ -27,6 +27,7 @@ from __future__ import unicode_literals
 import json
 from math import floor
 import sqlite3
+import string
 try:
     from itertools import izip
 except ImportError:  # Python 3
@@ -518,8 +519,8 @@ class Weather(callbacks.Plugin):
             # Round updated time (given as a string) to the nearest unit.
             # This is annoying because Wunderground sends these as raw strings, in the form
             # "1hr ago" or "2.7666666666666666m ago"
-            tailstr = outdata['observation'][-5:]
-            updated_time = outdata['observation'][:-5]
+            tailstr = outdata['observation'].lstrip(string.digits + '.')
+            updated_time = outdata['observation'].rstrip(string.ascii_letters + ' ')
             updated_time = round(float(updated_time))
             output += " | Updated %s%s" % (ircutils.bold(updated_time), tailstr)
 
