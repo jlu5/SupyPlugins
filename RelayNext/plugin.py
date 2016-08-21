@@ -216,6 +216,7 @@ class RelayNext(callbacks.Plugin):
 
     def relay(self, irc, msg, channel=None):
         channel = (channel or msg.args[0]).lower()
+        self.log.debug("RelayNext (%s): got channel %s", irc.network, channel)
         if not channel in irc.state.channels:
             return
 
@@ -229,10 +230,13 @@ class RelayNext(callbacks.Plugin):
             return
 
         # Get the source channel
-        source = "%s@%s".lower() % (channel, irc.network)
+        source = "%s@%s" % (channel, irc.network)
+        source = source.lower()
+
         out_s = self._format(irc, msg, channel)
         if out_s:
             for relay in self.db.values():
+                self.log.debug("RelayNext (%s): check if %s in %s", irc.network, source, relay)
                 if source in relay:  # If our channel is in a relay
                     self.log.debug("RelayNext: found %s to be in relay %s", source, relay)
 
