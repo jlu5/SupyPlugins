@@ -120,7 +120,7 @@ class RelayNext(callbacks.Plugin):
         noHighlight = self.registryValue('noHighlight', channel)
         useHostmask = self.registryValue('hostmasks', channel)
         color = self.registryValue('color', channel)
-        netname = irc.network.lower()
+        netname = irc.network
 
         if color:
             nick = self.simpleHash(nick)
