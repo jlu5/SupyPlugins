@@ -127,6 +127,7 @@ class PkgInfo(callbacks.Plugin):
     Arch Linux, CentOS, Debian, Fedora, FreeBSD, Linux Mint, and Ubuntu."""
     threaded = True
 
+    _deptypes = ['dep', 'rec', 'sug', 'enh', 'adep', 'idep']
     _dependencyColor = utils.str.MultipleReplacer({'rec:': '\x0312rec:\x03',
                                                    'dep:': '\x0304dep:\x03',
                                                    'sug:': '\x0309sug:\x03',
@@ -175,7 +176,7 @@ class PkgInfo(callbacks.Plugin):
             items = soup.find('div', {'id': 'pdeps'}).find_all('dt')
             # Store results by type and name, but in an ordered fashion: show dependencies first,
             # followed by recommends, suggests, and enhances.
-            res = OrderedDict((deptype+':', []) for deptype in ('dep', 'rec', 'sug', 'enh'))
+            res = OrderedDict((deptype+':', []) for deptype in self._deptypes)
             for item in items:
                 # Get package name and related versions and architectures:
                 # <packagename> (>= 1.0) [arch1, arch2]
