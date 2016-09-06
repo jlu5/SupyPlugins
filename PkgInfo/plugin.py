@@ -102,6 +102,7 @@ addrs = {'ubuntu': 'http://packages.ubuntu.com/',
          'debian': 'https://packages.debian.org/',
          # This site is very, VERY slow, but it still works..
          'debian-archive': 'http://archive.debian.net/'}
+_normalize = lambda text: utils.str.normalizeWhitespace(text).strip()
 
 def _getDistro(release):
     """<release>
@@ -169,7 +170,7 @@ class PkgInfo(callbacks.Plugin):
             irc.reply(err)
             return
 
-        # If we're using the  --depends option, handle that separately.
+        # If we're using the --depends option, handle that separately.
         if 'depends' in opts:
             items = soup.find('div', {'id': 'pdeps'}).find_all('dt')
             # Store results by type and name, but in an ordered fashion: show dependencies first,
@@ -389,6 +390,48 @@ class PkgInfo(callbacks.Plugin):
             irc.error(e)
     pkgsearch = wrap(pkgsearch, ['somethingWithoutSpaces',
                                  'somethingWithoutSpaces'])
+
+    @wrap(['somethingWithoutSpaces', 'somethingWithoutSpaces'])
+    def filesearch(self, irc, msg, args, release, query):
+        """<release> <file query>
+
+        Searches what package in Debian or Ubuntu has which file. <release> is the
+        codename/release name (e.g. xenial or jessie)."""
+        release = release.lower()
+        distro = _getDistro(release)
+
+        try:
+            url = '%ssearch?keywords=%s&searchon=contents&suite=%s' % (addrs[distro], quote(query), quote(release))
+        except KeyError:
+            irc.error(unknowndist, Raise=True)
+
+        try:
+            fd = utils.web.getUrl(url).decode("utf-8")
+        except utils.web.Error as e:
+            irc.error(str(e), Raise=True)
+
+        soup = BeautifulSoup(fd)
+
+        results = []
+        # Get results from table entries, minus the first one which is used for headings.
+        contentdiv = soup.find('div', attrs={'id': "pcontentsres"})
+        if contentdiv:
+            for tr in contentdiv.find_all("tr")[1:]:
+                tds = tr.find_all('td')
+                try:
+                    filename, packages = map(_normalize, [tds[0].get_text(), tds[1].get_text()])
+                except IndexError:
+                    continue
+                results.append('%s: %s' % (ircutils.bold(filename), packages))
+
+        if results:
+            irc.reply('; '.join(results))
+        else:
+            try:
+                e = _normalize(soup.find("div", class_="perror").get_text())
+            except AttributeError:
+                e = "No results found."
+            irc.error(e)
 
     @wrap(['somethingWithoutSpaces',
            'somethingWithoutSpaces',
