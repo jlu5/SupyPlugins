@@ -488,15 +488,22 @@ class PkgInfo(callbacks.Plugin):
             irc.error('No results found.')
 
 
-    @wrap(['positiveInt', 'somethingWithoutSpaces'])
-    def fedora(self, irc, msg, args, release, query):
-        """<release> <package name>
+    @wrap([getopts({'release': 'somethingWithoutSpaces'}), additional('somethingWithoutSpaces')])
+    def fedora(self, irc, msg, args, opts, query):
+        """[--release <release>] [<package name>]
 
-        Looks up <package> in Fedora's repositories. Globs (*, ?, etc.)
-        are supported here. <release> is the release version (22, 21, etc.)"""
-        url = 'https://admin.fedoraproject.org/pkgdb/api/packages/%s?' % quote(query)
-        # Fedora uses f## in their API, where ## is the release version
-        url += urlencode({'branches': 'f' + str(release), 'format': 'json'})
+        Looks up <package> in Fedora's repositories. Globs (*, ?) are supported here. <release> is
+        the release version: e.g. 'f25' or 'master' (for rawhide). If no package is given, a list
+        of available releases will be shown."""
+        opts = dict(opts)
+        if query is None:
+            # No package given; show available releases.
+            url = 'https://admin.fedoraproject.org/pkgdb/api/collections?format=json'
+        else:
+            url = 'https://admin.fedoraproject.org/pkgdb/api/packages/%s?format=json' % quote(query)
+            if 'release' in opts:
+                url += '&branches=%s' % quote(opts['release'])
+
         self.log.debug("PkgInfo: using url %s for 'fedora' command", url)
         try:
             fd = utils.web.getUrl(url).decode("utf-8")
@@ -507,17 +514,24 @@ class PkgInfo(callbacks.Plugin):
                     e += " Try wrapping your query with *'s: '*%s*'" % query
             irc.error(e, Raise=True)
         data = json.loads(fd)
-        def formatdesc(s):
-            # Fedora's package descriptions have newlines inserted in them at strange positions,
-            # sometimes even inside sentences. We'll break at the first sentence here:
-            s = s.split('.')[0].strip()
-            s = re.sub('\n+', ' ', s)
-            return s
-        results = ['%s: %s' % (ircutils.bold(pkg['name']), formatdesc(pkg['description']))
-                   for pkg in data["packages"]]
-        friendly_url = 'https://apps.fedoraproject.org/packages/s/%s' % query
-        s = format('Found %n: %s; View more at %u', (len(results), 'result'), '; '.join(results),
-                   friendly_url)
+
+        if query is None:
+            data = data['collections']
+            collections = ['%s (%s %s, %s)' % (ircutils.bold(c['branchname']), c['name'], c['version'], c['status']) for c in data]
+            s = format('Available releases to look up: %L', sorted(collections))
+        else:
+            def formatdesc(s):
+                # Fedora's package descriptions have newlines inserted in them at strange positions,
+                # sometimes even inside sentences. We'll break at the first sentence here:
+                s = s.split('.')[0].strip()
+                s = re.sub('\n+', ' ', s)
+                return s
+
+            results = ['%s: %s' % (ircutils.bold(pkg['name']), formatdesc(pkg['description']))
+                       for pkg in data["packages"]]
+            friendly_url = 'https://apps.fedoraproject.org/packages/s/%s' % query
+            s = format('Found %n: %s; View more at %u', (len(results), 'result'), '; '.join(results),
+                       friendly_url)
         irc.reply(s)
 
     @wrap(['positiveInt', additional('somethingWithoutSpaces'), additional('somethingWithoutSpaces'),
