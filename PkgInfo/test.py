@@ -71,11 +71,12 @@ class PkgInfoTestCase(PluginTestCase):
             self.assertRegexp('filesearch sid supybot', 'limnoria')
 
         def testFedora(self):
-            self.assertRegexp('fedora 22 bash*', 'bash')
+            self.assertRegexp('fedora --release master bash*', 'bash')
+            self.assertRegexp('fedora gnome-terminal', 'GNOME')
             # Not found queries that don't have any wildcards in them
             # should tell the user to try wrapping the search with *'s, since
             # Fedora's API always uses glob matches.
-            self.assertRegexp('fedora 22 sfasdfadsfasdfas', 'Try wrapping your query with \*')
+            self.assertRegexp('fedora sfasdfadsfasdfas', 'Try wrapping your query with \*')
 
         def testCentOS(self):
             self.assertRegexp('centos 7 os git-', 'git-all')
