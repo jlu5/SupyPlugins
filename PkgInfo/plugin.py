@@ -164,26 +164,35 @@ class PkgInfo(callbacks.Plugin):
         # If we're using the  --depends option, handle that separately.
         if 'depends' in opts:
             items = soup.find('div', {'id': 'pdeps'}).find_all('dt')
-            res = []
+            # Store results by type and name, but in an ordered fashion: show dependencies first,
+            # followed by recommends, suggests, and enhances.
+            res = OrderedDict((deptype+':', []) for deptype in ('dep', 'rec', 'sug', 'enh'))
             for item in items:
                 # Get package name and related versions and architectures:
                 # <packagename> (>= 1.0) [arch1, arch2]
                 try:
                     deptype = item.span.text if item.find('span') else ''
-                    name = '%s %s %s' % (deptype, ircutils.bold(item.a.text),
+                    if deptype not in res:
+                        continue  # Ignore unsupported fields
+
+                    name = '%s %s' % (ircutils.bold(item.a.text),
                             item.a.next_sibling.replace('\n', '').strip())
                     name = utils.str.normalizeWhitespace(name).strip()
                     if item.find('span'):
-                        res.append(name)
+                        res[deptype].append(name)
                     else:
-                        # OR dependency
-                        res[-1] += " or %s" % name
+                        # OR dependency; format accordingly
+                        res[deptype][-1] += " or %s" % name
                 except AttributeError:
                     continue
             if res:
-                s = format("Package \x02%s\x02 dependencies: %s, View more at %u", pkg,
-                           ', '.join(res), url)
-                s = self._dependencyColor(s)
+                s = format("Package \x02%s\x02 dependencies: ", pkg)
+                for deptype, packages in res.items():
+                    if packages:
+                        deptype = self._dependencyColor(deptype)
+                        s += format("%s %L; ", deptype, packages)
+                s += format("%u", url)
+
                 irc.reply(s)
             else:
                 irc.error("%s doesn't seem to have any dependencies." % pkg)
