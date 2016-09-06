@@ -147,20 +147,28 @@ class PkgInfo(callbacks.Plugin):
             url = addrs[distro]
         except KeyError:
             irc.error(unknowndist, Raise=True)
-        if source:
+        if source:  # Source package was requested
             url += 'source/'
         url += "{}/{}".format(release, pkg)
+
         try:
-            fd = utils.web.getUrl(url).decode("utf-8")
+            text = utils.web.getUrl(url).decode("utf-8")
         except utils.web.Error as e:
             irc.error(str(e), Raise=True)
-        soup = BeautifulSoup(fd)
+
+        # Workaround unescaped << in package versions (e.g. "python (<< 2.8)") not being parsed
+        # correctly.
+        text = text.replace('<<', '&lt;&lt;')
+
+        soup = BeautifulSoup(text)
+
         if "Error" in soup.title.string:
             err = soup.find('div', attrs={"id": "content"}).find('p').string
             if "two or more packages specified" in err:
                 irc.error("Unknown distribution/release.", Raise=True)
             irc.reply(err)
             return
+
         # If we're using the  --depends option, handle that separately.
         if 'depends' in opts:
             items = soup.find('div', {'id': 'pdeps'}).find_all('dt')
@@ -185,6 +193,7 @@ class PkgInfo(callbacks.Plugin):
                         res[deptype][-1] += " or %s" % name
                 except AttributeError:
                     continue
+
             if res:
                 s = format("Package \x02%s\x02 dependencies: ", pkg)
                 for deptype, packages in res.items():
@@ -194,10 +203,13 @@ class PkgInfo(callbacks.Plugin):
                 s += format("%u", url)
 
                 irc.reply(s)
+
             else:
                 irc.error("%s doesn't seem to have any dependencies." % pkg)
             return
+
         desc = soup.find('meta', attrs={"name": "Description"})["content"]
+
         # Override description if we selected source lookup, since the meta
         # tag Description should be empty for those. Replace this with a list
         # of binary packages that the source package builds.
@@ -205,11 +217,13 @@ class PkgInfo(callbacks.Plugin):
             binaries = soup.find('div', {'id': "pbinaries"})
             binaries = [ircutils.bold(obj.a.text) for obj in binaries.find_all('dt')]
             desc = format('Built packages: %L', binaries)
+
         # Get package information from the meta tags
         keywords = soup.find('meta', attrs={"name": "Keywords"})["content"]
         keywords = keywords.replace(",", "").split()
         version = keywords[-1]
-        # Handle virtual packages, showing a list of packages that provide it
+
+        # Handle virtual packages by showing a list of packages that provide it
         if version == "virtual":
             providing = [ircutils.bold(obj.a.text) for obj in soup.find_all('dt')]
             desc = "Virtual package provided by: %s" % ', '.join(providing[:10])
