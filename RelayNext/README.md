@@ -67,7 +67,7 @@ RelayNext uses Supybot's built in ignore system. However, you can set which mess
 This key takes a space separated list, and defaults to ignoring `PRIVMSG` and `MODE`. **If you want to disable the ignore feature entirely, simply set this value blank: `config plugins.RelayNext.events.userignored ""`**
 
 ### Highlight prevention
-One annoying aspect of relays is that when someone is on multiple relayed channels with the same nick, they will be spammed with highlights whenever they speak. RelayNext can mitigate this behavior (**for some clients**) by prefixing all nicks with a hyphen (`-`). Of course, this behavior is not universal and can't be made to magically silence highlights for all clients, and you may be better off looking for an "ignore highlight from certain nicks" feature for your IRC client.
+One annoying aspect of relays is that when someone is on multiple relayed channels with the same nick, they will be spammed with highlights whenever they speak. RelayNext can mitigate this behavior by inserting an invisible space in the middle of the nick.
 
 You can turn this prefixing on via:
 * `config plugins.RelayNext.noHighlight True`

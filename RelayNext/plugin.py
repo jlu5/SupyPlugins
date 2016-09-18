@@ -126,10 +126,9 @@ class RelayNext(callbacks.Plugin):
             nick = self.simpleHash(nick)
             netname = self.simpleHash(netname)
 
-        # Attempt to mitigate highlights (for some clients) by adding
-        # a hyphen in front of the nick.
+        # Adding a zero-width space to prevent being highlighted by clients
         if noHighlight:
-            nick = '-' + nick
+            nick = (nick[0] + "\u200b" + nick[1:] if len(nick) > 0 else "")
 
         # Skip hostmask checking if the sender is a server
         # (i.e. a '.' is present in their name)
