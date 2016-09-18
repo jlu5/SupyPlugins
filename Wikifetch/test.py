@@ -49,9 +49,6 @@ class WikifetchTestCase(PluginTestCase):
                               'Possible results include:.*?Windows 3.0.*?,.*?Windows 3.1x')
 
         def testWikiRedirects(self):
-            # Via Search find-first-result snarfer
-            self.assertRegexp('wiki synnero',
-                              'A \x02synchro\x02 is')
             self.assertRegexp('wiki Foo', '"Foobar" \(Redirected from "Foo"\): '
                                           'The terms \x02foobar\x02')
 
