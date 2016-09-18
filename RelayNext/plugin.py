@@ -114,6 +114,11 @@ class RelayNext(callbacks.Plugin):
         num = num % len(colors)
         return "\x03%s%s\x03" % (colors[num], s)
 
+    @staticmethod
+    def blockHighlights(nick):
+        """Block highlights in relaying by sticking a zero-width-space in the middle."""
+        return (nick[0] + "\u200b" + nick[1:] if len(nick) > 0 else "")
+
     def _format(self, irc, msg, channel, announcement=False):
         """
         Formats a relay given the IRC object, msg object, and channel.
@@ -128,7 +133,7 @@ class RelayNext(callbacks.Plugin):
 
         # Adding a zero-width space to prevent being highlighted by clients
         if noHighlight:
-            nick = (nick[0] + "\u200b" + nick[1:] if len(nick) > 0 else "")
+            nick = self.blockHighlights(nick)
 
         if color:
             nick = self.simpleHash(nick, hash_using=real_nick)
@@ -148,11 +153,11 @@ class RelayNext(callbacks.Plugin):
         else:
             if msg.command == 'NICK':
                 newnick = msg.args[0]
-                if color:
-                    newnick = self.simpleHash(newnick)
-
                 if noHighlight:
-                    newnick = '-' + newnick
+                    newnick = self.blockHighlights(newnick)
+
+                if color:
+                    newnick = self.simpleHash(newnick, hash_using=msg.args[0])
 
                 s = '%s is now known as %s' % (nick, newnick)
 
@@ -206,10 +211,10 @@ class RelayNext(callbacks.Plugin):
                 kicked = msg.args[1]
                 # Show the host of the kicked user, not the kicker
                 userhost = irc.state.nickToHostmask(kicked).split('!', 1)[1]
-                if color:
-                    kicked = self.simpleHash(kicked)
                 if noHighlight:
-                    kicked = '-' + kicked
+                    kicked = self.blockHighlights(kicked)
+                if color:
+                    kicked = self.simpleHash(kicked, hash_using=msg.args[1])
                 s = '%s (%s) has been kicked from %s by %s (%s)' % (kicked,
                     userhost, channel, nick, msg.args[2])
 
