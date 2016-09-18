@@ -99,14 +99,18 @@ class RelayNext(callbacks.Plugin):
 
     ### Relayer core
 
-    def simpleHash(self, s):
+    def simpleHash(self, s, hash_using=''):
         """
         Returns a colorized version of the given text based on a simple hash algorithm
         (sum of all characters).
         """
         colors = ('02', '03', '04', '05', '06', '07', '08', '09', '10', '11',
                   '12', '13')
-        num = sum([ord(char) for char in s])
+
+        # Optionally specify a different string to hash vs. display
+        hash_using = hash_using or s
+
+        num = sum([ord(char) for char in hash_using])
         num = num % len(colors)
         return "\x03%s%s\x03" % (colors[num], s)
 
@@ -122,13 +126,13 @@ class RelayNext(callbacks.Plugin):
         color = self.registryValue('color', channel)
         netname = irc.network
 
-        if color:
-            nick = self.simpleHash(nick)
-            netname = self.simpleHash(netname)
-
         # Adding a zero-width space to prevent being highlighted by clients
         if noHighlight:
             nick = (nick[0] + "\u200b" + nick[1:] if len(nick) > 0 else "")
+
+        if color:
+            nick = self.simpleHash(nick, hash_using=real_nick)
+            netname = self.simpleHash(netname)
 
         # Skip hostmask checking if the sender is a server
         # (i.e. a '.' is present in their name)
