@@ -49,9 +49,6 @@ class WikifetchTestCase(PluginTestCase):
                               'Possible results include:.*?Windows 3.0.*?,.*?Windows 3.1x')
 
         def testWikiRedirects(self):
-            # Via did you mean clause
-            self.assertRegexp('wiki George Washingon',
-                              'first President of the United States')
             # Via Search find-first-result snarfer
             self.assertRegexp('wiki synnero',
                               'A \x02synchro\x02 is')
