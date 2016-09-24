@@ -1,23 +1,22 @@
-supybot-lastfm (GLolol's fork)
+LastFM for Supybot/Limnoria
 ==============
 
-A Supybot plugin for LastFM, forked from [krf/supybot-lastfm](https://github.com/krf/supybot-lastfm).
+A Supybot/Limnoria plugin for LastFM, forked from [krf/supybot-lastfm](https://github.com/krf/supybot-lastfm).
 
 ### Changes made in this fork
 
 - Native Python 3 support.
-- Code cleanup and various bugfixes.
+- Code cleanup, formatting enhancements, and various bugfixes.
 - Migration to the newer (v2) LastFM API, using JSON instead of XML.
-- Simpler DB implementation using pickle, and storing hostmasks instead of nicks (requires DB reset).
-- Only the `np` and `profile` commands are present - the others have since been broken by LastFM API changes and removed.
+- Simpler DB implementation tracking bot accounts and hostmasks instead of nicks (unfortunately, this resets your DB if you're upgrading from krf's older versions).
+- Only the `np` and `profile` commands are present - the others have since been broken by LastFM API changes and thus were removed.
 - Optional integration with the DDG plugin in this repository, to provide YouTube links for tracks if available. Enable `plugins.LastFM.fetchYouTubeLink` for this to work.
-- Slight formatting enhancements for various commands.
 
 ### Setup and Usage
 
 Before using any parts of this plugin, you must register on the LastFM website and obtain an API key for your bot: http://www.last.fm/api/account/create
 
-After doing so, you tell the bot to use this key by doing `/msg <botname> config plugins.LastFM.apiKey <your-api-key>`.
+After doing so, you must then configure your bot to use your key: `/msg <botname> config plugins.LastFM.apiKey <your-api-key>`.
 
 Showing now playing information:
 ```
