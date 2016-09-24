@@ -1,6 +1,6 @@
-**RelayNext** is a next generation relayer system for Supybot, designed with two-way relays in mind. It is intended as a replacement for the stock Relay plugin, and an alternative to the LinkRelay plugin.
+**RelayNext** is a next generation relayer system for Limnoria, designed with two-way relays in mind. It is intended as a replacement for the stock Relay plugin, and an alternative to the LinkRelay plugin.
 
-RelayNext supports relaying between channels with different names, and stores its entries in a database, preventing corruption from being stored in the config.
+RelayNext supports relaying between channels with different names, and stores its entries in a database instead of the configuration, preventing various forms of entry corruption.
 
 ## Usage
 
@@ -45,7 +45,7 @@ Relays require at least two channels to relay between. When the last two channel
 
 ## Configuration
 
-Most of the following options are also configurable per channel. For any channel-specific variables, settings on the target relay channel are used for NICK and QUIT messages, while settings on the source channel are applied for all others. This is because nick changes and quits are effectively channel-independent.
+Most of the following options are also configurable per channel. For any channel-specific variables, settings on the target relay channel are used for NICK and QUIT messages, while settings on the source channel are applied for all others. This is because nick changes and quits are not bound to any channels.
 
 ### Relaying non-PRIVMSG events
 
@@ -59,7 +59,7 @@ RelayNext supports relaying the following non-PRIVMSG events: joins, kicks, mode
 - `config plugins.RelayNext.events.relayquits`: `True`
 - `config plugins.RelayNext.events.relaytopics`: `False`
 
-Note: Topic relaying will only show topic *changes* in a channel. **It does not, and can not sync topics between channels!**
+Note: Topic relaying will only show topic *changes* in a channel. **It does not yet sync topics between channels!**
 
 ### Ignoring users
 RelayNext uses Supybot's built in ignore system. However, you can set which messages you want to ignore (from ignored users) using `config plugins.RelayNext.events.userignored`.
@@ -72,21 +72,21 @@ One annoying aspect of relays is that when someone is on multiple relayed channe
 You can turn this prefixing on via:
 * `config plugins.RelayNext.noHighlight True`
 
-### Flood prevention *(experimental)*
-RelayNext has experimental flood prevention built in, though it's not quite reliable yet. When flood prevention is triggered, a warning message is displayed and all further messages of the matched type will be ignored for a certain amount of seconds. 
-
-For example, in the event of a join flood, JOIN messages are blocked from being relayed, while other messages are still displayed. This can be useful in the event of a netsplit on a large network, to prevent the bot from flooding itself off, while still allowing conversations to be mostly unaffected.
-
-To turn it on:
+### Flood prevention
+Flood prevention in RelayNext can be enabled with the following configuration option:
 * `config plugins.RelayNext.antiflood.enable True`
 
-You can then configure various the various options below:
+When flood prevention is triggered, a warning message is displayed and all further messages of the matched type will be ignored for a certain amount of seconds. For example, in the event of a netsplit, QUIT and JOIN messages will be blocked to prevent the bot from flooding itself off, allowing conversations to be relayed mostly unaffected.
+
+The following options allow you to fine tune RelayNext's flood prevention:
 
 * `plugins.RelayNext.antiflood.maximum`: configure the maximum amount of messages (PRIVMSGs) allowed in *X* seconds before flood prevention is triggered.
 * `plugins.RelayNext.antiflood.maximum.nonPrivmsgs`: configure the maximum amount of each non-PRIVMSG events (joins, quits, etc.) allowed in *X* seconds before flood prevention is triggered.
 * `plugins.RelayNext.antiflood.seconds`: configure the *X* amount of seconds mentioned above.
 * `plugins.RelayNext.antiflood.timeout`: determines the amount of seconds the bot will wait before flood prevention expires (messages are relayed as normal again).
 
-### Toggling colors and hostmask display
+### Miscellaneous formatting options
 
-You can enable/disable colors via the configuration variable `plugins.RelayNext.color`, and hostmask display via `plugins.RelayNext.hostmasks`.
+- You can enable/disable colors via the configuration variable `plugins.RelayNext.color`
+- Hostmask display can be configured via `plugins.RelayNext.hostmasks`. It defaults to True to make impersonating nicks more difficult, but you can turn this off if you wish.
+- Prefix display (`@`, `%`, or `+` in front of nicks) can be toggled via `plugins.RelayNext.showPrefixes`.
