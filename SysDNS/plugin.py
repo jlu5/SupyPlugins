@@ -54,14 +54,18 @@ class SysDNS(callbacks.Plugin):
         controls the type of record to look for. (A, AAAA, etc.)
         """
         cmd = self.registryValue('command')
+
         if not cmd:
             irc.error('This plugin is not correctly configured. Please configure '
                       'supybot.plugins.SysDNS.command appropriately.', Raise=True)
         else:
-            try:
+            optlist = dict(optlist)
+            recordtype = optlist.get('type')
+            if recordtype:
                 args = [cmd, '-t', dict(optlist)['type'], server]
-            except KeyError:
+            else:
                 args = [cmd, server]
+
             try:
                 with open(os.devnull) as null:
                     inst = subprocess.Popen(args,
@@ -78,6 +82,11 @@ class SysDNS(callbacks.Plugin):
                 response = result[0].decode('utf8').splitlines()
                 response = [l for l in response if l]
                 irc.replies(response)
+            elif not result[1]:
+                # Only show this explicit error if stderr doesn't provide something more specific.
+                # This case will trigger on domains that exist but have no A/AAAA/MX records.
+                irc.error('No records of type %s were found.' % (recordtype or 'A/AAAA/MX'))
+
     dns = thread(wrap(dns, [getopts({'type':'something'}), 'somethingWithoutSpaces']))
 
 
