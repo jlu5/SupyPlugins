@@ -50,8 +50,7 @@ except ImportError:
     _ = lambda x:x
 
 class TranslateParty(callbacks.Plugin):
-    """Worst Translations Ever! plugin. Translates text through
-    multiple rounds of Google Translate to get amazing results!"""
+    """Translates text through multiple rounds of Google Translate to get amusing results!"""
     threaded = True
 
     def __init__(self, irc):

@@ -7,8 +7,8 @@ some amusing results. It automatically picks a list of languages to go through, 
 back and forth between them quite a few times. This guarantees that the result will be different
 every time.
 
-Any source language [supported by Google Translate](https://cloud.google.com/translate/v2/translate-reference#supported_languages)
-is allowed, since auto-detection is used to translate text back to your desired language. This can be set via `config plugins.wte.language`, and defaults to English (`en`).
+Any source language [supported by Google Translate](https://cloud.google.com/translate/docs/languages)
+is allowed, since auto-detection is used to translate text back to your desired language. The output language can be set via `config plugins.wte.language`, and defaults to English (`en`).
 
 Samples:
 
