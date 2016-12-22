@@ -85,7 +85,8 @@ class SysDNS(callbacks.Plugin):
             elif not result[1]:
                 # Only show this explicit error if stderr doesn't provide something more specific.
                 # This case will trigger on domains that exist but have no A/AAAA/MX records.
-                irc.error('No records of type %s were found.' % (recordtype or 'A/AAAA/MX'))
+                irc.error('This domain exists, but no records of type %s were found.'
+                          % (recordtype or 'A/AAAA/MX'))
 
     dns = thread(wrap(dns, [getopts({'type':'something'}), 'somethingWithoutSpaces']))
 
