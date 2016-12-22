@@ -36,10 +36,6 @@ Please note that this list may not always be up to date; your best bet is to act
 
 Most of these plugins also have their own READMEs in their folders; you can usually find a usage demonstration or further explanation of what they do.
 
-##### BonusLevel
-- Snarfer for various things on [BonusLevel.org](http://www.bonuslevel.org/).
-    - **Requires:** [Beautiful Soup 4](http://www.crummy.com/software/BeautifulSoup/bs4/doc/)
-
 ##### CtcpNext
 - Alternative to the official Ctcp plugin, with a database for configurable replies.
 
