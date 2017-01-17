@@ -39,7 +39,7 @@ import supybot.world as world
 
 # Use this for the version of this plugin.  You may wish to put a CVS keyword
 # in here if you're keeping the plugin in CVS or some similar system.
-__version__ = "2017.01.16"
+__version__ = "2017.01.16+git"
 
 # Replace this with an appropriate author or supybot.Author instance.
 __author__ = supybot.Author("Kevin Funk", "KRF", "krf@electrostorm.net")
