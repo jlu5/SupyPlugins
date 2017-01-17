@@ -36,7 +36,7 @@ History replacer using sed-style expressions.
 import supybot
 import supybot.world as world
 
-__version__ = "2016.09.26+git"
+__version__ = "2017.01.16"
 __author__ = supybot.Author("Michael Daniel Telatynski", "t3chguy", "postmaster@webdevguru.co.uk")
 __contributors__ = {supybot.Author("James Lu", "GLolol", "glolol@overdrivenetworks.com"):
                     	["options bolding the replacement text", "misc. bug fixes and enhancements"],
