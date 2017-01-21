@@ -1,7 +1,7 @@
 ###
 # Copyright (c) 2006, Ilya Kuznetsov
 # Copyright (c) 2008,2012 Kevin Funk
-# Copyright (c) 2014-2016 James Lu
+# Copyright (c) 2014-2017 James Lu <james2overdrivenetworks.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -175,13 +175,11 @@ class LastFM(callbacks.Plugin):
         if self.registryValue("fetchYouTubeLink"):
             ddg = irc.getCallback("DDG")
             if ddg:
-                # Each valid result has a preceding heading in the format
-                # '<td valign="top">1.&nbsp;</td>', etc.
                 try:
-                    search = [td for td in ddg._ddgurl('site:youtube.com "%s - %s"' % (artist, track))
-                              if "1." in td.text]
-                    res = search[0].next_sibling.next_sibling
-                    public_url = format('%u', res.a.get('href'))
+                    results = ddg.search_core('site:youtube.com "%s - %s"' % (artist, track),
+                                              channel_context=msg.args[0], max_results=1, show_snippet=False)
+                    if results:
+                        public_url = format('%u', results[0][2])
                 except:
                     # If something breaks, log the error but don't cause the
                     # entire np request to fail.
