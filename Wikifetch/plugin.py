@@ -77,7 +77,13 @@ class Wikifetch(callbacks.Plugin):
         addr = '%s/Special:Search?search=%s' % \
                     (baseurl, quote_plus(search))
         self.log.debug('Wikifetch: using URL %s', addr)
-        article = utils.web.getUrl(addr)
+
+        try:
+            article = utils.web.getUrl(addr)
+        except utils.web.Error:
+            self.log.exception('Failed to fetch link %s', addr)
+            raise
+
         if sys.version_info[0] >= 3:
             article = article.decode()
         # parse the page
