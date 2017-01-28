@@ -223,6 +223,10 @@ class Wikifetch(callbacks.Plugin):
                         p = p.encode('utf-8', 'replace')
                     if isinstance(reply, unicode):
                         reply = reply.encode('utf-8','replace')
+
+                if not p:
+                    reply = _('<Page was too complex to parse>')
+
                 reply += format('%s %s %u', p, _('Retrieved from'), addr)
         reply = reply.replace('&amp;','&')
 
