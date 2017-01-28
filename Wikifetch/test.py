@@ -31,23 +31,23 @@
 
 from supybot.test import *
 
-class WikifetchTestCase(PluginTestCase):
-    plugins = ('Wikifetch',)
+if network:
+    class Wikipedia(PluginTestCase):
+        plugins = ('Wikifetch',)
 
-    if network:
-        def testWiki(self):
+        def testWikipedia(self):
             self.assertRegexp('wiki Monty Python',
                               '\x02Monty Python\x02 \(sometimes known as \x02The Pythons\x02\)')
             self.assertRegexp('wiki roegdfjpoepo',
                               'Not found, or page malformed.*')
 
-        def testDisambiguation(self):
+        def testDisambig(self):
             self.assertRegexp('wiki Python', 'is a disambiguation page.*'
                               'Possible results include:.*?,.*?,')
             self.assertRegexp('wiki Windows 3', '.*is a disambiguation page.*'
                               'Possible results include:.*?Windows 3.0.*?,.*?Windows 3.1x')
 
-        def testWikiRedirects(self):
+        def testRedirects(self):
             self.assertRegexp('wiki Foo', '"Foobar" \(Redirected from "Foo"\): '
                                           'The terms \x02foobar\x02')
 
@@ -65,5 +65,43 @@ class WikifetchTestCase(PluginTestCase):
 
         def testRandom(self):
             self.assertNotError('random')
+
+        def testSiteCombinations(self):
+            self.assertNotError('wiki --site en.wikipedia.org Bread')
+            self.assertNotError('wiki --site http://en.wikipedia.org/ Bread')
+            self.assertNotError('wiki --site en.wikipedia.org/wiki Bread')
+            self.assertNotError('wiki --site https://en.wikipedia.org Bread')
+            self.assertNotError('wiki --site https://en.wikipedia.org/wiki Bread')
+
+    class Wikia(PluginTestCase):
+        plugins = ('Wikifetch',)
+
+        def testWikia(self):
+            self.assertNotError('wiki --site help.wikia.com Help:Wikitext')
+
+        def testWikiaDisambig(self):
+            self.assertRegexp('wiki --site danball.wikia.com Fire', '.*?disambiguation.*?')
+
+    class ArchLinuxWiki(PluginTestCase):
+        plugins = ('Wikifetch',)
+
+        def testArchWiki(self):
+            self.assertNotError('wiki --site wiki.archlinux.org Bash')
+
+    class GentooWiki(PluginTestCase):
+        plugins = ('Wikifetch',)
+
+        def testGentooWiki(self):
+            self.assertNotError('wiki --site wiki.gentoo.org OpenRC')
+
+    class WikimediaSites(PluginTestCase):
+        plugins = ('Wikifetch',)
+
+        def testMediaWiki(self):
+            self.assertNotError('wiki --site mediawiki.org Sites using MediaWiki')
+
+        def testWikimediaCommons(self):
+            self.assertNotError('wiki --site commons.wikimedia.org Commons:Photo_challenge')
+            self.assertNotError('wiki --site commons.wikimedia.org Food')
 
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:
