@@ -177,20 +177,22 @@ class Wikifetch(callbacks.Plugin):
             tree.xpath('//table[@id="setindexbox"]') or \
             tree.xpath('//div[contains(@class, "disambig")]')  # Wikia (2017-01-27)
         if disambig:
+            reply += format(_('%u is a disambiguation page. '), addr)
             disambig = tree.xpath('//div[@id="bodyContent"]/div/ul/li')
-            # Hackishly bold all <a> tags
-            r = []
+
+            disambig_results = []
             for item in disambig:
                 for link in item.findall('a'):
                     if link.text is not None:
+                        # Hackishly bold all <a> tags
                         link.text = "&#x02;%s&#x02;" % link.text
                 item = item.text_content().replace('&#x02;', '\x02')
                 # Normalize and strip whitespace, to prevent newlines and such
                 # from corrupting the display.
                 item = utils.str.normalizeWhitespace(item).strip()
-                r.append(item)
-            reply += format(_('%u is a disambiguation page. '
-                       'Possible results include: %L'), addr, r)
+                disambig_results.append(item)
+            if disambig_results:
+                reply += format(_('Possible results include: %L'), disambig_results)
 
         # Catch talk pages
         elif 'ns-talk' in tree.find("body").attrib['class']:
