@@ -167,13 +167,7 @@ class Wikifetch(callbacks.Plugin):
                 r.append(item)
             reply += format(_('%u is a disambiguation page. '
                        'Possible results include: %L'), addr, r)
-        # or just as bad, a page listing events in that year
-        elif re.search(_('This article is about the year [\d]*\. '
-                       'For the [a-zA-Z ]* [\d]*, see'), article):
-            reply += _('"%s" is a page full of events that happened in that '
-                      'year.  If you were looking for information about the '
-                      'number itself, try searching for "%s_(number)", but '
-                      'don\'t expect anything useful...') % (search, search)
+
         # Catch talk pages
         elif 'ns-talk' in tree.find("body").attrib['class']:
             reply += format(_('This article appears to be a talk page: %u'), addr)
