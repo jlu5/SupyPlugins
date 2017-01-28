@@ -105,14 +105,14 @@ class Wikifetch(callbacks.Plugin):
             article = article.decode()
 
         tree = lxml.html.document_fromstring(article)
-        return (tree, article)
+        return (tree, article, addr)
 
     def _wiki(self, irc, msg, search, baseurl):
         """Fetches and replies content from a MediaWiki-powered website."""
         reply = ''
 
         # First, fetch and parse the page
-        tree, article = self._get_article_tree(baseurl, search)
+        tree, article, addr = self._get_article_tree(baseurl, search)
 
         # check if it gives a "Did you mean..." redirect
         didyoumean = tree.xpath('//div[@class="searchdidyoumean"]/a'
@@ -128,7 +128,7 @@ class Wikifetch(callbacks.Plugin):
                 reply += _('I didn\'t find anything for "%s". '
                            'Did you mean "%s"? ') % (search, redirect)
 
-            tree, article = self._get_article_tree(baseurl, didyoumean[0].get('href'))
+            tree, article, addr = self._get_article_tree(baseurl, didyoumean[0].get('href'))
             search = redirect
 
         # check if it's a page of search results (rather than an article), and
@@ -145,7 +145,7 @@ class Wikifetch(callbacks.Plugin):
             # Follow the search result and fetch that article. Note: use the original
             # base url to prevent prefixes like "/wiki" from being added twice.
             self.log.debug('Wikifetch: following search result:')
-            tree, article = self._get_article_tree(None, searchresults[0].get('href'))
+            tree, article, addr = self._get_article_tree(None, searchresults[0].get('href'))
             search = redirect
         # otherwise, simply return the title and whether it redirected
         elif self.registryValue('showRedirects', msg.args[0]):
@@ -171,7 +171,9 @@ class Wikifetch(callbacks.Plugin):
             addr = tree.find(".//div[@class='printfooter']/a").attrib['href']
             addr = re.sub('([&?]|(amp;)?)oldid=\d+$', '', addr)
         except:
+            # If any of the above post-processing tricks fail, just ignore
             pass
+
         # check if it's a disambiguation page
         disambig = tree.xpath('//table[@id="disambigbox"]') or \
             tree.xpath('//table[@id="setindexbox"]') or \
@@ -195,7 +197,7 @@ class Wikifetch(callbacks.Plugin):
                 reply += format(_('Possible results include: %L'), disambig_results)
 
         # Catch talk pages
-        elif 'ns-talk' in tree.find("body").attrib['class']:
+        elif 'ns-talk' in tree.find("body").attrib.get('class', ''):
             reply += format(_('This article appears to be a talk page: %u'), addr)
         else:
             p = tree.xpath("//div[@id='mw-content-text']/p[1]")
