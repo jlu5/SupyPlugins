@@ -1,7 +1,7 @@
 ###
 # Copyright (c) 2010, quantumlemur
 # Copyright (c) 2011, Valentin Lorentz
-# Copyright (c) 2015, James Lu
+# Copyright (c) 2015,2017 James Lu <james@overdrivenetworks.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,9 +27,7 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-
 ###
-
 
 import re
 import sys
