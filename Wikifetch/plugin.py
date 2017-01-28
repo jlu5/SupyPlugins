@@ -58,24 +58,41 @@ class Wikifetch(callbacks.Plugin):
     """Grabs data from Wikipedia and other MediaWiki-powered sites."""
     threaded = True
 
-    def _wiki(self, irc, msg, search, baseurl):
-        """Fetches and replies content from a MediaWiki-powered website."""
-        reply = ''
+    # This defines a series of suffixes this should be added after the domain name.
+    SPECIAL_URLS = {'wikia.com': '/wiki',
+                    'wikipedia.org': '/wiki',
+                    'wiki.archlinux.org': '/index.php',
+                    'wiki.gentoo.org': '/wiki',
+                   }
 
-        # Different instances of MediaWiki use different URLs... This tries
-        # to make the parser work for most sites, but still use resonable defaults
-        # such as filling in http:// and appending /wiki to links...
-        # Special cases: Wikia, Wikipedia, Wikimedia (i.e. Wikimedia Commons), Arch Linux Wiki
-        if any(sitename in baseurl for sitename in ('wikia.com', 'wikipedia.org', 'wikimedia.org')):
-            baseurl += '/wiki'
-        elif 'wiki.archlinux.org' in baseurl:
-            baseurl += '/index.php'
-        if not baseurl.lower().startswith(('http://', 'https://')):
-            baseurl = 'http://' + baseurl
+    def _get_article_tree(self, baseurl, search):
+        """
+        Returns the article tree given the base URL and search query. baseurl can be None,
+        in which case, the search query will be treated as a raw string.
+        """
 
-        # first, we get the page
-        addr = '%s/Special:Search?search=%s' % \
-                    (baseurl, quote_plus(search))
+        if baseurl is None:
+            addr = search
+        else:
+            # Different instances of MediaWiki use different URLs... This tries
+            # to make the parser work for most sites, but still use resonable defaults
+            # such as filling in http:// and appending /wiki to links...
+            # Special cases: Wikia, Wikipedia, Wikimedia (i.e. Wikimedia Commons), Arch Linux Wiki
+            if '/' not in search:
+                baseurl = baseurl.lower()
+                for match, suffix in self.SPECIAL_URLS.items():
+                    if match in baseurl:
+                        baseurl += suffix
+                        break
+
+            # Add http:// to the URL if a scheme isn't specified
+            if not baseurl.startswith(('http://', 'https://')):
+                baseurl = 'http://' + baseurl
+
+            # first, we get the page
+            addr = '%s/Special:Search?search=%s' % \
+                        (baseurl, quote_plus(search))
+
         self.log.debug('Wikifetch: using URL %s', addr)
 
         try:
@@ -86,8 +103,17 @@ class Wikifetch(callbacks.Plugin):
 
         if sys.version_info[0] >= 3:
             article = article.decode()
-        # parse the page
+
         tree = lxml.html.document_fromstring(article)
+        return tree
+
+    def _wiki(self, irc, msg, search, baseurl):
+        """Fetches and replies content from a MediaWiki-powered website."""
+        reply = ''
+
+        # First, fetch and parse the page
+        tree = self._get_article_tree(baseurl, search)
+
         # check if it gives a "Did you mean..." redirect
         didyoumean = tree.xpath('//div[@class="searchdidyoumean"]/a'
                                 '[@title="Special:Search"]')
@@ -101,28 +127,25 @@ class Wikifetch(callbacks.Plugin):
             if self.registryValue('showRedirects', msg.args[0]):
                 reply += _('I didn\'t find anything for "%s". '
                            'Did you mean "%s"? ') % (search, redirect)
-            addr = "%s/%s" % (baseurl,
-                   didyoumean[0].get('href'))
-            article = utils.web.getUrl(addr)
-            if sys.version_info[0] >= 3:
-                article = article.decode()
-            tree = lxml.html.document_fromstring(article)
+
+            tree = self._get_article_tree(baseurl, didyoumean[0].get('href'))
             search = redirect
+
         # check if it's a page of search results (rather than an article), and
         # if so, retrieve the first result
-        searchresults = tree.xpath('//div[@class="searchresults"]/ul/li/a')
+        searchresults = tree.xpath('//div[@class="searchresults"]/ul/li/a') or \
+            tree.xpath('//article/ul/li/a') # Special case for Wikia (2017-01-27)
+        self.log.debug('Wikifetch: got search results %s', searchresults)
+
         if searchresults:
             redirect = searchresults[0].text_content().strip()
             if self.registryValue('showRedirects', msg.args[0]):
                 reply += _('I didn\'t find anything for "%s", but here\'s the '
                            'result for "%s": ') % (search, redirect)
-            addr = self.registryValue('url', msg.args[0]) + \
-                   searchresults[0].get('href')
-            article = utils.web.getUrl(addr)
-            if sys.version_info[0] >= 3:
-                article = article.decode()
-
-            tree = lxml.html.document_fromstring(article)
+            # Follow the search result and fetch that article. Note: use the original
+            # base url to prevent prefixes like "/wiki" from being added twice.
+            self.log.debug('Wikifetch: following search result:')
+            tree = self._get_article_tree(None, searchresults[0].get('href'))
             search = redirect
         # otherwise, simply return the title and whether it redirected
         elif self.registryValue('showRedirects', msg.args[0]):
