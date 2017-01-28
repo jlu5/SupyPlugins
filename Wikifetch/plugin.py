@@ -103,14 +103,14 @@ class Wikifetch(callbacks.Plugin):
             article = article.decode()
 
         tree = lxml.html.document_fromstring(article)
-        return tree
+        return (tree, article)
 
     def _wiki(self, irc, msg, search, baseurl):
         """Fetches and replies content from a MediaWiki-powered website."""
         reply = ''
 
         # First, fetch and parse the page
-        tree = self._get_article_tree(baseurl, search)
+        tree, article = self._get_article_tree(baseurl, search)
 
         # check if it gives a "Did you mean..." redirect
         didyoumean = tree.xpath('//div[@class="searchdidyoumean"]/a'
@@ -126,7 +126,7 @@ class Wikifetch(callbacks.Plugin):
                 reply += _('I didn\'t find anything for "%s". '
                            'Did you mean "%s"? ') % (search, redirect)
 
-            tree = self._get_article_tree(baseurl, didyoumean[0].get('href'))
+            tree, article = self._get_article_tree(baseurl, didyoumean[0].get('href'))
             search = redirect
 
         # check if it's a page of search results (rather than an article), and
@@ -143,7 +143,7 @@ class Wikifetch(callbacks.Plugin):
             # Follow the search result and fetch that article. Note: use the original
             # base url to prevent prefixes like "/wiki" from being added twice.
             self.log.debug('Wikifetch: following search result:')
-            tree = self._get_article_tree(None, searchresults[0].get('href'))
+            tree, article = self._get_article_tree(None, searchresults[0].get('href'))
             search = redirect
         # otherwise, simply return the title and whether it redirected
         elif self.registryValue('showRedirects', msg.args[0]):
