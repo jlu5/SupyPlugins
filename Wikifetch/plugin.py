@@ -174,7 +174,8 @@ class Wikifetch(callbacks.Plugin):
             pass
         # check if it's a disambiguation page
         disambig = tree.xpath('//table[@id="disambigbox"]') or \
-            tree.xpath('//table[@id="setindexbox"]')
+            tree.xpath('//table[@id="setindexbox"]') or \
+            tree.xpath('//div[contains(@class, "disambig")]')  # Wikia (2017-01-27)
         if disambig:
             disambig = tree.xpath('//div[@id="bodyContent"]/div/ul/li')
             # Hackishly bold all <a> tags
