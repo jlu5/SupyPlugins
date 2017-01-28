@@ -61,6 +61,8 @@ class Wikifetch(callbacks.Plugin):
                     'wikipedia.org': '/wiki',
                     'wiki.archlinux.org': '/index.php',
                     'wiki.gentoo.org': '/wiki',
+                    'mediawiki.org': '/wiki',
+                    'wikimedia.org': '/wiki',
                    }
 
     def _get_article_tree(self, baseurl, search):
