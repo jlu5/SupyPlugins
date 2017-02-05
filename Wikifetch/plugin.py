@@ -96,7 +96,7 @@ class Wikifetch(callbacks.Plugin):
         self.log.debug('Wikifetch: using URL %s', addr)
 
         try:
-            article = utils.web.getUrl(addr)
+            article = utils.web.getUrl(addr, timeout=3)
         except utils.web.Error:
             self.log.exception('Failed to fetch link %s', addr)
             raise
