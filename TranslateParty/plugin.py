@@ -202,6 +202,7 @@ class TranslateParty(callbacks.Plugin):
         for targetlang in ll:
             text = self.getTranslation(irc, "auto", targetlang, text)
         text = self.getTranslation(irc, "auto", outlang, text)
+        text = ircutils.stripFormatting(text)
         text = text.strip()
 
         if self.registryValue("verbose", msg.args[0]):
