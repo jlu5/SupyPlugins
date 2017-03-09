@@ -153,12 +153,11 @@ class MCInfo(callbacks.Plugin):
                 recipe.append(rowitems)
 
         irc.reply("Recipe for %s uses: %s" % (ircutils.bold(item), ircutils.bold(ingredients)))
-        for row in recipe:
-            if any(row): # Only output rows that have filled squares.
-                # For each item, center its name based on the length of the longest item name in the
-                # recipe. This gives the grid a more monospace-y feel.
-                items = [s.center(maxitemlength, '-') for s in row]
-                irc.reply('|%s|' % '|'.join(items))
+        for row in filter(any, recipe):  # Only output rows that have filled squares.
+            # For each item, center its name based on the length of the longest item name in the
+            # recipe. This gives the grid a more monospace-y feel.
+            items = [s.center(maxitemlength, '-') for s in row]
+            irc.reply('|%s|' % '|'.join(items))
 
     @wrap(['text'])
     def smelt(self, irc, msg, args, item):
