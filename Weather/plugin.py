@@ -418,6 +418,9 @@ class Weather(callbacks.Plugin):
             self.log.error("Weather: Error processing JSON from: {0} :: {1}".format(url, e))
             irc.error("Could not process JSON from Weather Underground. Check the logs.", Raise=True)
 
+        if 'current_observation' not in data:
+            irc.error("Failed to fetch current conditions for %r." % loc, Raise=True)
+
         outdata = {'weather': data['current_observation']['weather'],
                    'location': data['current_observation']['display_location']['full'],
                    'humidity': data['current_observation']['relative_humidity'],
