@@ -297,12 +297,12 @@ class Weather(callbacks.Plugin):
     # WUNDERGROUND API CALLS #
     ##########################
 
-    def _wuac(self, irc, q):
-        """Internal helper to find a location via Wunderground's autocomplete API."""
+    def _wuac(self, q):
+        """Internal helper to find locations via Wunderground's autocomplete API."""
 
         if q.startswith('zmw:'):
             # If it's a raw Wunderground ZMW code, return it.
-            return q
+            return [q]
 
         url = 'http://autocomplete.wunderground.com/aq?query=%s' % utils.web.urlquote(q)
         self.log.debug("Weather: Autocomplete URL: %s", url)
@@ -311,16 +311,8 @@ class Weather(callbacks.Plugin):
         except utils.web.Error as e:
             irc.error("Failed to load location data for %r." % q, Raise=True)
         data = json.loads(page.decode('utf-8'))
-        loc = ''
-        for item in data['RESULTS']:
-            # Sometimes the autocomplete will lead us to more disambiguation pages...
-            # which cause lots of errors in processing!
-            if item['tz'] != 'MISSING':
-                loc = "zmw:%s" % item['zmw']
-                break
-        else:
-            irc.error("Failed to find a valid location for: %r" % q, Raise=True)
-        return loc
+
+        return ["zmw:%s" % item['zmw'] for item in data['RESULTS'] if item['tz'] != 'MISSING']
 
     def _wunderjson(self, url, location):
         """Fetch wunderground JSON and return."""
@@ -389,16 +381,23 @@ class Weather(callbacks.Plugin):
         if usersetting:
             for (k, v) in usersetting.items():
                 args[k] = v
-            loc = usersetting["location"]
+            # Prefer the location given in the command, falling back to the one stored in the DB if not given.
+            location = location or usersetting["location"]
             args['imperial'] = (not usersetting["metric"])
-        else:
-            if not location:  # location was also not specified, so we must bail.
-                if nick != msg.nick:
-                    irc.error("I did not find a preset location for %s." % nick, Raise=True)
-                else:
-                    irc.error("I did not find a preset location for you. Set one via 'setweather <location>'.", Raise=True)
+        # If both command line and DB locations aren't given, bail.
+        if not location:
+            if nick != msg.nick:
+                irc.error("I did not find a preset location for %s." % nick, Raise=True)
+            else:
+                irc.error("I did not find a preset location for you. Set one via 'setweather <location>'.", Raise=True)
 
-        loc = self._wuac(irc, location or loc)
+        loc = self._wuac(location)
+        if not loc:
+            irc.error("Failed to find a valid location for: %r" % location, Raise=True)
+        else:
+            # Use the first location. XXX: maybe make this more configurable?
+            loc = loc[0]
+
         url = 'http://api.wunderground.com/api/%s/' % (apikey)
         for check in ['alerts', 'almanac', 'astronomy']:
             if args[check]:
