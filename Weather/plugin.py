@@ -300,6 +300,10 @@ class Weather(callbacks.Plugin):
     def _wuac(self, irc, q):
         """Internal helper to find a location via Wunderground's autocomplete API."""
 
+        if q.startswith('zmw:'):
+            # If it's a raw Wunderground ZMW code, return it.
+            return q
+
         url = 'http://autocomplete.wunderground.com/aq?query=%s' % utils.web.urlquote(q)
         self.log.debug("Weather: Autocomplete URL: %s", url)
         try:
@@ -308,9 +312,6 @@ class Weather(callbacks.Plugin):
             irc.error("Failed to load location data for %r." % q, Raise=True)
         data = json.loads(page.decode('utf-8'))
         loc = ''
-        # ZMW is in some ways a lot like Wunderground's location ID Codes, for when locations
-        # are too ambiguous. (e.g. looking up "France", which is a country with many different
-        # locations!)
         for item in data['RESULTS']:
             # Sometimes the autocomplete will lead us to more disambiguation pages...
             # which cause lots of errors in processing!
