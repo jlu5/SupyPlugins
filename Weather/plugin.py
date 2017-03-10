@@ -323,13 +323,10 @@ class Weather(callbacks.Plugin):
         else:
             url = '%s/q/%s.json' % (url, utils.web.urlquote(location))
         # now actually fetch the url.
-        try:
-            self.log.debug("Weather URL: {0}".format(url))
-            page = utils.web.getUrl(url)
-            return page
-        except Exception as e:  # something didn't work.
-            self.log.info("Weather: (_wunderjson) Error trying to open {0} message: {1}".format(url, e))
-            return None
+
+        self.log.debug("Weather URL: {0}".format(url))
+        page = utils.web.getUrl(url)
+        return json.loads(page.decode('utf-8'))
 
     ####################
     # PUBLIC FUNCTIONS #
@@ -410,12 +407,7 @@ class Weather(callbacks.Plugin):
             if key in ("lang", "bestfct", "pws"): # rest added with key:value
                 url += "{0}:{1}/".format(key, value)
 
-        page = self._wunderjson(url, loc)
-        try:
-            data = json.loads(page.decode('utf-8'))
-        except Exception as e:
-            self.log.error("Weather: Error processing JSON from: {0} :: {1}".format(url, e))
-            irc.error("Could not process JSON from Weather Underground. Check the logs.", Raise=True)
+        data = self._wunderjson(url, loc)
 
         if 'current_observation' not in data:
             irc.error("Failed to fetch current conditions for %r." % loc, Raise=True)
