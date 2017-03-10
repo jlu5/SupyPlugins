@@ -297,7 +297,7 @@ class Weather(callbacks.Plugin):
     # WUNDERGROUND API CALLS #
     ##########################
 
-    def _wuac(self, q):
+    def _wuac(self, q, returnFirstResult=True):
         """Internal helper to find locations via Wunderground's autocomplete API."""
 
         if q.startswith('zmw:'):
@@ -312,7 +312,16 @@ class Weather(callbacks.Plugin):
             irc.error("Failed to load location data for %r." % q, Raise=True)
         data = json.loads(page.decode('utf-8'))
 
-        return ["zmw:%s" % item['zmw'] for item in data['RESULTS'] if item['tz'] != 'MISSING']
+        results = []
+        for item in data['RESULTS']:
+            if item['tz'] != 'MISSING':
+                zmw = "zmw:%s" % item['zmw']
+                if returnFirstResult:
+                    return [zmw]
+                else:
+                    results.append((zmw, item['name']))
+
+        return results
 
     def _wunderjson(self, url, location):
         """Fetch wunderground JSON and return."""
@@ -590,6 +599,30 @@ class Weather(callbacks.Plugin):
                         v['text'], v['high'], v['low']))
             output = "{0} {1}".format(self._bu('Forecast:'), " | ".join(outforecast))
             irc.reply(output)
+
+    @wrap(['text'])
+    def locationsearch(self, irc, msg, args, text):
+        """<location>
+
+        Returns a list of raw Wunderground (ZMW) codes given the search query <location>. This can be
+        helpful if Wunderground's autocomplete is not picking up the right place, as you can directly
+        look up weather using any ZMW codes returned here.
+
+        Warning: ZMW codes are not fixed and are thus prone to sudden changes!
+        """
+        apikey = self.registryValue('apiKey')
+        if not apikey:
+            irc.error("No Wunderground API key was defined; set 'config plugins.Weather.apiKey'.",
+                      Raise=True)
+
+        results = self._wuac(text, returnFirstResult=False)
+        max_results = 10  # TODO: possibly make this configurable?
+        cut_results = results[:max_results]
+        # Output the list of results.
+        if not results:
+            irc.error("No results found.")
+        else:
+            irc.reply(format('%L', [': '.join(res) for res in cut_results]))
 
 Class = Weather
 
