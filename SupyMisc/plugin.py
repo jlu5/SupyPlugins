@@ -109,7 +109,7 @@ class SupyMisc(callbacks.Plugin):
     randrange = wrap(randrange, ['int', 'int', additional('positiveInt')])
 
     def mreplace(self, irc, msg, args, bad, good, text):
-        """<bad substring1>,[<bad substring2>],... <good substring1,[<good substring2>],...> <text>
+        """<bad substring1>[,<bad substring2>,...] <good substring1>[,<good substring2>,...] <text>
 
         Replaces all instances of <bad substringX> with <good substringX> in <text> (from left to right).
         Essentially an alternative for Supybot's format.translate, but with support for substrings
