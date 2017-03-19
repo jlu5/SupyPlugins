@@ -65,20 +65,20 @@ class Wikifetch(callbacks.Plugin):
                     'wikimedia.org': '/wiki',
                    }
 
-    def _get_article_tree(self, baseurl, search):
+    def _get_article_tree(self, baseurl, query, use_mw_parsing=True):
         """
-        Returns the article tree given the base URL and search query. baseurl can be None,
+        Returns a wiki article tree given the base URL and search query. baseurl can be None,
         in which case, searching is skipped and the search query will be treated as a raw address.
         """
 
         if baseurl is None:
-            addr = search
+            addr = query
         else:
             # Different instances of MediaWiki use different URLs... This tries
             # to make the parser work for most sites, but still use resonable defaults
             # such as filling in http:// and appending /wiki to links...
             # Special cases: Wikia, Wikipedia, Wikimedia (i.e. Wikimedia Commons), Arch Linux Wiki
-            if '/' not in search:
+            if '/' not in query:
                 baseurl = baseurl.lower()
                 for match, suffix in self.SPECIAL_URLS.items():
                     if match in baseurl:
@@ -89,9 +89,12 @@ class Wikifetch(callbacks.Plugin):
             if not baseurl.startswith(('http://', 'https://')):
                 baseurl = 'http://' + baseurl
 
-            # first, we get the page
-            addr = '%s/Special:Search?search=%s' % \
-                        (baseurl, quote_plus(search))
+            if use_mw_parsing:
+                # first, we get the page
+                addr = '%s/Special:Search?search=%s' % \
+                            (baseurl, quote_plus(query))
+            else:
+                addr = '%s/%s' % (baseurl, query)
 
         self.log.debug('Wikifetch: using URL %s', addr)
 
@@ -107,12 +110,12 @@ class Wikifetch(callbacks.Plugin):
         tree = lxml.html.document_fromstring(article)
         return (tree, article, addr)
 
-    def _wiki(self, irc, msg, search, baseurl):
+    def _wiki(self, irc, msg, search, baseurl, use_mw_parsing=True):
         """Fetches and replies content from a MediaWiki-powered website."""
         reply = ''
 
         # First, fetch and parse the page
-        tree, article, addr = self._get_article_tree(baseurl, search)
+        tree, article, addr = self._get_article_tree(baseurl, search, use_mw_parsing=use_mw_parsing)
 
         # check if it gives a "Did you mean..." redirect
         didyoumean = tree.xpath('//div[@class="searchdidyoumean"]/a'
@@ -200,7 +203,10 @@ class Wikifetch(callbacks.Plugin):
         elif 'ns-talk' in tree.find("body").attrib.get('class', ''):
             reply += format(_('This article appears to be a talk page: %u'), addr)
         else:
-            p = tree.xpath("//div[@id='mw-content-text']/p[1]")
+            if use_mw_parsing:
+                p = tree.xpath("//div[@id='mw-content-text']/p[1]")
+            else: # Disable looking for MediaWiki-specific tags if searching is off
+                p = tree.xpath("//p[1]")
             if len(p) == 0 or 'wiki/Special:Search' in addr:
                 if 'wikipedia:wikiproject' in addr.lower():
                     reply += format(_('This page appears to be a WikiProject page, '
@@ -236,16 +242,31 @@ class Wikifetch(callbacks.Plugin):
         return reply
 
     @internationalizeDocstring
-    @wrap([getopts({'site': 'somethingWithoutSpaces'}), 'text'])
+    @wrap([getopts({'site': 'somethingWithoutSpaces',
+                    'no-mw-parsing': ''}),
+          'text'])
     def wiki(self, irc, msg, args, optlist, search):
-        """[--site <site>] <search term>
+        """[--site <site>] [--no-mw-parsing] <search term>
 
         Returns the first paragraph of a wiki article. Optionally, a --site
         argument can be given to override the default (usually Wikipedia) -
-        try using '--site lyrics.wikia.com' or '--site wiki.archlinux.org'."""
+        try using '--site lyrics.wikia.com' or '--site wiki.archlinux.org'.
+
+        If the --no-mw-parsing option is given, MediaWiki-specific parsing is
+        disabled. This has the following effects:
+          1) No attempt at searching for a relevant Wiki page is made, and
+             an article with the same name as the search term is directly
+             retrieved.
+          2) The plugin will retrieve the first <p> tag found on a page,
+             regardless of where it's found, and print it as text. This may
+             not work on all sites, as some use <p> for navbars and headings
+             as well.
+        """
         optlist = dict(optlist)
         baseurl = optlist.get('site') or self.registryValue('url', msg.args[0])
-        text = self._wiki(irc, msg, search, baseurl)
+        text = self._wiki(irc, msg, search, baseurl,
+                          use_mw_parsing=not optlist.get('no-mw-parsing'),
+                         )
 
         irc.reply(text)
 
