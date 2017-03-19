@@ -205,8 +205,14 @@ class Wikifetch(callbacks.Plugin):
         else:
             if use_mw_parsing:
                 p = tree.xpath("//div[@id='mw-content-text']/p[1]")
-            else: # Disable looking for MediaWiki-specific tags if searching is off
+            else: # Don't look for MediaWiki-specific tags if mw-parsing is off
                 p = tree.xpath("//p[1]")
+
+            # Try to filter out navbars and other clutter by making sure that the
+            # p tag we output has more words than the search query.
+            search_wordcount = len(search.split())
+            p = list(filter(lambda line: len(line.text_content().split()) > search_wordcount, p))
+
             if len(p) == 0 or 'wiki/Special:Search' in addr:
                 if 'wikipedia:wikiproject' in addr.lower():
                     reply += format(_('This page appears to be a WikiProject page, '
