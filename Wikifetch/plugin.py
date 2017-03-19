@@ -68,7 +68,7 @@ class Wikifetch(callbacks.Plugin):
     def _get_article_tree(self, baseurl, search):
         """
         Returns the article tree given the base URL and search query. baseurl can be None,
-        in which case, the search query will be treated as a raw string.
+        in which case, searching is skipped and the search query will be treated as a raw address.
         """
 
         if baseurl is None:
