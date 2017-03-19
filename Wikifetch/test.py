@@ -102,6 +102,6 @@ if network:
 
         def testWikimediaCommons(self):
             self.assertNotError('wiki --site commons.wikimedia.org Commons:Photo_challenge')
-            self.assertNotError('wiki --site commons.wikimedia.org Food')
+            self.assertNotError('wiki --site commons.wikimedia.org America')
 
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:
