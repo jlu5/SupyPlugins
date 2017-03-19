@@ -2,8 +2,6 @@ sudo: false
 language: python
 python:
   - "2.7"
-  - "3.2"
-  - "3.3"
   - "3.4"
   - "3.5"
   - "3.6"
@@ -34,8 +32,6 @@ notifications:
 
 matrix:
     allow_failures:
-        - python: "3.2"
-        - python: "3.3"
         - python: "pypy"
         - python: "pypy3"
         - python: "nightly"
