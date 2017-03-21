@@ -25,7 +25,8 @@ env:
     - SYSDNS_HOST_COMMAND="/usr/bin/unbound-host" TEST_ARGS=""
 
 script:
-    - supybot-test -c --plugins-dir=. $TEST_ARGS
+    - 'if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then export SKIP_PLUGINS=--exclude=./Weather --exclude=./LastFM; fi'
+    - supybot-test -c --plugins-dir=. $TEST_ARGS $SKIP_PLUGINS
 
 notifications:
     email: false
