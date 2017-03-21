@@ -25,7 +25,7 @@ env:
     - SYSDNS_HOST_COMMAND="/usr/bin/unbound-host" TEST_ARGS=""
 
 script:
-    - supybot-test -c --plugins-dir=. $TEST_ARGS --exclude=./Weather
+    - supybot-test -c --plugins-dir=. $TEST_ARGS
 
 notifications:
     email: false
