@@ -171,11 +171,16 @@ class Wikifetch(callbacks.Plugin):
         # extract the address we got it from - most sites have the perm link
         # inside the page itself
         try:
-            addr = tree.find(".//div[@class='printfooter']/a").attrib['href']
-            addr = re.sub('([&?]|(amp;)?)oldid=\d+$', '', addr)
-        except:
-            # If any of the above post-processing tricks fail, just ignore
-            pass
+            addr = tree.find(".//link[@rel='canonical']").attrib['href']
+        except (ValueError, AttributeError):
+            self.log.debug('Wikifetch: failed <link rel="canonical"> link extraction, skipping')
+            try:
+                addr = tree.find(".//div[@class='printfooter']/a").attrib['href']
+                addr = re.sub('([&?]|(amp;)?)oldid=\d+$', '', addr)
+            except (ValueError, AttributeError):
+                self.log.debug('Wikifetch: failed printfooter link extraction, skipping')
+                # If any of the above post-processing tricks fail, just ignore
+                pass
 
         # check if it's a disambiguation page
         disambig = tree.xpath('//table[@id="disambigbox"]') or \
