@@ -97,7 +97,7 @@ Most of these plugins also have their own READMEs in their folders; you can usua
 - A plugin for storing and manipulating votes/polls.
 
 ##### [Weather](Weather/README.md)
-- My fork of [reticulatingspline's Weather](https://github.com/reticulatingspline/Weather) plugin. [Source](https://github.com/GLolol/Supybot-Weather)
+- My fork of [reticulatingspline's Weather](https://github.com/reticulatingspline/Weather) plugin, with rewritten output handling, explicit location search, and many other tweaks.
 
 ##### Wikifetch
 - Fork of [ProgVal's Wikipedia plugin](https://github.com/ProgVal/Supybot-plugins), with support for other wikis (via a `--site` option) and other improvements.
