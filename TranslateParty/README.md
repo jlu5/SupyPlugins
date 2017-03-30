@@ -8,7 +8,7 @@ back and forth between them quite a few times. This guarantees that the result w
 every time.
 
 Any source language [supported by Google Translate](https://cloud.google.com/translate/docs/languages)
-is allowed, since auto-detection is used to translate text back to your desired language. The output language can be set via `config plugins.wte.language`, and defaults to English (`en`).
+is allowed, since auto-detection is used to translate text back to your desired language. The output language can be set via `config plugins.translateparty.language`, and defaults to English (`en`).
 
 Samples:
 
