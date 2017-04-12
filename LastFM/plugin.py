@@ -167,7 +167,7 @@ class LastFM(callbacks.Plugin):
             tformat = conf.supybot.reply.format.time()
             time = "at %s" % datetime.fromtimestamp(time).strftime(tformat)
         except KeyError:  # Nothing given by the API?
-            time = "right now"
+            time = "just now"
 
         public_url = ''
         # If the DDG plugin from this repository is loaded, we can integrate
