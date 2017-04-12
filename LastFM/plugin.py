@@ -185,8 +185,21 @@ class LastFM(callbacks.Plugin):
                     # entire np request to fail.
                     log.exception("LastFM: failed to get YouTube link for track %s - %s", artist, track)
 
-        s = '%s listened to %s by %s %s %s. %s' % (ircutils.bold(user), ircutils.bold(track),
-            ircutils.bold(artist), album, time, public_url)
+        ext_info = ''
+        if self.registryValue("showExtendedInfo", msg.args[0]):
+            # Get extended info via a separate API call.
+            ext_info_url = "%sapi_key=%s&method=track.getinfo&user=%s&format=json&mbid=%s" % (self.APIURL, apiKey, user, trackdata['mbid'])
+            ext_info_f = utils.web.getUrl(ext_info_url).decode("utf-8")
+            self.log.debug("LastFM.nowPlaying: using url %s for extended info", ext_info_url)
+            ext_data = json.loads(ext_info_f)['track']
+
+            # We currently show play count and tags - more could be added in the future...
+            userplaycount = ext_data['userplaycount']
+            tags = [tag['name'] for tag in ext_data['toptags']['tag']]
+            ext_info = ' (Playcount: %s / Tags: %s)' % (userplaycount, ', '.join(tags))
+
+        s = '%s listened to %s by %s %s %s%s. %s' % (ircutils.bold(user), ircutils.bold(track),
+            ircutils.bold(artist), album, time, ext_info, public_url)
         irc.reply(utils.str.normalizeWhitespace(s))
 
     @wrap(["something"])

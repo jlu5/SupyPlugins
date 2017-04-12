@@ -49,5 +49,10 @@ conf.registerChannelValue(LastFM, "fetchYouTubeLink",
         fetch a YouTube link for the track given in 'np'. This is an
         experimental feature, and requires the DDG plugin in this repository
         to be loaded."""))
+conf.registerChannelValue(LastFM, "showExtendedInfo",
+    registry.Boolean(False, """Determines whether the bot will show extended info
+        for tracks in 'np' (currently the track tags and user play count). Note:
+        this requires a second API call to be made for each 'np' call, which may
+        be expensive in high traffic situations."""))
 
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:
