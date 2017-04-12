@@ -172,7 +172,7 @@ class LastFM(callbacks.Plugin):
         public_url = ''
         # If the DDG plugin from this repository is loaded, we can integrate
         # that by finding a YouTube link for the track.
-        if self.registryValue("fetchYouTubeLink"):
+        if self.registryValue("fetchYouTubeLink", msg.args[0]):
             ddg = irc.getCallback("DDG")
             if ddg:
                 try:
