@@ -72,6 +72,9 @@ Most of these plugins also have their own READMEs in their folders; you can usua
 - Looks up commonly used UDP and TCP port numbers from Wikipedia: https://en.wikipedia.org/wiki/List_of_TCP_and_UDP_port_numbers
    - **Requires:** [Beautiful Soup 4](http://www.crummy.com/software/BeautifulSoup/bs4/doc/)
 
+##### Restart
+- **EXPERIMENTAL**: provides a command to restart Limnoria from IRC.
+
 ##### [RelayNext](RelayNext/README.md)
 - Next generation relayer plugin, designed with two-way relays in mind.
 
