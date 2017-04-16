@@ -52,11 +52,11 @@ Most of these plugins also have their own READMEs in their folders; you can usua
 ##### LastFM
 - LastFM plugin, forked from [krf/supybot-lastfm](https://github.com/krf/supybot-lastfm).
 
-##### [NoTrigger](NoTrigger/README.md)
-- Anti-abuse script; prevents the bot from triggering other bots by modifying its output slightly. For more information, see [NoTrigger/README.md](NoTrigger/README.md).
-
 ##### [Namegen](Namegen/README.md)
 - A small random name generator.
+
+##### [NoTrigger](NoTrigger/README.md)
+- Anti-abuse script; prevents the bot from triggering other bots by modifying its output slightly. For more information, see [NoTrigger/README.md](NoTrigger/README.md).
 
 ##### [OperUp](OperUp/README.md)
 - Allows Supybot to oper up on configured networks, automatically (on connect) and on demand.
@@ -75,16 +75,12 @@ Most of these plugins also have their own READMEs in their folders; you can usua
 ##### [RelayNext](RelayNext/README.md)
 - Next generation relayer plugin, designed with two-way relays in mind.
 
-##### SedRegex
-- History replacer using sed-style expressions. Fork of [t3chguy's Replacer plugin](https://github.com/t3chguy/Limnoria-Plugins/tree/master/Replacer).
-
-##### [TranslateParty](TranslateParty/README.md)
-- Translates text through Google Translate multiple times in order to get amusing results.
-   - **Note: This plugin requires Python 3!**
-
 ##### RhymeZone
 - Fetches rhymes from http://rhymezone.com/.
     - Unsupported on Python 2 due to string encoding issues.
+
+##### SedRegex
+- History replacer using sed-style expressions. Fork of [t3chguy's Replacer plugin](https://github.com/t3chguy/Limnoria-Plugins/tree/master/Replacer).
 
 ##### SupyMisc
 - Some assorted commands that don't seem to fit anywhere else.
@@ -92,6 +88,10 @@ Most of these plugins also have their own READMEs in their folders; you can usua
 ##### SysDNS
 - An alternative to Supybot's built-in DNS function, using the `host` DNS lookup utility on the host machine.
     * **Requires:** `host` DNS lookup binary (as in `/usr/bin/host`)
+
+##### [TranslateParty](TranslateParty/README.md)
+- Translates text through Google Translate multiple times in order to get amusing results.
+   - **Note: This plugin requires Python 3!**
 
 ##### Voteserv
 - A plugin for storing and manipulating votes/polls.
