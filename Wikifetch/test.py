@@ -37,7 +37,7 @@ if network:
 
         def testWikipedia(self):
             self.assertRegexp('wiki Monty Python',
-                              '\x02Monty Python\x02 \(sometimes known as \x02The Pythons\x02\)')
+                              r'\x02Monty Python\x02.*?\x02The Pythons\x02')
             self.assertRegexp('wiki roegdfjpoepo',
                               'Not found, or page malformed.*')
 
