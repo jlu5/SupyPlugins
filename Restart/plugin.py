@@ -29,6 +29,7 @@
 ###
 
 import supybot.utils as utils
+import supybot.conf as conf
 from supybot.commands import *
 import supybot.plugins as plugins
 import supybot.ircutils as ircutils
@@ -64,6 +65,9 @@ class Restart(callbacks.Plugin):
         If there is no default quitMsg set, your nick will be used. The standard
         substitutions ($version, $nick, etc.) are all handled appropriately.
         """
+        if conf.daemonized:  # XXX fix this
+            irc.error("Not supported on daemonized instances.", Raise=True)
+
         atexit.register(self.restart_atexit_hook)
         self.log.info('Restart: Attempting to restart Limnoria.')
         # Reuse the 'quit' command of the Owner plugin.
