@@ -72,6 +72,9 @@ Most of these plugins also have their own READMEs in their folders; you can usua
 - Looks up commonly used UDP and TCP port numbers from Wikipedia: https://en.wikipedia.org/wiki/List_of_TCP_and_UDP_port_numbers
    - **Requires:** [Beautiful Soup 4](http://www.crummy.com/software/BeautifulSoup/bs4/doc/)
 
+##### QuakeNet
+- Log in to Quakenet's Q Service via CHALLENGEAUTH. This plugin was written by request and not officially supported.
+
 ##### Restart
 - **EXPERIMENTAL**: provides a command to restart Limnoria from IRC.
 
