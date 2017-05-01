@@ -7,7 +7,7 @@ python:
   - "3.6"
   - "nightly"
   - "pypy"
-  - "pypy3"
+  - "pypy3.3-5.2-alpha1" # Per https://github.com/ProgVal/Limnoria/blob/62616a3/.travis.yml#L13
 
 addons:
   apt:
@@ -34,7 +34,7 @@ notifications:
 matrix:
     allow_failures:
         - python: "pypy"
-        - python: "pypy3"
+        - python: "pypy3.3-5.2-alpha1"
         - python: "nightly"
         - env: SYSDNS_HOST_COMMAND="/usr/bin/unbound-host" TEST_ARGS=""
 
