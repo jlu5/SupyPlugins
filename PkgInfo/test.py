@@ -51,12 +51,14 @@ class PkgInfoTestCase(PluginTestCase):
             self.assertRegexp('vlist debian bash', 'Found [1-9][0-9]* '
                               'results: (.*?\(.*?\))+')
 
+        @unittest.skip("Remote server is too unreliable (2017-02-23)")
         def testArchLinux(self):
             self.assertError('archlinux afdsfbjeiog')
             self.assertNotError('archlinux bash')
             self.assertRegexp('archlinux pacman --exact',
                               'Found 1.*?pacman')
 
+        @unittest.skip("Remote server is too unreliable (2017-02-23)")
         def testArchAUR(self):
             self.assertRegexp('archaur yaourt', 'Found [1-9][0-9]* results:'
                               '.*?yaourt.*?')
