@@ -35,7 +35,7 @@ Restart plugin: provides a command to restart Limnoria from IRC.
 import supybot
 import supybot.world as world
 
-__version__ = ""
+__version__ = "2017.05.31"
 __author__ = supybot.Author('James Lu', 'GLolol', 'james@overdrivenetworks.com')
 __contributors__ = {}
 __url__ = 'https://github.com/GLolol/SupyPlugins/'
