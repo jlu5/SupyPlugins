@@ -98,7 +98,7 @@ unknowndist = _("Unknown distribution. This command only supports "
                 "package lookup for Debian and Ubuntu. For a list of"
                 "commands for other distros' packages, use "
                 "'list PkgInfo'.")
-addrs = {'ubuntu': 'http://packages.ubuntu.com/',
+addrs = {'ubuntu': 'https://packages.ubuntu.com/',
          'debian': 'https://packages.debian.org/',
          # This site is very, VERY slow, but it still works..
          'debian-archive': 'http://archive.debian.net/'}
