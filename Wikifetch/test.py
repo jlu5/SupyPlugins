@@ -68,6 +68,7 @@ if network:
 
         def testSiteCombinations(self):
             self.assertNotError('wiki --site en.wikipedia.org Bread')
+            self.assertNotError('wiki --site EN.WikiPedia.Org Bread')  # god forbid if anyone actually types like this
             self.assertNotError('wiki --site http://en.wikipedia.org/ Bread')
             self.assertNotError('wiki --site en.wikipedia.org/wiki Bread')
             self.assertNotError('wiki --site https://en.wikipedia.org Bread')
@@ -82,6 +83,8 @@ if network:
         def testNonEnglishWikipedia(self):
             self.assertNotError('wiki --site fr.wikipedia.org Paris')
             self.assertNotError('wiki --site de.wikipedia.org Berlin')
+            self.assertNotError('wiki --site zh.wikipedia.org 中文')
+            self.assertNotError('wiki --site ar.wikipedia.org 2017')
 
     class Wikia(PluginTestCase):
         plugins = ('Wikifetch',)
