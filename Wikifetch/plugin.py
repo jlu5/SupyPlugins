@@ -209,8 +209,10 @@ class Wikifetch(callbacks.Plugin):
             reply += format(_('This article appears to be a talk page: %u'), addr)
         else:
             if use_mw_parsing:
-                p = tree.xpath("//div[@id='mw-content-text']/p[1]")
-            else: # Don't look for MediaWiki-specific tags if mw-parsing is off
+                # As of 2017-06-03, Wikipedia has put its text content under a new "mw-parser-output" div, while
+                # other sites (e.g. Wikia) still have it directly under "mw-content-text".
+                p = tree.xpath("//div[@id='mw-content-text']/p[1]") or tree.xpath("//div[@class='mw-parser-output']/p[1]")
+            else: # Don't look for MediaWiki-specific tags if MediaWiki parsing is disabled
                 p = tree.xpath("//p[1]")
 
             # Try to filter out navbars and other clutter by making sure that the
