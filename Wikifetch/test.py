@@ -73,6 +73,16 @@ if network:
             self.assertNotError('wiki --site https://en.wikipedia.org Bread')
             self.assertNotError('wiki --site https://en.wikipedia.org/wiki Bread')
 
+        def testArticlesWithSymbolsInName(self):
+            self.assertNotError('wiki /')
+            self.assertNotError('wiki *')
+            self.assertNotError('wiki GNU/Linux')
+            self.assertNotError('wiki --site en.wikipedia.org /')
+
+        def testNonEnglishWikipedia(self):
+            self.assertNotError('wiki --site fr.wikipedia.org Paris')
+            self.assertNotError('wiki --site de.wikipedia.org Berlin')
+
     class Wikia(PluginTestCase):
         plugins = ('Wikifetch',)
 
