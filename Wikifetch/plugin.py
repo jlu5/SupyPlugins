@@ -77,13 +77,11 @@ class Wikifetch(callbacks.Plugin):
             # Different instances of MediaWiki use different URLs... This tries
             # to make the parser work for most sites, but still use resonable defaults
             # such as filling in http:// and appending /wiki to links...
-            # Special cases: Wikia, Wikipedia, Wikimedia (i.e. Wikimedia Commons), Arch Linux Wiki
-            if '/' not in query:
-                baseurl = baseurl.lower()
-                for match, suffix in self.SPECIAL_URLS.items():
-                    if match in baseurl:
-                        baseurl += suffix
-                        break
+            baseurl = baseurl.lower()
+            for match, suffix in self.SPECIAL_URLS.items():
+                if match in baseurl:
+                    baseurl += suffix
+                    break
 
             # Add http:// to the URL if a scheme isn't specified
             if not baseurl.startswith(('http://', 'https://')):
