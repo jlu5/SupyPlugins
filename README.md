@@ -13,7 +13,7 @@ The recommended way of fetching plugins in this repository is to clone the git r
 
 * `$ git clone https://github.com/GLolol/SupyPlugins`
 
-and adding the folder to your bot's `config directories.plugins`.
+and add the folder to your bot's `config directories.plugins`.
 
 **You will need a working copy of [Limnoria](https://github.com/ProgVal/Limnoria) running on Python 2.7 or Python 3.4+.** Anything older will *not* work.
 
