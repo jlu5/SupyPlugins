@@ -144,6 +144,8 @@ class PkgInfo(callbacks.Plugin):
         'adep:': '\x0305adep:\x03',
         'idep:': '\x0302idep:\x03',
         'enh:': '\x0308enh:\x03',
+        # Generic
+        'depends': '\x0304depends\x03',
     })
 
     def get_distro_fetcher(self, dist):
@@ -255,6 +257,21 @@ class PkgInfo(callbacks.Plugin):
             pkgdata = data['results'][0]
             name, version, repo, arch, desc = pkgdata['pkgname'], pkgdata['pkgver'], pkgdata['repo'], pkgdata['arch'], pkgdata['pkgdesc']
 
+            if fetch_depends:
+                deps = set()
+                for dep in pkgdata['depends']:
+                    # XXX: Arch's API does not differentiate between required deps and optional ones w/o explanation...
+
+                    # Sort through the API info and better explain optional dependencies with reasons in them.
+                    if ':' in dep:
+                        name, explanation = dep.split(':', 1)
+                        dep = '%s (optional; needed for %s)' % (ircutils.bold(name), explanation.strip())
+                    else:
+                        dep = ircutils.bold(dep)
+                    deps.add(dep)
+
+                return {'depends:': deps}
+
             # Package site URLs use a form like https://www.archlinux.org/packages/extra/x86_64/python/
             friendly_url = 'https://www.archlinux.org/packages/%s/%s/%s' % (repo, arch, name)
             return (name, version, repo, desc, friendly_url)
@@ -293,7 +310,7 @@ class PkgInfo(callbacks.Plugin):
                         # that isn't empty.
                         deplists.append("%s %s" % (ircutils.bold(deptype), ', '.join(packages)))
 
-                irc.reply(format("Package %s dependencies: %s", ircutils.bold(query), '; '.join(deplists)))
+                irc.reply(format("%s %s", ircutils.bold(query), '; '.join(deplists)))
 
             else:
                 irc.error("%s doesn't seem to have any dependencies." % ircutils.bold(query))
