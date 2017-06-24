@@ -35,6 +35,7 @@ import supybot.plugins as plugins
 import supybot.ircutils as ircutils
 import supybot.callbacks as callbacks
 import supybot.log as log
+import supybot.conf as conf
 
 from collections import OrderedDict, defaultdict
 try:  # Python 3
@@ -44,6 +45,7 @@ except ImportError:  # Python 2
 import json
 import re
 import sys
+import time
 try:
     from bs4 import BeautifulSoup
 except ImportError:
@@ -256,6 +258,16 @@ class PkgInfo(callbacks.Plugin):
         if data['valid'] and data['results']:
             pkgdata = data['results'][0]
             name, version, repo, arch, desc = pkgdata['pkgname'], pkgdata['pkgver'], pkgdata['repo'], pkgdata['arch'], pkgdata['pkgdesc']
+
+            if pkgdata['flag_date']:
+                # Mark flagged-as-outdated versions in red.
+                version = '\x0304%s\x03' % version
+
+                # Note the flagged date in the package description.
+                t = time.strptime(pkgdata['flag_date'], '%Y-%m-%dT%H:%M:%S.%fZ')  # Why can't strptime be smarter and guess this?!
+                # Convert the time format to the globally configured one.
+                out_t = time.strftime(conf.supybot.reply.format.time(), t)
+                desc += ' [flagged as \x0304outdated\x03 on %s]' % out_t
 
             if fetch_depends:
                 deps = set()
