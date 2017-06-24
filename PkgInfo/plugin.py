@@ -140,14 +140,15 @@ class PkgInfo(callbacks.Plugin):
 
     _get_dependency_color = utils.str.MultipleReplacer({
         # Debian/Ubuntu names
-        'dep:': '\x0304dep:\x03',
-        'rec:': '\x0312rec:\x03',
-        'sug:': '\x0309sug:\x03',
-        'adep:': '\x0305adep:\x03',
-        'idep:': '\x0302idep:\x03',
-        'enh:': '\x0308enh:\x03',
+        'dep': '\x0304dep\x03',
+        'rec': '\x0312rec\x03',
+        'sug': '\x0309sug\x03',
+        'adep': '\x0305adep\x03',
+        'idep': '\x0302idep\x03',
+        'enh': '\x0308enh\x03',
         # Generic
         'depends': '\x0304depends\x03',
+        'optdepends': '\x0312optdepends\x03'
     })
 
     def get_distro_fetcher(self, dist):
@@ -282,7 +283,7 @@ class PkgInfo(callbacks.Plugin):
                         dep = ircutils.bold(dep)
                     deps.add(dep)
 
-                return {'depends:': deps}
+                return {'depends': deps}
 
             # Package site URLs use a form like https://www.archlinux.org/packages/extra/x86_64/python/
             friendly_url = 'https://www.archlinux.org/packages/%s/%s/%s' % (repo, arch, name)
