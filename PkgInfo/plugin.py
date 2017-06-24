@@ -184,36 +184,43 @@ class PkgInfo(callbacks.Plugin):
 
         # If we're using the --depends option, handle that separately.
         if fetch_depends:
-            items = soup.find('div', {'id': 'pdeps'}).find_all('dt')
+            items = soup.find('div', {'id': 'pdeps'}).find_all('dl')
             # Store results by type and name, but in an ordered fashion: show dependencies first,
             # followed by recommends, suggests, and enhances.
             # "adep" and "idep" are arch-dependent and arch-independent build-dependencies
             # respectively.
             res = OrderedDict((deptype, []) for deptype in ('dep:', 'rec:', 'sug:', 'enh:', 'adep:', 'idep:'))
 
-            for item in items:
+            for item_wrapper in items:
                 # Get package name and related versions and architectures:
                 # <packagename> (>= 1.0) [arch1, arch2]
-                try:
+                last_deptype = ''
+                for count, item in enumerate(item_wrapper.find_all('dt')):
                     # The dependency type is in a <span> element in front of the package name,
                     # which is expressed as a link.
-                    deptype = item.span.text if item.find('span') else ''
+                    deptype = item.span.text if item.find('span') else last_deptype
+                    last_deptype = deptype
                     if deptype not in res:
                         continue  # Ignore unsupported fields
 
                     # Also include any parts directly after the package name (usually a version
                     # restriction).
-                    name = '%s %s' % (ircutils.bold(item.a.text),
-                            item.a.next_sibling.replace('\n', '').strip())
+                    try:
+                        name = '%s %s' % (ircutils.bold(item.a.text),
+                                item.a.next_sibling.replace('\n', '').strip())
+                    except AttributeError:
+                        # No package link usually means that the package isn't available
+                        name = item.string
+                        if name:
+                            name = ircutils.bold(name.splitlines()[1].strip())
                     name = utils.str.normalizeWhitespace(name).strip()
+                    self.log.debug('PkgInfo.debian_fetcher: got %s %s for package %s', deptype, name, query)
 
-                    if item.find('span'):
+                    if count == 0:
                         res[deptype].append(name)
                     else:
                         # OR dependency; format accordingly
                         res[deptype][-1] += " or %s" % name
-                except AttributeError:
-                    continue
 
             return res
 
