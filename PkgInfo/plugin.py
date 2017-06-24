@@ -157,6 +157,8 @@ class PkgInfo(callbacks.Plugin):
 
         if dist in ('archlinux', 'arch'):
             return self.arch_fetcher
+        elif dist in ('archaur', 'aur'):
+            return self.arch_aur_fetcher
         elif guess_dist == 'debian':
             return self.debian_fetcher
         elif guess_dist == 'ubuntu':
@@ -298,6 +300,56 @@ class PkgInfo(callbacks.Plugin):
         else:
             return  # No results found!
 
+
+    def arch_aur_fetcher(self, release, query, fetch_source=False, fetch_depends=False):
+        search_url = 'https://aur.archlinux.org/rpc/?' + urlencode(
+            {'arg[]': query, 'v': 5,'type': 'info'}
+        )
+
+        self.log.debug("PkgInfo: using url %s for arch_aur_fetcher", search_url)
+
+        fd = utils.web.getUrl(search_url)
+        data = json.loads(fd.decode("utf-8"))
+
+        if data['results']:
+            pkgdata = data['results'][0]
+            name, version, votecount, popularity, desc = pkgdata['Name'], pkgdata['Version'], \
+                pkgdata['NumVotes'], pkgdata['Popularity'], pkgdata['Description']
+
+            verbose_info = ' [Popularity: \x02%s\x02; Votes: \x02%s\x02' % (popularity, votecount)
+
+            if pkgdata['OutOfDate']:
+                # Mark flagged-as-outdated versions in red.
+                version = '\x0304%s\x03' % version
+
+                flag_time = time.strftime(conf.supybot.reply.format.time(), time.gmtime(pkgdata['OutOfDate']))
+                verbose_info += '; flagged as \x0304outdated\x03 on %s' % flag_time
+            verbose_info += ']'
+
+            if fetch_depends:
+                deplist = pkgdata['MakeDepends'] if fetch_source else pkgdata['Depends']
+                deplist = [ircutils.bold(dep) for dep in deplist]
+
+                # Fill in opt depends
+                optdepends = set()
+                for dep in pkgdata.get('OptDepends', []):
+                    if ':' in dep:
+                        name, explanation = dep.split(':', 1)
+                        dep = '%s (optional; needed for %s)' % (ircutils.bold(name), explanation.strip())
+                    else:
+                        dep = '%s (optional)' % ircutils.bold(dep)
+                    optdepends.add(dep)
+
+                # Note: this is an ordered dict so that depends always show before optdepends
+                return OrderedDict((('depends', deplist), ('optdepends', optdepends)))
+
+            # Package site URLs use a form like https://www.archlinux.org/packages/extra/x86_64/python/
+            friendly_url = 'https://aur.archlinux.org/packages/%s/' % name
+            desc += verbose_info
+            return (name, version, 'Arch Linux AUR', desc, friendly_url)
+        else:
+            return  # No results found!
+
     def package(self, irc, msg, args, dist, query, opts):
         """<release> <package> [--depends] [--source]
 
@@ -326,6 +378,8 @@ class PkgInfo(callbacks.Plugin):
                 for deptype, packages in result.items():
                     if packages:
                         deptype = self._get_dependency_color(deptype)
+                        if ':' not in deptype:
+                            deptype += ':'
                         # Join together the dependency type and package list for each list
                         # that isn't empty.
                         deplists.append("%s %s" % (ircutils.bold(deptype), ', '.join(packages)))
