@@ -113,7 +113,7 @@ addrs = {'ubuntu': 'https://packages.ubuntu.com/',
          'debian-archive': 'http://archive.debian.net/'}
 _normalize = lambda text: utils.str.normalizeWhitespace(text).strip()
 
-def _getDistro(release):
+def _guess_distro(release):
     """<release>
 
     Guesses the distribution from the release name."""
@@ -121,15 +121,12 @@ def _getDistro(release):
     debian = ("oldoldstable", "oldstable", "wheezy", "stable",
               "jessie", "testing", "sid", "unstable", "stretch", "buster",
               "experimental", "bullseye")
-    debian_archive = ("bo", "hamm", "slink", "potato", "woody", "sarge",
-                      "etch", "lenny", "squeeze")
     ubuntu = ("precise", "trusty", "xenial", "yakkety", "zesty", "artful")
+
     if release.startswith(debian):
         return "debian"
     elif release.startswith(ubuntu):
         return "ubuntu"
-    elif release.startswith(debian_archive):
-        return "debian-archive"
 
 class UnknownDistributionError(ValueError):
     pass
@@ -150,16 +147,11 @@ class PkgInfo(callbacks.Plugin):
     })
 
     def get_distro_fetcher(self, dist):
-        dist = dist.lower()
+        dist = _guess_distro(dist)
 
-        debian = ("oldoldstable", "oldstable", "wheezy", "stable",
-                  "jessie", "testing", "sid", "unstable", "stretch", "buster",
-                  "experimental", "bullseye")
-        ubuntu = ("precise", "trusty", "xenial", "yakkety", "zesty", "artful")
-
-        if dist.startswith(debian):
+        if dist == 'debian':
             return self.debian_fetcher
-        elif dist.startswith(ubuntu):
+        elif dist == 'ubuntu':
             return self.ubuntu_fetcher
 
     def debian_fetcher(self, release, query, baseurl='https://packages.debian.org/', fetch_source=False, fetch_depends=False):
@@ -302,7 +294,7 @@ class PkgInfo(callbacks.Plugin):
         pkg, distro = map(str.lower, (pkg, distro))
         supported = ("debian", "ubuntu", "derivatives", "all")
         if distro not in supported:
-            distro = _getDistro(distro)
+            distro = _guess_distro(distro)
             if distro is None:
                 irc.error(unknowndist, Raise=True)
         opts = dict(opts)
@@ -411,7 +403,7 @@ class PkgInfo(callbacks.Plugin):
         'debian', 'ubuntu', and 'debian-archive'."""
         distro = distro.lower()
         if distro not in addrs.keys():
-            distro = _getDistro(distro)
+            distro = _guess_distro(distro)
         try:
             url = '%ssearch?keywords=%s' % (addrs[distro], quote(query))
         except KeyError:
@@ -454,7 +446,7 @@ class PkgInfo(callbacks.Plugin):
         Searches what package in Debian or Ubuntu has which file. <release> is the
         codename/release name (e.g. xenial or jessie)."""
         release = release.lower()
-        distro = _getDistro(release)
+        distro = _guess_distro(release)
 
         try:
             url = '%ssearch?keywords=%s&searchon=contents&suite=%s' % (addrs[distro], quote(query), quote(release))
