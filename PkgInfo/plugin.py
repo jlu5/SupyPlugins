@@ -147,15 +147,19 @@ class PkgInfo(callbacks.Plugin):
     })
 
     def get_distro_fetcher(self, dist):
-        dist = _guess_distro(dist)
+        dist = dist.lower()
+        guess_dist = _guess_distro(dist)
 
-        if dist == 'debian':
+        if dist in ('archlinux', 'arch'):
+            return self.arch_fetcher
+        elif guess_dist == 'debian':
             return self.debian_fetcher
-        elif dist == 'ubuntu':
+        elif guess_dist == 'ubuntu':
             return self.ubuntu_fetcher
 
     def debian_fetcher(self, release, query, baseurl='https://packages.debian.org/', fetch_source=False, fetch_depends=False):
         url = baseurl
+        query = query.lower()
         if fetch_source:  # Source package was requested
             url += 'source/'
         url += "{}/{}".format(release, query)
@@ -239,6 +243,24 @@ class PkgInfo(callbacks.Plugin):
         kwargs['baseurl'] = 'https://packages.ubuntu.com/'
         return self.debian_fetcher(*args, **kwargs)
 
+    def arch_fetcher(self, release, query, fetch_source=False, fetch_depends=False):
+        search_url = 'https://www.archlinux.org/packages/search/json/?%s&arch=x86_64&arch=any' % urlencode({'name': query})
+
+        self.log.debug("PkgInfo: using url %s for arch_fetcher", search_url)
+
+        fd = utils.web.getUrl(search_url)
+        data = json.loads(fd.decode("utf-8"))
+
+        if data['valid'] and data['results']:
+            pkgdata = data['results'][0]
+            name, version, repo, arch, desc = pkgdata['pkgname'], pkgdata['pkgver'], pkgdata['repo'], pkgdata['arch'], pkgdata['pkgdesc']
+
+            # Package site URLs use a form like https://www.archlinux.org/packages/extra/x86_64/python/
+            friendly_url = 'https://www.archlinux.org/packages/%s/%s/%s' % (repo, arch, name)
+            return (name, version, repo, desc, friendly_url)
+        else:
+            return  # No results found!
+
     def package(self, irc, msg, args, dist, query, opts):
         """<release> <package> [--depends] [--source]
 
@@ -277,8 +299,8 @@ class PkgInfo(callbacks.Plugin):
                 irc.error("%s doesn't seem to have any dependencies." % ircutils.bold(query))
         else:
             # result is formatted in the order: packagename, version, real_distribution, desc, url
-            self.log.info('args: %s', str(result))
-            s = format("Package: \x02%s (%s)\x02 in %s - %s, View more at: %u", *result)
+            self.log.debug('PkgInfo result args: %s', str(result))
+            s = format("Package: \x02%s (%s)\x02 in %s - %s %u", *result)
             irc.reply(s)
 
     pkg = wrap(package, ['somethingWithoutSpaces', 'somethingWithoutSpaces',
