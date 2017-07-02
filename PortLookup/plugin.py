@@ -99,7 +99,7 @@ class PortLookup(callbacks.Plugin):
                     # List the port notes (tags such as "Official", "TCP", "UDP", etc.)
                     # This is every <td> tag except the 4th one, which is the description parsed
                     # above.
-                    notes = [t.text.strip() for t in tds[:3]+tds[4:]]
+                    notes = [t.text.strip() for t in tds[:3]+tds[4:] if '?' not in t]
                     notes = '; '.join(filter(None, notes))
 
                     # Remove \n, etc. in fields to prevent output corruption.
