@@ -124,13 +124,22 @@ def _guess_distro(release):
               "jessie", "testing", "sid", "unstable", "stretch", "buster",
               "experimental", "bullseye")
     ubuntu = ("precise", "trusty", "xenial", "yakkety", "zesty", "artful")
+    mint = ("betsy", "qiana", "rebecca", "rafaela", "rosa", "sarah", "serena", "sonya")
 
     if release.startswith(debian):
         return "debian"
     elif release.startswith(ubuntu):
         return "ubuntu"
+    elif release.startswith(mint):
+        return "mint"
 
 class UnknownDistributionError(ValueError):
+    pass
+
+class AmbiguousDistributionError(UnknownDistributionError):
+    pass
+
+class UnsupportedOperationError(NotImplementedError):
     pass
 
 class PkgInfo(callbacks.Plugin):
@@ -155,7 +164,18 @@ class PkgInfo(callbacks.Plugin):
         dist = dist.lower()
         guess_dist = _guess_distro(dist)
 
-        if dist in ('archlinux', 'arch'):
+        if dist == 'debian':
+            raise AmbiguousDistributionError("You must specify a distribution version (e.g. 'stretch' or 'unstable')")
+        elif dist == 'ubuntu':
+            raise AmbiguousDistributionError("You must specify a distribution version (e.g. 'trusty' or 'xenial')")
+        elif dist in ('mint', 'linuxmint'):
+            raise AmbiguousDistributionError("You must specify a distribution version (e.g. 'sonya' or 'betsy')")
+        elif dist == 'fedora':
+            raise AmbiguousDistributionError("You must specify a distribution version (e.g. 'f26', 'rawhide' or 'epel7')")
+        elif dist == 'master':
+            raise AmbiguousDistributionError("'master' is ambiguous: for Fedora rawhide, use the release 'rawhide'")
+
+        elif dist in ('archlinux', 'arch'):
             return self.arch_fetcher
         elif dist in ('archaur', 'aur'):
             return self.arch_aur_fetcher
@@ -163,6 +183,10 @@ class PkgInfo(callbacks.Plugin):
             return self.debian_fetcher
         elif guess_dist == 'ubuntu':
             return self.ubuntu_fetcher
+        elif guess_dist == 'mint':
+            return self.mint_fetcher
+        elif dist.startswith(('f', 'el', 'epel', 'olpc', 'rawhide')):
+            return self.fedora_fetcher
 
     def debian_fetcher(self, release, query, baseurl='https://packages.debian.org/', fetch_source=False, fetch_depends=False):
         url = baseurl
@@ -350,13 +374,74 @@ class PkgInfo(callbacks.Plugin):
         else:
             return  # No results found!
 
+    def fedora_fetcher(self, release, query, fetch_source=False, fetch_depends=False):
+        if fetch_source or fetch_depends:
+            raise UnsupportedOperationError("--depends and --source lookup are not supported for Fedora")
+
+        if release == 'master':
+            release = 'rawhide'
+
+        url = 'https://admin.fedoraproject.org/pkgdb/api/packages/%s?format=json&branches=%s' % (quote(query), quote(release))
+        self.log.debug("PkgInfo: using url %s for fedora_fetcher", url)
+        fd = utils.web.getUrl(url).decode("utf-8")
+        data = json.loads(fd)
+        result = data["packages"][0]
+        friendly_url = 'https://apps.fedoraproject.org/packages/%s' % query
+
+        # XXX: find some way to fetch the package version, as pkgdb's api doesn't provide that info
+        return (result['name'], 'some version, see URL for details', release, result['description'].replace('\n', ' '), friendly_url)
+
+    def mint_fetcher(self, release, query, fetch_source=False, fetch_depends=False):
+        if fetch_source:
+            addr = 'http://packages.linuxmint.com/list-src.php?'
+        else:
+            addr = 'http://packages.linuxmint.com/list.php?'
+        addr += urlencode({'release': release})
+
+        fd = utils.web.getUrl(addr).decode("utf-8")
+
+        soup = BeautifulSoup(fd)
+
+        # Linux Mint puts their package lists in tables, so use HTML parsing
+        results = soup.find_all("td")
+
+        versions = {}
+        query = query.lower()
+
+        for result in results:
+            name = result.contents[0].string  # Package name
+
+            if query == name:
+                # This feels like really messy code, but we have to find tags
+                # relative to our results.
+                # Ascend to find the section name (in <h2>):
+                section = result.parent.parent.parent.previous_sibling.\
+                    previous_sibling.string
+
+                # Find the package version in the next <td>; for some reason we
+                # have to go two siblings further, as the first .next_sibling
+                # returns '\n'. This is mentioned briefly in Beautiful Soup 4's
+                # documentation...
+                version = result.next_sibling.next_sibling.string
+
+                # Create a list of versions because a package can exist multiple
+                # times in different sections of the repository (e.g. one in Main,
+                # one in Backports, etc.)
+                versions[section] = version
+
+        return (query, ', '.join('%s: %s' % (k, v) for k, v in versions.items()),
+                'Linux Mint %s' % release.title(), 'no description available', addr)
+
     def package(self, irc, msg, args, dist, query, opts):
         """<release> <package> [--depends] [--source]
 
-        Fetches information for <package> from Debian or Ubuntu's repositories.
-        <release> is the codename/release name (e.g. 'trusty', 'squeeze'). If
-        --depends is given, fetches dependency info for <package>. If --source
-        is given, look up the source package instead of a binary."""
+        Fetches information for <package> from Arch Linux, Debian, Fedora, Linux Mint, or Ubuntu's repositories.
+        <release> is the codename/release name (e.g. 'xenial', 'unstable', 'rawhide', 'f26', 'arch', archaur').
+
+        If --depends is given, fetches dependency info for <package>. If --source is given, look up the source package
+        instead of a binary.
+
+        This command replaces the 'fedora', 'archlinux', and 'archaur' commands from earlier versions of PkgInfo."""
 
         distro_fetcher = self.get_distro_fetcher(dist)
         if distro_fetcher is None:
