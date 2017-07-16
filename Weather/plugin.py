@@ -525,7 +525,10 @@ class Weather(callbacks.Plugin):
             # "1hr ago" or "2.7666666666666666m ago"
             tailstr = outdata['observation'].lstrip(string.digits + '.')
             updated_time = outdata['observation'].rstrip(string.ascii_letters + ' ')
-            updated_time = round(float(updated_time))
+            try:
+                updated_time = round(float(updated_time))
+            except ValueError:
+                pass
             output += " | Updated %s%s" % (ircutils.bold(updated_time), tailstr)
 
         # finally, output the basic weather.
