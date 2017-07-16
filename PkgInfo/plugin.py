@@ -53,13 +53,8 @@ except ImportError:
                       " at http://www.crummy.com/software/BeautifulSoup/bs4/"
                       "doc/#installing-beautiful-soup")
 
-# supybot.commands overrides any by default which is horrible ...
-# Also horrible is how accessing items from __builtins__ requires different
-# syntax on Python 2 and 3.
-if sys.version_info[0] >= 3:
-    any = __builtins__['any']
-else:
-    any = __builtins__.any
+# Use __builtins__.any and not the supybot.commands version...
+any = __builtins__['any'] if isinstance(__builtins__, dict) else __builtins__.any
 
 try:
     from supybot.i18n import PluginInternationalization
