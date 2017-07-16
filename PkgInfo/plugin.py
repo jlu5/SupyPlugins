@@ -1,5 +1,5 @@
 ###
-# Copyright (c) 2014-2016, James Lu
+# Copyright (c) 2014-2017, James Lu <james@overdrivenetworks.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -35,6 +35,7 @@ import supybot.plugins as plugins
 import supybot.ircutils as ircutils
 import supybot.callbacks as callbacks
 import supybot.log as log
+import supybot.conf as conf
 
 from collections import OrderedDict, defaultdict
 try:  # Python 3
@@ -43,12 +44,22 @@ except ImportError:  # Python 2
     from urllib import urlencode, quote
 import json
 import re
+import sys
+import time
 try:
     from bs4 import BeautifulSoup
 except ImportError:
     raise ImportError("Beautiful Soup 4 is required for this plugin: get it"
                       " at http://www.crummy.com/software/BeautifulSoup/bs4/"
                       "doc/#installing-beautiful-soup")
+
+# supybot.commands overrides any by default which is horrible ...
+# Also horrible is how accessing items from __builtins__ requires different
+# syntax on Python 2 and 3.
+if sys.version_info[0] >= 3:
+    any = __builtins__['any']
+else:
+    any = __builtins__.any
 
 try:
     from supybot.i18n import PluginInternationalization
@@ -104,7 +115,7 @@ addrs = {'ubuntu': 'https://packages.ubuntu.com/',
          'debian-archive': 'http://archive.debian.net/'}
 _normalize = lambda text: utils.str.normalizeWhitespace(text).strip()
 
-def _getDistro(release):
+def _guess_distro(release):
     """<release>
 
     Guesses the distribution from the release name."""
@@ -112,51 +123,79 @@ def _getDistro(release):
     debian = ("oldoldstable", "oldstable", "wheezy", "stable",
               "jessie", "testing", "sid", "unstable", "stretch", "buster",
               "experimental", "bullseye")
-    debian_archive = ("bo", "hamm", "slink", "potato", "woody", "sarge",
-                      "etch", "lenny", "squeeze")
     ubuntu = ("precise", "trusty", "xenial", "yakkety", "zesty", "artful")
+    mint = ("betsy", "qiana", "rebecca", "rafaela", "rosa", "sarah", "serena", "sonya")
+
     if release.startswith(debian):
         return "debian"
     elif release.startswith(ubuntu):
         return "ubuntu"
-    elif release.startswith(debian_archive):
-        return "debian-archive"
+    elif release.startswith(mint):
+        return "mint"
+
+class UnknownDistributionError(ValueError):
+    pass
+
+class AmbiguousDistributionError(UnknownDistributionError):
+    pass
+
+class UnsupportedOperationError(NotImplementedError):
+    pass
 
 class PkgInfo(callbacks.Plugin):
     """Fetches package information from the repositories of
     Arch Linux, CentOS, Debian, Fedora, FreeBSD, Linux Mint, and Ubuntu."""
     threaded = True
 
-    _deptypes = ['dep', 'rec', 'sug', 'enh', 'adep', 'idep']
-    _dependencyColor = utils.str.MultipleReplacer({'rec:': '\x0312rec:\x03',
-                                                   'dep:': '\x0304dep:\x03',
-                                                   'sug:': '\x0309sug:\x03',
-                                                   'adep:': '\x0305adep:\x03',
-                                                   'idep:': '\x0302idep:\x03',
-                                                   'enh:': '\x0308enh:\x03'})
-    def package(self, irc, msg, args, release, pkg, opts):
-        """<release> <package> [--depends] [--source]
+    _get_dependency_color = utils.str.MultipleReplacer({
+        # Debian/Ubuntu names
+        'dep': '\x0304dep\x03',
+        'rec': '\x0312rec\x03',
+        'sug': '\x0309sug\x03',
+        'adep': '\x0305adep\x03',
+        'idep': '\x0302idep\x03',
+        'enh': '\x0308enh\x03',
+        # Generic
+        'depends': '\x0304depends\x03',
+        'optdepends': '\x0312optdepends\x03'
+    })
 
-        Fetches information for <package> from Debian or Ubuntu's repositories.
-        <release> is the codename/release name (e.g. 'trusty', 'squeeze'). If
-        --depends is given, fetches dependency info for <package>. If --source
-        is given, look up the source package instead of a binary."""
-        pkg = pkg.lower()
-        distro = _getDistro(release)
-        opts = dict(opts)
-        source = 'source' in opts
-        try:
-            url = addrs[distro]
-        except KeyError:
-            irc.error(unknowndist, Raise=True)
-        if source:  # Source package was requested
+    def get_distro_fetcher(self, dist):
+        dist = dist.lower()
+        guess_dist = _guess_distro(dist)
+
+        if dist == 'debian':
+            raise AmbiguousDistributionError("You must specify a distribution version (e.g. 'stretch' or 'unstable')")
+        elif dist == 'ubuntu':
+            raise AmbiguousDistributionError("You must specify a distribution version (e.g. 'trusty' or 'xenial')")
+        elif dist in ('mint', 'linuxmint'):
+            raise AmbiguousDistributionError("You must specify a distribution version (e.g. 'sonya' or 'betsy')")
+        elif dist == 'fedora':
+            raise AmbiguousDistributionError("You must specify a distribution version (e.g. 'f26', 'rawhide' or 'epel7')")
+        elif dist == 'master':
+            raise AmbiguousDistributionError("'master' is ambiguous: for Fedora rawhide, use the release 'rawhide'")
+
+        elif dist in ('archlinux', 'arch'):
+            return self.arch_fetcher
+        elif dist in ('archaur', 'aur'):
+            return self.arch_aur_fetcher
+        elif guess_dist == 'debian':
+            return self.debian_fetcher
+        elif guess_dist == 'ubuntu':
+            return self.ubuntu_fetcher
+        elif guess_dist == 'mint':
+            return self.mint_fetcher
+        elif dist.startswith(('f', 'el', 'epel', 'olpc', 'rawhide')):
+            return self.fedora_fetcher
+
+    def debian_fetcher(self, release, query, baseurl='https://packages.debian.org/', fetch_source=False, fetch_depends=False):
+        url = baseurl
+        query = query.lower()
+        if fetch_source:  # Source package was requested
             url += 'source/'
-        url += "{}/{}".format(release, pkg)
+        url += "{}/{}".format(release, query)
 
-        try:
-            text = utils.web.getUrl(url).decode("utf-8")
-        except utils.web.Error as e:
-            irc.error(str(e), Raise=True)
+        text = utils.web.getUrl(url).decode("utf-8")
 
         # Workaround unescaped << in package versions (e.g. "python (<< 2.8)") not being parsed
         # correctly.
@@ -167,73 +206,279 @@ class PkgInfo(callbacks.Plugin):
         if "Error" in soup.title.string:
             err = soup.find('div', attrs={"id": "content"}).find('p').string
             if "two or more packages specified" in err:
-                irc.error("Unknown distribution/release.", Raise=True)
-            irc.reply(err)
-            return
+                raise UnknownDistributionError("Unknown distribution/release.")
 
         # If we're using the --depends option, handle that separately.
-        if 'depends' in opts:
-            items = soup.find('div', {'id': 'pdeps'}).find_all('dt')
+        if fetch_depends:
+            items = soup.find('div', {'id': 'pdeps'}).find_all('dl')
             # Store results by type and name, but in an ordered fashion: show dependencies first,
             # followed by recommends, suggests, and enhances.
-            res = OrderedDict((deptype+':', []) for deptype in self._deptypes)
-            for item in items:
+            # "adep" and "idep" are arch-dependent and arch-independent build-dependencies
+            # respectively.
+            res = OrderedDict((deptype, []) for deptype in ('dep:', 'rec:', 'sug:', 'enh:', 'adep:', 'idep:'))
+
+            for item_wrapper in items:
                 # Get package name and related versions and architectures:
                 # <packagename> (>= 1.0) [arch1, arch2]
-                try:
-                    deptype = item.span.text if item.find('span') else ''
+                last_deptype = ''
+                for count, item in enumerate(item_wrapper.find_all('dt')):
+                    # The dependency type is in a <span> element in front of the package name,
+                    # which is expressed as a link.
+                    deptype = item.span.text if item.find('span') else last_deptype
+                    last_deptype = deptype
                     if deptype not in res:
                         continue  # Ignore unsupported fields
 
-                    name = '%s %s' % (ircutils.bold(item.a.text),
-                            item.a.next_sibling.replace('\n', '').strip())
+                    # Also include any parts directly after the package name (usually a version
+                    # restriction).
+                    try:
+                        name = '%s %s' % (ircutils.bold(item.a.text),
+                                item.a.next_sibling.replace('\n', '').strip())
+                    except AttributeError:
+                        # No package link usually means that the package isn't available
+                        name = item.string
+                        if name:
+                            name = ircutils.bold(name.splitlines()[1].strip())
                     name = utils.str.normalizeWhitespace(name).strip()
-                    if item.find('span'):
+                    self.log.debug('PkgInfo.debian_fetcher: got %s %s for package %s', deptype, name, query)
+
+                    if count == 0:
                         res[deptype].append(name)
                     else:
                         # OR dependency; format accordingly
                         res[deptype][-1] += " or %s" % name
-                except AttributeError:
-                    continue
 
-            if res:
-                s = format("Package \x02%s\x02 dependencies: ", pkg)
-                for deptype, packages in res.items():
-                    if packages:
-                        deptype = self._dependencyColor(deptype)
-                        s += format("%s %L; ", deptype, packages)
-                s += format("%u", url)
+            return res
 
-                irc.reply(s)
-
-            else:
-                irc.error("%s doesn't seem to have any dependencies." % pkg)
-            return
-
+        # Fetch package information from the packages page's <meta> tags.
         desc = soup.find('meta', attrs={"name": "Description"})["content"]
+        keywords = soup.find('meta', attrs={"name": "Keywords"})["content"]
+        keywords = keywords.replace(",", "").split()
+        try:
+            real_distribution = keywords[1]
+        except IndexError:
+            return  # No such package
+        version = keywords[-1]
 
-        # Override description if we selected source lookup, since the meta
-        # tag Description should be empty for those. Replace this with a list
+        # Override the description if we selected source lookup, since the meta
+        # tag Description will be empty for those. Replace this with a list
         # of binary packages that the source package builds.
-        if source:
+        if fetch_source:
             binaries = soup.find('div', {'id': "pbinaries"})
             binaries = [ircutils.bold(obj.a.text) for obj in binaries.find_all('dt')]
             desc = format('Built packages: %L', binaries)
-
-        # Get package information from the meta tags
-        keywords = soup.find('meta', attrs={"name": "Keywords"})["content"]
-        keywords = keywords.replace(",", "").split()
-        version = keywords[-1]
 
         # Handle virtual packages by showing a list of packages that provide it
         if version == "virtual":
             providing = [ircutils.bold(obj.a.text) for obj in soup.find_all('dt')]
             desc = "Virtual package provided by: %s" % ', '.join(providing[:10])
-            if len(providing) > 10:
+            if len(providing) > 10:  # XXX: arbitrary limit
                 desc += " and %s others" % (ircutils.bold(len(providing) - 10))
-        s = format("Package: \x02%s (%s)\x02 in %s - %s, View more at: %u",
-                   pkg, version, keywords[1], desc, url)
-        irc.reply(s)
+
+        return (query, version, real_distribution, desc, url)
+
+    def ubuntu_fetcher(self, *args, **kwargs):
+        kwargs['baseurl'] = 'https://packages.ubuntu.com/'
+        return self.debian_fetcher(*args, **kwargs)
+
+    def arch_fetcher(self, release, query, fetch_source=False, fetch_depends=False):
+        search_url = 'https://www.archlinux.org/packages/search/json/?%s&arch=x86_64&arch=any' % urlencode({'name': query})
+
+        self.log.debug("PkgInfo: using url %s for arch_fetcher", search_url)
+
+        fd = utils.web.getUrl(search_url)
+        data = json.loads(fd.decode("utf-8"))
+
+        if data['valid'] and data['results']:
+            pkgdata = data['results'][0]
+            name, version, repo, arch, desc = pkgdata['pkgname'], pkgdata['pkgver'], pkgdata['repo'], pkgdata['arch'], pkgdata['pkgdesc']
+
+            if pkgdata['flag_date']:
+                # Mark flagged-as-outdated versions in red.
+                version = '\x0304%s\x03' % version
+
+                # Note the flagged date in the package description.
+                t = time.strptime(pkgdata['flag_date'], '%Y-%m-%dT%H:%M:%S.%fZ')  # Why can't strptime be smarter and guess this?!
+                # Convert the time format to the globally configured one.
+                out_t = time.strftime(conf.supybot.reply.format.time(), t)
+                desc += ' [flagged as \x0304outdated\x03 on %s]' % out_t
+
+            if fetch_depends:
+                deps = set()
+                for dep in pkgdata['depends']:
+                    # XXX: Arch's API does not differentiate between required deps and optional ones w/o explanation...
+
+                    # Sort through the API info and better explain optional dependencies with reasons in them.
+                    if ':' in dep:
+                        name, explanation = dep.split(':', 1)
+                        dep = '%s (optional; needed for %s)' % (ircutils.bold(name), explanation.strip())
+                    else:
+                        dep = ircutils.bold(dep)
+                    deps.add(dep)
+
+                return {'depends': deps}
+
+            # Package site URLs use a form like https://www.archlinux.org/packages/extra/x86_64/python/
+            friendly_url = 'https://www.archlinux.org/packages/%s/%s/%s' % (repo, arch, name)
+            return (name, version, repo, desc, friendly_url)
+        else:
+            return  # No results found!
+
+
+    def arch_aur_fetcher(self, release, query, fetch_source=False, fetch_depends=False):
+        search_url = 'https://aur.archlinux.org/rpc/?' + urlencode(
+            {'arg[]': query, 'v': 5,'type': 'info'}
+        )
+
+        self.log.debug("PkgInfo: using url %s for arch_aur_fetcher", search_url)
+
+        fd = utils.web.getUrl(search_url)
+        data = json.loads(fd.decode("utf-8"))
+
+        if data['results']:
+            pkgdata = data['results'][0]
+            name, version, votecount, popularity, desc = pkgdata['Name'], pkgdata['Version'], \
+                pkgdata['NumVotes'], pkgdata['Popularity'], pkgdata['Description']
+
+            verbose_info = ' [Popularity: \x02%s\x02; Votes: \x02%s\x02' % (popularity, votecount)
+
+            if pkgdata['OutOfDate']:
+                # Mark flagged-as-outdated versions in red.
+                version = '\x0304%s\x03' % version
+
+                flag_time = time.strftime(conf.supybot.reply.format.time(), time.gmtime(pkgdata['OutOfDate']))
+                verbose_info += '; flagged as \x0304outdated\x03 on %s' % flag_time
+            verbose_info += ']'
+
+            if fetch_depends:
+                deplist = pkgdata['MakeDepends'] if fetch_source else pkgdata['Depends']
+                deplist = [ircutils.bold(dep) for dep in deplist]
+
+                # Fill in opt depends
+                optdepends = set()
+                for dep in pkgdata.get('OptDepends', []):
+                    if ':' in dep:
+                        name, explanation = dep.split(':', 1)
+                        dep = '%s (optional; needed for %s)' % (ircutils.bold(name), explanation.strip())
+                    else:
+                        dep = '%s (optional)' % ircutils.bold(dep)
+                    optdepends.add(dep)
+
+                # Note: this is an ordered dict so that depends always show before optdepends
+                return OrderedDict((('depends', deplist), ('optdepends', optdepends)))
+
+            # Package site URLs use a form like https://www.archlinux.org/packages/extra/x86_64/python/
+            friendly_url = 'https://aur.archlinux.org/packages/%s/' % name
+            desc += verbose_info
+            return (name, version, 'Arch Linux AUR', desc, friendly_url)
+        else:
+            return  # No results found!
+
+    def fedora_fetcher(self, release, query, fetch_source=False, fetch_depends=False):
+        if fetch_source or fetch_depends:
+            raise UnsupportedOperationError("--depends and --source lookup are not supported for Fedora")
+
+        if release == 'master':
+            release = 'rawhide'
+
+        url = 'https://admin.fedoraproject.org/pkgdb/api/packages/%s?format=json&branches=%s' % (quote(query), quote(release))
+        self.log.debug("PkgInfo: using url %s for fedora_fetcher", url)
+        fd = utils.web.getUrl(url).decode("utf-8")
+        data = json.loads(fd)
+        result = data["packages"][0]
+        friendly_url = 'https://apps.fedoraproject.org/packages/%s' % query
+
+        # XXX: find some way to fetch the package version, as pkgdb's api doesn't provide that info
+        return (result['name'], 'some version, see URL for details', release, result['description'].replace('\n', ' '), friendly_url)
+
+    def mint_fetcher(self, release, query, fetch_source=False, fetch_depends=False):
+        if fetch_source:
+            addr = 'http://packages.linuxmint.com/list-src.php?'
+        else:
+            addr = 'http://packages.linuxmint.com/list.php?'
+        addr += urlencode({'release': release})
+
+        fd = utils.web.getUrl(addr).decode("utf-8")
+
+        soup = BeautifulSoup(fd)
+
+        # Linux Mint puts their package lists in tables, so use HTML parsing
+        results = soup.find_all("td")
+
+        versions = {}
+        query = query.lower()
+
+        for result in results:
+            name = result.contents[0].string  # Package name
+
+            if query == name:
+                # This feels like really messy code, but we have to find tags
+                # relative to our results.
+                # Ascend to find the section name (in <h2>):
+                section = result.parent.parent.parent.previous_sibling.\
+                    previous_sibling.string
+
+                # Find the package version in the next <td>; for some reason we
+                # have to go two siblings further, as the first .next_sibling
+                # returns '\n'. This is mentioned briefly in Beautiful Soup 4's
+                # documentation...
+                version = result.next_sibling.next_sibling.string
+
+                # Create a list of versions because a package can exist multiple
+                # times in different sections of the repository (e.g. one in Main,
+                # one in Backports, etc.)
+                versions[section] = version
+
+        return (query, ', '.join('%s: %s' % (k, v) for k, v in versions.items()),
+                'Linux Mint %s' % release.title(), 'no description available', addr)
+
+    def package(self, irc, msg, args, dist, query, opts):
+        """<release> <package> [--depends] [--source]
+
+        Fetches information for <package> from Arch Linux, Debian, Fedora, Linux Mint, or Ubuntu's repositories.
+        <release> is the codename/release name (e.g. 'xenial', 'unstable', 'rawhide', 'f26', 'arch', archaur').
+
+        If --depends is given, fetches dependency info for <package>. If --source is given, look up the source package
+        instead of a binary.
+
+        This command replaces the 'fedora', 'archlinux', and 'archaur' commands from earlier versions of PkgInfo."""
+
+        distro_fetcher = self.get_distro_fetcher(dist)
+        if distro_fetcher is None:
+            irc.error("Unknown distribution version %r" % dist, Raise=True)
+
+        opts = dict(opts)
+        fetch_source = 'source' in opts
+        fetch_depends = 'depends' in opts
+
+        result = distro_fetcher(dist, query, fetch_source=fetch_source, fetch_depends=fetch_depends)
+        if not result:
+            irc.error("Unknown package %r" % query, Raise=True)
+
+        if fetch_depends:
+            # results is a dictionary mapping dependency type to a list
+            # of packages.
+            if any(result.values()):
+                deplists = []
+                for deptype, packages in result.items():
+                    if packages:
+                        deptype = self._get_dependency_color(deptype)
+                        if ':' not in deptype:
+                            deptype += ':'
+                        # Join together the dependency type and package list for each list
+                        # that isn't empty.
+                        deplists.append("%s %s" % (ircutils.bold(deptype), ', '.join(packages)))
+
+                irc.reply(format("%s %s", ircutils.bold(query), '; '.join(deplists)))
+
+            else:
+                irc.error("%s doesn't seem to have any dependencies." % ircutils.bold(query))
+        else:
+            # result is formatted in the order: packagename, version, real_distribution, desc, url
+            self.log.debug('PkgInfo result args: %s', str(result))
+            s = format("Package: \x02%s (%s)\x02 in %s - %s %u", *result)
+            irc.reply(s)
+
     pkg = wrap(package, ['somethingWithoutSpaces', 'somethingWithoutSpaces',
                getopts({'depends': '', 'source': ''})])
 
@@ -247,7 +492,7 @@ class PkgInfo(callbacks.Plugin):
         pkg, distro = map(str.lower, (pkg, distro))
         supported = ("debian", "ubuntu", "derivatives", "all")
         if distro not in supported:
-            distro = _getDistro(distro)
+            distro = _guess_distro(distro)
             if distro is None:
                 irc.error(unknowndist, Raise=True)
         opts = dict(opts)
@@ -356,7 +601,7 @@ class PkgInfo(callbacks.Plugin):
         'debian', 'ubuntu', and 'debian-archive'."""
         distro = distro.lower()
         if distro not in addrs.keys():
-            distro = _getDistro(distro)
+            distro = _guess_distro(distro)
         try:
             url = '%ssearch?keywords=%s' % (addrs[distro], quote(query))
         except KeyError:
@@ -399,7 +644,7 @@ class PkgInfo(callbacks.Plugin):
         Searches what package in Debian or Ubuntu has which file. <release> is the
         codename/release name (e.g. xenial or jessie)."""
         release = release.lower()
-        distro = _getDistro(release)
+        distro = _guess_distro(release)
 
         try:
             url = '%ssearch?keywords=%s&searchon=contents&suite=%s' % (addrs[distro], quote(query), quote(release))
