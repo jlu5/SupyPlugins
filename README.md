@@ -3,10 +3,12 @@
 [webchatlink]: https://webchat.overdrivenetworks.com/?channels=dev
 
 [![Travis-CI Build Status](https://travis-ci.org/GLolol/SupyPlugins.svg?branch=master)](https://travis-ci.org/GLolol/SupyPlugins)
-![Supported Python versions](https://img.shields.io/badge/python-2.7%2C%203.4%2C%203.5-blue.svg)
+![Supported Python versions](https://img.shields.io/badge/python-2.7-blue.svg)
 [![Live chat](https://img.shields.io/badge/IRC-live%20chat%20%C2%BB-green.svg)][webchatlink]
 
 My collection of plugins for [Limnoria](https://github.com/ProgVal/Limnoria). This repository is provided **AS IS**, **without any warranty**! It may glitch, break, or spontaneously combust at any time. You have been warned!
+
+**This branch contains the legacy Python 2 branch for SupyPlugins, which will only receive maintenance updates.** Those wanting new features and plugins should migrate their bot to Python 3 and use the *master* branch, as Python 2 is EOL in 2020.
 
 ## Installation
 The recommended way of fetching plugins in this repository is to clone the git repository:
