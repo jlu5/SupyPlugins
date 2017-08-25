@@ -83,10 +83,6 @@ Most of these plugins also have their own READMEs in their folders; you can usua
 ##### [RelayNext](RelayNext/README.md)
 - Next generation relayer plugin, designed with two-way relays in mind.
 
-##### RhymeZone
-- Fetches rhymes from http://rhymezone.com/.
-    - Unsupported on Python 2 due to string encoding issues.
-
 ##### SedRegex
 - History replacer using sed-style expressions. Fork of [t3chguy's Replacer plugin](https://github.com/t3chguy/Limnoria-Plugins/tree/master/Replacer).
 
@@ -96,10 +92,6 @@ Most of these plugins also have their own READMEs in their folders; you can usua
 ##### SysDNS
 - An alternative to Supybot's built-in DNS function, using the `host` DNS lookup utility on the host machine.
     * **Requires:** `host` DNS lookup binary (as in `/usr/bin/host`)
-
-##### [TranslateParty](TranslateParty/README.md)
-- Translates text through Google Translate multiple times in order to get amusing results.
-   - **Note: This plugin requires Python 3!**
 
 ##### Voteserv
 - A plugin for storing and manipulating votes/polls.
