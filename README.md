@@ -3,10 +3,12 @@
 [webchatlink]: https://webchat.overdrivenetworks.com/?channels=dev
 
 [![Travis-CI Build Status](https://travis-ci.org/GLolol/SupyPlugins.svg?branch=master)](https://travis-ci.org/GLolol/SupyPlugins)
-![Supported Python versions](https://img.shields.io/badge/python-2.7%2C%203.4%2C%203.5-blue.svg)
+![Supported Python versions](https://img.shields.io/badge/python-3.4%2C%203.5-blue.svg)
 [![Live chat](https://img.shields.io/badge/IRC-live%20chat%20%C2%BB-green.svg)][webchatlink]
 
 My collection of plugins for [Limnoria](https://github.com/ProgVal/Limnoria). This repository is provided **AS IS**, **without any warranty**! It may glitch, break, or spontaneously combust at any time. You have been warned!
+
+**WARNING: Python 2 is no longer supported in the SupyPlugins *master* branch as of August 2017. Please migrate your bots to Python 3, or use the *python2-legacy* branch instead.**
 
 ## Installation
 The recommended way of fetching plugins in this repository is to clone the git repository:
@@ -15,7 +17,7 @@ The recommended way of fetching plugins in this repository is to clone the git r
 
 and add the folder to your bot's `config directories.plugins`.
 
-**You will need a working copy of [Limnoria](https://github.com/ProgVal/Limnoria) running on Python 2.7 or Python 3.4+.** Anything older will *not* work.
+**You will need a working copy of [Limnoria](https://github.com/ProgVal/Limnoria) running on Python 3.4+.** Python 2 users should consult the *python2-legacy* branch in Git instead. Anything older will *not* work.
 
 If you are using a recent version of Limnoria's PluginDownloader, you can also fetch [individual plugins](#list-of-plugins) by running:
 
@@ -83,7 +85,6 @@ Most of these plugins also have their own READMEs in their folders; you can usua
 
 ##### RhymeZone
 - Fetches rhymes from http://rhymezone.com/.
-    - Unsupported on Python 2 due to string encoding issues.
 
 ##### SedRegex
 - History replacer using sed-style expressions. Fork of [t3chguy's Replacer plugin](https://github.com/t3chguy/Limnoria-Plugins/tree/master/Replacer).
@@ -97,7 +98,6 @@ Most of these plugins also have their own READMEs in their folders; you can usua
 
 ##### [TranslateParty](TranslateParty/README.md)
 - Translates text through Google Translate multiple times in order to get amusing results.
-   - **Note: This plugin requires Python 3!**
 
 ##### Voteserv
 - A plugin for storing and manipulating votes/polls.
