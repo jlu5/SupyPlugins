@@ -180,13 +180,20 @@ class Wikifetch(callbacks.Plugin):
                 # If any of the above post-processing tricks fail, just ignore
                 pass
 
+        text_content = tree
+        if use_mw_parsing:
+            text_content = tree.xpath("//div[@class='mw-parser-output']") or tree.xpath("//div[@id='mw-content-text']")
+            if text_content:
+                text_content = text_content[0]
+        self.log.debug('Wikifetch: Using %s as text_content', text_content)
+
         # check if it's a disambiguation page
         disambig = tree.xpath('//table[@id="disambigbox"]') or \
             tree.xpath('//table[@id="setindexbox"]') or \
             tree.xpath('//div[contains(@class, "disambig")]')  # Wikia (2017-01-27)
         if disambig:
             reply += format(_('%u is a disambiguation page. '), addr)
-            disambig = tree.xpath('//div[@id="bodyContent"]/div/ul/li')
+            disambig = text_content.xpath('./ul/li')
 
             disambig_results = []
             for item in disambig:
@@ -206,12 +213,8 @@ class Wikifetch(callbacks.Plugin):
         elif 'ns-talk' in tree.find("body").attrib.get('class', ''):
             reply += format(_('This article appears to be a talk page: %u'), addr)
         else:
-            if use_mw_parsing:
-                # As of 2017-06-03, Wikipedia has put its text content under a new "mw-parser-output" div, while
-                # other sites (e.g. Wikia) still have it directly under "mw-content-text".
-                p = tree.xpath("//div[@id='mw-content-text']/p[1]") or tree.xpath("//div[@class='mw-parser-output']/p[1]")
-            else: # Don't look for MediaWiki-specific tags if MediaWiki parsing is disabled
-                p = tree.xpath("//p[1]")
+            # Get the first paragraph as text.
+            p = text_content.xpath("./p[1]")
             if len(p) == 0 or 'wiki/Special:Search' in addr:
                 if 'wikipedia:wikiproject' in addr.lower():
                     reply += format(_('This page appears to be a WikiProject page, '
