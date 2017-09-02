@@ -241,8 +241,8 @@ class Wikifetch(callbacks.Plugin):
                 reply += format('%s %s %u', p, _('Retrieved from'), addr)
         reply = reply.replace('&amp;','&')
 
-        # Remove inline citations (text[1][2][3], etc.)
-        reply = re.sub('\[\d+\]', '', reply)
+        # Remove inline citations (text[1][2][3]) as well as inline notes (text[note 1]).
+        reply = re.sub('\[[a-z ]*?\d+\]', '', reply)
 
         return reply
 
