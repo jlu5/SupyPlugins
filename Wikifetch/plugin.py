@@ -47,10 +47,11 @@ except:
     _ = lambda x:x
     internationalizeDocstring = lambda x:x
 
-if sys.version_info[0] >= 3:
-    from urllib.parse import quote_plus
-else:
-    from urllib import quote_plus
+if sys.version_info[0] < 3:
+    raise ImportError('This plugin requires Python 3. For a legacy version of this plugin that still '
+                      'supports Python 2, consult the python2-legacy branch at '
+                      'https://github.com/GLolol/SupyPlugins/tree/python2-legacy')
+from urllib import quote_plus
 
 class Wikifetch(callbacks.Plugin):
     """Grabs data from Wikipedia and other MediaWiki-powered sites."""
@@ -102,8 +103,7 @@ class Wikifetch(callbacks.Plugin):
             self.log.exception('Failed to fetch link %s', addr)
             raise
 
-        if sys.version_info[0] >= 3:
-            article = article.decode()
+        article = article.decode()
 
         tree = lxml.html.document_fromstring(article)
         return (tree, article, addr)
@@ -120,11 +120,6 @@ class Wikifetch(callbacks.Plugin):
                                 '[@title="Special:Search"]')
         if didyoumean:
             redirect = didyoumean[0].text_content().strip()
-            if sys.version_info[0] < 3:
-                if isinstance(redirect, unicode):
-                    redirect = redirect.encode('utf-8','replace')
-                if isinstance(search, unicode):
-                    search = search.encode('utf-8','replace')
             if self.registryValue('showRedirects', msg.args[0]):
                 reply += _('I didn\'t find anything for "%s". '
                            'Did you mean "%s"? ') % (search, redirect)
@@ -158,11 +153,6 @@ class Wikifetch(callbacks.Plugin):
                     redirect = redirect.text_content().strip()
                     title = tree.xpath('//*[@class="firstHeading"]')
                     title = title[0].text_content().strip()
-                    if sys.version_info[0] < 3:
-                        if isinstance(title, unicode):
-                            title = title.encode('utf-8','replace')
-                        if isinstance(redirect, unicode):
-                            redirect = redirect.encode('utf-8','replace')
                     reply += '"%s" (Redirected from "%s"): ' % (title, redirect)
                 except IndexError:
                     pass
@@ -232,11 +222,6 @@ class Wikifetch(callbacks.Plugin):
                 # Get rid of newlines, etc., that can corrupt the output.
                 p = utils.str.normalizeWhitespace(p)
                 p = p.strip()
-                if sys.version_info[0] < 3:
-                    if isinstance(p, unicode):
-                        p = p.encode('utf-8', 'replace')
-                    if isinstance(reply, unicode):
-                        reply = reply.encode('utf-8','replace')
 
                 if not p:
                     reply = _('<Page was too complex to parse>')
