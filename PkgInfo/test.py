@@ -43,7 +43,7 @@ class PkgInfoTestCase(PluginTestCase):
             self.assertNotError('pkg sid bash --depends')
             self.assertNotError('pkg sid vlc --source --depends')
             self.assertError('pkg afdsfsadf asfasfasf')
-            self.assertRegexp('pkg sid afsadfasfsa', 'no such package', re.I)
+            self.assertError('pkg sid afsadfasfsa')
 
         def testVlist(self):
             self.assertError('vlist all afdsafas')
@@ -91,4 +91,5 @@ class PkgInfoTestCase(PluginTestCase):
             self.assertRegexp('freebsd lxterminal --exact', 'Found 1 result:.*?LXDE')
             self.assertNotError('freebsd bash')
             self.assertError('freebsd asdfasjkfalewrghaekglae')
+
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:
