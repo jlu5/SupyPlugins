@@ -137,6 +137,9 @@ class AmbiguousDistributionError(UnknownDistributionError):
 class UnsupportedOperationError(NotImplementedError):
     pass
 
+class BadRequestError(ValueError):
+    pass
+
 class PkgInfo(callbacks.Plugin):
     """Fetches package information from the repositories of
     Arch Linux, CentOS, Debian, Fedora, FreeBSD, Linux Mint, and Ubuntu."""
@@ -285,7 +288,8 @@ class PkgInfo(callbacks.Plugin):
         return self.debian_fetcher(*args, **kwargs)
 
     def arch_fetcher(self, release, query, fetch_source=False, fetch_depends=False, multi=False):
-        search_url = 'https://www.archlinux.org/packages/search/json/?%s&arch=x86_64&arch=any' % urlencode({'name': query})
+        search_url = 'https://www.archlinux.org/packages/search/json/?%s&arch=x86_64&arch=any' % \
+            urlencode({'q' if multi else 'name': query})
 
         self.log.debug("PkgInfo: using url %s for arch_fetcher", search_url)
 
@@ -293,7 +297,9 @@ class PkgInfo(callbacks.Plugin):
         data = json.loads(fd.decode("utf-8"))
 
         if data['valid'] and data['results']:
-            pkgdata = data['results'][0]
+            if multi:
+                return [pkgdata['pkgname'] for pkgdata in data['results']]
+            pkgdata = data['results']
             name, version, repo, arch, desc = pkgdata['pkgname'], pkgdata['pkgver'], pkgdata['repo'], pkgdata['arch'], pkgdata['pkgdesc']
 
             if pkgdata['flag_date']:
@@ -327,18 +333,22 @@ class PkgInfo(callbacks.Plugin):
         else:
             return  # No results found!
 
-
     def arch_aur_fetcher(self, release, query, fetch_source=False, fetch_depends=False, multi=False):
-        search_url = 'https://aur.archlinux.org/rpc/?' + urlencode(
-            {'arg[]': query, 'v': 5,'type': 'info'}
-        )
+        url = 'https://aur.archlinux.org/rpc/?'
+        if multi:
+            url += urlencode({'arg': query, 'v': 5, 'type': 'search'})
+        else:
+            url += urlencode({'arg[]': query, 'v': 5, 'type': 'info'})
 
-        self.log.debug("PkgInfo: using url %s for arch_aur_fetcher", search_url)
+        self.log.debug("PkgInfo: using url %s for arch_aur_fetcher", url)
 
-        fd = utils.web.getUrl(search_url)
+        fd = utils.web.getUrl(url)
         data = json.loads(fd.decode("utf-8"))
 
         if data['results']:
+            if multi:
+                return [pkgdata['Name'] for pkgdata in data['results']]
+
             pkgdata = data['results'][0]
             name, version, votecount, popularity, desc = pkgdata['Name'], pkgdata['Version'], \
                 pkgdata['NumVotes'], pkgdata['Popularity'], pkgdata['Description']
@@ -375,7 +385,8 @@ class PkgInfo(callbacks.Plugin):
             desc += verbose_info
             return (name, version, 'Arch Linux AUR', desc, friendly_url)
         else:
-            return  # No results found!
+            if data['type'] == 'error':
+                raise BadRequestError(data['error'])
 
     def fedora_fetcher(self, release, query, fetch_source=False, fetch_depends=False):
         if fetch_source or fetch_depends:
@@ -487,7 +498,10 @@ class PkgInfo(callbacks.Plugin):
 
         result = distro_fetcher(dist, query, fetch_source=fetch_source, fetch_depends=fetch_depends, multi=multi)
         if not result:
-            irc.error("Unknown package %r" % query, Raise=True)
+            if multi:
+                irc.error("No results found.", Raise=True)
+            else:
+                irc.error("Unknown package %r" % query, Raise=True)
 
         if fetch_depends:
             # results is a dictionary mapping dependency type to a list
