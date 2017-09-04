@@ -425,10 +425,14 @@ class PkgInfo(callbacks.Plugin):
         versions = {}
         query = query.lower()
 
+        multi_results = []
         for result in results:
             name = result.contents[0].string  # Package name
 
-            if query == name:
+            if query in name and multi:
+                multi_results.append(name)
+
+            elif query == name:
                 # This feels like really messy code, but we have to find tags
                 # relative to our results.
                 # Ascend to find the section name (in <h2>):
@@ -446,6 +450,8 @@ class PkgInfo(callbacks.Plugin):
                 # one in Backports, etc.)
                 versions[section] = version
 
+        if multi:
+            return multi_results
         return (query, ', '.join('%s: %s' % (k, v) for k, v in versions.items()),
                 'Linux Mint %s' % release.title(), 'no description available', addr)
 
@@ -457,6 +463,9 @@ class PkgInfo(callbacks.Plugin):
         self.log.debug('PkgInfo: using URL %s for freebsd_fetcher', url)
         data = utils.web.getUrl(url)
         soup = BeautifulSoup(data)
+
+        if multi:
+            return [dt.text for dt in soup.find_all('dt')]
 
         for dt in soup.find_all('dt'):
             pkgname, pkgver = dt.text.rsplit('-', 1)
