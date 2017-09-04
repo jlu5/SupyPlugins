@@ -155,17 +155,17 @@ class PkgInfo(callbacks.Plugin):
         'optdepends': '\x0312optdepends\x03'
     })
 
-    def get_distro_fetcher(self, dist):
+    def get_distro_fetcher(self, dist, multi=False):
         dist = dist.lower()
         guess_dist = _guess_distro(dist)
 
-        if dist == 'debian':
+        if dist == 'debian' and not multi:
             raise AmbiguousDistributionError("You must specify a distribution version (e.g. 'stretch' or 'unstable')")
-        elif dist == 'ubuntu':
+        elif dist == 'ubuntu' and not multi:
             raise AmbiguousDistributionError("You must specify a distribution version (e.g. 'trusty' or 'xenial')")
         elif dist in ('mint', 'linuxmint'):
             raise AmbiguousDistributionError("You must specify a distribution version (e.g. 'sonya' or 'betsy')")
-        elif dist == 'fedora':
+        elif dist == 'fedora' and not multi:
             raise AmbiguousDistributionError("You must specify a distribution version (e.g. 'f26', 'rawhide' or 'epel7')")
         elif dist == 'master':
             raise AmbiguousDistributionError("'master' is ambiguous: for Fedora rawhide, use the release 'rawhide'")
@@ -174,23 +174,26 @@ class PkgInfo(callbacks.Plugin):
             return self.arch_fetcher
         elif dist in ('archaur', 'aur'):
             return self.arch_aur_fetcher
-        elif guess_dist == 'debian':
+        elif guess_dist == 'debian' or dist == 'debian':
             return self.debian_fetcher
         elif dist in ('fbsd', 'freebsd'):
             return self.freebsd_fetcher
-        elif guess_dist == 'ubuntu':
+        elif guess_dist == 'ubuntu' or dist == 'ubuntu':
             return self.ubuntu_fetcher
         elif guess_dist == 'mint':
             return self.mint_fetcher
         elif dist.startswith(('f', 'el', 'epel', 'olpc', 'rawhide')):
             return self.fedora_fetcher
 
-    def debian_fetcher(self, release, query, baseurl='https://packages.debian.org/', fetch_source=False, fetch_depends=False):
+    def debian_fetcher(self, release, query, baseurl='https://packages.debian.org/', fetch_source=False, fetch_depends=False, multi=False):
         url = baseurl
         query = query.lower()
-        if fetch_source:  # Source package was requested
-            url += 'source/'
-        url += "{}/{}".format(release, query)
+        if multi:
+            url += 'search?%s' % urlencode({'keywords': query})
+        else:
+            if fetch_source:  # Source package was requested
+                url += 'source/'
+            url += "{}/{}".format(release, query)
 
         text = utils.web.getUrl(url).decode("utf-8")
 
@@ -205,8 +208,11 @@ class PkgInfo(callbacks.Plugin):
             if "two or more packages specified" in err:
                 raise UnknownDistributionError("Unknown distribution/release.")
 
-        # If we're using the --depends option, handle that separately.
-        if fetch_depends:
+        # If we're using the --depends or search options, handle that separately.
+        if multi:
+            # Debian and Ubuntu use h3 for result names in the format 'Package abcd'
+            return [pkg.string.split()[1] for pkg in soup.find_all('h3')]
+        elif fetch_depends:
             items = soup.find('div', {'id': 'pdeps'}).find_all('dl')
             # Store results by type and name, but in an ordered fashion: show dependencies first,
             # followed by recommends, suggests, and enhances.
@@ -278,7 +284,7 @@ class PkgInfo(callbacks.Plugin):
         kwargs['baseurl'] = 'https://packages.ubuntu.com/'
         return self.debian_fetcher(*args, **kwargs)
 
-    def arch_fetcher(self, release, query, fetch_source=False, fetch_depends=False):
+    def arch_fetcher(self, release, query, fetch_source=False, fetch_depends=False, multi=False):
         search_url = 'https://www.archlinux.org/packages/search/json/?%s&arch=x86_64&arch=any' % urlencode({'name': query})
 
         self.log.debug("PkgInfo: using url %s for arch_fetcher", search_url)
@@ -322,7 +328,7 @@ class PkgInfo(callbacks.Plugin):
             return  # No results found!
 
 
-    def arch_aur_fetcher(self, release, query, fetch_source=False, fetch_depends=False):
+    def arch_aur_fetcher(self, release, query, fetch_source=False, fetch_depends=False, multi=False):
         search_url = 'https://aur.archlinux.org/rpc/?' + urlencode(
             {'arg[]': query, 'v': 5,'type': 'info'}
         )
@@ -388,7 +394,7 @@ class PkgInfo(callbacks.Plugin):
         # XXX: find some way to fetch the package version, as pkgdb's api doesn't provide that info
         return (result['name'], 'some version, see URL for details', release, result['description'].replace('\n', ' '), friendly_url)
 
-    def mint_fetcher(self, release, query, fetch_source=False, fetch_depends=False):
+    def mint_fetcher(self, release, query, fetch_source=False, fetch_depends=False, multi=False):
         if fetch_depends:
             raise UnsupportedOperationError("--depends lookup is not supported for Linux Mint")
 
@@ -432,7 +438,7 @@ class PkgInfo(callbacks.Plugin):
         return (query, ', '.join('%s: %s' % (k, v) for k, v in versions.items()),
                 'Linux Mint %s' % release.title(), 'no description available', addr)
 
-    def freebsd_fetcher(self, release, query, fetch_source=False, fetch_depends=False):
+    def freebsd_fetcher(self, release, query, fetch_source=False, fetch_depends=False, multi=False):
         if fetch_source:
             raise UnsupportedOperationError("--source lookup is not supported for FreeBSD")
 
@@ -470,16 +476,16 @@ class PkgInfo(callbacks.Plugin):
         instead of a binary.
 
         This command replaces the 'fedora', 'archlinux', and 'archaur' commands from earlier versions of PkgInfo."""
-
-        distro_fetcher = self.get_distro_fetcher(dist)
-        if distro_fetcher is None:
-            irc.error("Unknown distribution version %r" % dist, Raise=True)
-
         opts = dict(opts)
         fetch_source = 'source' in opts
         fetch_depends = 'depends' in opts
+        multi = 'search' in opts
 
-        result = distro_fetcher(dist, query, fetch_source=fetch_source, fetch_depends=fetch_depends)
+        distro_fetcher = self.get_distro_fetcher(dist, multi=multi)
+        if distro_fetcher is None:
+            irc.error("Unknown distribution version %r" % dist, Raise=True)
+
+        result = distro_fetcher(dist, query, fetch_source=fetch_source, fetch_depends=fetch_depends, multi=multi)
         if not result:
             irc.error("Unknown package %r" % query, Raise=True)
 
@@ -507,13 +513,27 @@ class PkgInfo(callbacks.Plugin):
         else:
             if not isinstance(result, (list, tuple)):
                 raise UnsupportedOperationError("Internal fetcher error (wrong output type; expected list or tuple but got %s)" % (type(result).__name__))
-            # result is formatted in the order: packagename, version, real_distribution, desc, url
-            self.log.debug('PkgInfo result args: %s', str(result))
-            s = format("Package: \x02%s (%s)\x02 in %s - %s %u", *result)
-            irc.reply(s)
+
+            if multi:
+                s = format("Found \x02%s\x02 results: %L", len(result), (ircutils.bold(r) for r in result))
+                irc.reply(s)
+            else:
+                # result is formatted in the order: packagename, version, real_distribution, desc, url
+                self.log.debug('PkgInfo result args: %s', str(result))
+                s = format("Package: \x02%s (%s)\x02 in %s - %s %u", *result)
+                irc.reply(s)
 
     pkg = wrap(package, ['somethingWithoutSpaces', 'somethingWithoutSpaces',
                getopts({'depends': '', 'source': ''})])
+
+    def pkgsearch(self, irc, msg, args, dist, query):
+        """<distro> <query>
+
+        Looks up <query> in <distro>'s website. Valid <distro>'s include
+        'debian', 'ubuntu', and 'debian-archive'."""
+        return self.package(irc, msg, args, dist, query, {'search': True})
+    pkgsearch = wrap(pkgsearch, ['somethingWithoutSpaces',
+                                 'somethingWithoutSpaces'])
 
     def vlist(self, irc, msg, args, distro, pkg, opts):
         """<distribution> <package> [--reverse]
@@ -626,49 +646,6 @@ class PkgInfo(callbacks.Plugin):
         else:
             irc.error("No results found.", Raise=True)
     archaur = wrap(archaur, ['somethingWithoutSpaces'])
-
-    def pkgsearch(self, irc, msg, args, distro, query):
-        """<distro> <query>
-
-        Looks up <query> in <distro>'s website. Valid <distro>'s include
-        'debian', 'ubuntu', and 'debian-archive'."""
-        distro = distro.lower()
-        if distro not in addrs.keys():
-            distro = _guess_distro(distro)
-        try:
-            url = '%ssearch?keywords=%s' % (addrs[distro], quote(query))
-        except KeyError:
-            irc.error(unknowndist, Raise=True)
-        try:
-            fd = utils.web.getUrl(url).decode("utf-8")
-        except utils.web.Error as e:
-            irc.error(str(e), Raise=True)
-        soup = BeautifulSoup(fd)
-        # Debian/Ubuntu use h3 for result names in the format 'Package abcd'
-        results = [pkg.string.split()[1] for pkg in soup.find_all('h3')]
-        if results:
-            s = format("Found %n: \x02%L\x02, View more at: %u",
-                       (len(results), 'result'), results, url)
-            irc.reply(s)
-        else:
-            e = "No results found."
-            try:
-                # Look for "too many results" errors and others reported by the
-                # web interface.
-                if distro == "debian":
-                    errorParse = soup.find("div", class_="note").p
-                else:
-                    errorParse = soup.find("p", attrs={"id":
-                                                       "psearchtoomanyhits"})
-                if errorParse:
-                    for br in errorParse.findAll('br'):
-                        br.replace_with(" ")
-                    e = errorParse.text.strip()
-            except AttributeError:
-                pass
-            irc.error(e)
-    pkgsearch = wrap(pkgsearch, ['somethingWithoutSpaces',
-                                 'somethingWithoutSpaces'])
 
     @wrap(['somethingWithoutSpaces', 'somethingWithoutSpaces'])
     def filesearch(self, irc, msg, args, release, query):
