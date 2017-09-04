@@ -47,7 +47,7 @@ import re
 import sys
 import time
 try:
-    from bs4 import BeautifulSoup
+    from bs4 import BeautifulSoup, element
 except ImportError:
     raise ImportError("Beautiful Soup 4 is required for this plugin: get it"
                       " at http://www.crummy.com/software/BeautifulSoup/bs4/"
@@ -176,6 +176,8 @@ class PkgInfo(callbacks.Plugin):
             return self.arch_aur_fetcher
         elif guess_dist == 'debian':
             return self.debian_fetcher
+        elif dist in ('fbsd', 'freebsd'):
+            return self.freebsd_fetcher
         elif guess_dist == 'ubuntu':
             return self.ubuntu_fetcher
         elif guess_dist == 'mint':
@@ -430,6 +432,34 @@ class PkgInfo(callbacks.Plugin):
         return (query, ', '.join('%s: %s' % (k, v) for k, v in versions.items()),
                 'Linux Mint %s' % release.title(), 'no description available', addr)
 
+    def freebsd_fetcher(self, release, query, fetch_source=False, fetch_depends=False):
+        if fetch_source:
+            raise UnsupportedOperationError("--source lookup is not supported for FreeBSD")
+
+        url = 'https://www.freebsd.org/cgi/ports.cgi?' + urlencode({'query': query, 'stype': 'name'})
+        self.log.debug('PkgInfo: using URL %s for freebsd_fetcher', url)
+        data = utils.web.getUrl(url)
+        soup = BeautifulSoup(data)
+
+        for dt in soup.find_all('dt'):
+            pkgname, pkgver = dt.text.rsplit('-', 1)
+            self.log.debug('PkgInfo: got pkgname=%s pkgver=%s for freebsd_fetcher', pkgname, pkgver)
+
+            if pkgname == query:
+                # In this case, we only want the first line of the description, in order
+                # to keep things short.
+                info_dd = dt.next_sibling.next_sibling
+                desc = info_dd.text.split('\n')[0]
+
+                if fetch_depends:
+                    # Depends are displayed as links after an "<i>Requires:</i>" element, which is (supposedly) the
+                    # last <i> element per package entry. Iterate over all items following it, filter out
+                    # valid <a> tags, and grab+clean up the text from them.
+                    return {'requires': [tag.text for tag in info_dd.find_all('i')[-1].next_siblings
+                                         if isinstance(tag, element.Tag) and tag.text]}
+
+                return (query, pkgver, 'FreeBSD Ports', desc, url)
+
     def package(self, irc, msg, args, dist, query, opts):
         """<release> <package> [--depends] [--source]
 
@@ -466,6 +496,7 @@ class PkgInfo(callbacks.Plugin):
                         # Join together the dependency type and package list for each list
                         # that isn't empty.
                         deplists.append("%s %s" % (ircutils.bold(deptype), ', '.join(packages)))
+                        log.debug('PkgInfo: joining deplist %r', packages)
 
                 irc.reply(format("%s %s", ircutils.bold(query), '; '.join(deplists)))
 
