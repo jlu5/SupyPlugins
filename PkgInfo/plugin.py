@@ -387,6 +387,9 @@ class PkgInfo(callbacks.Plugin):
         return (result['name'], 'some version, see URL for details', release, result['description'].replace('\n', ' '), friendly_url)
 
     def mint_fetcher(self, release, query, fetch_source=False, fetch_depends=False):
+        if fetch_depends:
+            raise UnsupportedOperationError("--depends lookup is not supported for Linux Mint")
+
         if fetch_source:
             addr = 'http://packages.linuxmint.com/list-src.php?'
         else:
