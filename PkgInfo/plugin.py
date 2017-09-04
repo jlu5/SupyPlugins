@@ -486,6 +486,8 @@ class PkgInfo(callbacks.Plugin):
         if fetch_depends:
             # results is a dictionary mapping dependency type to a list
             # of packages.
+            if not isinstance(result, dict):
+                raise UnsupportedOperationError("Internal fetcher error (wrong output type; expected dict but got %s)" % (type(result).__name__))
             if any(result.values()):
                 deplists = []
                 for deptype, packages in result.items():
@@ -503,6 +505,8 @@ class PkgInfo(callbacks.Plugin):
             else:
                 irc.error("%s doesn't seem to have any dependencies." % ircutils.bold(query))
         else:
+            if not isinstance(result, (list, tuple)):
+                raise UnsupportedOperationError("Internal fetcher error (wrong output type; expected list or tuple but got %s)" % (type(result).__name__))
             # result is formatted in the order: packagename, version, real_distribution, desc, url
             self.log.debug('PkgInfo result args: %s', str(result))
             s = format("Package: \x02%s (%s)\x02 in %s - %s %u", *result)
