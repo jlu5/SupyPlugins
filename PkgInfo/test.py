@@ -37,59 +37,63 @@ class PkgInfoTestCase(PluginTestCase):
 
         timeout = 12
 
-        def testPkg(self):
-            self.assertRegexp('pkg sid bash', 'Package: .*?bash .*?')
-            self.assertRegexp('pkg trusty apt', 'Package: .*?apt .*?')
+        def test_pkg_debian(self):
+            self.assertNotError('pkg sid bash')
             self.assertNotError('pkg sid bash --depends')
+            self.assertNotError('pkg sid ffmpeg --source')
             self.assertNotError('pkg sid vlc --source --depends')
-            self.assertError('pkg afdsfsadf asfasfasf')
-            self.assertError('pkg sid afsadfasfsa')
+            self.assertError('pkg unittestinvaliddistignore unittestinvalidpackageignore')
+            self.assertError('pkg sid unittestinvalidpackageignore')
+            self.assertNotError('pkgsearch debian python')
 
-        def testVlist(self):
-            self.assertError('vlist all afdsafas')
+        def test_pkg_ubuntu(self):
+            self.assertNotError('pkg xenial apt')
+            self.assertNotError('pkg xenial python3 --depends')
+            self.assertNotError('pkg xenial ubuntu-meta --source')
+            self.assertNotError('pkg xenial ubuntu-meta --source --depends')
+            self.assertNotError('pkgsearch ubuntu gtk')
+
+        def test_vlist(self):
+            self.assertNotError('vlist debian bash')
+            self.assertNotError('vlist ubuntu variety')
+            self.assertError('vlist all unittestinvalidpackageignore')
             self.assertError('vlist invalid-distro firefox')
-            self.assertRegexp('vlist debian bash', 'Found [1-9][0-9]* '
-                              'results: (.*?\(.*?\))+')
 
-        @unittest.skip("Remote server is too unreliable (2017-02-23)")
-        def testArchLinux(self):
-            self.assertError('archlinux afdsfbjeiog')
-            self.assertNotError('archlinux bash')
-            self.assertRegexp('archlinux pacman --exact',
-                              'Found 1.*?pacman')
+        #@unittest.skip("Remote server is too unreliable (2017-02-23)")
+        def test_pkg_arch(self):
+            self.assertNotError('pkg arch audacity')
+            self.assertNotError('pkgsearch arch ffmpeg')
+            self.assertError('pkg arch unittestinvalidpackageignore')
+            self.assertError('pkgsearch arch unittestinvalidpackageignore')
 
-        @unittest.skip("Remote server is too unreliable (2017-02-23)")
-        def testArchAUR(self):
-            self.assertRegexp('archaur yaourt', 'Found [1-9][0-9]* results:'
-                              '.*?yaourt.*?')
+        #@unittest.skip("Remote server is too unreliable (2017-02-23)")
+        def test_pkg_archaur(self):
+            self.assertNotError('pkg archaur yaourt')
+            self.assertNotError('pkgsearch archaur yaourt')
+            self.assertError('pkg archaur unittestinvalidpackageignore')
+            self.assertError('pkgsearch archaur unittestinvalidpackageignore')
 
-        def testMintPkg(self):
-            self.assertRegexp('linuxmint rebecca cinnamon', 'session')
+        def test_pkg_mint(self):
+            self.assertNotError('pkgsearch sonya cinnamon')
+            self.assertNotError('pkg sonya cinnamon')
+            self.assertError('pkg mint unittestinvalidpackageignore')
+            self.assertError('pkgsearch mint unittestinvalidpackageignore')
 
-        def testPkgsearch(self):
-            self.assertRegexp('pkgsearch debian python', 'python')
+        def test_pkg_freebsd(self):
+            self.assertNotError('pkg freebsd lxterminal')
+            self.assertNotError('pkgsearch freebsd gnome')
+            self.assertRegexp('pkg freebsd python3 --depends', 'python3.*?requires')
+            self.assertError('pkg freebsd unittestinvalidpackageignore')
+            self.assertError('pkgsearch freebsd unittestinvalidpackageignore')
 
-        def testFilesearch(self):
+        def test_filesearch(self):
             self.assertRegexp('filesearch sid supybot', 'limnoria')
 
-        def testFedora(self):
-            self.assertRegexp('fedora --release master bash*', 'bash')
-            self.assertRegexp('fedora gnome-terminal', 'GNOME')
-            # Not found queries that don't have any wildcards in them
-            # should tell the user to try wrapping the search with *'s, since
-            # Fedora's API always uses glob matches.
-            self.assertRegexp('fedora sfasdfadsfasdfas', 'Try wrapping your query with \*')
-
-        def testCentOS(self):
+        def test_centos(self):
             self.assertRegexp('centos 7 os git-', 'git-all')
             self.assertRegexp('centos 6 os bash --arch i386', 'i686.rpm')
             self.assertNotError('centos 7 extras python')
             # This should be stripped.
             self.assertNotRegexp('centos 7 extras "a"', 'Parent Directory')
-
-        def testFreeBSD(self):
-            self.assertRegexp('freebsd lxterminal --exact', 'Found 1 result:.*?LXDE')
-            self.assertNotError('freebsd bash')
-            self.assertError('freebsd asdfasjkfalewrghaekglae')
 
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:
