@@ -82,8 +82,7 @@ class BadRequestError(ValueError):
     pass
 
 class PkgInfo(callbacks.Plugin):
-    """Fetches package information from the repositories of
-    Arch Linux, CentOS, Debian, Fedora, FreeBSD, Linux Mint, and Ubuntu."""
+    """Fetches package information from various OS software repositories.."""
     threaded = True
 
     _get_dependency_color = utils.str.MultipleReplacer({
@@ -101,9 +100,7 @@ class PkgInfo(callbacks.Plugin):
 
     @staticmethod
     def _guess_distro_from_release(release):
-        """<release>
-
-        Guesses the distribution from the release name."""
+        """Guesses the Linux distribution from a release codename."""
         release = release.lower()
         debian = ("oldoldstable", "oldstable", "wheezy", "stable",
                   "jessie", "testing", "sid", "unstable", "stretch", "buster",
@@ -458,15 +455,24 @@ class PkgInfo(callbacks.Plugin):
             log.debug("PkgInfo: No results found for URL %s", url)
 
     def package(self, irc, msg, args, dist, query, opts):
-        """<release> <package> [--depends] [--source]
+        """<distro/release name> <package name> [--depends] [--source]
 
-        Fetches information for <package> from Arch Linux, Debian, Fedora, Linux Mint, or Ubuntu's repositories.
-        <release> is the codename/release name (e.g. 'xenial', 'unstable', 'rawhide', 'f26', 'arch', archaur').
+        Fetches information (version, description, etc.) from various operating system's package repositories.
 
-        If --depends is given, fetches dependency info for <package>. If --source is given, look up the source package
-        instead of a binary.
+        If --depends is given, fetches dependency info for the given package instead of general details.
+        If --source is given, looks up the package name as a source package instead of a binary package.
+        Not all options are supported for all distributions.
 
-        This command replaces the 'fedora', 'archlinux', and 'archaur' commands from earlier versions of PkgInfo."""
+        The following OSes are supported:
+            Arch Linux (distro name 'arch' or 'archlinux'),
+            Arch Linux AUR (distro name 'aur' or 'archaur'),
+            Debian (use a release codename such as 'sid', 'unstable', 'stretch', or 'stable'),
+            FreeBSD (distro name 'freebsd'),
+            Linux Mint (use a release codename such as 'sonya' or 'betsy'),
+            and
+            Ubuntu (use a release codename such as 'trusty' or 'xenial').
+
+        This command replaces the 'archlinux', 'archaur', 'freebsd', and 'linuxmint' commands from earlier versions of PkgInfo."""
         opts = dict(opts)
         fetch_source = 'source' in opts
         fetch_depends = 'depends' in opts
@@ -521,21 +527,34 @@ class PkgInfo(callbacks.Plugin):
                getopts({'depends': '', 'source': ''})])
 
     def pkgsearch(self, irc, msg, args, dist, query):
-        """<distro> <query>
+        """<distro> <search query>
 
-        Looks up <query> in <distro>'s website. Valid <distro>'s include
-        'debian', 'ubuntu', and 'debian-archive'."""
+        Looks up the search query in the given operating system's package repositories.
+
+        The following OSes are supported:
+            Arch Linux (distro name 'arch' or 'archlinux'),
+            Arch Linux AUR (distro name 'aur' or 'archaur'),
+            Debian (distro name 'debian'),
+            FreeBSD (distro name 'freebsd'),
+            Linux Mint (use a release codename such as 'sonya' or 'betsy'),
+            and
+            Ubuntu (distro name 'ubuntu').
+
+        This command replaces the 'archlinux', 'archaur', 'freebsd', and 'linuxmint' commands from earlier versions of PkgInfo."""
+
         return self.package(irc, msg, args, dist, query, {'search': True})
     pkgsearch = wrap(pkgsearch, ['somethingWithoutSpaces',
                                  'somethingWithoutSpaces'])
 
     def vlist(self, irc, msg, args, distro, pkg, opts):
-        """<distribution> <package> [--reverse]
+        """<distribution> <package name> [--reverse]
 
-        Fetches all available version of <package> in <distribution>, if
-        such package exists. Supported entries for <distribution>
-        include 'debian', 'ubuntu', 'derivatives', and 'all'. If
-        --reverse is given, show the newest package versions first."""
+        Fetches all available version of <package name> in <distribution>, if
+        such a package exists.
+
+        Supported distributions include 'debian', 'ubuntu', 'derivatives', and 'all'.
+
+        If --reverse is given, show the newest package versions first."""
         pkg, distro = map(str.lower, (pkg, distro))
         supported = ("debian", "ubuntu", "derivatives", "all")
         if distro not in supported:
@@ -562,8 +581,8 @@ class PkgInfo(callbacks.Plugin):
     def filesearch(self, irc, msg, args, release, query):
         """<release> <file query>
 
-        Searches what package in Debian or Ubuntu has which file. <release> is the
-        codename/release name (e.g. xenial or jessie)."""
+        Searches what package in Debian or Ubuntu has which file.
+        <release> is the codename/release name (e.g. xenial or stretch)."""
         release = release.lower()
         distro = self._guess_distro_from_release(release)
 
