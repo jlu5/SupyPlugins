@@ -122,7 +122,7 @@ class PkgInfo(callbacks.Plugin):
         'optdepends': '\x0312optdepends\x03'
     })
 
-    def get_distro_fetcher(self, dist, multi=False):
+    def _get_distro_fetcher(self, dist, multi=False):
         dist = dist.lower()
         guess_dist = _guess_distro(dist)
 
@@ -138,21 +138,21 @@ class PkgInfo(callbacks.Plugin):
             raise AmbiguousDistributionError("'master' is ambiguous: for Fedora rawhide, use the release 'rawhide'")
 
         elif dist in ('archlinux', 'arch'):
-            return self.arch_fetcher
+            return self._arch_fetcher
         elif dist in ('archaur', 'aur'):
-            return self.arch_aur_fetcher
+            return self._arch_aur_fetcher
         elif guess_dist == 'debian' or dist == 'debian':
-            return self.debian_fetcher
+            return self._debian_fetcher
         elif dist in ('fbsd', 'freebsd'):
-            return self.freebsd_fetcher
+            return self._freebsd_fetcher
         elif guess_dist == 'ubuntu' or dist == 'ubuntu':
-            return self.ubuntu_fetcher
+            return self._ubuntu_fetcher
         elif guess_dist == 'mint':
-            return self.mint_fetcher
+            return self._mint_fetcher
         elif dist.startswith(('f', 'el', 'epel', 'olpc', 'rawhide')):
-            return self.fedora_fetcher
+            return self._fedora_fetcher
 
-    def debian_fetcher(self, release, query, baseurl='https://packages.debian.org/', fetch_source=False, fetch_depends=False, multi=False):
+    def _debian_fetcher(self, release, query, baseurl='https://packages.debian.org/', fetch_source=False, fetch_depends=False, multi=False):
         url = baseurl
         query = query.lower()
         if multi:
@@ -247,11 +247,11 @@ class PkgInfo(callbacks.Plugin):
 
         return (query, version, real_distribution, desc, url)
 
-    def ubuntu_fetcher(self, *args, **kwargs):
+    def _ubuntu_fetcher(self, *args, **kwargs):
         kwargs['baseurl'] = 'https://packages.ubuntu.com/'
-        return self.debian_fetcher(*args, **kwargs)
+        return self._debian_fetcher(*args, **kwargs)
 
-    def arch_fetcher(self, release, query, fetch_source=False, fetch_depends=False, multi=False):
+    def _arch_fetcher(self, release, query, fetch_source=False, fetch_depends=False, multi=False):
         search_url = 'https://www.archlinux.org/packages/search/json/?%s&arch=x86_64&arch=any' % \
             urlencode({'q' if multi else 'name': query})
 
@@ -297,7 +297,7 @@ class PkgInfo(callbacks.Plugin):
         else:
             return  # No results found!
 
-    def arch_aur_fetcher(self, release, query, fetch_source=False, fetch_depends=False, multi=False):
+    def _arch_aur_fetcher(self, release, query, fetch_source=False, fetch_depends=False, multi=False):
         url = 'https://aur.archlinux.org/rpc/?'
         if multi:
             url += urlencode({'arg': query, 'v': 5, 'type': 'search'})
@@ -352,7 +352,7 @@ class PkgInfo(callbacks.Plugin):
             if data['type'] == 'error':
                 raise BadRequestError(data['error'])
 
-    def fedora_fetcher(self, release, query, fetch_source=False, fetch_depends=False):
+    def _fedora_fetcher(self, release, query, fetch_source=False, fetch_depends=False):
         if fetch_source or fetch_depends:
             raise UnsupportedOperationError("--depends and --source lookup are not supported for Fedora")
 
@@ -369,7 +369,7 @@ class PkgInfo(callbacks.Plugin):
         # XXX: find some way to fetch the package version, as pkgdb's api doesn't provide that info
         return (result['name'], 'some version, see URL for details', release, result['description'].replace('\n', ' '), friendly_url)
 
-    def mint_fetcher(self, release, query, fetch_source=False, fetch_depends=False, multi=False):
+    def _mint_fetcher(self, release, query, fetch_source=False, fetch_depends=False, multi=False):
         if fetch_depends:
             raise UnsupportedOperationError("--depends lookup is not supported for Linux Mint")
 
@@ -419,7 +419,7 @@ class PkgInfo(callbacks.Plugin):
         return (query, ', '.join('%s: %s' % (k, v) for k, v in versions.items()),
                 'Linux Mint %s' % release.title(), 'no description available', addr)
 
-    def freebsd_fetcher(self, release, query, fetch_source=False, fetch_depends=False, multi=False):
+    def _freebsd_fetcher(self, release, query, fetch_source=False, fetch_depends=False, multi=False):
         if fetch_source:
             raise UnsupportedOperationError("--source lookup is not supported for FreeBSD")
 
@@ -450,7 +450,7 @@ class PkgInfo(callbacks.Plugin):
 
                 return (query, pkgver, 'FreeBSD Ports', desc, url)
 
-    def debian_vlist_fetcher(self, pkg, dist, reverse=False):
+    def _debian_vlist_fetcher(self, pkg, dist, reverse=False):
         """Parser for the madison API at https://qa.debian.org/madison.php."""
         # This arch value implies 'all' (architecture-independent packages)
         # and 'source' (source packages), in order to prevent misleading
@@ -497,7 +497,7 @@ class PkgInfo(callbacks.Plugin):
         fetch_depends = 'depends' in opts
         multi = 'search' in opts
 
-        distro_fetcher = self.get_distro_fetcher(dist, multi=multi)
+        distro_fetcher = self._get_distro_fetcher(dist, multi=multi)
         if distro_fetcher is None:
             irc.error("Unknown distribution version %r" % dist, Raise=True)
 
@@ -568,7 +568,7 @@ class PkgInfo(callbacks.Plugin):
             if distro is None:
                 irc.error(unknowndist, Raise=True)
 
-        d = self.debian_vlist_fetcher(pkg, distro, reverse='reverse' in dict(opts))
+        d = self._debian_vlist_fetcher(pkg, distro, reverse='reverse' in dict(opts))
         if not d:
             irc.error("No results found.", Raise=True)
         try:
