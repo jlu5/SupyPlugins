@@ -168,8 +168,6 @@ class PkgInfo(callbacks.Plugin):
             raise AmbiguousDistributionError("You must specify a distribution version (e.g. 'trusty' or 'xenial')")
         elif dist in ('mint', 'linuxmint'):
             raise AmbiguousDistributionError("You must specify a distribution version (e.g. 'sonya' or 'betsy')")
-        elif dist == 'fedora' and not multi:
-            raise AmbiguousDistributionError("You must specify a distribution version (e.g. 'f26', 'rawhide' or 'epel7')")
         elif dist == 'master':
             raise AmbiguousDistributionError("'master' is ambiguous: for Fedora rawhide, use the release 'rawhide'")
 
@@ -185,7 +183,7 @@ class PkgInfo(callbacks.Plugin):
             return self.ubuntu_fetcher
         elif guess_dist == 'mint':
             return self.mint_fetcher
-        elif dist.startswith(('f', 'el', 'epel', 'olpc', 'rawhide')):
+        elif dist == 'fedora':
             return self.fedora_fetcher
 
     def debian_fetcher(self, release, query, baseurl='https://packages.debian.org/', fetch_source=False, fetch_depends=False, multi=False):
@@ -388,22 +386,26 @@ class PkgInfo(callbacks.Plugin):
             if data['type'] == 'error':
                 raise BadRequestError(data['error'])
 
-    def fedora_fetcher(self, release, query, fetch_source=False, fetch_depends=False):
+    def fedora_fetcher(self, release, query, fetch_source=False, fetch_depends=False, multi=False):
         if fetch_source or fetch_depends:
             raise UnsupportedOperationError("--depends and --source lookup are not supported for Fedora")
+        friendly_url = 'https://apps.fedoraproject.org/packages/%s' % query
 
-        if release == 'master':
-            release = 'rawhide'
+        if not multi:  # The name= arg in the pdc API actually takes a regexp
+            query = r'^%s$' % query
 
-        url = 'https://admin.fedoraproject.org/pkgdb/api/packages/%s?format=json&branches=%s' % (quote(query), quote(release))
+        url = 'https://pdc.fedoraproject.org/rest_api/v1/rpms/?' + urlencode({'name': query})
         self.log.debug("PkgInfo: using url %s for fedora_fetcher", url)
         fd = utils.web.getUrl(url).decode("utf-8")
         data = json.loads(fd)
-        result = data["packages"][0]
-        friendly_url = 'https://apps.fedoraproject.org/packages/%s' % query
 
-        # XXX: find some way to fetch the package version, as pkgdb's api doesn't provide that info
-        return (result['name'], 'some version, see URL for details', release, result['description'].replace('\n', ' '), friendly_url)
+        results = data["results"]
+
+        if multi:
+            return [result['name'] for result in results]
+        else:
+            result = results[0]
+            return (result['name'], result['version'], 'Fedora', 'no description available', friendly_url)
 
     def mint_fetcher(self, release, query, fetch_source=False, fetch_depends=False, multi=False):
         if fetch_depends:
