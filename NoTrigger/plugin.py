@@ -90,7 +90,7 @@ class NoTrigger(callbacks.Plugin):
                                "blocking colors.", msg.args[0], irc.network)
                 s = self.padchar + s
             elif self.registryValue('spaceBeforeNicks', msg.args[0]) and \
-                    s.split()[0].endswith((",", ":")):
+                    s.strip() and s.split()[0].endswith((",", ":")):
                 # If the last character of the first word ends with a ',' or
                 # ':', prepend a space.
                 s = self.padchar + s
