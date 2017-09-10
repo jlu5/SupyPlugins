@@ -64,42 +64,6 @@ except ImportError:
     # without the i18n module
     _ = lambda x: x
 
-class MadisonParser():
-    def parse(self, pkg, dist, archs, codenames='', suite='', reverse=False, verbose=False):
-        """Parser for the madison API at https://qa.debian.org/madison.php."""
-        # This arch value implies 'all' (architecture-independent packages)
-        # and 'source' (source packages), in order to prevent misleading
-        # "Not found" errors.
-        self.arg = {'package': pkg, 'table': dist, 'a': archs, 'c': codenames,
-                    's': suite}
-        self.arg = urlencode(self.arg)
-        url = 'https://qa.debian.org/madison.php?text=on&' + self.arg
-        log.debug("PkgInfo: Using url %s for 'vlist' command", url)
-        d = OrderedDict()
-        fd = utils.web.getUrlFd(url)
-        for line in fd.readlines():
-            L = line.decode("utf-8").split("|")
-            try:
-                L = map(unicode.strip, L)
-            except:
-                L = map(str.strip, L)
-            name, version, release, archs = L
-            d[release] = (version, archs)
-        if d:
-            if reverse:
-                # *sigh*... I wish there was a better way to do this
-                d = OrderedDict(reversed(tuple(d.items())))
-            if verbose:
-                items = ["{name} \x02({version} [{archs}])\x02".format(name=k,
-                         version=v[0], archs=v[1]) for (k, v) in d.items()]
-            else:
-                items = ["{name} \x02({version})\x02".format(name=k,
-                         version=v[0]) for (k, v) in d.items()]
-            s = format('Found %n: %L', (len(d), 'result'), items)
-            return s
-        else:
-            log.debug("PkgInfo: No results found for URL %s", url)
-
 unknowndist = _("Unknown distribution. This command only supports "
                 "package lookup for Debian and Ubuntu. For a list of"
                 "commands for other distros' packages, use "
@@ -486,6 +450,38 @@ class PkgInfo(callbacks.Plugin):
 
                 return (query, pkgver, 'FreeBSD Ports', desc, url)
 
+    def debian_vlist_fetcher(self, pkg, dist, reverse=False):
+        """Parser for the madison API at https://qa.debian.org/madison.php."""
+        # This arch value implies 'all' (architecture-independent packages)
+        # and 'source' (source packages), in order to prevent misleading
+        # "Not found" errors.
+        archs = self.registryValue('archs') + ['source', 'all']
+        arg = {'package': pkg, 'table': dist, 'a': ','.join(set(archs))}
+
+        url = 'https://qa.debian.org/madison.php?text=on&' + urlencode(arg)
+        log.debug("PkgInfo: Using url %s for debian_vlist_fetcher", url)
+
+        d = OrderedDict()
+        fd = utils.web.getUrlFd(url)
+        for line in fd.readlines():
+            L = line.decode("utf-8").split("|")
+            name, version, release, archs = map(str.strip, L)
+            d[release] = (version, archs)
+        if d:
+            if reverse:
+                # *sigh*... I wish there was a better way to do this
+                d = OrderedDict(reversed(tuple(d.items())))
+            if self.registryValue('verbose'):
+                items = ["{name} \x02({version} [{archs}])\x02".format(name=k,
+                         version=v[0], archs=v[1]) for (k, v) in d.items()]
+            else:
+                items = ["{name} \x02({version})\x02".format(name=k,
+                         version=v[0]) for (k, v) in d.items()]
+            s = format('Found %n: %L', (len(d), 'result'), items)
+            return s
+        else:
+            log.debug("PkgInfo: No results found for URL %s", url)
+
     def package(self, irc, msg, args, dist, query, opts):
         """<release> <package> [--depends] [--source]
 
@@ -571,13 +567,8 @@ class PkgInfo(callbacks.Plugin):
             distro = _guess_distro(distro)
             if distro is None:
                 irc.error(unknowndist, Raise=True)
-        opts = dict(opts)
-        reverse = 'reverse' in opts
-        archs = self.registryValue("archs") + ['all', 'source']
-        archs = ','.join(set(archs))
-        parser = MadisonParser()
-        d = parser.parse(pkg, distro, archs, reverse=reverse,
-                         verbose=self.registryValue("verbose"))
+
+        d = self.debian_vlist_fetcher(pkg, distro, reverse='reverse' in dict(opts))
         if not d:
             irc.error("No results found.", Raise=True)
         try:
@@ -585,7 +576,9 @@ class PkgInfo(callbacks.Plugin):
             d += format("; View more at: %u", url)
         except KeyError:
             pass
+
         irc.reply(d)
+
     vlist = wrap(vlist, ['somethingWithoutSpaces', 'somethingWithoutSpaces',
                  getopts({'reverse': ''})])
 
