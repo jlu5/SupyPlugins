@@ -64,33 +64,10 @@ except ImportError:
     # without the i18n module
     _ = lambda x: x
 
-unknowndist = _("Unknown distribution. This command only supports "
-                "package lookup for Debian and Ubuntu. For a list of"
-                "commands for other distros' packages, use "
-                "'list PkgInfo'.")
-addrs = {'ubuntu': 'https://packages.ubuntu.com/',
-         'debian': 'https://packages.debian.org/',
-         # This site is very, VERY slow, but it still works..
-         'debian-archive': 'http://archive.debian.net/'}
+DEBIAN_ADDRS = {'ubuntu': 'https://packages.ubuntu.com/',
+                'debian': 'https://packages.debian.org/'
+               }
 _normalize = lambda text: utils.str.normalizeWhitespace(text).strip()
-
-def _guess_distro(release):
-    """<release>
-
-    Guesses the distribution from the release name."""
-    release = release.lower()
-    debian = ("oldoldstable", "oldstable", "wheezy", "stable",
-              "jessie", "testing", "sid", "unstable", "stretch", "buster",
-              "experimental", "bullseye")
-    ubuntu = ("precise", "trusty", "xenial", "yakkety", "zesty", "artful")
-    mint = ("betsy", "qiana", "rebecca", "rafaela", "rosa", "sarah", "serena", "sonya")
-
-    if release.startswith(debian):
-        return "debian"
-    elif release.startswith(ubuntu):
-        return "ubuntu"
-    elif release.startswith(mint):
-        return "mint"
 
 class UnknownDistributionError(ValueError):
     pass
@@ -122,9 +99,28 @@ class PkgInfo(callbacks.Plugin):
         'optdepends': '\x0312optdepends\x03'
     })
 
+    @staticmethod
+    def _guess_distro_from_release(release):
+        """<release>
+
+        Guesses the distribution from the release name."""
+        release = release.lower()
+        debian = ("oldoldstable", "oldstable", "wheezy", "stable",
+                  "jessie", "testing", "sid", "unstable", "stretch", "buster",
+                  "experimental", "bullseye")
+        ubuntu = ("precise", "trusty", "xenial", "yakkety", "zesty", "artful")
+        mint = ("betsy", "qiana", "rebecca", "rafaela", "rosa", "sarah", "serena", "sonya")
+
+        if release.startswith(debian):
+            return "debian"
+        elif release.startswith(ubuntu):
+            return "ubuntu"
+        elif release.startswith(mint):
+            return "mint"
+
     def _get_distro_fetcher(self, dist, multi=False):
         dist = dist.lower()
-        guess_dist = _guess_distro(dist)
+        guess_dist = self._guess_distro_from_release(dist)
 
         if dist == 'debian' and not multi:
             raise AmbiguousDistributionError("You must specify a distribution version (e.g. 'stretch' or 'unstable')")
@@ -564,15 +560,16 @@ class PkgInfo(callbacks.Plugin):
         pkg, distro = map(str.lower, (pkg, distro))
         supported = ("debian", "ubuntu", "derivatives", "all")
         if distro not in supported:
-            distro = _guess_distro(distro)
+            distro = self._guess_distro_from_release(distro)
             if distro is None:
-                irc.error(unknowndist, Raise=True)
+                irc.error("Unknown distribution. This command only supports "
+                          "package lookup for Debian and Ubuntu.", Raise=True)
 
         d = self._debian_vlist_fetcher(pkg, distro, reverse='reverse' in dict(opts))
         if not d:
             irc.error("No results found.", Raise=True)
         try:
-            url = "{}search?keywords={}".format(addrs[distro], pkg)
+            url = "{}search?keywords={}".format(DEBIAN_ADDRS[distro], pkg)
             d += format("; View more at: %u", url)
         except KeyError:
             pass
@@ -670,12 +667,13 @@ class PkgInfo(callbacks.Plugin):
         Searches what package in Debian or Ubuntu has which file. <release> is the
         codename/release name (e.g. xenial or jessie)."""
         release = release.lower()
-        distro = _guess_distro(release)
+        distro = self._guess_distro_from_release(release)
 
         try:
-            url = '%ssearch?keywords=%s&searchon=contents&suite=%s' % (addrs[distro], quote(query), quote(release))
+            url = '%ssearch?keywords=%s&searchon=contents&suite=%s' % (DEBIAN_ADDRS[distro], quote(query), quote(release))
         except KeyError:
-            irc.error(unknowndist, Raise=True)
+            irc.error("Unknown distribution. This command only supports "
+                      "package lookup for Debian and Ubuntu.", Raise=True)
 
         try:
             fd = utils.web.getUrl(url).decode("utf-8")
