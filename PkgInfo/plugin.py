@@ -259,7 +259,7 @@ class PkgInfo(callbacks.Plugin):
         if data['valid'] and data['results']:
             if multi:
                 return [pkgdata['pkgname'] for pkgdata in data['results']]
-            pkgdata = data['results']
+            pkgdata = data['results'][0]
             name, version, repo, arch, desc = pkgdata['pkgname'], pkgdata['pkgver'], pkgdata['repo'], pkgdata['arch'], pkgdata['pkgdesc']
 
             if pkgdata['flag_date']:
