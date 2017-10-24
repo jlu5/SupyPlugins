@@ -105,8 +105,9 @@ class PkgInfo(callbacks.Plugin):
         debian = ("oldoldstable", "oldstable", "wheezy", "stable",
                   "jessie", "testing", "sid", "unstable", "stretch", "buster",
                   "experimental", "bullseye")
-        ubuntu = ("precise", "trusty", "xenial", "yakkety", "zesty", "artful")
-        mint = ("betsy", "qiana", "rebecca", "rafaela", "rosa", "sarah", "serena", "sonya")
+        ubuntu = ("trusty", "xenial", "zesty", "artful", "bionic")
+        mint = ("betsy", "cindy", "qiana", "rebecca", "rafaela", "rosa",
+                "sarah", "serena", "sonya", "sylvia")
 
         if release.startswith(debian):
             return "debian"
