@@ -535,13 +535,10 @@ class Weather(callbacks.Plugin):
         irc.reply(output)
 
         # handle alerts - everything here and below sends as separate replies if enabled
-        if args['alerts']:  # only look for alerts if present.
-            if data['alerts']:  # alerts is a list. it can also be empty.
-                outdata['alerts'] = data['alerts'][0]['message']  # need to do some formatting below.
-                outdata['alerts'] = outdata['alerts'].replace('\n', ' ')
-                outdata['alerts'] = utils.str.normalizeWhitespace(outdata['alerts'])  # fix pesky double whitespacing.
-            else:  # no alerts found (empty).
-                outdata['alerts'] = "No alerts."
+        if args['alerts'] and data['alerts']:  # only look for alerts if enabled and present.
+            outdata['alerts'] = data['alerts'][0]['message']  # need to do some formatting below.
+            outdata['alerts'] = outdata['alerts'].replace('\n', ' ')
+            outdata['alerts'] = utils.str.normalizeWhitespace(outdata['alerts'])  # fix pesky double whitespacing.
             irc.reply("{0} {1}".format(self._bu("Alerts:"), outdata['alerts']))
 
         # handle almanac
