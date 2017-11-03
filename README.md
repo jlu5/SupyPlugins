@@ -21,7 +21,7 @@ and add the folder to your bot's `config directories.plugins`.
 
 If you are using a recent version of Limnoria's PluginDownloader, you can also fetch [individual plugins](#list-of-plugins) by running:
 
-* `install GLolol <plugin>`
+* `install glolol-py2legacy <plugin>`
 
 on your bot.
 
