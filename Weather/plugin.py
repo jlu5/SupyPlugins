@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 ###
 # Copyright (c) 2012-2014, spline
-# Copyright (c) 2014-2016, James Lu
+# Copyright (c) 2014-2017, James Lu <james@overdrivenetworks.com>
 # All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy of
@@ -283,10 +283,10 @@ class Weather(callbacks.Plugin):
 
     def setweather(self, irc, msg, args, optlocation):
         """<location code>
-        Set's weather location code for your nick as location code.
 
-        Use your zip/postal code to keep it simple.
-        Ex: setweather 10012
+        Sets the weather location for your nick. Location codes can be city names, "City, Country"
+        pairs, ICAO airport codes, US ZIP codes, or raw zmw codes as returned by the
+        'locationsearch' command.
         """
         self.db.setweather(msg.nick.lower(), optlocation)
         irc.replySuccess()
