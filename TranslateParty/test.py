@@ -34,15 +34,13 @@ from sys import version_info
 class TranslatePartyTestCase(PluginTestCase):
     plugins = ('TranslateParty',)
 
-    @unittest.skipIf(version_info[0] < 3, 
-        "Not supported on Python 2 (severe Unicode handling problems)")
     @unittest.skipUnless(network, "Network-based tests have been disabled via "
                          "--no-network")
     def testTranslateParty(self):
         inp = "The quick brown fox jumps over the lazy dog."
         for _ in range(2):
             m = self.getMsg("tp %s" % inp)
-            print('\nTranslateParty Input: %s\nWTE Response: %s' % (inp, m.args[1]))
+            print('\nTranslateParty input: %s\nTranslateParty response: %s' % (inp, m.args[1]))
             assert m, 'No response found.'
 
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:
