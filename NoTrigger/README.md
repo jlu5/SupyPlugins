@@ -50,7 +50,7 @@ This is slightly harder to parse, but we essentially check if a message matches 
 
 Now our bot is really foolproof, right?
 
-Almost! What about color stripping modes? We'll have to append messages with a space too if those are set...
+Almost! What about color stripping modes? We'll have to prepend matching messages with a space too if those are set...
 
 #### Before:
 ```
