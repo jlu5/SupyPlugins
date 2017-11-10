@@ -12,10 +12,10 @@ In short, NoTrigger works by:
 
 To enable NoTrigger, set the `plugins.NoTrigger.enable` config option `True` for the channels in question. You can find a list of NoTrigger's options (toggling the things mentioned above) by running `config list plugins.NoTrigger`.
 
-## Longer description/Backstory on why I wrote this
-Sometimes when you have a public development channel with many bots residing in it, someone will come along and do something really evil: that is, create a huge message loop by chaining all your innocent bots together!
+## Background with examples
+Sometimes when you have a public development channel with many bots residing in it, someone will come along and do something really evil: chaining these bots together to create a huge message loop.
 
-For example:
+#### Before:
 
 ```
 <evilperson> !echo @echo $echo &echo abcdefg
@@ -25,9 +25,9 @@ For example:
 ...
 ```
 
-NoTrigger aims to solve some of these issues by prepending messages that start with commonly-used bot triggers with a [zero-width space](https://en.wikipedia.org/wiki/Zero-width_space) or ZWSP. These are non-printing characters, which are essentially invisible to people's clients. (We're going to use a space to represent the ZWSP in the examples below, just so you can see a difference.)
+NoTrigger aims to solve some of these issues by prepending messages that start with commonly-used bot triggers with a [zero-width space](https://en.wikipedia.org/wiki/Zero-width_space) (ZWSP). These are non-printing characters which are invisible on most clients, so the impact of the plugin is minimal. (The examples below will use space to represent the ZWSP, just so you can see a difference.)
 
-For example:
+#### After:
 
 ```
 <evilperson> !echo @echo $echo &echo abcdefg
@@ -35,9 +35,9 @@ For example:
 ...
 ```
 
-Boom. Problem solved, right? Well, almost.
+Problem solved, right?
 
-Some bots will also respond to their nick!
+Almost. Some bots will also respond to their nick!
 
 ```
 <evilperson> !echo bot2: echo bot3: echo i lost the game!
@@ -46,15 +46,13 @@ Some bots will also respond to their nick!
 ...
 ```
 
-This is slightly harder to parse, so we have to check if a message matches `<something>: <text>` or `<something>, <text>` (where `<something>` can be used as the name of a bot).
+This is slightly harder to parse, but we essentially check if a message matches `<something>: <text>` or `<something>, <text>` (where `<something>` can be anything, including the name of a bot).
 
-OKAY OKAY, now our bot is really foolproof, right?
+Now our bot is really foolproof, right?
 
-**ALMOST!** Then there are the truly evil ops (shoutout to [@jacob1](https://github.com/jacob1)) that start messing with your bot by introducing colour stripping! :D
+Almost! What about color stripping modes? We'll have to append messages with a space too if those are set...
 
-Fortunately, we'll append these message with a space too! (when the channel is set to strip colours, of course.)
-
-##### Before:
+#### Before:
 ```
 Channel is set +c.
 <evilperson> !bold "bot2: echo bot3: echo i lost the game!"
@@ -63,14 +61,10 @@ Channel is set +c.
 ...
 ```
 
-##### After:
+#### After:
 
 ```
 Channel is set +c.
 <evilperson> !bold "bot2: echo bot3: echo i lost the game!"
 <securedbot>  bot2: echo bot3: echo i lost the game!
 ```
-
-That's all! Find any more ways to abuse a poor, innocent bot? Let me know on the issue tracker! :stuck_out_tongue_closed_eyes:
-
-(and no, not all bots use a hostmask matching `*!*@*/bot/*`, not even on freenode!)
