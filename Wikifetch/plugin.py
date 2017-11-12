@@ -214,15 +214,20 @@ class Wikifetch(callbacks.Plugin):
             reply += format(_('This article appears to be a talk page: %u'), addr)
         else:
             # Get the first paragraph as text.
-            p = text_content.xpath("./p[1]")
-            if len(p) == 0 or 'wiki/Special:Search' in addr:
+            paragraphs = []
+            for p in text_content.xpath("./p"):
+                # Skip geographic coordinates, e.g. on articles for countries
+                if not p.xpath(".//span[@class='geo-dec']"):
+                    paragraphs.append(p)
+
+            if (not paragraphs) or 'wiki/Special:Search' in addr:
                 if 'wikipedia:wikiproject' in addr.lower():
                     reply += format(_('This page appears to be a WikiProject page, '
                                'but it is too complex for us to parse: %u'), addr)
                 else:
                     irc.error(_('Not found, or page malformed.'), Raise=True)
             else:
-                p = p[0]
+                p = paragraphs[0]
                 # Replace <b> tags with IRC-style bold, this has to be
                 # done indirectly because unescaped '\x02' is invalid in XML
                 for b_tag in p.xpath('//b'):

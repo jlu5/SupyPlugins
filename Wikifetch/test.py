@@ -45,6 +45,13 @@ if network:
         def testStripInlineCitations(self):
             self.assertNotRegexp('wiki UNICEF', '\[\d+\]')
 
+        def testIgnoreCoordinates(self):
+            # Articles for countries, cities, landmarks, etc. have GPS coordinates added to the top right.
+            # These should be ignored because we want to focus on the actual article text.
+            self.assertNotRegexp('wiki Canada', 'Coordinates\:')
+            self.assertNotRegexp('wiki Eiffel Tower', 'Coordinates\:')
+            self.assertNotRegexp('wiki Poland', 'Coordinates\:')
+
         def testDisambig(self):
             self.assertRegexp('wiki Python', 'is a disambiguation page.*'
                               'Possible results include:.*?,.*?,')
