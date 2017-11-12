@@ -42,21 +42,27 @@ if network:
             self.assertRegexp('wiki roegdfjpoepo',
                               'Not found, or page malformed.*')
 
+        def testStripInlineCitations(self):
+            self.assertNotRegexp('wiki UNICEF', '\[\d+\]')
+
         def testDisambig(self):
             self.assertRegexp('wiki Python', 'is a disambiguation page.*'
                               'Possible results include:.*?,.*?,')
             self.assertRegexp('wiki Windows 3', '.*is a disambiguation page.*'
                               'Possible results include:.*?Windows 3.0.*?,.*?Windows 3.1x')
 
+        def testDisambigStripSpaces(self):
+            self.assertNotRegexp('wiki Na', '\n')
+
+        def testArticlesWithSymbolsInName(self):
+            self.assertNotError('wiki /')
+            self.assertNotError('wiki *')
+            self.assertNotError('wiki GNU/Linux')
+            self.assertNotError('wiki --site en.wikipedia.org /')
+
         def testRedirects(self):
             self.assertRegexp('wiki Foo', '"Foobar" \(Redirected from "Foo"\): '
                                           'The terms \x02foobar\x02')
-
-        def testStripInlineCitations(self):
-            self.assertNotRegexp('wiki UNICEF', '\[\d+\]')
-
-        def testDisambigStripSpaces(self):
-            self.assertNotRegexp('wiki Na', '\n')
 
         def testWikiBold(self):
             self.assertRegexp('wiki Apple', '\x02')
@@ -64,7 +70,7 @@ if network:
             # empty bold content instead of the text "None".
             self.assertNotRegexp('wiki Fallstreak hole', 'None')
 
-        def testRandom(self):
+        def testWikiRandom(self):
             self.assertNotError('random')
 
         def testSiteCombinations(self):
@@ -74,12 +80,6 @@ if network:
             self.assertNotError('wiki --site en.wikipedia.org/wiki Bread')
             self.assertNotError('wiki --site https://en.wikipedia.org Bread')
             self.assertNotError('wiki --site https://en.wikipedia.org/wiki Bread')
-
-        def testArticlesWithSymbolsInName(self):
-            self.assertNotError('wiki /')
-            self.assertNotError('wiki *')
-            self.assertNotError('wiki GNU/Linux')
-            self.assertNotError('wiki --site en.wikipedia.org /')
 
         def testNonEnglishWikipedia(self):
             self.assertNotError('wiki --site fr.wikipedia.org Paris')
