@@ -196,13 +196,13 @@ class TranslateParty(callbacks.Plugin):
         self.log.debug(format("TranslateParty: Using %i languages: %L "
             "(outlang %s)", len(ll), ll, outlang))
 
+        text = ircutils.stripFormatting(text)
         # For every language in this list, translate the text given from
         # auto-detect into the target language, and replace the original text
         # with it.
         for targetlang in ll:
             text = self.getTranslation(irc, "auto", targetlang, text)
         text = self.getTranslation(irc, "auto", outlang, text)
-        text = ircutils.stripFormatting(text)
         text = text.strip()
 
         if self.registryValue("verbose", msg.args[0]):
