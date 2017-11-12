@@ -38,9 +38,10 @@ class TranslatePartyTestCase(PluginTestCase):
                          "--no-network")
     def testTranslateParty(self):
         inp = "The quick brown fox jumps over the lazy dog."
+        print('\n    TranslateParty input: %s' % inp)
         for _ in range(2):
             m = self.getMsg("tp %s" % inp)
-            print('\nTranslateParty input: %s\nTranslateParty response: %s' % (inp, m.args[1]))
+            print('    TranslateParty response: %s' % m.args[1])
             assert m, 'No response found.'
 
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:
