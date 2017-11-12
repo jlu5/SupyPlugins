@@ -70,6 +70,7 @@ for dir in filter(os.path.isdir, args.folders):
             if old_version and old_version.count('.') < 2 and version == default_version:
                 old_version = old_version.split('+', 1)[0]
                 new_version = "%s+%s" % (old_version, version)
+            new_version += '+python2-legacy'  # Suffix for the python2-legacy branch
             print('Rewriting %s __version__: %s' % (name, new_version))
             contents = version_re.sub('__version__ = "%s"' % new_version, contents)
             f.seek(0)
