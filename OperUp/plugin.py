@@ -47,7 +47,7 @@ class OperUp(callbacks.Plugin):
         connect and manually."""
 
     def do376(self, irc, msg):
-        """Oper up on connect. This listens on numerics 376 (end of MOTD) and
+        """Oper up on connect. This listens for numerics 376 (end of MOTD) and
         422 (MOTD not found)."""
         if not self.registryValue('autoOper'):
             return
@@ -61,7 +61,7 @@ class OperUp(callbacks.Plugin):
                 self.log.warning("OperUp: Bot is set to oper on network %s, but"
                     " operName and/or operPass are not defined!", irc.network)
 
-    do377 = do422 = do376
+    do422 = do376
 
     def do381(self, irc, msg):
         self.log.info("OperUp: Received 381 (successfully opered up) from "
