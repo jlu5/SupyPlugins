@@ -76,10 +76,6 @@ class OperUp(callbacks.Plugin):
         self.log.info("OperUp: Received 385 (not opered anymore) from network"
             " %s.", irc.network)
 
-    def do461(self, irc, msg):
-        self.log.warning("OperUp: Received 461 (some command needs more "
-            "parameters) from network %s.", irc.network)
-
     def do464(self, irc, msg):
         self.log.error("OperUp: Received 464 (password mismatch) from "
             "network %s.", irc.network)
