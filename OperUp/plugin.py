@@ -81,7 +81,7 @@ class OperUp(callbacks.Plugin):
             "parameters) from network %s.", irc.network)
 
     def do464(self, irc, msg):
-        self.log.error("OperUp: Received 461 (password mismatch) from "
+        self.log.error("OperUp: Received 464 (password mismatch) from "
             "network %s.", irc.network)
 
     def do481(self, irc, msg):
