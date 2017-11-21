@@ -40,79 +40,82 @@ try:
 except:
     # Placeholder that allows to run the plugin on a bot
     # without the i18n module
-    _ = lambda x:x
+    _ = lambda x: x
+
 
 class OperUp(callbacks.Plugin):
-    """Simple plugin that allows Supybot to oper up on configured networks, on
-        connect and manually."""
+
+    """Plugin that allows Supybot to oper up on configured networks."""
 
     def do376(self, irc, msg):
-        """Oper up on connect. This listens for numerics 376 (end of MOTD) and
+        """Opers up on connect. This listens for numerics 376 (end of MOTD) and
         422 (MOTD not found)."""
         if not self.registryValue('autoOper'):
             return
         if irc.network in self.registryValue('operNets'):
             if self.registryValue("operName") and \
-                self.registryValue("operPass"):
+                    self.registryValue("operPass"):
                 irc.sendMsg(ircmsgs.IrcMsg(command="OPER",
-                    args=[self.registryValue("operName"),
-                    self.registryValue("operPass")]))
+                                           args=[self.registryValue("operName"),
+                                                 self.registryValue("operPass")]))
             else:
                 self.log.warning("OperUp: Bot is set to oper on network %s, but"
-                    " operName and/or operPass are not defined!", irc.network)
+                                 " operName and/or operPass are not defined!", irc.network)
 
     do422 = do376
 
     def do381(self, irc, msg):
         self.log.info("OperUp: Received 381 (successfully opered up) from "
-            "network %s.", irc.network)
+                      "network %s.", irc.network)
         if self.registryValue("operModes"):
             self.log.info("OperUp: Opered up on %s, sending user modes %s",
-                irc.network, ''.join(self.registryValue("operModes")))
+                          irc.network, ''.join(self.registryValue("operModes")))
             irc.sendMsg(ircmsgs.mode(irc.nick,
-                self.registryValue("operModes")))
+                                     self.registryValue("operModes")))
 
     def do385(self, irc, msg):
         self.log.info("OperUp: Received 385 (not opered anymore) from network"
-            " %s.", irc.network)
+                      " %s.", irc.network)
 
     def do464(self, irc, msg):
         self.log.error("OperUp: Received 464 (password mismatch) from "
-            "network %s.", irc.network)
+                       "network %s.", irc.network)
 
     def do481(self, irc, msg):
         self.log.warning("OperUp: Received 481 (missing oper privileges) "
-            "from network %s.", irc.network)
+                         "from network %s.", irc.network)
 
     def do491(self, irc, msg):
         self.log.error("OperUp: Received 491 (server has been configured "
-            "to disallow the your bot's host from opering) from network %s.",
-            irc.network)
+                       "to disallow the your bot's host from opering) from network %s.",
+                       irc.network)
 
     def operup(self, irc, msg, args):
         """takes no arguments.
-        Makes the bot Oper up using the name and password defined in config.
+
+        Makes the bot oper up using the name and password defined in config.
         """
         if irc.nested:
             irc.error("This command cannot be nested.", Raise=True)
         if irc.network in self.registryValue('operNets'):
             if self.registryValue("operName") and \
-                self.registryValue("operPass"):
+                    self.registryValue("operPass"):
                 irc.sendMsg(ircmsgs.IrcMsg(command="OPER",
-                    args=[self.registryValue("operName"),
-                    self.registryValue("operPass")]))
+                                           args=[self.registryValue("operName"),
+                                                 self.registryValue("operPass")]))
                 irc.replySuccess()
             else:
                 irc.error(_("Either the operName or the operPass "
-                    "configuration values were not properly defined. Please "
-                    "check to see if these values are correct!"))
+                            "configuration values were not properly defined. Please "
+                            "check to see if these values are correct!"))
         else:
             irc.error(_("This network is not configured for opering! (see"
-                " 'config plugins.OperUp.opernets')"))
+                        " 'config plugins.OperUp.opernets')"))
     operup = wrap(operup, ['owner'])
 
     def deoper(self, irc, msg, args):
         """takes no arguments.
+
         Makes the bot deoper by setting user modes -Oo on itself.
         """
         if irc.nested:
