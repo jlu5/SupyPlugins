@@ -55,7 +55,7 @@ class OperUp(callbacks.Plugin):
         # Don't try to oper more than once per network: otherwise we can hit
         # infinite loops if OPERMOTDs also use the regular MOTD numerics
         # (e.g. InspIRCd)
-        if hasattr(irc, '_operup_tried_oper'):
+        if hasattr(irc.state, '_operup_tried_oper'):
             return
         if irc.network in self.registryValue('operNets'):
             if self.registryValue("operName") and \
@@ -63,7 +63,7 @@ class OperUp(callbacks.Plugin):
                 irc.sendMsg(ircmsgs.IrcMsg(command="OPER",
                                            args=[self.registryValue("operName"),
                                                  self.registryValue("operPass")]))
-                irc._operup_tried_oper = True
+                irc.state._operup_tried_oper = True
             else:
                 self.log.warning("OperUp: Bot is set to oper on network %s, but"
                                  " operName and/or operPass are not defined!", irc.network)
@@ -109,7 +109,7 @@ class OperUp(callbacks.Plugin):
                 irc.sendMsg(ircmsgs.IrcMsg(command="OPER",
                                            args=[self.registryValue("operName"),
                                                  self.registryValue("operPass")]))
-                irc._operup_tried_oper = True
+                irc.state._operup_tried_oper = True
                 irc.replySuccess()
             else:
                 irc.error(_("Either the operName or the operPass "
