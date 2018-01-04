@@ -307,7 +307,7 @@ class Weather(callbacks.Plugin):
         url = 'http://autocomplete.wunderground.com/aq?query=%s' % utils.web.urlquote(q)
         self.log.debug("Weather: Autocomplete URL: %s", url)
         try:
-            page = utils.web.getUrl(url)
+            page = utils.web.getUrl(url, timeout=5)
         except utils.web.Error as e:
             irc.error("Failed to load location data for %r." % q, Raise=True)
         data = json.loads(page.decode('utf-8'))
@@ -334,7 +334,7 @@ class Weather(callbacks.Plugin):
         # now actually fetch the url.
 
         self.log.debug("Weather URL: {0}".format(url))
-        page = utils.web.getUrl(url)
+        page = utils.web.getUrl(url, timeout=5)
         return json.loads(page.decode('utf-8'))
 
     ####################
