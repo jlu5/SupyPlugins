@@ -405,9 +405,8 @@ class Weather(callbacks.Plugin):
                 baseurl += "/".join(value)
             if key in ("lang", "bestfct", "pws"):
                 # Preset and configured (only lang) options,  added with key:value
-                baseurl += "{0}:{1}/".format(key, value)
-
-        url = '%s/%s/q/%s.json' % (baseurl.rstrip('/'), apikey, loc)
+                baseurl += "/{0}:{1}".format(key, value)
+        url = '%s/q/%s.json' % (baseurl.rstrip('/'), loc)
         self.log.debug("Weather URL: {0}".format(url))
         page = utils.web.getUrl(url, timeout=5)
         data = json.loads(page.decode('utf-8'))
