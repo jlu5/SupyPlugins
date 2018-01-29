@@ -403,6 +403,7 @@ class Weather(callbacks.Plugin):
             if key == "features": # will always be at least conditions.
                 # Join features directly to the URL
                 baseurl += "/".join(value)
+                baseurl += "/"
             if key in ("lang", "bestfct", "pws"):
                 # Preset and configured (only lang) options,  added with key:value
                 baseurl += "{0}:{1}/".format(key, value)
