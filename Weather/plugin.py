@@ -297,42 +297,33 @@ class Weather(callbacks.Plugin):
     # WUNDERGROUND API CALLS #
     ##########################
 
-    def _wuac(self, q, returnFirstResult=True):
-        """Internal helper to find locations via Wunderground's autocomplete API."""
+    def _wuac(self, q):
+        """Internal helper to find locations via Wunderground's GeoLookup API.
+        Previous versions of this plugin used the Autocompete API instead."""
 
         if q.startswith('zmw:'):
-            # If it's a raw Wunderground ZMW code, return it.
+            # If we're given a ZMW code, just return it as is.
             return [q]
 
-        url = 'http://autocomplete.wunderground.com/aq?query=%s' % utils.web.urlquote(q)
-        self.log.debug("Weather: Autocomplete URL: %s", url)
+        apikey = self.registryValue('apiKey')
+        if not apikey:
+            raise callbacks.Error("No Wunderground API key was defined; set "
+                                  "the 'plugins.Weather.apiKey' config variable.")
+
+        url = 'http://api.wunderground.com/api/%s/geolookup/q/%s.json' % (apikey, utils.web.urlquote(q))
+        self.log.debug("Weather: GeoLookup URL %s", url)
         page = utils.web.getUrl(url, timeout=5)
         data = json.loads(page.decode('utf-8'))
 
-        results = []
-        for item in data['RESULTS']:
-            if item['tz'] != 'MISSING':
-                zmw = "zmw:%s" % item['zmw']
-                if returnFirstResult:
-                    return [zmw]
-                else:
-                    results.append((zmw, item['name']))
-
-        return results
-
-    def _wunderjson(self, url, location):
-        """Fetch wunderground JSON and return."""
-
-        # first, construct the url properly.
-        if url.endswith('/'):  # cheap way to strip the trailing /
-            url = '%sq/%s.json' % (url, utils.web.urlquote(location))
+        if data.get('location'):
+            # This form is used when there's only one result.
+            zmw = 'zmw:{zip}.{magic}.{wmo}'.format(**data['location'])
+            return [zmw]
         else:
-            url = '%s/q/%s.json' % (url, utils.web.urlquote(location))
-        # now actually fetch the url.
+            # This form of result is returned there are multiple places matching a query
+            results = [('zmw:' + result['zmw']) for result in data['response'].get('results', [])]
+            return results
 
-        self.log.debug("Weather URL: {0}".format(url))
-        page = utils.web.getUrl(url, timeout=5)
-        return json.loads(page.decode('utf-8'))
 
     ####################
     # PUBLIC FUNCTIONS #
@@ -398,22 +389,28 @@ class Weather(callbacks.Plugin):
         if not loc:
             irc.error("Failed to find a valid location for: %r" % location, Raise=True)
         else:
-            # Use the first location. XXX: maybe make this more configurable?
+            # Use the first location.
             loc = loc[0]
 
-        url = 'http://api.wunderground.com/api/%s/' % (apikey)
         for check in ['alerts', 'almanac', 'astronomy']:
             if args[check]:
                 urlArgs['features'].append(check) # append to dict->key (list)
 
-        # now, we use urlArgs dict to append to url.
+        baseurl = 'http://api.wunderground.com/api/%s/' % apikey
+
+        # Prepare API options
         for (key, value) in urlArgs.items():
             if key == "features": # will always be at least conditions.
-                url += "".join([item + '/' for item in value]) # listcmp the features/
-            if key in ("lang", "bestfct", "pws"): # rest added with key:value
-                url += "{0}:{1}/".format(key, value)
+                # Join features directly to the URL
+                baseurl += "/".join(value)
+            if key in ("lang", "bestfct", "pws"):
+                # Preset and configured (only lang) options,  added with key:value
+                baseurl += "{0}:{1}/".format(key, value)
 
-        data = self._wunderjson(url, loc)
+        url = '%s/%s/q/%s.json' % (baseurl.rstrip('/'), apikey, loc)
+        self.log.debug("Weather URL: {0}".format(url))
+        page = utils.web.getUrl(url, timeout=5)
+        data = json.loads(page.decode('utf-8'))
 
         if 'current_observation' not in data:
             irc.error("Failed to fetch current conditions for %r." % loc, Raise=True)
@@ -612,7 +609,7 @@ class Weather(callbacks.Plugin):
             irc.error("No Wunderground API key was defined; set 'config plugins.Weather.apiKey'.",
                       Raise=True)
 
-        results = self._wuac(text, returnFirstResult=False)
+        results = self._wuac(text)
         max_results = 10  # TODO: possibly make this configurable?
         cut_results = results[:max_results]
         # Output the list of results.
