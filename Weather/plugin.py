@@ -407,7 +407,7 @@ class Weather(callbacks.Plugin):
                 # Preset and configured (only lang) options,  added with key:value
                 baseurl += "{0}:{1}/".format(key, value)
 
-        url = '%s/%s/q/%s.json' % (baseurl.rstrip('/'), apikey, loc)
+        url = '%s/q/%s.json' % (baseurl.rstrip('/'), loc)
         self.log.debug("Weather URL: {0}".format(url))
         page = utils.web.getUrl(url, timeout=5)
         data = json.loads(page.decode('utf-8'))
