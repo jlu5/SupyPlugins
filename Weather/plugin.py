@@ -604,7 +604,7 @@ class Weather(callbacks.Plugin):
         helpful if Wunderground's autocomplete is not picking up the right place, as you can directly
         look up weather using any ZMW codes returned here.
 
-        Warning: ZMW codes are not fixed and are thus prone to sudden changes!
+        Warning: ZMW codes are not fixed and are prone to sudden changes!
         """
         apikey = self.registryValue('apiKey')
         if not apikey:
@@ -612,13 +612,10 @@ class Weather(callbacks.Plugin):
                       Raise=True)
 
         results = self._wuac(text)
-        max_results = 10  # TODO: possibly make this configurable?
-        cut_results = results[:max_results]
-        # Output the list of results.
         if not results:
             irc.error("No results found.")
         else:
-            irc.reply(format('%L', [': '.join(res) for res in cut_results]))
+            irc.reply(format('%L', results))
 
 Class = Weather
 
