@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 ###
 # Copyright (c) 2012-2014, spline
-# Copyright (c) 2014-2017, James Lu <james@overdrivenetworks.com>
+# Copyright (c) 2014-2018, James Lu <james@overdrivenetworks.com>
 # All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy of
@@ -480,15 +480,16 @@ class Weather(callbacks.Plugin):
         # handle forecast data. This is internally stored as a dict with integer keys (days from now)
         # with the forecast text as values.
         forecastdata = {}
-        for forecastday in data['forecast']['txt_forecast']['forecastday']:
-            # Slightly different wording and results (e.g. rainfall for X inches vs. X cm) are given
-            # depending on whether imperial or metric units are the same.
-            if args['imperial']:
-                text = forecastday['fcttext']
-            else:
-                text = forecastday['fcttext_metric']
-            forecastdata[int(forecastday['period'])] = {'day': forecastday['title'],
-                                                        'text': text}
+        if 'forecast' in data:
+            for forecastday in data['forecast']['txt_forecast']['forecastday']:
+                # Slightly different wording and results (e.g. rainfall for X inches vs. X cm) are given
+                # depending on whether imperial or metric units are the same.
+                if args['imperial']:
+                    text = forecastday['fcttext']
+                else:
+                    text = forecastday['fcttext_metric']
+                forecastdata[int(forecastday['period'])] = {'day': forecastday['title'],
+                                                            'text': text}
 
         output = "{0} :: {1} ::".format(self._bold(outdata['location']), outdata['weather'])
         output += " {0} ".format(outdata['temp'])
@@ -509,9 +510,10 @@ class Weather(callbacks.Plugin):
             if args[k]:
                 output += "| {0}: {1} ".format(self._bold(k.title()), outdata[k])
 
-        # Add in the first two forecasts item in conditions + the "last updated" time.
-        output += "| {0}: {1}".format(self._bold(forecastdata[0]['day']), forecastdata[0]['text'])
-        output += " {0}: {1}".format(self._bold(forecastdata[1]['day']), forecastdata[1]['text'])
+        if forecastdata:
+            # Add in the first two forecasts item in conditions + the "last updated" time.
+            output += "| {0}: {1}".format(self._bold(forecastdata[0]['day']), forecastdata[0]['text'])
+            output += " {0}: {1}".format(self._bold(forecastdata[1]['day']), forecastdata[1]['text'])
 
         if args['updated']:
             # Round updated time (given as a string) to the nearest unit.
