@@ -222,6 +222,15 @@ class Weather(callbacks.Plugin):
         # return.
         return direction_names[index]
 
+    @staticmethod
+    def _format_geolookup_name(result):
+        """Formats a place name from Wunderground Geolookup."""
+        if result['state'] and not result['state'].isdigit():
+            template = '{city}, {state}, {country_name}'
+        else:
+            template = '{city}, {country_name}'
+        return template.format(**result)
+
     ##############################################
     # PUBLIC FUNCTIONS TO WORK WITH THE DATABASE #
     ##############################################
@@ -292,7 +301,7 @@ class Weather(callbacks.Plugin):
             # This form is used when there's only one result.
             zmw = 'zmw:{zip}.{magic}.{wmo}'.format(**data['location'])
             if return_names:
-                name = '{city}, {country_name}'.format(**data['location'])
+                name = self._format_geolookup_name(data['location'])
                 return [(name, zmw)]
             else:
                 return [zmw]
@@ -303,7 +312,7 @@ class Weather(callbacks.Plugin):
                 return []
 
             if return_names:
-                results = [('{name}, {country_name}'.format(**result), 'zmw:' + result['zmw']) for result in results]
+                results = [(self._format_geolookup_name(result), 'zmw:' + result['zmw']) for result in results]
             else:
                 results = [('zmw:' + result['zmw']) for result in results]
             return results
