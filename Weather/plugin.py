@@ -169,33 +169,6 @@ class Weather(callbacks.Plugin):
     # INTERNAL WEATHER HELPERS #
     ############################
 
-    def _weatherSymbol(self, code):
-        """Return a unicode symbol based on weather status."""
-
-        table = {'partlycloudy': '~☁',
-                 'cloudy': '☁',
-                 'tstorms': '⚡',
-                 'sunny': '☀',
-                 'snow': '❄',
-                 'sleet': '☄',
-                 'rain': '☔',
-                 'mostlysunny': '~☀',
-                 'mostlycloudy': '~☁',
-                 'hazy': '♒',
-                 'fog': '♒',
-                 'flurries': '❄',
-                 'clear': '☼',
-                 'chanceflurries': '?❄',
-                 'chancerain': '?☔',
-                 'chancesleet': '?❄',
-                 'chancesnow': '?❄',
-                 'chancetstorms': '?☔'}
-        # return symbol from table.
-        try:
-            return table[code]
-        except KeyError:
-            return "unknown"
-
     def _temp(self, channel, f, c=None):
         """Returns a colored string based on the temperature."""
 
@@ -595,7 +568,6 @@ class Weather(callbacks.Plugin):
                 high = self._temp(channel, forecastday['high']['fahrenheit'])
                 low = self._temp(channel, forecastday['low']['fahrenheit'])
                 tmpdict = {'day': forecastday['date']['weekday_short'],
-                           'symbol': self._weatherSymbol(forecastday['icon']),
                            'text': forecastday['conditions'],
                            'low': low,
                            'high': high}
