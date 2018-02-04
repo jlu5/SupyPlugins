@@ -297,7 +297,7 @@ class Weather(callbacks.Plugin):
     # WUNDERGROUND API CALLS #
     ##########################
 
-    def _wuac(self, q):
+    def _wuac(self, q, return_names=False):
         """Internal helper to find locations via Wunderground's GeoLookup API.
         Previous versions of this plugin used the Autocompete API instead."""
 
@@ -318,10 +318,21 @@ class Weather(callbacks.Plugin):
         if data.get('location'):
             # This form is used when there's only one result.
             zmw = 'zmw:{zip}.{magic}.{wmo}'.format(**data['location'])
-            return [zmw]
+            if return_names:
+                name = '{city}, {country_name}'.format(**data['location'])
+                return [(name, zmw)]
+            else:
+                return [zmw]
         else:
             # This form of result is returned there are multiple places matching a query
-            results = [('zmw:' + result['zmw']) for result in data['response'].get('results', [])]
+            results = data['response'].get('results')
+            if not results:
+                return []
+
+            if return_names:
+                results = [('{name}, {country_name}'.format(**result), 'zmw:' + result['zmw']) for result in results]
+            else:
+                results = [('zmw:' + result['zmw']) for result in results]
             return results
 
 
@@ -612,11 +623,11 @@ class Weather(callbacks.Plugin):
             irc.error("No Wunderground API key was defined; set 'config plugins.Weather.apiKey'.",
                       Raise=True)
 
-        results = self._wuac(text)
+        results = self._wuac(text, return_names=True)
         if not results:
             irc.error("No results found.")
         else:
-            irc.reply(format('%L', results))
+            irc.reply(format('%L', ('\x02{0}\x02: {1}'.format(*result) for result in results)))
 
 Class = Weather
 
