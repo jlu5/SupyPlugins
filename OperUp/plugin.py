@@ -1,5 +1,5 @@
 ###
-# Copyright (c) 2014, James Lu (GLolol)
+# Copyright (c) 2014,2018 James Lu <james@overdrivenetworks.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -55,7 +55,7 @@ class OperUp(callbacks.Plugin):
         # Don't try to oper more than once per network: otherwise we can hit
         # infinite loops if OPERMOTDs also use the regular MOTD numerics
         # (e.g. InspIRCd)
-        if hasattr(irc.state, '_operup_tried_oper'):
+        if hasattr(irc.state, '_operup_tried_oper') and irc.state._operup_tried_oper:
             return
         if irc.network in self.registryValue('operNets'):
             if self.registryValue("operName") and \
@@ -69,6 +69,23 @@ class OperUp(callbacks.Plugin):
                                  " operName and/or operPass are not defined!", irc.network)
 
     do422 = do376
+
+    # Unset irc.state_operup_tried_oper on disconnection.
+    def doError(self, irc, msg):
+        irc.state._operup_tried_oper = False
+
+    def doQuit(self, irc, msg):
+        if ircutils.strEqual(msg.nick, irc.nick):
+            irc.state._operup_tried_oper = False
+
+    def outFilter(self, irc, msg):
+        try:
+            if msg.command == 'QUIT' and ircutils.strEqual(msg.nick, irc.nick):
+                irc.state._operup_tried_oper = False
+        except:
+            self.log.exception('OperUp: caught error from outFilter on %s', irc.name)
+        finally:
+            return msg
 
     def do381(self, irc, msg):
         self.log.info("OperUp: Received 381 (successfully opered up) from "
