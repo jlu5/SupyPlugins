@@ -87,31 +87,22 @@ class OperUp(callbacks.Plugin):
         finally:
             return msg
 
+    # RPL_YOUREOPER (successful oper up)
     def do381(self, irc, msg):
-        self.log.info("OperUp: Received 381 (successfully opered up) from "
-                      "network %s.", irc.network)
+        self.log.info("OperUp: Received 381 (successful oper up) on %s: %s", irc.network, msg.args[-1])
         if self.registryValue("operModes"):
             self.log.info("OperUp: Opered up on %s, sending user modes %s",
                           irc.network, ''.join(self.registryValue("operModes")))
             irc.sendMsg(ircmsgs.mode(irc.nick,
                                      self.registryValue("operModes")))
 
+    # RPL_NOTOPERANYMORE (deoper)
     def do385(self, irc, msg):
-        self.log.info("OperUp: Received 385 (not opered anymore) from network"
-                      " %s.", irc.network)
+        self.log.info("OperUp: Received 385 (deopered) on %s: %s", irc.network, msg.args[-1])
 
-    def do464(self, irc, msg):
-        self.log.error("OperUp: Received 464 (password mismatch) from "
-                       "network %s.", irc.network)
-
-    def do481(self, irc, msg):
-        self.log.warning("OperUp: Received 481 (missing oper privileges) "
-                         "from network %s.", irc.network)
-
+    # ERR_NOOPERHOST (used for "invalid credentials" errors: bad password, host, etc.)
     def do491(self, irc, msg):
-        self.log.error("OperUp: Received 491 (server has been configured "
-                       "to disallow the your bot's host from opering) from network %s.",
-                       irc.network)
+        self.log.error("OperUp: Received 491 (bad oper credentials) on %s: %s", irc.network, msg.args[-1])
 
     def operup(self, irc, msg, args):
         """takes no arguments.
