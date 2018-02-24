@@ -347,23 +347,28 @@ class PkgInfo(callbacks.Plugin):
     def _fedora_fetcher(self, release, query, fetch_source=False, fetch_depends=False, multi=False):
         if fetch_source or fetch_depends:
             raise UnsupportedOperationError("--depends and --source lookup are not supported for Fedora")
+        elif multi:
+            raise UnsupportedOperationError("Package searching is not supported for Fedora")
+
         friendly_url = 'https://apps.fedoraproject.org/packages/%s' % query
 
         if not multi:  # The name= arg in the pdc API actually takes a regexp
             query = r'^%s$' % query
 
-        url = 'https://pdc.fedoraproject.org/rest_api/v1/rpms/?' + urlencode({'name': query})
+        # Sort results by version descendingly
+        url = 'https://pdc.fedoraproject.org/rest_api/v1/rpms/?' + urlencode({'name': query, 'ordering': '-version'})
+
         self.log.debug("PkgInfo: using url %s for fedora_fetcher", url)
         fd = utils.web.getUrl(url).decode("utf-8")
         data = json.loads(fd)
 
         results = data["results"]
 
-        if multi:
-            return [result['name'] for result in results]
-        else:
-            result = results[0]
-            return (result['name'], result['version'], 'Fedora', 'no description available', friendly_url)
+        if not results:
+            return  # No results found
+
+        result = results[0]
+        return (result['name'], result['version'], 'Fedora', 'no description available', friendly_url)
 
     def _mint_fetcher(self, release, query, fetch_source=False, fetch_depends=False, multi=False):
         if fetch_depends:
