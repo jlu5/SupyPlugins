@@ -86,6 +86,9 @@ class PkgInfoTestCase(PluginTestCase):
             self.assertError('pkg freebsd unittestinvalidpackageignore')
             self.assertError('pkgsearch freebsd unittestinvalidpackageignore')
 
+        def test_pkg_fedora(self):
+            self.assertNotError('pkg fedora gnome-shell')
+
         def test_filesearch(self):
             self.assertRegexp('filesearch sid supybot', 'limnoria')
 
