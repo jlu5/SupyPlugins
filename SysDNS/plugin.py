@@ -48,8 +48,8 @@ class SysDNS(callbacks.Plugin):
     utility available on the host machine.
     """
     threaded = True
-    def dns(self, irc, msg, args, optlist, server):
-        """[--type type] <host>
+    def dns(self, irc, msg, args, optlist, target, nameserver):
+        """[--type type] <target host> [<name server>]
         Looks up a DNS hostname using the 'host' binary available on the system. --type
         controls the type of record to look for. (A, AAAA, etc.)
         """
@@ -62,9 +62,12 @@ class SysDNS(callbacks.Plugin):
             optlist = dict(optlist)
             recordtype = optlist.get('type')
             if recordtype:
-                args = [cmd, '-t', dict(optlist)['type'], server]
+                args = [cmd, '-t', dict(optlist)['type'], target]
             else:
-                args = [cmd, server]
+                args = [cmd, target]
+
+            if nameserver:
+                args.append(nameserver)
 
             try:
                 with open(os.devnull) as null:
@@ -88,7 +91,8 @@ class SysDNS(callbacks.Plugin):
                 irc.error('This domain exists, but no records of type %s were found.'
                           % (recordtype or 'A/AAAA/MX'))
 
-    dns = thread(wrap(dns, [getopts({'type':'something'}), 'somethingWithoutSpaces']))
+    dns = thread(wrap(dns, [getopts({'type':'something'}), 'somethingWithoutSpaces',
+                            additional('somethingWithoutSpaces')]))
 
 
 Class = SysDNS
