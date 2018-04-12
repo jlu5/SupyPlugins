@@ -35,7 +35,7 @@ class PortLookupTestCase(PluginTestCase):
     plugins = ('PortLookup',)
 
     def testPort(self):
-        self.assertRegexp('port 22', 'SSH.*?TCP.*?Official')
+        self.assertRegexp('port 22', 'SSH')
 
         # Some entries in the list are defined as port ranges (i.e.
         # 6665-6669); we have to split them manually.
