@@ -36,6 +36,7 @@ import supybot.ircmsgs as ircmsgs
 import supybot.callbacks as callbacks
 import supybot.log as log
 import supybot.httpserver as httpserver
+import supybot.world as world
 try:
     from supybot.i18n import PluginInternationalization
     from supybot.i18n import internationalizeDocstring
@@ -54,15 +55,18 @@ class GitlabHandler(object):
 
     """Handle gitlab messages"""
 
-    def __init__(self, plugin, irc):
-        self.irc = irc
+    def __init__(self, plugin):
         self.plugin = plugin
         self.log = log.getPluginLogger('Gitlab')
+        # HACK: instead of refactoring everything, I can just replace with each handle_payload() call.
+        self.irc = None
 
-    def handle_payload(self, headers, payload):
+    def handle_payload(self, headers, payload, irc):
         if 'X-Gitlab-Event' not in headers:
             self.log.info('Invalid header: Missing X-Gitlab-Event entry')
             return
+        self.irc = irc
+        self.log.debug('GitLab: running on network %r', irc.network)
 
         event_type = headers['X-Gitlab-Event']
         if event_type not in ['Push Hook', 'Tag Push Hook', 'Note Hook', 'Issue Hook', 'Merge Request Hook']:
@@ -70,7 +74,7 @@ class GitlabHandler(object):
             return
 
         # Check if any channel has subscribed to this project
-        for channel in self.irc.state.channels.keys():
+        for channel in irc.state.channels.keys():
             projects = self.plugin._load_projects(channel)
             for slug, url in projects.items():
                 # Parse project url
@@ -205,11 +209,10 @@ class GitlabWebHookService(httpserver.SupyHTTPServerCallback):
     name = "GitlabWebHookService"
     defaultResponse = """This plugin handles only POST request, please don't use other requests."""
 
-    def __init__(self, plugin, irc):
+    def __init__(self, plugin):
         self.log = log.getPluginLogger('Gitlab')
-        self.gitlab = GitlabHandler(plugin, irc)
+        self.gitlab = GitlabHandler(plugin)
         self.plugin = plugin
-        self.irc = irc
 
     def _send_error(self, handler, message):
         handler.send_response(403)
@@ -239,7 +242,12 @@ class GitlabWebHookService(httpserver.SupyHTTPServerCallback):
                                         url."""))
             return
 
-        if self.irc.network != network or channel not in self.irc.state.channels:
+        irc = world.getIrc(network)
+        if irc is None:
+            self._send_error(handler, (_('Error: Unknown network %r') % network))
+            return
+        elif channel not in irc.state.channels:
+            self._send_error(handler, (_('Error: Unknown channel %r') % channel))
             return
 
         # Handle payload
@@ -252,7 +260,7 @@ class GitlabWebHookService(httpserver.SupyHTTPServerCallback):
             return
 
         try:
-            self.gitlab.handle_payload(headers, payload)
+            self.gitlab.handle_payload(headers, payload, irc)
         except Exception as e:
             self.log.info(e)
             self._send_error(handler, _('Error: Invalid data sent.'))
@@ -272,7 +280,7 @@ class Gitlab(callbacks.Plugin):
         super(Gitlab, self).__init__(irc)
         instance = self
 
-        callback = GitlabWebHookService(self, irc)
+        callback = GitlabWebHookService(self)
         httpserver.hook('gitlab', callback)
 
     def die(self):
