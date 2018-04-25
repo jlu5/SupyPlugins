@@ -199,8 +199,11 @@ class GitlabHandler(object):
         return msg
 
     def _send_message(self, channel, msg):
-        priv_msg = ircmsgs.privmsg(channel, msg)
-        self.irc.queueMsg(priv_msg)
+        if self.plugin.registryValue('use-notices', channel):
+            announce_msg = ircmsgs.notice(channel, msg)
+        else:
+            announce_msg = ircmsgs.privmsg(channel, msg)
+        self.irc.queueMsg(announce_msg)
 
 
 class GitlabWebHookService(httpserver.SupyHTTPServerCallback):

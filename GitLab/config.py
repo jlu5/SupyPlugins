@@ -57,6 +57,8 @@ conf.registerChannelValue(Gitlab, 'projects',
 # Format
 conf.registerGroup(Gitlab, 'format')
 
+conf.registerChannelValue(Gitlab, 'use-notices',
+    registry.Boolean(False, _("""Determines whether the bot should announce using NOTICE instead of PRIVMSG.""")))
 conf.registerChannelValue(Gitlab.format, 'push',
     registry.String(_("""\x02[{project[name]}]\x02 {user_name} pushed \x02{total_commits_count} commit(s)\x02 to \x02{ref}\x02:"""),
                     _("""Format for push events.""")))
