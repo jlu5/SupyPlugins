@@ -230,24 +230,17 @@ class GitlabWebHookService(httpserver.SupyHTTPServerCallback):
         headers = dict(self.headers)
 
         network = None
-        channel = None
-
         try:
             information = path.split('/')[1:]
             network = information[0]
-            channel = '#' + information[1]
         except IndexError:
             self._send_error(handler, _("""Error: You need to provide the
-                                        network name and the channel in
-                                        url."""))
+                                        network name in the URL."""))
             return
 
         irc = world.getIrc(network)
         if irc is None:
             self._send_error(handler, (_('Error: Unknown network %r') % network))
-            return
-        elif channel not in irc.state.channels:
-            self._send_error(handler, (_('Error: Unknown channel %r') % channel))
             return
 
         # Handle payload
