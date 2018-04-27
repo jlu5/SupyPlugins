@@ -70,10 +70,6 @@ Most of these plugins also have their own READMEs in their folders; you can usua
 - Fetches package information from various Linux and BSD distros' software repositories.
    - **Requires:** [Beautiful Soup 4](http://www.crummy.com/software/BeautifulSoup/bs4/doc/)
 
-##### PortLookup
-- Looks up commonly used UDP and TCP port numbers from Wikipedia: https://en.wikipedia.org/wiki/List_of_TCP_and_UDP_port_numbers
-   - **Requires:** [Beautiful Soup 4](http://www.crummy.com/software/BeautifulSoup/bs4/doc/)
-
 ##### QuakeNet
 - Log in to Quakenet's Q Service via CHALLENGEAUTH. This plugin was written by request and not officially supported.
 
