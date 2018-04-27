@@ -146,6 +146,9 @@ class WeatherDB():
                 return False
 
 
+class WeatherAPIError(RuntimeError):
+    pass
+
 class Weather(callbacks.Plugin):
     """This plugin provides access to information from Weather Underground."""
     threaded = True
@@ -306,6 +309,11 @@ class Weather(callbacks.Plugin):
             else:
                 return [zmw]
         else:
+            if data['response'].get('error'):
+                errdata = data['response']['error']
+                raise WeatherAPIError('Error in _wuac step: [%s] %s' %
+                                      (errdata.get('type', 'N/A'),
+                                       errdata.get('description', 'No message specified')))
             # This form of result is returned there are multiple places matching a query
             results = data['response'].get('results')
             if not results:
@@ -406,7 +414,12 @@ class Weather(callbacks.Plugin):
         page = utils.web.getUrl(url, timeout=5)
         data = json.loads(page.decode('utf-8'))
 
-        if 'current_observation' not in data:
+        if data['response'].get('error'):
+            errdata = data['response']['error']
+            raise WeatherAPIError('Error in weather step: [%s] %s' %
+                                  (errdata.get('type', 'N/A'),
+                                   errdata.get('description', 'No message specified')))
+        elif 'current_observation' not in data:
             irc.error("Failed to fetch current conditions for %r." % loc, Raise=True)
 
         outdata = {'weather': data['current_observation']['weather'],
