@@ -1,6 +1,6 @@
 ###
 # Copyright (c) 2008,2012 Kevin Funk
-# Copyright (c) 2014-2015 James Lu
+# Copyright (c) 2014-2018 James Lu <james@overdrivenetworks.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -35,26 +35,27 @@ import os
 class LastFMTestCase(PluginTestCase):
     plugins = ('LastFM',)
 
-    def setUp(self):
-        PluginTestCase.setUp(self)
-        self.prefix = "a!b@c.d"
-        apiKey = os.environ.get('lastfm_apikey')
-        if not apiKey:
-            e = ("The LastFM API key has not been set. "
-                 "Please set the environment variable 'lastfm_apikey' "
-                 "and try again.")
-            raise callbacks.Error(e)
-        conf.supybot.plugins.LastFM.apiKey.setValue(apiKey)
+    if network:
+        def setUp(self):
+            PluginTestCase.setUp(self)
+            self.prefix = "a!b@c.d"
+            apiKey = os.environ.get('lastfm_apikey')
+            if not apiKey:
+                e = ("The LastFM API key has not been set. "
+                     "Please set the environment variable 'lastfm_apikey' "
+                     "and try again.")
+                raise callbacks.Error(e)
+            conf.supybot.plugins.LastFM.apiKey.setValue(apiKey)
 
-    def testNowPlaying(self):
-        self.assertNotError("np krf")
+        def testNowPlaying(self):
+            self.assertNotError("np krf")
 
-    def testLastfmDB(self):
-        self.assertNotError("lastfm set GLolol") # test db
-        self.assertNotError("np")
+        def testLastfmDB(self):
+            self.assertNotError("lastfm set GLolol") # test db
+            self.assertNotError("np")
 
-    def testProfile(self):
-        self.assertNotError("profile czshadow")
-        self.assertNotError("profile test")
+        def testProfile(self):
+            self.assertNotError("profile czshadow")
+            self.assertNotError("profile test")
 
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:
