@@ -50,7 +50,6 @@ def configure(advanced):
 
 FML = conf.registerPlugin('FML')
 conf.registerChannelValue(FML, 'showInfo',
-    registry.Boolean(True, _("""Weather we should show more info (ID, category, and URL) in FML posts.""")))
-
+    registry.Boolean(True, _("""Determines whether the bot should show more info (ID, category, and URL) in FML posts.""")))
 
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:
