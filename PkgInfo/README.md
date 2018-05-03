@@ -1,27 +1,40 @@
-Fetches package information from the repositories of Arch Linux, CentOS, Debian, Fedora, FreeBSD, Linux Mint, and Ubuntu.
+Fetches package information from the repositories of various \*nix distributions, including Arch Linux, CentOS, Debian, Fedora, FreeBSD, Linux Mint, and Ubuntu.
 
 This plugin uses the following APIs:
 - For Debian and Ubuntu, Debian's [madison.php](//qa.debian.org/madison.php) (used by the `vlist` command)
 - For Arch Linux and its AUR, [AurJson](//wiki.archlinux.org/index.php/AurJson) and the [Arch Linux Web Interface](//wiki.archlinux.org/index.php/Official_Repositories_Web_Interface)
-- For Fedora, the official PkgDB API: https://admin.fedoraproject.org/pkgdb/api/
+- For Fedora, the Product Definition Center API: https://pdc.fedoraproject.org/
 
 Everything else is parsed as HTML using the Beautiful Soup 4 library.
 
-### Searching Debian/Ubuntu packages
+### Package information
 
-#### Package details
+**Synopsis**: `pkg <distro/release name> <package name> [--depends] [--source]`
+
+The `pkg` command fetches package information from distribution sources, with additional support for showing source package info (via `--source`) and dependencies (`--depends`) for some OSes.
+
+This command supports Arch Linux (distro names `arch`/`archlinux` and `aur`/`archaur`), Debian (using release codenames such as `sid`, `unstable`, `stretch`, `stable`), FreeBSD (distro name `freebsd`), Linux Mint (release codenames such as `sonya` or `betsy`), and Ubuntu (release codenames such as `bionic` or `xenial`).
+
+This command replaces the `archlinux`, `archaur`, `freebsd`, and `linuxmint` commands from earlier versions of PkgInfo.
 
 ```
-<GLolol> pkg sid bash
-<Atlas> Package: bash (4.3-11) in sid - GNU Bourne Again SHell, View more at: <https://packages.debian.org/sid/bash>
+<GLolol> `pkg stretch nginx
+<Atlas> Package: nginx (1.10.3-1+deb9u1) in stretch - small, powerful, scalable web/proxy server <https://packages.debian.org/stretch/nginx>
+<GLolol> `pkg stretch bash --source
+<Atlas> Package: bash (4.4-5) in stretch - Built packages: bash, bash-builtins, bash-doc, and bash-static <https://packages.debian.org/source/stretch/bash>
+
+<GLolol> `pkg arch chromium
+<Atlas> Package: chromium (66.0.3359.139) in extra - A web browser built for speed, simplicity, and security <https://www.archlinux.org/packages/extra/x86_64/chromium>
+<GLolol> `pkg archaur chromium-beta
+<Atlas> Package: chromium-beta (64.0.3282.99-1) in Arch Linux AUR - A web browser built for speed, simplicity, and security (beta channel) [Popularity: 0; Votes: 0] <https://aur.archlinux.org/packages/chromium-beta/>
+
+<GLolol> `pkg freebsd python36
+<Atlas> Package: python36 (3.6.5) in FreeBSD Ports - Interpreted object-oriented programming language <https://www.freebsd.org/cgi/ports.cgi?stype=name&query=python36>
+
+<GLolol> `pkg fedora gnome-shell
+<Atlas> Package: gnome-shell (3.29.1) in Fedora - no description available <https://apps.fedoraproject.org/packages/gnome-shell>
 ```
 
-#### Package details (source)
-
-```
-<GLolol> `pkg sid bash --source
-<Atlas> Package: bash (4.3-12) in sid - Built packages: bash, bash-builtins, bash-doc, and bash-static, View more at: <https://packages.debian.org/source/sid/bash>
-```
 #### Viewing (build-)dependencies
 
 ```
@@ -32,57 +45,41 @@ Everything else is parsed as HTML using the Beautiful Soup 4 library.
 <Atlas> Package bash dependencies: dep: dash (>= 0.5.5.1-2.2), dep: libc0.1 (>= 2.17-91) [kfreebsd-amd64, kfreebsd-i386], dep: libc0.3 (>= 2.15) [hurd-i386], dep: libc6 (>= 2.15) [not alpha, arm64, hurd-i386, kfreebsd-amd64, kfreebsd-i386, mips, mipsel, ppc64el, sh4, x32], dep: libc6 (>= 2.16) [x32], dep: libc6 (>= 2.17) [arm64, ppc64el], dep: libc6 (>= 2.19) [mips, (1 more message)
 ```
 
-#### Version listing
+### Package search
 
-(`vlist --reverse` lists packages newest to oldest)
+**Synopsis:** `pkgsearch <distro> <search query>`
 
-```
-<GLolol> vlist ubuntu firefox --reverse
-<Atlas> Found 35 results: vivid (34.0+build2-0ubuntu2 [source, amd64, i386]), utopic (33.0+build2-0ubuntu0.14.10.1 [source, amd64, i386]), trusty-updates (33.0+build2-0ubuntu0.14.04.1 [source, amd64, i386]), trusty-security (33.0+build2-0ubuntu0.14.04.1 [source, amd64, i386]), precise-updates (33.0+build2-0ubuntu0.12.04.1 [source, amd64, i386]), precise-security (33.0+build2-0ubuntu0.12.04.1 [source, amd64, (5 more messages)
-```
-
-#### Generic package lookup
+The `pkgsearch` command provides package searches on various distros. As of writing, supports all distros that `pkg` does except for Fedora.
 
 ```
-<GLolol> pkgsearch debian perl
-<Atlas> Found 23 results: perl, perl-base, perl-byacc, perl-cross-debian, perl-debug, perl-depends, perl-doc, perl-doc-html, perl-mapscript, perl-modules, perl-suid, perl-tk, perlbal, perlbrew, perlconsole, perlindex, perlmagick, perlpanel, perlprimer, perlprimer-doc, perlrdf, perlsgml, and perltidy, View more at: <https://packages.debian.org/search?keywords=perl>
+<GLolol> `pkgsearch arch firefox
+<Atlas> Found 207 results: arch-firefox-search, bluegriffon, firefox, firefox-adblock-plus, firefox-developer-edition, firefox-developer-edition-i18n-ach, firefox-developer-edition-i18n-af, firefox-developer-edition-i18n-an, firefox-developer-edition-i18n-ar, firefox-developer-edition-i18n-as, firefox-developer-edition-i18n-ast, firefox-developer-edition-i18n-az, firefox-developer- (14 more messages)
+<GLolol> `pkgsearch debian geany-plugin
+<Atlas> Found 86 results: geany-plugin-addons, geany-plugin-addons-dbgsym, geany-plugin-autoclose, geany-plugin-autoclose-dbgsym, geany-plugin-automark, geany-plugin-automark-dbgsym, geany-plugin-codenav, geany-plugin-codenav-dbgsym, geany-plugin-commander, geany-plugin-commander-dbgsym, geany-plugin-ctags, geany-plugin-ctags-dbgsym, geany-plugin-debugger, geany-plugin-defineformat,  (6 more messages)
+<GLolol> `pkgsearch ubuntu unity-scope
+<Atlas> Found 54 results: libunity-scopes-cli, libunity-scopes-dev, libunity-scopes-doc, libunity-scopes-json-def-desktop, libunity-scopes-json-def-phone, libunity-scopes-qt-dev, libunity-scopes-qt-doc, libunity-scopes-qt0.2, libunity-scopes1, libunity-scopes1.0, unity-scope-audacious, unity-scope-calculator, unity-scope-chromiumbookmarks, unity-scope-clementine, unity-scope-click,  (3 more messages)
 ```
 
-### Arch Linux packages
+### Version listing (Debian and Ubuntu)
+
+**Synopsis:**: `vlist <distribution> <package name> [--reverse]`
 
 ```
-<GLolol> archlinux bash
-<Atlas> Found 8 results: bash-docs - Advanced Bash-Scripting Guide in HTML (10) [any], bash-completion - Programmable completion for the bash shell (2.1) [any], bashdb - A debugger for Bash scripts loosely modeled on the gdb command syntax (4.3_0.9) [any], screenfetch - CLI Bash script to show system/theme info in screenshots (3.6.5) [any], bash - The GNU Bourne Again shell (4.3.030) [i686, x86_64], (1 more message)
-```
-
-#### Arch Linux AUR
-
-```
-<GLolol> archaur bash
-<Atlas> Found 150+ results: dvdwizard - A set of bash scripts for converting MPEG streams into DVDs with chapters and menus (0.7.1-1 [ID:1166 Votes:26]), bash-completion-xmms2 - bash-completion for xmms2 (20051023-2 [ID:6033 Votes:11]), imageshack-upload - Bash script for uploading images to imageshack.us (0.4-3 [ID:7478 Votes:44]), tuxrip - Bash script for ripping and encoding DVD titles in mpeg4 format (39 more messages)
-```
-
-### Linux Mint packages
-
-```
-<GLolol> linuxmint Rebecca nemo
-<Atlas> Found 22 results: gir1.2-nemo-3.0 [Main] (2.4.4+rebecca), libnemo-extension-dev [Main] (2.4.4+rebecca), libnemo-extension1 [Main] (2.4.4+rebecca), nemo [Main] (2.4.4+rebecca), nemo-compare [Main] (2.4.0+rebecca), nemo-data [Main] (2.4.4+rebecca), nemo-dbg [Main] (2.4.4+rebecca), nemo-dropbox [Main] (2.4.0+rebecca), nemo-emblems [Main] (2.4.3+rebecca), nemo-filename-repairer (2 more messages)
+<GLolol> `vlist debian variety
+<Atlas> Found 4 results: jessie-backports (0.6.3-5~bpo8+1 [source, all]), stretch (0.6.3-5 [source, all]), buster (0.6.7-1 [source, all]), and sid (0.6.7-1 [source, all]); View more at: <https://packages.debian.org/search?keywords=variety>
+<GLolol> `vlist ubuntu libreoffice --reverse
+<atlas> Found 55 results: cosmic/universe (1:6.0.3-0ubuntu1 [amd64, i386]), cosmic (1:6.0.3-0ubuntu1 [source]), bionic/universe (1:6.0.3-0ubuntu1 [amd64, i386]), bionic (1:6.0.3-0ubuntu1 [source]), artful-updates/universe (1:5.4.6-0ubuntu0.17.10.1 [amd64, i386]), artful-updates (1:5.4.6-0ubuntu0.17.10.1 [source]), artful-security/universe (1:5.4.5-0ubuntu0.17.10.5 [amd64, i386]), artful-security  (7 more messages)
 ```
 
 ### CentOS packages
 
+**Synopsis**: `centos <release> [<repository> <package name>] [--arch <arch>] [--startswith|--exact]`
+
+This lookup command is provided as a separate command due to limited package searching abilities through the CentOS website.
+
 ```
-<GLolol> %centos 7 os zsh
+<GLolol> `centos 7 os zsh
 <Atlas> Available RPMs: zsh-5.0.2-7.el7.x86_64.rpm and zsh-html-5.0.2-7.el7.x86_64.rpm
-<GLolol> %centos 7 os python
+<GLolol> `centos 7 os python
 <Atlas> Available RPMs: MySQL-python-1.2.3-11.el7.x86_64.rpm, OpenIPMI-python-2.0.19-11.el7.x86_64.rpm, abrt-addon-python-2.1.11-19.el7.centos.0.3.x86_64.rpm, abrt-python-2.1.11-19.el7.centos.0.3.x86_64.rpm, abrt-python-doc-2.1.11-19.el7.centos.0.3.noarch.rpm, antlr-python-2.7.7-30.el7.noarch.rpm, at-spi-python-1.32.0-12.el7.x86_64.rpm, audit-libs-python-2.4.1-5.el7.x86_64.rpm, (25 more messages)
-```
-
-### Fedora packages
-
-```
-<GLolol> %fedora 22 *vorbis*
-<Atlas> libvorbis: Ogg Vorbis is a fully open, non-proprietary, patent- and royalty-free, general-purpose compressed audio format for audio and music at fixed and variable bitrates; python-vorbis: An object-oriented Python binding for the Ogg Vorbis libraries; vorbisspi: VorbisSPI is a Java Service Provider Interface that adds OGG Vorbis audio format support to Java platform; vorbis-tools: Ogg Vorbis is a fully (2 more messages)
-<GLolol> %fedora 22 bash
-<Atlas> bash: The GNU Bourne Again shell (Bash) is a shell or command language interpreter that is compatible with the Bourne shell (sh)
 ```
