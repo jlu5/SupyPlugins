@@ -82,7 +82,7 @@ class FML(callbacks.Plugin):
                               tree.find('deserved').text))
 
         if not self.registryValue("showInfo", msg.args[0]):
-            s = format('%s - %s', text, votes)
+            s = format('\x02[FML]\x02 %s - %s', text, votes)
         else:
             s = format('\x02#%i [%s]\x02: %s - %s %u', fmlid,
                        category, text, votes, url)
