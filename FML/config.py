@@ -49,9 +49,8 @@ def configure(advanced):
 
 
 FML = conf.registerPlugin('FML')
-# This is where your configuration variables (if any) should go.  For example:
-# conf.registerGlobalValue(FML, 'someConfigVariableName',
-#     registry.Boolean(False, _("""Help for someConfigVariableName.""")))
+conf.registerChannelValue(FML, 'showInfo',
+    registry.Boolean(True, _("""Weather we should show more info (ID, category, and URL) in FML posts.""")))
 
 
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:

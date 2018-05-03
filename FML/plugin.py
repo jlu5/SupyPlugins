@@ -80,8 +80,12 @@ class FML(callbacks.Plugin):
         votes = ircutils.bold("[Agreed: %s / Deserved: %s]" %
                               (tree.find('agree').text,
                               tree.find('deserved').text))
-        s = format('\x02#%i [%s]\x02: %s - %s %u', fmlid,
-                   category, text, votes, url)
+
+        if not self.registryValue("showInfo", msg.args[0]):
+            s = format('%s - %s', text, votes)
+        else:
+            s = format('\x02#%i [%s]\x02: %s - %s %u', fmlid,
+                       category, text, votes, url)
         irc.reply(s)
     fml = wrap(fml, [additional('positiveInt')])
 
