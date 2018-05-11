@@ -197,7 +197,7 @@ class Wikifetch(callbacks.Plugin):
                 item = utils.str.normalizeWhitespace(item).strip()
                 disambig_results.append(item)
             if disambig_results:
-                reply += format(_('Possible results include: %L'), disambig_results)
+                reply += format(_('Possible results include: %s'), '; '.join(disambig_results))
 
         # Catch talk pages
         elif 'ns-talk' in tree.find("body").attrib.get('class', ''):
