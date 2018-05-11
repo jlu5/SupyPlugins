@@ -58,7 +58,7 @@ class GitlabHandler(object):
     def __init__(self, plugin):
         self.plugin = plugin
         self.log = log.getPluginLogger('Gitlab')
-        # HACK: instead of refactoring everything, I can just replace with each handle_payload() call.
+        # HACK: instead of refactoring everything, I can just replace this with each handle_payload() call.
         self.irc = None
 
     def handle_payload(self, headers, payload, irc):
@@ -273,7 +273,10 @@ class Gitlab(callbacks.Plugin):
 
     def __init__(self, irc):
         global instance
-        super(Gitlab, self).__init__(irc)
+
+        # Store the super() information so that reloads don't fail
+        self.__parent = super(Gitlab, self)
+        self.__parent.__init__(irc)
         instance = self
 
         callback = GitlabWebHookService(self)
@@ -282,7 +285,7 @@ class Gitlab(callbacks.Plugin):
     def die(self):
         httpserver.unhook('gitlab')
 
-        super(Gitlab, self).die()
+        self.__parent.die()
 
     def _load_projects(self, channel):
         projects = self.registryValue('projects', channel)
