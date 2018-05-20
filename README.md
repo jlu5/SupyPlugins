@@ -3,7 +3,7 @@
 [webchatlink]: https://webchat.overdrivenetworks.com/?channels=dev
 
 [![Travis-CI Build Status](https://travis-ci.org/GLolol/SupyPlugins.svg?branch=master)](https://travis-ci.org/GLolol/SupyPlugins)
-![Supported Python versions](https://img.shields.io/badge/python-3.4%2C%203.5-blue.svg)
+![Supported Python versions](https://img.shields.io/badge/python-3.4%20and%20later-blue.svg)
 [![Live chat](https://img.shields.io/badge/IRC-live%20chat%20%C2%BB-green.svg)][webchatlink]
 
 My collection of plugins for [Limnoria](https://github.com/ProgVal/Limnoria). This repository is provided **AS IS**, **without any warranty**! It may glitch, break, or spontaneously combust at any time. You have been warned!
