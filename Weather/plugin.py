@@ -332,7 +332,7 @@ class Weather(callbacks.Plugin):
 
     @wrap([getopts({'user': 'nick'}), optional('text')])
     def weather(self, irc, msg, args, optlist, location):
-        """[<location>] [--user <othernick>]
+        """[--user <othernick>] [<location>]
 
         Fetches weather and forecast information for <location>. <location> can be left blank if you have a previously set location (via 'setweather').
 
