@@ -206,9 +206,19 @@ class Wikifetch(callbacks.Plugin):
             # Get the first paragraph as text.
             paragraphs = []
             for p in text_content.xpath("./p"):
+                self.log.debug('Wikifetch: looking at paragraph %s', p.text_content())
+
                 # Skip geographic coordinates, e.g. on articles for countries
-                if not p.xpath(".//span[@class='geo-dec']"):
-                    paragraphs.append(p)
+                if p.xpath(".//span[@class='geo-dec']"):
+                    continue
+                # 2018-07-19: some articles have an empty p tag with this class and no content (why?)
+                elif 'mw-empty-elt' in p.attrib.get('class', ''):
+                    continue
+                # Skip <p> tags with no content, for obvious reasons
+                elif not p.text_content().strip():
+                    continue
+
+                paragraphs.append(p)
 
             if (not paragraphs) or 'wiki/Special:Search' in addr:
                 if 'wikipedia:wikiproject' in addr.lower():
