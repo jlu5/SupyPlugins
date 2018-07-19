@@ -54,9 +54,9 @@ if network:
 
         def testDisambig(self):
             self.assertRegexp('wiki Python', 'is a disambiguation page.*'
-                              'Possible results include:.*?,.*?,')
+                              'Possible results include:.*?Pythonidae.*?;.*?;')
             self.assertRegexp('wiki Windows 3', '.*is a disambiguation page.*'
-                              'Possible results include:.*?Windows 3.0.*?,.*?Windows 3.1x')
+                              'Possible results include:.*?Windows 3.0.*?;.*?Windows 3.1x')
 
         def testDisambigStripSpaces(self):
             self.assertNotRegexp('wiki Na', '\n')
