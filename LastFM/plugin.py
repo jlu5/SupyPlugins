@@ -244,7 +244,11 @@ class LastFM(callbacks.Plugin):
         profile = {"id": ircutils.bold(user)}
         for tag in keys:
             try:
-                s = data["user"][tag].strip() or "N/A"
+                s = data["user"][tag] or "N/A"
+                if tag == "age" and s == "0":
+                    s = "N/A"
+                elif tag == "gender" and s == "n":
+                    s = "N/A"
             except KeyError: # empty field
                 s = "N/A"
             finally:
@@ -259,7 +263,7 @@ class LastFM(callbacks.Plugin):
             s = "N/A"
         finally:
             profile["registered"] = ircutils.bold(s)
-        irc.reply("%(id)s (realname: %(realname)s) registered on %(registered)s; age: %(age)s / %(gender)s; "
+        irc.reply("%(id)s (realname: %(realname)s) registered on %(registered)s; age: %(age)s; gender: %(gender)s; "
                   "Country: %(country)s; Tracks played: %(playcount)s" % profile)
 
 filename = conf.supybot.directories.data.dirize("LastFM.db")
