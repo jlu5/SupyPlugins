@@ -1,5 +1,5 @@
 ###
-# Copyright (c) 2015, James Lu
+# Copyright (c) 2015-2018 James Lu <james@overdrivenetworks.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -151,6 +151,7 @@ class RelayNext(callbacks.Plugin):
             # Announcements use a special syntax
             s = '*** %s' % announcement
         else:
+            ignoreRegexp = self.registryValue("ignoreRegexp", channel)
             if msg.command == 'NICK':
                 newnick = msg.args[0]
                 if noHighlight:
@@ -182,6 +183,9 @@ class RelayNext(callbacks.Plugin):
                 elif text.startswith('\x01'):
                     # Other CTCP messages should just be ignored
                     return
+                elif ignoreRegexp and ignoreRegexp.search(text):
+                    self.log.debug("RelayNext: filtering message %r from ignoreRegexp %s", text, ignoreRegexp)
+                    return
                 else:
                     s = '<%s> %s' % (nick, msg.args[1])
 
@@ -195,10 +199,19 @@ class RelayNext(callbacks.Plugin):
                 except IndexError:
                     partmsg = ''
 
+                if ignoreRegexp and ignoreRegexp.search(partmsg):
+                    self.log.debug("RelayNext: filtering part message %r from ignoreRegexp %s", partmsg, ignoreRegexp)
+                    partmsg = ''
+
                 s = '%s%s has left %s%s' % (nick, userhost, channel, partmsg)
 
             elif msg.command == 'QUIT':
-                s = '%s has quit (%s)' % (nick, msg.args[0])
+                quitmsg = msg.args[0]
+                if ignoreRegexp and ignoreRegexp.search(quitmsg):
+                    self.log.debug("RelayNext: filtering quit message %r from ignoreRegexp %s", quitmsg, ignoreRegexp)
+                    quitmsg = ''
+
+                s = '%s has quit (%s)' % (nick, quitmsg)
 
             elif msg.command == 'MODE':
                 modes = ' '.join(msg.args[1:])

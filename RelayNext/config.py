@@ -1,5 +1,5 @@
 ###
-# Copyright (c) 2015, James Lu
+# Copyright (c) 2015-2018 James Lu <james@overdrivenetworks.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -63,6 +63,9 @@ conf.registerChannelValue(RelayNext, 'noHighlight',
 conf.registerChannelValue(RelayNext, 'showPrefixes',
     registry.Boolean(False, _("""Determines whether the bot should status prefixes
     (@, %, +) when relaying.""")))
+conf.registerChannelValue(RelayNext, 'ignoreRegexp',
+    registry.Regexp(None, _("""If configured, text, part, and quit messages matching this regexp
+                            will not be relayed. This may be useful for spam blocking.""")))
 
 conf.registerGroup(RelayNext, 'antiflood')
 conf.registerChannelValue(RelayNext.antiflood, 'enable',
