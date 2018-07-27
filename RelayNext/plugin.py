@@ -183,7 +183,7 @@ class RelayNext(callbacks.Plugin):
                 elif text.startswith('\x01'):
                     # Other CTCP messages should just be ignored
                     return
-                elif ignoreRegexp and ignoreRegexp.search(text):
+                elif ignoreRegexp and ignoreRegexp.search(text, re.IGNORECASE):
                     self.log.debug("RelayNext: filtering message %r from ignoreRegexp %s", text, ignoreRegexp)
                     return
                 else:
@@ -199,7 +199,7 @@ class RelayNext(callbacks.Plugin):
                 except IndexError:
                     partmsg = ''
 
-                if ignoreRegexp and ignoreRegexp.search(partmsg):
+                if ignoreRegexp and ignoreRegexp.search(partmsg, re.IGNORECASE):
                     self.log.debug("RelayNext: filtering part message %r from ignoreRegexp %s", partmsg, ignoreRegexp)
                     partmsg = ''
 
@@ -207,7 +207,7 @@ class RelayNext(callbacks.Plugin):
 
             elif msg.command == 'QUIT':
                 quitmsg = msg.args[0]
-                if ignoreRegexp and ignoreRegexp.search(quitmsg):
+                if ignoreRegexp and ignoreRegexp.search(quitmsg, re.IGNORECASE):
                     self.log.debug("RelayNext: filtering quit message %r from ignoreRegexp %s", quitmsg, ignoreRegexp)
                     quitmsg = ''
 
