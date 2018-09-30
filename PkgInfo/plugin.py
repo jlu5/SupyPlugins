@@ -1,5 +1,5 @@
 ###
-# Copyright (c) 2014-2017, James Lu <james@overdrivenetworks.com>
+# Copyright (c) 2014-2018, James Lu <james@overdrivenetworks.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -143,6 +143,8 @@ class PkgInfo(callbacks.Plugin):
             return self._mint_fetcher
         elif dist == 'fedora':
             return self._fedora_fetcher
+        elif dist == 'gentoo':
+            return self._gentoo_fetcher
 
     def _debian_fetcher(self, release, query, baseurl='https://packages.debian.org/', fetch_source=False, fetch_depends=False, multi=False):
         url = baseurl
@@ -451,6 +453,33 @@ class PkgInfo(callbacks.Plugin):
 
                 return (query, pkgver, 'FreeBSD Ports', desc, url)
 
+    def _gentoo_fetcher(self, _, query, fetch_source=False, fetch_depends=False, multi=False):
+        # Gentoo is all sources, so fetch_source is ignored
+        if fetch_depends:
+            raise UnsupportedOperationError("--depends lookup is not supported for Gentoo")
+
+        url = "https://packages.gentoo.org/packages/"
+        query = query.lower()
+        if multi:
+            url += "search?%s" % urlencode({'q': query})
+        else:
+            url += query  # Don't encode the / in package name
+
+        text = utils.web.getUrl(url).decode('utf-8')
+        soup = BeautifulSoup(text)
+
+        if multi:
+            results = [tag.text.strip() for tag in soup.find_all('h3', class_='kk-search-result-header')]
+            return results
+        else:
+            titletag = soup.find(id="package-title")
+            name = titletag["data-name"]
+            category = titletag["data-category"]
+            version = _normalize(soup.find('a', class_="kk-ebuild-link").text)
+            desc = _normalize(soup.find('p', class_="kk-package-maindesc").text)
+
+            return (name, version, category, desc, url)
+
     def _debian_vlist_fetcher(self, pkg, dist, reverse=False):
         """Parser for the madison API at https://qa.debian.org/madison.php."""
         # This arch value implies 'all' (architecture-independent packages)
@@ -497,6 +526,7 @@ class PkgInfo(callbacks.Plugin):
             Arch Linux AUR (distro name 'aur' or 'archaur'),
             Debian (use a release codename such as 'sid', 'unstable', 'stretch', or 'stable'),
             FreeBSD (distro name 'freebsd'),
+            Gentoo (distro name 'gentoo'; use category/package-name for package names),
             Linux Mint (use a release codename such as 'sonya' or 'betsy'),
             and
             Ubuntu (use a release codename such as 'trusty' or 'xenial').
@@ -565,6 +595,7 @@ class PkgInfo(callbacks.Plugin):
             Arch Linux AUR (distro name 'aur' or 'archaur'),
             Debian (distro name 'debian'),
             FreeBSD (distro name 'freebsd'),
+            Gentoo (distro name 'gentoo'),
             Linux Mint (use a release codename such as 'sonya' or 'betsy'),
             and
             Ubuntu (distro name 'ubuntu').
