@@ -89,6 +89,10 @@ class PkgInfoTestCase(PluginTestCase):
         def test_pkg_fedora(self):
             self.assertNotError('pkg fedora gnome-shell')
 
+        def test_pkg_gentoo(self):
+            self.assertNotError('pkg gentoo www-client/firefox')
+            self.assertRegexp('pkgsearch gentoo lightdm', 'lightdm-gtk')
+
         def test_filesearch(self):
             self.assertRegexp('filesearch sid supybot', 'limnoria')
 
