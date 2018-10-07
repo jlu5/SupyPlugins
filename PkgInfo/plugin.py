@@ -85,18 +85,20 @@ class PkgInfo(callbacks.Plugin):
     """Fetches package information from various OS software repositories.."""
     threaded = True
 
-    _get_dependency_color = utils.str.MultipleReplacer({
-        # Debian/Ubuntu names
-        'dep': '\x0304dep\x03',
-        'rec': '\x0312rec\x03',
-        'sug': '\x0309sug\x03',
-        'adep': '\x0305adep\x03',
-        'idep': '\x0302idep\x03',
-        'enh': '\x0308enh\x03',
-        # Generic
-        'depends': '\x0304depends\x03',
-        'optdepends': '\x0312optdepends\x03'
-    })
+    _get_dependency_color = utils.str.MultipleReplacer(OrderedDict((
+        # Arch
+        ('depends', '\x0304depends\x03'),
+        ('optdepends', '\x0312optdepends\x03'),
+        # FreeBSD
+        ('requires', '\x0304requires\x03'),
+        # Debian/Ubuntu abbreviations
+        ('dep', '\x0304dep\x03'),
+        ('rec', '\x0312rec\x03'),
+        ('sug', '\x0309sug\x03'),
+        ('adep', '\x0305adep\x03'),
+        ('idep', '\x0302idep\x03'),
+        ('enh', '\x0308enh\x03'),
+    )))
 
     @staticmethod
     def _guess_distro_from_release(release):
