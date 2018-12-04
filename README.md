@@ -2,7 +2,7 @@
 
 [webchatlink]: https://webchat.overdrivenetworks.com/?channels=dev
 
-[![Travis-CI Build Status](https://travis-ci.org/GLolol/SupyPlugins.svg?branch=master)](https://travis-ci.org/GLolol/SupyPlugins)
+[![Travis-CI Build Status](https://travis-ci.org/jlu5/SupyPlugins.svg?branch=master)](https://travis-ci.org/jlu5/SupyPlugins)
 ![Supported Python versions](https://img.shields.io/badge/python-3.4%20and%20later-blue.svg)
 [![Live chat](https://img.shields.io/badge/IRC-live%20chat%20%C2%BB-green.svg)][webchatlink]
 
@@ -13,7 +13,7 @@ My collection of plugins for [Limnoria](https://github.com/ProgVal/Limnoria). Th
 ## Installation
 The recommended way of fetching plugins in this repository is to clone the git repository:
 
-* `$ git clone https://github.com/GLolol/SupyPlugins`
+* `$ git clone https://github.com/jlu5/SupyPlugins`
 
 and add the folder to your bot's `config directories.plugins`.
 
