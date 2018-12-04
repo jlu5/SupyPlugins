@@ -98,7 +98,7 @@ class FML(callbacks.Plugin):
             panel = soup.find('div', class_='panel-content')
             if not panel:
                 irc.error(_("Entry not found."), Raise=True)
-            data = self._parse_panel(panel)
+            data = self._parse_panel(panel, fml_id=query)
         else:  # Random search
             if not len(self.cached_results):
                 if not self._get_random_entries():
