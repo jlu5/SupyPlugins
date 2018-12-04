@@ -8,6 +8,8 @@ Fetches package information from the repositories of various \*nix distributions
 - Linux Mint
 - Ubuntu
 
+This plugin requires the [Beautiful Soup 4](http://www.crummy.com/software/BeautifulSoup/bs4/doc/) Python module.
+
 ### Package information
 
 **Synopsis**: `pkg <distro/release name> <package name> [--depends] [--source]`

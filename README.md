@@ -47,6 +47,7 @@ Most of these plugins also have their own READMEs in their folders; you can usua
 
 ##### FML
 - Displays random entries from fmylife.com.
+   - **Requires:** [Beautiful Soup 4](http://www.crummy.com/software/BeautifulSoup/bs4/doc/)
 
 ##### Isup
 - Provides a simple command to check whether a website is up or down (using [isup.me](http://isup.me)).
@@ -81,6 +82,7 @@ Most of these plugins also have their own READMEs in their folders; you can usua
 
 ##### RhymeZone
 - Fetches rhymes from http://rhymezone.com/.
+   - **Requires:** [Beautiful Soup 4](http://www.crummy.com/software/BeautifulSoup/bs4/doc/)
 
 ##### SedRegex
 - History replacer using sed-style expressions. Fork of [t3chguy's Replacer plugin](https://github.com/t3chguy/Limnoria-Plugins/tree/master/Replacer).
