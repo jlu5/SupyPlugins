@@ -55,6 +55,10 @@ Most of these plugins also have their own READMEs in their folders; you can usua
 ##### LastFM
 - LastFM plugin, forked from [krf/supybot-lastfm](https://github.com/krf/supybot-lastfm).
 
+##### MCInfo
+- Fetches information from [minecraft.gamepedia.com](https://minecraft.gamepedia.com/).
+   - **Requires:** [Beautiful Soup 4](http://www.crummy.com/software/BeautifulSoup/bs4/doc/)
+
 ##### [Namegen](Namegen/README.md)
 - A small random name generator.
 
@@ -105,3 +109,4 @@ Most of these plugins also have their own READMEs in their folders; you can usua
 
 ##### Wikifetch
 - Fork of [ProgVal's Wikipedia plugin](https://github.com/ProgVal/Supybot-plugins), with support for other wikis (via a `--site` option) and other improvements.
+   - **Requires:** [lxml](https://lxml.de/installation.html)

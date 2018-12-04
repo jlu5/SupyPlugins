@@ -1,4 +1,4 @@
-Grabs data from Wikipedia and other MediaWiki-powered sites.
+Grabs data from Wikipedia and other MediaWiki-powered sites. This plugin requires the [lxml](https://lxml.de/installation.html) Python module.
 
 ## Usage
 
