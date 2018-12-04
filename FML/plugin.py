@@ -27,14 +27,10 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 ###
+import collections
 
-from __future__ import unicode_literals
-from xml.etree import ElementTree
-import supybot.utils as utils
+from supybot import utils, plugins, ircutils, callbacks
 from supybot.commands import *
-import supybot.plugins as plugins
-import supybot.ircutils as ircutils
-import supybot.callbacks as callbacks
 try:
     from supybot.i18n import PluginInternationalization
     _ = PluginInternationalization('FML')
@@ -43,50 +39,83 @@ except ImportError:
     # without the i18n module
     _ = lambda x: x
 
+from bs4 import BeautifulSoup
 
 class FML(callbacks.Plugin):
     """Displays entries from fmylife.com."""
     threaded = True
 
+    URL_RANDOM = 'https://www.fmylife.com/random'
+    URL_ARTICLE = 'https://www.fmylife.com/article/-_%s.html'  # subst in the ID
+    cached_results = collections.deque()
+
+    @staticmethod
+    def _parse_panel(panel, fml_id=None):
+        """Parses a FML entry panel for data. Returns a (fml_id, text, num_upvotes, num_downvotes) tuple."""
+        if panel.p:
+            text = panel.p.text.strip()
+            if not text.endswith(' FML'):  # Ignore ads, promos, previews
+                return
+
+            # If not given, extract the FML ID from the link
+            if fml_id is None:
+                link = panel.p.a['href']
+                fml_id = link.split('_', 1)[-1].split('.', 1)[0]
+
+            voteup_btn = panel.find('button', class_='vote-up')
+            votedown_btn = panel.find('button', class_='vote-down')
+
+            upvotes = voteup_btn.text.strip()
+            downvotes = votedown_btn.text.strip()
+
+            data = (fml_id, text, upvotes, downvotes)
+            return data
+
+    def _get_random_entries(self):
+        """Fetches and caches random FML entries. Returns the amount of entries retrieved."""
+        html = utils.web.getUrl(self.URL_RANDOM)
+        soup = BeautifulSoup(html)
+
+        results_count = 0
+        for panel in soup.find_all('div', class_='panel-content'):
+            data = self._parse_panel(panel)
+            if data:
+                self.log.debug('FML: got entry: %s', str(data))
+                self.cached_results.append(data)
+                results_count += 1
+
+        self.log.debug('FML: got total of %s results, cache size: %s', results_count,
+                       len(self.cached_results))
+        return results_count
+
     def fml(self, irc, msg, args, query):
         """[<id>]
 
-        Displays an entry from fmylife.com. If <id>
-        is not given, fetch a random entry from the API."""
-        query = query or 'random'
-        url = ('http://api.betacie.com/view/%s/nocomment'
-              '?key=4be9c43fc03fe&language=en' % query)
-        try:
-            data = utils.web.getUrl(url)
-        except utils.web.Error as e:
-            irc.error(str(e), Raise=True)
-        tree = ElementTree.fromstring(data.decode('utf-8'))
-        tree = tree.find('items/item')
+        Displays an entry from fmylife.com. If <id> is not given, fetch a random entry from the API."""
+        if query:  # Explicit ID given
+            html = utils.web.getUrl(self.URL_ARTICLE % query)
+            soup = BeautifulSoup(html)
+            panel = soup.find('div', class_='panel-content')
+            if not panel:
+                irc.error(_("Entry not found."), Raise=True)
+            data = self._parse_panel(panel)
+        else:  # Random search
+            if not len(self.cached_results):
+                if not self._get_random_entries():
+                    irc.error("Could not fetch new FML entries - try again later.", Raise=True)
+            data = self.cached_results.popleft()
 
-        try:
-            category = tree.find('category').text
-            text = tree.find('text').text
-            fmlid = tree.attrib['id']
-            url = tree.find('short_url').text
-        except AttributeError as e:
-            self.log.debug("FML: Error fetching FML %s from URL %s: %s",
-                           query, url, e)
-            irc.error("That FML does not exist or there was an error "
-                      "fetching data from the API.", Raise=True)
+        fml_id, text, num_upvotes, num_downvotes = data
 
-        if not fmlid:
-            irc.error("That FML does not exist.", Raise=True)
-
-        votes = ircutils.bold("[Agreed: %s / Deserved: %s]" %
-                              (tree.find('agree').text,
-                              tree.find('deserved').text))
-
-        if not self.registryValue("showInfo", msg.args[0]):
-            s = format('\x02[FML]\x02 %s - %s', text, votes)
+        votes = ircutils.bold("[Agreed: %s / Deserved: %s]" % (num_upvotes, num_downvotes))
+        if self.registryValue("showInfo", msg.args[0]):
+            url = self.URL_ARTICLE % fml_id
+            s = format('\x02#%i\x02: %s - %s %u', fml_id, text, votes, url)
         else:
-            s = format('\x02#%i [%s]\x02: %s - %s %u', fmlid,
-                       category, text, votes, url)
+            s = format('%s - %s', text, votes)
+
         irc.reply(s)
+
     fml = wrap(fml, [additional('positiveInt')])
 
 Class = FML
