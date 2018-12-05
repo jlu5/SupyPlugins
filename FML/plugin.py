@@ -52,7 +52,7 @@ class FML(callbacks.Plugin):
     @staticmethod
     def _parse_panel(panel, fml_id=None):
         """Parses a FML entry panel for data. Returns a (fml_id, text, num_upvotes, num_downvotes) tuple."""
-        if panel.p:
+        if panel and panel.p:
             text = panel.p.text.strip()
             if not text.endswith(' FML'):  # Ignore ads, promos, previews
                 return
@@ -96,8 +96,6 @@ class FML(callbacks.Plugin):
             html = utils.web.getUrl(self.URL_ARTICLE % query)
             soup = BeautifulSoup(html)
             panel = soup.find('div', class_='panel-content')
-            if not panel:
-                irc.error(_("Entry not found."), Raise=True)
             data = self._parse_panel(panel, fml_id=query)
         else:  # Random search
             if not len(self.cached_results):
@@ -105,6 +103,8 @@ class FML(callbacks.Plugin):
                     irc.error("Could not fetch new FML entries - try again later.", Raise=True)
             data = self.cached_results.popleft()
 
+        if not data:
+            irc.error(_("Entry not found or error processing data."), Raise=True)
         fml_id, text, num_upvotes, num_downvotes = data
 
         votes = ircutils.bold("[Agreed: %s / Deserved: %s]" % (num_upvotes, num_downvotes))
