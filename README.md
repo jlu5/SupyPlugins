@@ -65,6 +65,9 @@ Most of these plugins also have their own READMEs in their folders; you can usua
 ##### [NoTrigger](NoTrigger/README.md)
 - Anti-abuse script; prevents the bot from triggering other bots by modifying its output slightly. For more information, see [NoTrigger/README.md](NoTrigger/README.md).
 
+##### [NuWeather](NuWeather/README.md)
+- A weather plugin for Limnoria. It currently uses [Apixu](https://www.apixu.com/), but more backends will be added soon.
+
 ##### [OperUp](OperUp/README.md)
 - Allows Supybot to oper up on configured networks, automatically (on connect) and on demand.
 
@@ -104,8 +107,9 @@ Most of these plugins also have their own READMEs in their folders; you can usua
 ##### Voteserv
 - A plugin for storing and manipulating votes/polls.
 
-##### [Weather](Weather/README.md)
+##### [Weather](Weather/README.md) **[DEPRECATED]**
 - My fork of [reticulatingspline's Weather](https://github.com/reticulatingspline/Weather) plugin, with rewritten output handling, explicit location search, and many other tweaks.
+- **Update 2018012**: Weather Underground is shutting down free weather access, so this plugin will no longer be maintained. See the NuWeather plugin in this folder for an alternative using other backends.
 
 ##### Wikifetch
 - Fork of [ProgVal's Wikipedia plugin](https://github.com/ProgVal/Supybot-plugins), with support for other wikis (via a `--site` option) and other improvements.
