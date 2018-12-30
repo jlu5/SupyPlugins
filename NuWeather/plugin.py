@@ -139,7 +139,7 @@ class NuWeather(callbacks.Plugin):
         condition = forecastdata['day']['condition']['text']
         maxtemp = self._format_temp(forecastdata['day']['maxtemp_f'], forecastdata['day']['maxtemp_c'])
         mintemp = self._format_temp(forecastdata['day']['mintemp_f'], forecastdata['day']['mintemp_c'])
-        forecast = _('Low: %s High: %s' % (mintemp, maxtemp))
+        forecast = _('%s, Low: %s High: %s' % (condition, mintemp, maxtemp))
 
         s = _('%s :: %s | \x02Today:\x02 %s | Powered by \x02Apixu\x02') % (
             ircutils.bold(location), current, forecast
