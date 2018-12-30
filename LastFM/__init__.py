@@ -50,19 +50,20 @@ __contributors__ = {
             supybot.Author("Pavel Dvořák", "czshadow", "czshadow@gmail.com"):
             ["misc"],
             supybot.Author('James Lu', 'GLolol',
-                        'GLolol@overdrivenetworks.com'):
+                        'james@overdrivenetworks.com'):
                         ['Python 3 support', 'rewriting most of the plugin']
         }
 
 # This is a url where the most recent plugin package can be downloaded.
-__url__ = 'https://github.com/GLolol/SupyPlugins/tree/master/LastFM'
+__url__ = 'https://github.com/jlu5/SupyPlugins/tree/master/LastFM'
 
 from . import config
 from . import plugin
 from imp import reload
 reload(plugin) # In case we're being reloaded.
-# Add more reloads here if you add third-party modules and want them to be
-# reloaded when this plugin is reloaded.  Don't forget to import them as well!
+
+from .local import accountsdb
+reload(accountsdb)
 
 if world.testing:
     from . import test
