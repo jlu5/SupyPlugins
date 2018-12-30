@@ -51,7 +51,7 @@ class LastFM(callbacks.Plugin):
     def __init__(self, irc):
         self.__parent = super(LastFM, self)
         self.__parent.__init__(irc)
-        self.db = accountsdb.AccountsDB("LastFM", filename)
+        self.db = accountsdb.AccountsDB("LastFM", "LastFM.db")
         world.flushers.append(self.db.flush)
 
         # 2.0 API (see http://www.lastfm.de/api/intro)
@@ -211,8 +211,6 @@ class LastFM(callbacks.Plugin):
             profile["registered"] = ircutils.bold(s)
         irc.reply("%(id)s (realname: %(realname)s) registered on %(registered)s; age: %(age)s; gender: %(gender)s; "
                   "Country: %(country)s; Tracks played: %(playcount)s" % profile)
-
-filename = conf.supybot.directories.data.dirize("LastFM.db")
 
 Class = LastFM
 

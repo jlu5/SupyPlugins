@@ -4,7 +4,7 @@ Shared code for database handling.
 
 import pickle
 
-from supybot import ircdb, log
+from supybot import ircdb, log, conf
 
 class AccountsDB():
     """
@@ -21,7 +21,7 @@ class AccountsDB():
         """
         self.db = {}
         self._plugin_name = plugin_name
-        self.filename = filename
+        self.filename = conf.supybot.directories.data.dirize(filename)
         try:
             with open(self.filename, 'rb') as f:
                self.db = pickle.load(f)
