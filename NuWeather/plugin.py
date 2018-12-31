@@ -214,9 +214,20 @@ class NuWeather(callbacks.Plugin):
         cur_temp = self._format_temp(currentdata['temp_f'], currentdata['temp_c'], msg=msg)
         feels_like = self._format_temp(currentdata['feelslike_f'], currentdata['feelslike_c'], msg=msg)
         humidity = currentdata['humidity']
-        precip = '%smm/%sin' % (currentdata['precip_mm'], currentdata['precip_in'])
-        wind = '%smph/%skph %s' % (currentdata['wind_mph'], currentdata['wind_kph'], currentdata['wind_dir'])
-        visibility = '%skm/%smi' % (currentdata['vis_km'], currentdata['vis_miles'])
+
+        precip = currentdata['precip_mm']
+        if float(precip) != 0.0:  # Only show both units if precip > 0
+            precip = _('%smm/%sin') % (currentdata['precip_mm'], currentdata['precip_in'])
+        else:
+            precip = _('%smm') % precip
+
+        wind = currentdata['wind_mph']
+        if float(wind) != 0.0:  # Ditto for wind speed
+            wind = _('%smph/%skph %s') % (currentdata['wind_mph'], currentdata['wind_kph'], currentdata['wind_dir'])
+        else:
+            wind = _('%smph') % wind
+
+        visibility = _('%skm/%smi') % (currentdata['vis_km'], currentdata['vis_miles'])
         uv = self._format_uv(currentdata['uv'])
 
         current = _('%s %s (Humidity: %s%%) | \x02Feels like:\x02 %s | \x02Precip:\x02 %s '
@@ -229,7 +240,7 @@ class NuWeather(callbacks.Plugin):
         condition = forecastdata['day']['condition']['text']
         maxtemp = self._format_temp(forecastdata['day']['maxtemp_f'], forecastdata['day']['maxtemp_c'], msg=msg)
         mintemp = self._format_temp(forecastdata['day']['mintemp_f'], forecastdata['day']['mintemp_c'], msg=msg)
-        forecast = _('%s, High: %s Low: %s' % (condition, mintemp, maxtemp))
+        forecast = _('%s; High: %s Low: %s' % (condition, mintemp, maxtemp))
 
         s = _('%s :: %s | \x02Today:\x02 %s | Powered by \x02Apixu\x02') % (
             ircutils.bold(location), current, forecast
