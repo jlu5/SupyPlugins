@@ -29,7 +29,7 @@
 ###
 import json
 
-from supybot import utils, plugins, ircutils, callbacks, world
+from supybot import utils, plugins, ircutils, callbacks, world, conf
 from supybot.commands import *
 try:
     from supybot.i18n import PluginInternationalization
@@ -41,6 +41,10 @@ except ImportError:
 
 from .config import BACKENDS
 from .local import accountsdb
+
+HEADERS = {
+    'User-agent': 'Mozilla/5.0 (compatible; Supybot/Limnoria %s; NuWeather weather plugin)' % conf.version
+}
 
 class NuWeather(callbacks.Plugin):
     """Weather plugin for Limnoria"""
@@ -123,7 +127,7 @@ class NuWeather(callbacks.Plugin):
         })
         self.log.debug('NuWeather: using url %s', url)
 
-        f = utils.web.getUrl(url).decode('utf-8')
+        f = utils.web.getUrl(url, headers=HEADERS).decode('utf-8')
         data = json.loads(f)
 
         location = data['location']
