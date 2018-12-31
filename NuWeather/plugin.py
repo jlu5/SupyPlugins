@@ -28,6 +28,7 @@
 
 ###
 import json
+import os
 
 from supybot import utils, plugins, ircutils, callbacks, world, conf
 from supybot.commands import *
@@ -52,12 +53,28 @@ class NuWeather(callbacks.Plugin):
 
     def __init__(self, irc):
         super().__init__(irc)
+        # We use 2 DBs: one to store preferred locations and another for location latlon (geocoding)
         self.db = accountsdb.AccountsDB("NuWeather", 'NuWeather.db')
+        geocode_db_filename = conf.supybot.directories.data.dirize("NuWeather-geocode.json")
+        if os.path.exists(geocode_db_filename):
+            with open(geocode_db_filename) as f:
+                self.geocode_db = json.load(f)
+        else:
+            self.log.info("NuWeather: Creating new geocode DB")
+            self.geocode_db = {}
         world.flushers.append(self.db.flush)
+        world.flushers.append(self._flush_geocode_db)
+
+    def _flush_geocode_db(self):
+        geocode_db_filename = conf.supybot.directories.data.dirize("NuWeather-geocode.json")
+        with open(geocode_db_filename, 'w') as f:
+            json.dump(self.geocode_db, f)
 
     def die(self):
         world.flushers.remove(self.db.flush)
+        world.flushers.remove(self._flush_geocode_db)
         self.db.flush()
+        self._flush_geocode_db()
         super().die()
 
     def _format_temp(self, f, c=None, msg=None):
@@ -115,6 +132,33 @@ class NuWeather(callbacks.Plugin):
             color, risk = 'pink', 'Extreme'
         string = '%d (%s)' % (uv, risk)
         return ircutils.mircColor(string, color)
+
+    def _nominatim_geocode(self, location):
+        location = location.lower()
+        if location in self.geocode_db:
+            self.log.debug('NuWeather: using cached latlon %s for location %s', self.geocode_db[location], location)
+            return self.geocode_db[location]
+
+        url = 'https://nominatim.openstreetmap.org/search/%s?format=jsonv2' % location
+        self.log.debug('NuWeather: using url %s (geocoding)', url)
+        # Custom User agent & caching are required for Nominatim per https://operations.osmfoundation.org/policies/nominatim/
+        f = utils.web.getUrl(url, headers=HEADERS).decode('utf-8')
+        data = json.loads(f)
+        if not data:
+            raise callbacks.Error("Unknown location %s." % location)
+
+        data = data[0]
+        display_name = data['display_name']
+        lat = data['lat']
+        lon = data['lon']
+        osm_id = data['osm_id']
+        self.log.debug('NuWeather: saving %s,%s (osm_id %s, %s) for location %s', lat, lon, osm_id, display_name, location)
+        self.geocode_db[location] = (lat, lon)
+
+        return (lat, lon)
+
+    _geocode = _nominatim_geocode  # Maybe we'll add more backends for this in the future?
+    _geocode.backend = "OSM/Nominatim"
 
     def _apixu_fetcher(self, location):
         """Grabs weather data from Apixu."""
