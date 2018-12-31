@@ -48,6 +48,14 @@ def configure(advanced):
 
 NuWeather = conf.registerPlugin('NuWeather')
 conf.registerGroup(NuWeather, 'apikeys')
+conf.registerGroup(NuWeather, 'units')
+
+class NuWeatherTemperatureDisplayMode(registry.OnlySomeStrings):
+    validStrings = ('F/C', 'C/F', 'F', 'C')
+
+conf.registerChannelValue(NuWeather.units, 'temperature',
+    NuWeatherTemperatureDisplayMode('F/C', _("""Determines how temperatures will be displayed.
+        F/C means show "50F/10C", C means display only Celsius, and so on.""")))
 
 BACKENDS = ('apixu',)
 class NuWeatherBackend(registry.OnlySomeStrings):

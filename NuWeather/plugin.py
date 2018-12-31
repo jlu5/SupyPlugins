@@ -56,8 +56,7 @@ class NuWeather(callbacks.Plugin):
         self.db.flush()
         super().die()
 
-    @staticmethod
-    def _format_temp(f, c=None):
+    def _format_temp(self, f, c=None, msg=None):
         f = float(f)
         if f < 10:
             color = 'light blue'
@@ -75,9 +74,24 @@ class NuWeather(callbacks.Plugin):
             color = 'orange'
         else:
             color = 'red'
+        # Round to nearest tenth for display purposes
         if c is None:
-            c = round((f - 32) * 5/9)
-        string = '%sC/%sF' % (c, f)
+            c = round((f - 32) * 5/9, 1)
+        else:
+            c = round(c, 1)
+        f = round(f, 1)
+
+        displaymode = self.registryValue('units.temperature', msg.args[0] if msg else None)
+        if displaymode == 'F/C':
+            string = '%sF/%sC' % (f, c)
+        elif displaymode == 'C/F':
+            string = '%sC/%sF' % (c, f)
+        elif displaymode == 'F':
+            string = '%sF' % f
+        elif displaymode == 'C':
+            string = '%sC' % c
+        else:
+            raise ValueError("Unknown display mode for temperature.")
         return ircutils.mircColor(string, color)
 
     @staticmethod
