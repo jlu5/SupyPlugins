@@ -78,7 +78,7 @@ class NuWeather(callbacks.Plugin):
         self._flush_geocode_db()
         super().die()
 
-    def _format_temp(self, f, c=None, msg=None):
+    def _format_temp(self, f, c=None):
         """
         Colorizes temperatures and formats them to show either Fahrenheit, Celsius, or both.
         """
@@ -106,7 +106,7 @@ class NuWeather(callbacks.Plugin):
             c = round(c, 1)
         f = round(f, 1)
 
-        displaymode = self.registryValue('units.temperature', msg.args[0] if msg else None)
+        displaymode = self.registryValue('units.temperature', dynamic.channel)
         if displaymode == 'F/C':
             string = '%sF/%sC' % (f, c)
         elif displaymode == 'C/F':
@@ -120,12 +120,12 @@ class NuWeather(callbacks.Plugin):
         return ircutils.mircColor(string, color)
 
     _temperatures_re = re.compile(r'((\d+)°?F)')  # Only need FtoC conversion so far
-    def _mangle_temperatures(self, forecast, msg=None):
+    def _mangle_temperatures(self, forecast):
         """Runs _format_temp() on temperature values embedded within forecast strings."""
         if not forecast:
             return forecast
         for (text, value) in set(self._temperatures_re.findall(forecast)):
-            forecast = forecast.replace(text, self._format_temp(f=value, msg=msg))
+            forecast = forecast.replace(text, self._format_temp(f=value))
         return forecast
 
     @staticmethod
@@ -190,7 +190,7 @@ class NuWeather(callbacks.Plugin):
     _geocode = _nominatim_geocode  # Maybe we'll add more backends for this in the future?
     _geocode.backend = "OSM/Nominatim"
 
-    def _apixu_fetcher(self, location, msg=None):
+    def _apixu_fetcher(self, location):
         """Grabs weather data from Apixu."""
         apikey = self.registryValue('apikeys.apixu')
         if not apikey:
@@ -213,8 +213,8 @@ class NuWeather(callbacks.Plugin):
         # current conditions
         currentdata = data['current']
         condition = currentdata['condition']['text']
-        cur_temp = self._format_temp(currentdata['temp_f'], currentdata['temp_c'], msg=msg)
-        feels_like = self._format_temp(currentdata['feelslike_f'], currentdata['feelslike_c'], msg=msg)
+        cur_temp = self._format_temp(currentdata['temp_f'], currentdata['temp_c'])
+        feels_like = self._format_temp(currentdata['feelslike_f'], currentdata['feelslike_c'])
         humidity = currentdata['humidity']
 
         precip = currentdata['precip_mm']
@@ -240,8 +240,8 @@ class NuWeather(callbacks.Plugin):
         # daily forecast
         forecastdata = data['forecast']['forecastday'][0]
         condition = forecastdata['day']['condition']['text']
-        maxtemp = self._format_temp(forecastdata['day']['maxtemp_f'], forecastdata['day']['maxtemp_c'], msg=msg)
-        mintemp = self._format_temp(forecastdata['day']['mintemp_f'], forecastdata['day']['mintemp_c'], msg=msg)
+        maxtemp = self._format_temp(forecastdata['day']['maxtemp_f'], forecastdata['day']['maxtemp_c'])
+        mintemp = self._format_temp(forecastdata['day']['mintemp_f'], forecastdata['day']['mintemp_c'])
         forecast = _('%s; High: %s Low: %s' % (condition, maxtemp, mintemp))
 
         s = _('%s :: %s | \x02Today:\x02 %s | Powered by \x02Apixu\x02') % (
@@ -249,7 +249,7 @@ class NuWeather(callbacks.Plugin):
         )
         return s
 
-    def _darksky_fetcher(self, location, msg=None):
+    def _darksky_fetcher(self, location):
         """Grabs weather data from Dark Sky."""
         apikey = self.registryValue('apikeys.darksky')
         if not apikey:
@@ -274,7 +274,7 @@ class NuWeather(callbacks.Plugin):
         summary = currentdata.get('summary', 'N/A')
         temp = currentdata.get('temperature')
         if temp is not None:
-            temp = self._format_temp(temp, msg=msg)
+            temp = self._format_temp(temp)
         else:
             temp = ''  # Not available
 
@@ -286,7 +286,7 @@ class NuWeather(callbacks.Plugin):
 
         feels_like = currentdata.get('apparentTemperature')
         if feels_like is not None:
-            feels_like = self._format_temp(feels_like, msg=msg)
+            feels_like = self._format_temp(feels_like)
             s += _(' | \x02Feels like:\x02 %s') % feels_like
 
         precip = currentdata.get('precipIntensity')  # mm per hour
@@ -320,10 +320,10 @@ class NuWeather(callbacks.Plugin):
         # We don't show individual data packets in either of these because that would be way too
         # long for IRC.
         if data['hourly'].get('summary'):
-            hourly_summary = self._mangle_temperatures(data['hourly']['summary'], msg=msg)
+            hourly_summary = self._mangle_temperatures(data['hourly']['summary'])
             s += _(' | \x02Forecast\x02: %s' % hourly_summary)
         if data['daily'].get('summary'):
-            daily_summary = self._mangle_temperatures(data['daily']['summary'], msg=msg)
+            daily_summary = self._mangle_temperatures(data['daily']['summary'])
             s += _(' | \x02This week\x02: %s' % daily_summary)
 
         url = 'https://darksky.net/forecast/%s,%s' % (lat, lon)
@@ -359,7 +359,7 @@ class NuWeather(callbacks.Plugin):
             irc.error(_("Unknown weather backend %s. Valid ones are: %s") % (backend, ', '.join(BACKENDS)), Raise=True)
 
         backend_func = getattr(self, '_%s_fetcher' % backend)
-        s = backend_func(location, msg=msg)
+        s = backend_func(location)
         irc.reply(s)
 
     @wrap(['text'])
