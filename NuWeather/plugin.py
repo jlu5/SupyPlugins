@@ -29,6 +29,7 @@
 ###
 import json
 import os
+import re
 
 from supybot import utils, plugins, ircutils, callbacks, world, conf
 from supybot.commands import *
@@ -78,6 +79,9 @@ class NuWeather(callbacks.Plugin):
         super().die()
 
     def _format_temp(self, f, c=None, msg=None):
+        """
+        Colorizes temperatures and formats them to show either Fahrenheit, Celsius, or both.
+        """
         f = float(f)
         if f < 10:
             color = 'light blue'
@@ -115,6 +119,24 @@ class NuWeather(callbacks.Plugin):
             raise ValueError("Unknown display mode for temperature.")
         return ircutils.mircColor(string, color)
 
+    _temperatures_re = re.compile(r'((\d+)°?F)')  # Only need FtoC conversion so far
+    def _mangle_temperatures(self, forecast, msg=None):
+        """Runs _format_temp() on temperature values embedded within forecast strings."""
+        if not forecast:
+            return forecast
+        for (text, value) in set(self._temperatures_re.findall(forecast)):
+            forecast = forecast.replace(text, self._format_temp(f=value, msg=msg))
+        return forecast
+
+    @staticmethod
+    def _wind_direction(angle):
+        """Returns wind direction (N, W, S, E, etc.) given an angle."""
+        # Adapted from https://stackoverflow.com/a/7490772
+        directions = ('N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW')
+        angle = int(angle)
+        idx = int((angle/(360/len(directions)))+.5)
+        return directions[idx % len(directions)]
+
     @staticmethod
     def _format_uv(uv):
         # From https://en.wikipedia.org/wiki/Ultraviolet_index#Index_usage 2018-12-30
@@ -139,7 +161,7 @@ class NuWeather(callbacks.Plugin):
             self.log.debug('NuWeather: using cached latlon %s for location %s', self.geocode_db[location], location)
             return self.geocode_db[location]
 
-        url = 'https://nominatim.openstreetmap.org/search/%s?format=jsonv2' % location
+        url = 'https://nominatim.openstreetmap.org/search/%s?format=jsonv2' % utils.web.urlquote(location)
         self.log.debug('NuWeather: using url %s (geocoding)', url)
         # Custom User agent & caching are required for Nominatim per https://operations.osmfoundation.org/policies/nominatim/
         f = utils.web.getUrl(url, headers=HEADERS).decode('utf-8')
@@ -148,19 +170,25 @@ class NuWeather(callbacks.Plugin):
             raise callbacks.Error("Unknown location %s." % location)
 
         data = data[0]
+        # Limit location verbosity to 3 divisions (e.g. City, Province/State, Country)
         display_name = data['display_name']
+        display_name_parts = display_name.split(', ')
+        if len(display_name_parts) > 3:
+            display_name = ', '.join([display_name_parts[0]] + display_name_parts[-2:])
+
         lat = data['lat']
         lon = data['lon']
         osm_id = data['osm_id']
         self.log.debug('NuWeather: saving %s,%s (osm_id %s, %s) for location %s', lat, lon, osm_id, display_name, location)
-        self.geocode_db[location] = (lat, lon)
 
-        return (lat, lon)
+        result = (lat, lon, display_name, osm_id)
+        self.geocode_db[location] = result  # Cache result persistently
+        return result
 
     _geocode = _nominatim_geocode  # Maybe we'll add more backends for this in the future?
     _geocode.backend = "OSM/Nominatim"
 
-    def _apixu_fetcher(self, location):
+    def _apixu_fetcher(self, location, msg=None):
         """Grabs weather data from Apixu."""
         apikey = self.registryValue('apikeys.apixu')
         if not apikey:
@@ -183,8 +211,8 @@ class NuWeather(callbacks.Plugin):
         # current conditions
         currentdata = data['current']
         condition = currentdata['condition']['text']
-        cur_temp = self._format_temp(currentdata['temp_f'], currentdata['temp_c'])
-        feels_like = self._format_temp(currentdata['feelslike_f'], currentdata['feelslike_c'])
+        cur_temp = self._format_temp(currentdata['temp_f'], currentdata['temp_c'], msg=msg)
+        feels_like = self._format_temp(currentdata['feelslike_f'], currentdata['feelslike_c'], msg=msg)
         humidity = currentdata['humidity']
         precip = '%smm/%sin' % (currentdata['precip_mm'], currentdata['precip_in'])
         wind = '%smph/%skph %s' % (currentdata['wind_mph'], currentdata['wind_kph'], currentdata['wind_dir'])
@@ -199,13 +227,89 @@ class NuWeather(callbacks.Plugin):
         # daily forecast
         forecastdata = data['forecast']['forecastday'][0]
         condition = forecastdata['day']['condition']['text']
-        maxtemp = self._format_temp(forecastdata['day']['maxtemp_f'], forecastdata['day']['maxtemp_c'])
-        mintemp = self._format_temp(forecastdata['day']['mintemp_f'], forecastdata['day']['mintemp_c'])
-        forecast = _('%s, Low: %s High: %s' % (condition, mintemp, maxtemp))
+        maxtemp = self._format_temp(forecastdata['day']['maxtemp_f'], forecastdata['day']['maxtemp_c'], msg=msg)
+        mintemp = self._format_temp(forecastdata['day']['mintemp_f'], forecastdata['day']['mintemp_c'], msg=msg)
+        forecast = _('%s, High: %s Low: %s' % (condition, mintemp, maxtemp))
 
         s = _('%s :: %s | \x02Today:\x02 %s | Powered by \x02Apixu\x02') % (
             ircutils.bold(location), current, forecast
         )
+        return s
+
+    def _darksky_fetcher(self, location, msg=None):
+        """Grabs weather data from Dark Sky."""
+        apikey = self.registryValue('apikeys.darksky')
+        if not apikey:
+            raise callbacks.Error(_("Please configure the Dark Sky API key in plugins.nuweather.apikeys.darksky."))
+
+        # Convert location to lat,lon first
+        latlon = self._geocode(location)
+        if not latlon:
+            raise callbacks.Error("Unknown location %s." % location)
+
+        lat, lon, display_name, geocodeid = latlon
+
+        # Request US units - this is reflected (mi, mph) and processed in our output format as needed
+        url = 'https://api.darksky.net/forecast/%s/%s,%s?units=us&exclude=minutely' % (apikey, lat, lon)
+        self.log.debug('NuWeather: using url %s', url)
+
+        f = utils.web.getUrl(url, headers=HEADERS).decode('utf-8')
+        data = json.loads(f, strict=False)
+
+        currentdata = data['currently']
+        # N.B. Dark Sky docs tell to not expect any values to exist except the timestamp attached to the response
+        summary = currentdata.get('summary', 'N/A')
+        temp = currentdata.get('temperature')
+        if temp is not None:
+            temp = self._format_temp(temp, msg=msg)
+        else:
+            temp = ''  # Not available
+
+        s = '%s :: %s %s' % (ircutils.bold(display_name), summary, temp)
+
+        humidity = currentdata.get('humidity')
+        if humidity is not None:  # Format humidity as a percentage
+            s += _(' (\x02Humidity:\x02 %.0f%%)') % (float(humidity) * 100)
+
+        feels_like = currentdata.get('apparentTemperature')
+        if feels_like is not None:
+            feels_like = self._format_temp(feels_like, msg=msg)
+            s += _(' | \x02Feels like:\x02 %s') % feels_like
+
+        precip = currentdata.get('precipIntensity')  # mm per hour
+        if precip is not None:
+            s += _(' | \x02Precip:\x02 %smm') % precip
+
+        wind_str = ''
+        windspeed = currentdata.get('windSpeed', 0)
+        windgust = currentdata.get('windGust', 0)
+        if windspeed:
+            wind_str = _(' | \x02Wind:\x02 %smph') % windspeed
+            windbearing = currentdata.get('windBearing')  # This can only be defined if windSpeed != 0
+            if windbearing:
+                wind_str += ' '
+                wind_str += self._wind_direction(windbearing)
+            if windgust:
+                wind_str += _(' up to %smph') % windgust
+        s += wind_str
+
+        visibility = currentdata.get('visibility')
+        if visibility is not None:
+            s += _(' | \x02Visibility:\x02 %smi') % visibility
+
+        uv = currentdata.get('uvIndex')
+        if uv is not None:
+            s += _(' | \x02UV:\x02 %s') % self._format_uv(uv)
+
+        if data['hourly'].get('summary'):
+            hourly_summary = self._mangle_temperatures(data['hourly']['summary'], msg=msg)
+            s += _(' | \x02This hour\x02: %s' % hourly_summary)
+        if data['daily'].get('summary'):
+            daily_summary = self._mangle_temperatures(data['daily']['summary'], msg=msg)
+            s += _(' | \x02Today\x02: %s' % daily_summary)
+
+        url = 'https://darksky.net/forecast/%s,%s' % (lat, lon)
+        s += _(format(' | Powered by \x02Dark Sky+%s\x02 %u', self._geocode.backend, url))
         return s
 
     @wrap([getopts({'user': 'nick', 'backend': None}), additional('text')])
@@ -237,7 +341,7 @@ class NuWeather(callbacks.Plugin):
             irc.error(_("Unknown weather backend %s. Valid ones are: %s") % (backend, ', '.join(BACKENDS)), Raise=True)
 
         backend_func = getattr(self, '_%s_fetcher' % backend)
-        s = backend_func(location)
+        s = backend_func(location, msg=msg)
         irc.reply(s)
 
     @wrap(['text'])

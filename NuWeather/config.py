@@ -57,7 +57,7 @@ conf.registerChannelValue(NuWeather.units, 'temperature',
     NuWeatherTemperatureDisplayMode('F/C', _("""Determines how temperatures will be displayed.
         F/C means show "50F/10C", C means display only Celsius, and so on.""")))
 
-BACKENDS = ('apixu',)
+BACKENDS = ('darksky', 'apixu')
 class NuWeatherBackend(registry.OnlySomeStrings):
     validStrings = BACKENDS
 
