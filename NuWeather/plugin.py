@@ -178,7 +178,7 @@ class NuWeather(callbacks.Plugin):
 
         lat = data['lat']
         lon = data['lon']
-        osm_id = data['osm_id']
+        osm_id = data.get('osm_id')
         self.log.debug('NuWeather: saving %s,%s (osm_id %s, %s) for location %s', lat, lon, osm_id, display_name, location)
 
         result = (lat, lon, display_name, osm_id)
