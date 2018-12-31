@@ -174,6 +174,8 @@ class NuWeather(callbacks.Plugin):
         display_name = data['display_name']
         display_name_parts = display_name.split(', ')
         if len(display_name_parts) > 3:
+            if display_name_parts[-2].isdigit():  # Try to remove ZIP code-like divisions
+                display_name_parts.pop(-2)
             display_name = ', '.join([display_name_parts[0]] + display_name_parts[-2:])
 
         lat = data['lat']
@@ -312,12 +314,17 @@ class NuWeather(callbacks.Plugin):
         if uv is not None:
             s += _(' | \x02UV:\x02 %s') % self._format_uv(uv)
 
+        # This may seem a bit counterintuitive, but the hourly summary is actually a summary of
+        # the hourly data blocks spanning 48 hours. So, it is more of a daily weather forecast.
+        # Similarly, the daily summary is actually a summary of weekly info.
+        # We don't show individual data packets in either of these because that would be way too
+        # long for IRC.
         if data['hourly'].get('summary'):
             hourly_summary = self._mangle_temperatures(data['hourly']['summary'], msg=msg)
-            s += _(' | \x02This hour\x02: %s' % hourly_summary)
+            s += _(' | \x02Forecast\x02: %s' % hourly_summary)
         if data['daily'].get('summary'):
             daily_summary = self._mangle_temperatures(data['daily']['summary'], msg=msg)
-            s += _(' | \x02Today\x02: %s' % daily_summary)
+            s += _(' | \x02This week\x02: %s' % daily_summary)
 
         url = 'https://darksky.net/forecast/%s,%s' % (lat, lon)
         s += _(format(' | Powered by \x02Dark Sky+%s\x02 %u', self._geocode.backend, url))
