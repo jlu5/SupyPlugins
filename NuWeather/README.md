@@ -1,13 +1,20 @@
 ## NuWeather
 
-A weather plugin for Limnoria. It currently uses [Apixu](https://www.apixu.com/), but more backends will be added soon.
+A weather plugin for Limnoria. It supports multiple backends:
+
+- [Dark Sky](https://darksky.net) (default)
+- [Apixu](https://www.apixu.com/)
+
+For the Dark Sky backend, [OpenStreetMap Nominatim](https://nominatim.openstreetmap.org/) is used to translate locations into latitude/longitude pairs.
 
 ### Quick start
 
-1) Grab an API key from https://www.apixu.com/
+1) Pick your preferred backend: `config help plugins.nuweather.defaultbackend`
 
-2) Configure it: `/msg yourbot config plugins.nuweather.apikeys.apixu YOUR-API-KEY`
+2) Grab an API key. [Dark Sky](https://darksky.net/dev) | [Apixu](https://www.apixu.com/)
 
-3) Set your default weather location: `setweather <your-preferred-location>`
+3) Configure it: `/msg yourbot config plugins.nuweather.apikeys.BACKENDNAME YOUR-API-KEY`
 
-4) Obtain weather: `weather [<optional location>]`
+5) Set your default weather location: `setweather <your-preferred-location>`
+
+6) Obtain weather: `weather [<optional location>]`

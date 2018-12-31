@@ -315,7 +315,7 @@ class NuWeather(callbacks.Plugin):
             s += _(' | \x02UV:\x02 %s') % self._format_uv(uv)
 
         # This may seem a bit counterintuitive, but the hourly summary is actually a summary of
-        # the hourly data blocks spanning 48 hours. So, it is more of a daily weather forecast.
+        # "hourly" data blocks spanning 48 hours. So, it is more of a daily weather forecast.
         # Similarly, the daily summary is actually a summary of weekly info.
         # We don't show individual data packets in either of these because that would be way too
         # long for IRC.

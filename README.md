@@ -66,7 +66,7 @@ Most of these plugins also have their own READMEs in their folders; you can usua
 - Anti-abuse script; prevents the bot from triggering other bots by modifying its output slightly. For more information, see [NoTrigger/README.md](NoTrigger/README.md).
 
 ##### [NuWeather](NuWeather/README.md)
-- A weather plugin for Limnoria. It currently uses [Apixu](https://www.apixu.com/), but more backends will be added soon.
+- A weather plugin for Limnoria. It supports [Dark Sky](https://darksky.net) and [Apixu](https://www.apixu.com/) as backends.
 
 ##### [OperUp](OperUp/README.md)
 - Allows Supybot to oper up on configured networks, automatically (on connect) and on demand.
