@@ -1,6 +1,6 @@
 ###
 # Copyright (c) 2008, Kevin Funk
-# Copyright (c) 2014-2015 James Lu
+# Copyright (c) 2014-2019 James Lu <james@overdrivenetworks.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -32,6 +32,8 @@
 import supybot.conf as conf
 import supybot.registry as registry
 
+from .local import accountsdb
+
 def configure(advanced):
     # This will be called by supybot to configure this module.  advanced is
     # a bool that specifies whether the user identified himself as an advanced
@@ -54,5 +56,7 @@ conf.registerChannelValue(LastFM, "showExtendedInfo",
         for tracks in 'np' (currently the track tags and user play count). Note:
         this requires a second API call to be made for each 'np' call, which may
         be expensive in high traffic situations."""))
+
+conf.registerGlobalValue(LastFM, accountsdb.CONFIG_OPTION_NAME, accountsdb.CONFIG_OPTION)
 
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:

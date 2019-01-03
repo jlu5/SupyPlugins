@@ -1,5 +1,5 @@
 ###
-# Copyright (c) 2018, James Lu <james@overdrivenetworks.com>
+# Copyright (c) 2018-2019, James Lu <james@overdrivenetworks.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -55,7 +55,7 @@ class NuWeather(callbacks.Plugin):
     def __init__(self, irc):
         super().__init__(irc)
         # We use 2 DBs: one to store preferred locations and another for location latlon (geocoding)
-        self.db = accountsdb.AccountsDB("NuWeather", 'NuWeather.db')
+        self.db = accountsdb.AccountsDB("NuWeather", 'NuWeather.db', self.registryValue(accountsdb.CONFIG_OPTION_NAME))
         geocode_db_filename = conf.supybot.directories.data.dirize("NuWeather-geocode.json")
         if os.path.exists(geocode_db_filename):
             with open(geocode_db_filename) as f:

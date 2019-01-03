@@ -1,7 +1,7 @@
 ###
 # Copyright (c) 2006, Ilya Kuznetsov
 # Copyright (c) 2008,2012 Kevin Funk
-# Copyright (c) 2014-2017 James Lu <james@overdrivenetworks.com>
+# Copyright (c) 2014-2019 James Lu <james@overdrivenetworks.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -51,7 +51,7 @@ class LastFM(callbacks.Plugin):
     def __init__(self, irc):
         self.__parent = super(LastFM, self)
         self.__parent.__init__(irc)
-        self.db = accountsdb.AccountsDB("LastFM", "LastFM.db")
+        self.db = accountsdb.AccountsDB("LastFM", "LastFM.db", self.registryValue(accountsdb.CONFIG_OPTION_NAME))
         world.flushers.append(self.db.flush)
 
         # 2.0 API (see http://www.lastfm.de/api/intro)

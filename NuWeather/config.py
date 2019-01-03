@@ -1,5 +1,5 @@
 ###
-# Copyright (c) 2018, James Lu <james@overdrivenetworks.com>
+# Copyright (c) 2018-2019, James Lu <james@overdrivenetworks.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -25,7 +25,6 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-
 ###
 
 from supybot import conf, registry
@@ -36,6 +35,8 @@ except:
     # Placeholder that allows to run the plugin on a bot
     # without the i18n module
     _ = lambda x: x
+
+from .local import accountsdb
 
 def configure(advanced):
     # This will be called by supybot to configure this module.  advanced is
@@ -49,6 +50,7 @@ def configure(advanced):
 NuWeather = conf.registerPlugin('NuWeather')
 conf.registerGroup(NuWeather, 'apikeys')
 conf.registerGroup(NuWeather, 'units')
+conf.registerGlobalValue(NuWeather, accountsdb.CONFIG_OPTION_NAME, accountsdb.CONFIG_OPTION)
 
 class NuWeatherTemperatureDisplayMode(registry.OnlySomeStrings):
     validStrings = ('F/C', 'C/F', 'F', 'C')
