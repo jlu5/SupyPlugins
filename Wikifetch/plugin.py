@@ -145,7 +145,7 @@ class Wikifetch(callbacks.Plugin):
             search = redirect
         # otherwise, simply return the title and whether it redirected
         elif self.registryValue('showRedirects', msg.args[0]):
-            redirect = re.search('\(%s <a href=[^>]*>([^<]*)</a>\)' %
+            redirect = re.search(r'\(%s <a href=[^>]*>([^<]*)</a>\)' %
                                  _('Redirected from'), article)
             if redirect:
                 try:
@@ -164,7 +164,7 @@ class Wikifetch(callbacks.Plugin):
             self.log.debug('Wikifetch: failed <link rel="canonical"> link extraction, skipping')
             try:
                 addr = tree.find(".//div[@class='printfooter']/a").attrib['href']
-                addr = re.sub('([&?]|(amp;)?)oldid=\d+$', '', addr)
+                addr = re.sub(r'([&?]|(amp;)?)oldid=\d+$', '', addr)
             except (ValueError, AttributeError):
                 self.log.debug('Wikifetch: failed printfooter link extraction, skipping')
                 # If any of the above post-processing tricks fail, just ignore
@@ -245,7 +245,7 @@ class Wikifetch(callbacks.Plugin):
         reply = reply.replace('&amp;','&')
 
         # Remove inline citations (text[1][2][3]) as well as inline notes (text[note 1]).
-        reply = re.sub('\[[a-z ]*?\d+\]', '', reply)
+        reply = re.sub(r'\[[a-z ]*?\d+\]', '', reply)
 
         return reply
 
