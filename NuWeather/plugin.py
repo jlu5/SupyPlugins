@@ -327,7 +327,7 @@ class NuWeather(callbacks.Plugin):
             s += _(' | \x02This week\x02: %s' % daily_summary)
 
         url = 'https://darksky.net/forecast/%s,%s' % (lat, lon)
-        s += _(format(' | Powered by \x02Dark Sky+%s\x02 %u', self._geocode.backend, url))
+        s += _(format(' | Powered by \x02Dark\xa0Sky+%s\x02 %u', self._geocode.backend, url))
         return s
 
     @wrap([getopts({'user': 'nick', 'backend': None}), additional('text')])
