@@ -42,7 +42,7 @@ except ImportError:
     # without the i18n module
     _ = lambda x: x
 
-from .config import BACKENDS
+from .config import BACKENDS, DEFAULT_FORMAT
 from .local import accountsdb
 
 HEADERS = {
@@ -136,7 +136,7 @@ class NuWeather(callbacks.Plugin):
             c = round(c, 1)
         f = round(f, 1)
 
-        displaymode = self.registryValue('units.temperature', dynamic.channel)
+        displaymode = self.registryValue('units.temperature', dynamic.msg.args[0])
         if displaymode == 'F/C':
             string = '%sF/%sC' % (f, c)
         elif displaymode == 'C/F':
@@ -265,18 +265,19 @@ class NuWeather(callbacks.Plugin):
     _geocode = _nominatim_geocode  # Maybe we'll add more backends for this in the future?
     _geocode.backend = "OSM/Nominatim"
 
-    FORMAT = ('\x02$location\x02 :: $current__condition $current__temperature (Humidity: $current__humidity) | \x02Feels like:\x02 $current__feels_like '
-              '| \x02Wind\x02: $current__wind $current__wind_dir | \x02Today\x02: $forecast__0__summary. High $forecast__0__max. Low $forecast__0__min. '
-              '| \x02Tomorrow\x02: $forecast__1__summary. High $forecast__1__max. Low $forecast__1__min. | Powered by \x02$poweredby\x02 $url')
-
     def _format(self, data):
         """
         Formats and returns current conditions.
         """
+        # Work around IRC length limits...
+        data['c'] = data['current']
+        data['f'] = data['forecast']
+
         flat_data = flatten_subdicts(data)
         if flat_data.get('url'):
             flat_data['url'] = utils.str.url(flat_data['url'])
-        template = string.Template(self.FORMAT)
+
+        template = string.Template(self.registryValue('outputFormat', dynamic.msg.args[0]) or DEFAULT_FORMAT)
         return template.safe_substitute(flat_data)
 
     def _apixu_fetcher(self, location):
