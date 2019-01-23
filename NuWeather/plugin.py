@@ -195,9 +195,9 @@ class NuWeather(callbacks.Plugin):
             return '0'  # Don't bother with 2 units if the value is 0
 
         if mm is None:
-            mm = round(inches / 25.4, 1)
+            mm = round(inches * 25.4, 1)
         elif inches is None:
-            inches = round(mm * 25.4, 1)
+            inches = round(mm / 25.4, 1)
 
         return _('%smm/%sin') % (mm, inches)
 
@@ -209,9 +209,9 @@ class NuWeather(callbacks.Plugin):
             return '0'  # Don't bother with 2 units if the value is 0
 
         if mi is None:
-            mi = round(km * 1.609, 1)
+            mi = round(km / 1.609, 1)
         elif km is None:
-            km = round(mi / 1.609, 1)
+            km = round(mi * 1.609, 1)
 
         if speed:
             return _('%smph/%skph') % (mi, km)
