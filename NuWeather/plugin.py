@@ -218,6 +218,18 @@ class NuWeather(callbacks.Plugin):
         else:
             return _('%smi/%skm') % (mi, km)
 
+    @staticmethod
+    def _format_percentage(value):
+        """
+        Formats percentage values given either as an int (value%) or float (0 <= value <= 1).
+        """
+        if isinstance(value, float):
+            return '%.0f%%' % (value * 100)
+        elif isinstance(value, int):
+            return '%d%%' % value
+        else:
+            return 'N/A'
+
     def _nominatim_geocode(self, location):
         location = location.lower()
         if location in self.geocode_db:
@@ -254,8 +266,8 @@ class NuWeather(callbacks.Plugin):
     _geocode.backend = "OSM/Nominatim"
 
     FORMAT = ('\x02$location\x02 :: $current__condition $current__temperature (Humidity: $current__humidity) | \x02Feels like:\x02 $current__feels_like '
-              '| \x02Wind\x02: $current__wind $current__wind_dir | \x02Today\x02: $forecast__0__summary High $forecast__0__max. Low $forecast__0__min. '
-              '| \x02Tomorrow\x02: $forecast__1__summary High $forecast__1__max. Low $forecast__1__min. | Powered by \x02$poweredby\x02 $url')
+              '| \x02Wind\x02: $current__wind $current__wind_dir | \x02Today\x02: $forecast__0__summary. High $forecast__0__max. Low $forecast__0__min. '
+              '| \x02Tomorrow\x02: $forecast__1__summary. High $forecast__1__max. Low $forecast__1__min. | Powered by \x02$poweredby\x02 $url')
 
     def _format(self, data):
         """
@@ -298,9 +310,9 @@ class NuWeather(callbacks.Plugin):
                 'condition': currentdata['condition']['text'],
                 'temperature': self._format_temp(currentdata['temp_f'], currentdata['temp_c']),
                 'feels_like': self._format_temp(currentdata['feelslike_f'], currentdata['feelslike_c']),
-                'humidity': currentdata['humidity'],
+                'humidity': self._format_percentage(currentdata['humidity']),
                 'precip': self._format_precip(currentdata['precip_mm'], currentdata['precip_in']),
-                'wind': self._format_distance(currentdata['wind_mph'], currentdata['wind_kph']),
+                'wind': self._format_distance(currentdata['wind_mph'], currentdata['wind_kph'], speed=True),
                 'wind_dir': currentdata['wind_dir'],
                 'uv': self._format_uv(currentdata['uv']),
                 'visibility': self._format_distance(currentdata.get('vis_miles'), currentdata.get('vis_km')),
@@ -331,12 +343,8 @@ class NuWeather(callbacks.Plugin):
         data = json.loads(f, strict=False)
 
         currentdata = data['currently']
+
         # N.B. Dark Sky docs tell to not expect any values to exist except the timestamp attached to the response
-
-        humidity = currentdata.get('humidity')
-        if humidity is not None:  # Format humidity as a percentage
-            humidity = '%.0f%%' % (float(humidity) * 100)
-
         return {
             'location': display_name,
             'poweredby': 'Dark\xa0Sky+' + self._geocode.backend,
@@ -345,7 +353,7 @@ class NuWeather(callbacks.Plugin):
                 'condition': currentdata.get('summary', 'N/A'),
                 'temperature': self._format_temp(f=currentdata.get('temperature')),
                 'feels_like': self._format_temp(f=currentdata.get('apparentTemperature')),
-                'humidity': humidity,
+                'humidity': self._format_percentage(currentdata.get('humidity')),
                 'precip': self._format_precip(mm=currentdata.get('precipIntensity')),
                 'wind': self._format_distance(mi=currentdata.get('windSpeed', 0), speed=True),
                 'wind_dir': self._wind_direction(currentdata.get('windBearing')),
@@ -354,7 +362,7 @@ class NuWeather(callbacks.Plugin):
             },
             'forecast': [{'max': self._format_temp(f=forecastdata['temperatureHigh']),
                           'min': self._format_temp(f=forecastdata['temperatureLow']),
-                          'summary': forecastdata['summary']} for forecastdata in data['daily']['data']]
+                          'summary': forecastdata['summary'].rstrip('.')} for forecastdata in data['daily']['data']]
         }
 
     @wrap([getopts({'user': 'nick', 'backend': None}), additional('text')])
