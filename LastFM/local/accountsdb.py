@@ -86,9 +86,11 @@ class AccountsDB():
 
     def flush(self):
         """Exports the database to a file."""
+        tmp_filename = self.filename + '.tmp'
         try:
-            with open(self.filename, 'wb') as f:
+            with open(tmp_filename, 'wb') as f:
                 pickle.dump(self.db, f, 2)
+            os.rename(tmp_filename, self.filename)
         except Exception as e:
             log.warning('%s: Unable to write database: %s', self._plugin_name, e)
 
