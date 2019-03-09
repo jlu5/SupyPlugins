@@ -32,6 +32,7 @@ accountsdb: Provides storage for user-specific data via Supybot accounts, ident@
 """
 
 import pickle
+import os
 
 from supybot import ircdb, log, conf, registry
 
@@ -91,7 +92,7 @@ class AccountsDB():
                 pickle.dump(self.db, f, 2)
             os.rename(tmp_filename, self.filename)
         except Exception as e:
-            log.warning('%s: Unable to write database: %s', self._plugin_name, e)
+            log.exception('%s: Unable to write database: %s', self._plugin_name, e)
 
     def _get_key(self, prefix):
         nick, identhost = prefix.split('!', 1)
