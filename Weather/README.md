@@ -1,4 +1,6 @@
-# Limnoria plugin for Weather Underground
+# [DEPRECATED] Limnoria plugin for Weather Underground
+
+Update 201903: Weather Underground has shut down free weather access, so this plugin will no longer be maintained. See the [NuWeather](../NuWeather) plugin for an alternative using other backends.
 
 ## Installation
 
