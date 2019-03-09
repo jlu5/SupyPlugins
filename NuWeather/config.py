@@ -74,12 +74,21 @@ for backend in BACKENDS:
 DEFAULT_FORMAT = ('\x02$location\x02 :: $c__condition $c__temperature '
                   '(Humidity: $c__humidity) | \x02Feels like:\x02 $c__feels_like '
                   '| \x02Wind\x02: $c__wind $c__wind_dir '
-                  '| \x02Today\x02: $f__0__summary. High $f__0__max. Low $f__0__min. '
-                  '| \x02Tomorrow\x02: $f__1__summary. High $f__1__max. Low $f__1__min. '
+                  '| \x02$f__0__dayname\x02: $f__0__summary. High $f__0__max. Low $f__0__min. '
+                  '| \x02$f__1__dayname\x02: $f__1__summary. High $f__1__max. Low $f__1__min. '
                   '| Powered by \x02$poweredby\x02 $url')
 conf.registerChannelValue(NuWeather, 'outputFormat',
     registry.String("", _("""EXPERIMENTAL: configures NuWeather's output format.
         Template names are not finalized and may change between releases. If in doubt, leave this
         option empty and the default format will be used: "%s\"""" % DEFAULT_FORMAT)))
 
+forecastdays = []
+for idx in range(5):  # Build up a 5 day forecast. XXX: not a user friendly config format
+    forecastdays.append('\x02$f__{idx}__dayname\x02: $f__{idx}__summary ($f__{idx}__min to $f__{idx}__max)'.format(idx=idx))
+DEFAULT_FORECAST_FORMAT = ('\x02$location\x02 :: %s | Powered by \x02$poweredby\x02 $url' % ' | '.join(forecastdays))
+
+conf.registerChannelValue(NuWeather.outputFormat, 'forecast',
+    registry.String("", _("""EXPERIMENTAL: configures NuWeather's output format for forecasts.
+        Template names are not finalized and may change between releases. If in doubt, leave this
+        option empty and the default format will be used: "%s\"""" % DEFAULT_FORECAST_FORMAT)))
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:

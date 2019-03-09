@@ -32,7 +32,7 @@ import os
 import re
 import string
 
-from supybot import utils, plugins, ircutils, callbacks, world, conf
+from supybot import utils, plugins, ircutils, callbacks, world, conf, log
 from supybot.commands import *
 try:
     from supybot.i18n import PluginInternationalization
@@ -42,7 +42,13 @@ except ImportError:
     # without the i18n module
     _ = lambda x: x
 
-from .config import BACKENDS, DEFAULT_FORMAT
+try:
+    import pendulum
+except ImportError:
+    pendulum = None
+    log.warning('NuWeather: pendulum is not installed; extended forecasts will not be formatted properly')
+
+from .config import BACKENDS, DEFAULT_FORMAT, DEFAULT_FORECAST_FORMAT
 from .local import accountsdb
 
 HEADERS = {
@@ -230,6 +236,23 @@ class NuWeather(callbacks.Plugin):
         else:
             return 'N/A'
 
+    @staticmethod
+    def _get_dayname(ts, idx, *, tz=None):
+        """
+        Returns the day name given a Unix timestamp, day index and (optionally) a timezone.
+        """
+        if pendulum is not None:
+            p = pendulum.from_timestamp(ts, tz=tz)
+            return p.format('dddd')
+        else:
+            # Fallback
+            if idx == 0:
+                return 'Today'
+            elif idx == 1:
+                return 'Tomorrow'
+            else:
+                return 'Day_%d' % idx
+
     def _nominatim_geocode(self, location):
         location = location.lower()
         if location in self.geocode_db:
@@ -265,11 +288,11 @@ class NuWeather(callbacks.Plugin):
     _geocode = _nominatim_geocode  # Maybe we'll add more backends for this in the future?
     _geocode.backend = "OSM/Nominatim"
 
-    def _format(self, data):
+    def _format(self, data, forecast=False):
         """
         Formats and returns current conditions.
         """
-        # Work around IRC length limits...
+        # Work around IRC length limits for config opts...
         data['c'] = data['current']
         data['f'] = data['forecast']
 
@@ -277,7 +300,12 @@ class NuWeather(callbacks.Plugin):
         if flat_data.get('url'):
             flat_data['url'] = utils.str.url(flat_data['url'])
 
-        template = string.Template(self.registryValue('outputFormat', dynamic.msg.args[0]) or DEFAULT_FORMAT)
+        if forecast:
+            fmt = self.registryValue('outputFormat.forecast', dynamic.msg.args[0]) or DEFAULT_FORECAST_FORMAT
+        else:
+            fmt = self.registryValue('outputFormat', dynamic.msg.args[0]) or DEFAULT_FORMAT
+        template = string.Template(fmt)
+
         return template.safe_substitute(flat_data)
 
     def _apixu_fetcher(self, location):
@@ -295,11 +323,11 @@ class NuWeather(callbacks.Plugin):
         f = utils.web.getUrl(url, headers=HEADERS).decode('utf-8')
         data = json.loads(f)
 
-        location = data['location']
-        if location['region']:
-            location = "%s, %s, %s" % (location['name'], location['region'], location['country'])
+        locationdata = data['location']
+        if locationdata['region']:
+            location = "%s, %s, %s" % (locationdata['name'], locationdata['region'], locationdata['country'])
         else:
-            location = "%s, %s" % (location['name'], location['country'])
+            location = "%s, %s" % (locationdata['name'], locationdata['country'])
 
         currentdata = data['current']
 
@@ -318,9 +346,10 @@ class NuWeather(callbacks.Plugin):
                 'uv': self._format_uv(currentdata['uv']),
                 'visibility': self._format_distance(currentdata.get('vis_miles'), currentdata.get('vis_km')),
             },
-            'forecast': [{'max': self._format_temp(forecastdata['day']['maxtemp_f'], forecastdata['day']['maxtemp_c']),
+            'forecast': [{'dayname': self._get_dayname(forecastdata['date_epoch'], idx, tz=locationdata['tz_id']),
+                          'max': self._format_temp(forecastdata['day']['maxtemp_f'], forecastdata['day']['maxtemp_c']),
                           'min': self._format_temp(forecastdata['day']['mintemp_f'], forecastdata['day']['mintemp_c']),
-                          'summary': forecastdata['day']['condition']['text']} for forecastdata in data['forecast']['forecastday']]
+                          'summary': forecastdata['day']['condition']['text']} for idx, forecastdata in enumerate(data['forecast']['forecastday'])]
         }
 
     def _darksky_fetcher(self, location):
@@ -361,19 +390,21 @@ class NuWeather(callbacks.Plugin):
                 'uv': self._format_uv(currentdata.get('uvIndex')),
                 'visibility': self._format_distance(mi=currentdata['visibility']),
             },
-            'forecast': [{'max': self._format_temp(f=forecastdata['temperatureHigh']),
+            'forecast': [{'dayname': self._get_dayname(forecastdata['time'], idx, tz=data['timezone']),
+                          'max': self._format_temp(f=forecastdata['temperatureHigh']),
                           'min': self._format_temp(f=forecastdata['temperatureLow']),
-                          'summary': forecastdata['summary'].rstrip('.')} for forecastdata in data['daily']['data']]
+                          'summary': forecastdata['summary'].rstrip('.')} for idx, forecastdata in enumerate(data['daily']['data'])]
         }
 
-    @wrap([getopts({'user': 'nick', 'backend': None}), additional('text')])
+    @wrap([getopts({'user': 'nick', 'backend': None, 'forecast': ''}), additional('text')])
     def weather(self, irc, msg, args, optlist, location):
-        """
-        [--user <othernick>] [--backend <backend>] [<location>]
+        """[--user <othernick>] [--backend <backend>] [--forecast] [<location>]
 
         Fetches weather and forecast information for <location>. <location> can be left blank if you have a previously set location (via 'setweather').
 
-        If the --user option is specified, show weather for the saved location of that nick, instead of the caller.
+        If --forecast is specified, show an extended (default: 5-day) forecast for <location>.
+
+        If the --user option is specified, show weather for the saved location of that nick, instead of the caller's.
         """
         optlist = dict(optlist)
         # Default to the caller
@@ -388,7 +419,7 @@ class NuWeather(callbacks.Plugin):
         location = location or self.db.get(hostmask)
 
         if not location:
-            irc.error(_("I did not find a preset location for your nick. Please set one via 'setweather <location>'."), Raise=True)
+            irc.error(_("I did not find a preset location for you. Please set one via 'setweather <location>'."), Raise=True)
 
         backend = optlist.get('backend', self.registryValue('defaultBackend', msg.args[0]))
         if backend not in BACKENDS:
@@ -396,7 +427,8 @@ class NuWeather(callbacks.Plugin):
 
         backend_func = getattr(self, '_%s_fetcher' % backend)
         raw_data = backend_func(location)
-        s = self._format(raw_data)
+
+        s = self._format(raw_data, forecast='forecast' in optlist)
         irc.reply(s)
 
     @wrap(['text'])

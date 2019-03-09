@@ -45,7 +45,7 @@ optional arguments:
 
 3) Run the script on the right files: `./weather-migrate.py BOT_DATA_DIR/Weather.db BOT_DATA_DIR/NuWeather.db`
 
-4) After performing the migration, set the **`plugins.NuWeather.DBAddressingMode` option to `nicks`** (since the previous database tracks locations by nick):
+4) After performing the migration, set the **`plugins.NuWeather.DBAddressingMode`** option to **`nicks`** (since the previous database tracks locations by nick):
 
 ```
 config plugins.NuWeather.DBAddressingMode nicks
