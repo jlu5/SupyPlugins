@@ -48,7 +48,7 @@ except ImportError:
     pendulum = None
     log.warning('NuWeather: pendulum is not installed; extended forecasts will not be formatted properly')
 
-from .config import BACKENDS, DEFAULT_FORMAT, DEFAULT_FORECAST_FORMAT
+from .config import BACKENDS, GEOBACKS, DEFAULT_FORMAT, DEFAULT_FORECAST_FORMAT
 from .local import accountsdb
 
 HEADERS = {
@@ -101,6 +101,9 @@ class NuWeather(callbacks.Plugin):
             self.geocode_db = {}
         world.flushers.append(self.db.flush)
         world.flushers.append(self._flush_geocode_db)
+        self.geoback = self.registryValue('geocodeBackend')
+        if self.geoback not in GEOBACKS:
+            irc.error(_("Unknown geocode backend %s. Valid ones are: %s") % (self.geoback, ', '.join(GEOBACKS)), Raise=True)
 
     def _flush_geocode_db(self):
         geocode_db_filename = conf.supybot.directories.data.dirize("NuWeather-geocode.json")
@@ -265,7 +268,7 @@ class NuWeather(callbacks.Plugin):
         f = utils.web.getUrl(url, headers=HEADERS).decode('utf-8')
         data = json.loads(f)
         if not data:
-            raise callbacks.Error("Unknown location %s." % location)
+            raise callbacks.Error("Unknown location %s from %s Geocoding API" % location, self.geoback)
 
         data = data[0]
         # Limit location verbosity to 3 divisions (e.g. City, Province/State, Country)
@@ -285,8 +288,35 @@ class NuWeather(callbacks.Plugin):
         self.geocode_db[location] = result  # Cache result persistently
         return result
 
-    _geocode = _nominatim_geocode  # Maybe we'll add more backends for this in the future?
-    _geocode.backend = "OSM/Nominatim"
+    def _google_geocode(self, location):
+        location = location.lower()
+        apikey = self.registryValue('apikeys.google')
+        if not apikey:
+            raise callbacks.Error("No Google Geocode API key.", Raise=True)
+        if location in self.geocode_db:
+            self.log.debug('NuWeather: using cached latlon %s for location %s', self.geocode_db[location], location)
+            return self.geocode_db[location]
+        url = "https://maps.googleapis.com/maps/api/geocode/json?address={0}&key={1}".format(utils.web.urlquote(location), apikey)
+        self.log.debug('NuWeather: using url %s (geocoding)', url)
+        # Custom User agent & caching are required for Nominatim per https://operations.osmfoundation.org/policies/nominatim/
+        f = utils.web.getUrl(url, headers=HEADERS).decode('utf-8')
+        data = json.loads(f)
+        if not data:
+            raise callbacks.Error("Unknown location %s from %s Geocoding API" % location, self.geoback)
+        data = data['results'][0]
+        lat = data['geometry']['location']['lat']
+        lon = data['geometry']['location']['lng']
+        display_name = data['formatted_address']
+        place_id = data['place_id']
+        self.log.debug('NuWeather: saving %s,%s (place_id %s, %s) for location %s', lat, lon, place_id, display_name, location)
+        result = (lat, lon, display_name, place_id)
+        self.geocode_db[location] = result  # Cache result persistently
+        return result
+
+    def _geocode (self, location):
+        backend_func = getattr(self, '_%s_geocode' % self.geoback)
+        result = backend_func(location)
+        return result
 
     def _format(self, data, forecast=False):
         """
@@ -377,7 +407,7 @@ class NuWeather(callbacks.Plugin):
         # N.B. Dark Sky docs tell to not expect any values to exist except the timestamp attached to the response
         return {
             'location': display_name,
-            'poweredby': 'Dark\xa0Sky+' + self._geocode.backend,
+            'poweredby': 'Dark\xa0Sky+' + self.geoback.title(),
             'url': 'https://darksky.net/forecast/%s,%s' % (lat, lon),
             'current': {
                 'condition': currentdata.get('summary', 'N/A'),
@@ -424,6 +454,10 @@ class NuWeather(callbacks.Plugin):
         backend = optlist.get('backend', self.registryValue('defaultBackend', msg.args[0]))
         if backend not in BACKENDS:
             irc.error(_("Unknown weather backend %s. Valid ones are: %s") % (backend, ', '.join(BACKENDS)), Raise=True)
+
+        self.geoback = self.registryValue('geocodeBackend', msg.args[0])
+        if self.geoback not in GEOBACKS:
+            irc.error(_("Unknown geocode backend %s. Valid ones are: %s") % (self.geoback, ', '.join(GEOBACKS)), Raise=True)
 
         backend_func = getattr(self, '_%s_fetcher' % backend)
         raw_data = backend_func(location)
