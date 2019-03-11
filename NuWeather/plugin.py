@@ -276,7 +276,7 @@ class NuWeather(callbacks.Plugin):
         lat = data['lat']
         lon = data['lon']
         osm_id = data.get('osm_id')
-        self.log.debug('NuWeather: saving %s,%s (osm_id %s, %s) for location %s', lat, lon, osm_id, display_name, location)
+        self.log.debug('NuWeather: saving %s,%s (osm_id %s, %s) for location %s from OSM/Nominatim', lat, lon, osm_id, display_name, location)
 
         result = (lat, lon, display_name, osm_id, "OSM/Nominatim")
         self.geocode_db[location] = result  # Cache result persistently
@@ -299,7 +299,7 @@ class NuWeather(callbacks.Plugin):
         lon = data['geometry']['location']['lng']
         display_name = data['formatted_address']
         place_id = data['place_id']
-        self.log.debug('NuWeather: saving %s,%s (place_id %s, %s) for location %s', lat, lon, place_id, display_name, location)
+        self.log.debug('NuWeather: saving %s,%s (place_id %s, %s) for location %s from GoogleMaps', lat, lon, place_id, display_name, location)
         result = (lat, lon, display_name, place_id, "GoogleMaps")
         self.geocode_db[location] = result  # Cache result persistently
         return result
