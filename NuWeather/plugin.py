@@ -48,7 +48,7 @@ except ImportError:
     pendulum = None
     log.warning('NuWeather: pendulum is not installed; extended forecasts will not be formatted properly')
 
-from .config import BACKENDS, GEOBACKS, DEFAULT_FORMAT, DEFAULT_FORECAST_FORMAT
+from .config import BACKENDS, GEOCODE_BACKENDS, DEFAULT_FORMAT, DEFAULT_FORECAST_FORMAT
 from .local import accountsdb
 
 HEADERS = {
@@ -101,9 +101,6 @@ class NuWeather(callbacks.Plugin):
             self.geocode_db = {}
         world.flushers.append(self.db.flush)
         world.flushers.append(self._flush_geocode_db)
-        self.geoback = self.registryValue('geocodeBackend')
-        if self.geoback not in GEOBACKS:
-            irc.error(_("Unknown geocode backend %s. Valid ones are: %s") % (self.geoback, ', '.join(GEOBACKS)), Raise=True)
 
     def _flush_geocode_db(self):
         geocode_db_filename = conf.supybot.directories.data.dirize("NuWeather-geocode.json")
@@ -258,9 +255,6 @@ class NuWeather(callbacks.Plugin):
 
     def _nominatim_geocode(self, location):
         location = location.lower()
-        if location in self.geocode_db:
-            self.log.debug('NuWeather: using cached latlon %s for location %s', self.geocode_db[location], location)
-            return self.geocode_db[location]
 
         url = 'https://nominatim.openstreetmap.org/search/%s?format=jsonv2' % utils.web.urlquote(location)
         self.log.debug('NuWeather: using url %s (geocoding)', url)
@@ -288,14 +282,11 @@ class NuWeather(callbacks.Plugin):
         self.geocode_db[location] = result  # Cache result persistently
         return result
 
-    def _google_geocode(self, location):
+    def _googlemaps_geocode(self, location):
         location = location.lower()
-        apikey = self.registryValue('apikeys.google')
+        apikey = self.registryValue('apikeys.googlemaps')
         if not apikey:
             raise callbacks.Error("No Google Geocode API key.", Raise=True)
-        if location in self.geocode_db:
-            self.log.debug('NuWeather: using cached latlon %s for location %s', self.geocode_db[location], location)
-            return self.geocode_db[location]
         url = "https://maps.googleapis.com/maps/api/geocode/json?address={0}&key={1}".format(utils.web.urlquote(location), apikey)
         self.log.debug('NuWeather: using url %s (geocoding)', url)
         # Custom User agent & caching are required for Nominatim per https://operations.osmfoundation.org/policies/nominatim/
@@ -313,7 +304,14 @@ class NuWeather(callbacks.Plugin):
         self.geocode_db[location] = result  # Cache result persistently
         return result
 
-    def _geocode (self, location):
+    def _geocode (self, channel, location):
+        if location in self.geocode_db:
+            self.log.debug('NuWeather: using cached latlon %s for location %s', self.geocode_db[location], location)
+            return self.geocode_db[location]
+
+        self.geoback = self.registryValue('geocodeBackend', channel)
+        if self.geoback not in GEOCODE_BACKENDS:
+            irc.error(_("Unknown geocode backend %s. Valid ones are: %s") % (self.geoback, ', '.join(GEOCODE_BACKENDS)), Raise=True)
         backend_func = getattr(self, '_%s_geocode' % self.geoback)
         result = backend_func(location)
         return result
@@ -382,18 +380,22 @@ class NuWeather(callbacks.Plugin):
                           'summary': forecastdata['day']['condition']['text']} for idx, forecastdata in enumerate(data['forecast']['forecastday'])]
         }
 
-    def _darksky_fetcher(self, location):
+    def _darksky_fetcher(self, channel, location):
         """Grabs weather data from Dark Sky."""
         apikey = self.registryValue('apikeys.darksky')
         if not apikey:
             raise callbacks.Error(_("Please configure the Dark Sky API key in plugins.nuweather.apikeys.darksky."))
 
         # Convert location to lat,lon first
-        latlon = self._geocode(location)
+        latlon = self._geocode(channel, location)
         if not latlon:
             raise callbacks.Error("Unknown location %s." % location)
 
         lat, lon, display_name, geocodeid = latlon
+        if 'osm_id' in geocodeid:
+            geocode_api = 'OSM/Nominatim'
+        else:
+            geocode_api = 'GoogleMaps'
 
         # Request US units - this is reflected (mi, mph) and processed in our output format as needed
         url = 'https://api.darksky.net/forecast/%s/%s,%s?units=us&exclude=minutely' % (apikey, lat, lon)
@@ -407,7 +409,7 @@ class NuWeather(callbacks.Plugin):
         # N.B. Dark Sky docs tell to not expect any values to exist except the timestamp attached to the response
         return {
             'location': display_name,
-            'poweredby': 'Dark\xa0Sky+' + self.geoback.title(),
+            'poweredby': 'DarkSky+' + geocode_api,
             'url': 'https://darksky.net/forecast/%s,%s' % (lat, lon),
             'current': {
                 'condition': currentdata.get('summary', 'N/A'),
@@ -436,6 +438,7 @@ class NuWeather(callbacks.Plugin):
 
         If the --user option is specified, show weather for the saved location of that nick, instead of the caller's.
         """
+        channel = msg.args[0]
         optlist = dict(optlist)
         # Default to the caller
         if optlist.get('user'):
@@ -451,16 +454,12 @@ class NuWeather(callbacks.Plugin):
         if not location:
             irc.error(_("I did not find a preset location for you. Please set one via 'setweather <location>'."), Raise=True)
 
-        backend = optlist.get('backend', self.registryValue('defaultBackend', msg.args[0]))
+        backend = optlist.get('backend', self.registryValue('defaultBackend', channel))
         if backend not in BACKENDS:
             irc.error(_("Unknown weather backend %s. Valid ones are: %s") % (backend, ', '.join(BACKENDS)), Raise=True)
 
-        self.geoback = self.registryValue('geocodeBackend', msg.args[0])
-        if self.geoback not in GEOBACKS:
-            irc.error(_("Unknown geocode backend %s. Valid ones are: %s") % (self.geoback, ', '.join(GEOBACKS)), Raise=True)
-
         backend_func = getattr(self, '_%s_fetcher' % backend)
-        raw_data = backend_func(location)
+        raw_data = backend_func(channel, location)
 
         s = self._format(raw_data, forecast='forecast' in optlist)
         irc.reply(s)
