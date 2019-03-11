@@ -293,7 +293,7 @@ class NuWeather(callbacks.Plugin):
         f = utils.web.getUrl(url, headers=HEADERS).decode('utf-8')
         data = json.loads(f)
         if data['status'] != "OK":
-            raise callbacks.Error("Error {0} from GoogleMaps for location {1}".format(data['status'], location))
+            raise callbacks.Error("{0} from GoogleMaps for location {1}".format(data['status'], location))
         data = data['results'][0]
         lat = data['geometry']['location']['lat']
         lon = data['geometry']['location']['lng']
