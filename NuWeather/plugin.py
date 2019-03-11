@@ -292,7 +292,7 @@ class NuWeather(callbacks.Plugin):
         # Custom User agent & caching are required for Nominatim per https://operations.osmfoundation.org/policies/nominatim/
         f = utils.web.getUrl(url, headers=HEADERS).decode('utf-8')
         data = json.loads(f)
-        if not data:
+        if data['status'] != "OK":
             raise callbacks.Error("Unknown location %s from GoogleMaps" % location)
         data = data['results'][0]
         lat = data['geometry']['location']['lat']
