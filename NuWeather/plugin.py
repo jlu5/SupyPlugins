@@ -48,7 +48,7 @@ except ImportError:
     pendulum = None
     log.warning('NuWeather: pendulum is not installed; extended forecasts will not be formatted properly')
 
-from .config import BACKENDS, DEFAULT_FORMAT, DEFAULT_FORECAST_FORMAT
+from .config import BACKENDS, GEOCODE_BACKENDS, DEFAULT_FORMAT, DEFAULT_FORECAST_FORMAT
 from .local import accountsdb
 
 HEADERS = {
@@ -255,9 +255,6 @@ class NuWeather(callbacks.Plugin):
 
     def _nominatim_geocode(self, location):
         location = location.lower()
-        if location in self.geocode_db:
-            self.log.debug('NuWeather: using cached latlon %s for location %s', self.geocode_db[location], location)
-            return self.geocode_db[location]
 
         url = 'https://nominatim.openstreetmap.org/search/%s?format=jsonv2' % utils.web.urlquote(location)
         self.log.debug('NuWeather: using url %s (geocoding)', url)
@@ -265,7 +262,7 @@ class NuWeather(callbacks.Plugin):
         f = utils.web.getUrl(url, headers=HEADERS).decode('utf-8')
         data = json.loads(f)
         if not data:
-            raise callbacks.Error("Unknown location %s." % location)
+            raise callbacks.Error("Unknown location %s from OSM/Nominatim" % location)
 
         data = data[0]
         # Limit location verbosity to 3 divisions (e.g. City, Province/State, Country)
@@ -279,14 +276,50 @@ class NuWeather(callbacks.Plugin):
         lat = data['lat']
         lon = data['lon']
         osm_id = data.get('osm_id')
-        self.log.debug('NuWeather: saving %s,%s (osm_id %s, %s) for location %s', lat, lon, osm_id, display_name, location)
+        self.log.debug('NuWeather: saving %s,%s (osm_id %s, %s) for location %s from OSM/Nominatim', lat, lon, osm_id, display_name, location)
 
-        result = (lat, lon, display_name, osm_id)
+        result = (lat, lon, display_name, osm_id, "OSM/Nominatim")
         self.geocode_db[location] = result  # Cache result persistently
         return result
 
-    _geocode = _nominatim_geocode  # Maybe we'll add more backends for this in the future?
-    _geocode.backend = "OSM/Nominatim"
+    def _googlemaps_geocode(self, location):
+        location = location.lower()
+        apikey = self.registryValue('apikeys.googlemaps')
+        if not apikey:
+            raise callbacks.Error("No Google Geocode API key.", Raise=True)
+        url = "https://maps.googleapis.com/maps/api/geocode/json?address={0}&key={1}".format(utils.web.urlquote(location), apikey)
+        self.log.debug('NuWeather: using url %s (geocoding)', url)
+        # Custom User agent & caching are required for Nominatim per https://operations.osmfoundation.org/policies/nominatim/
+        f = utils.web.getUrl(url, headers=HEADERS).decode('utf-8')
+        data = json.loads(f)
+        if data['status'] != "OK":
+            raise callbacks.Error("{0} from GoogleMaps for location {1}".format(data['status'], location))
+        data = data['results'][0]
+        lat = data['geometry']['location']['lat']
+        lon = data['geometry']['location']['lng']
+        display_name = data['formatted_address']
+        place_id = data['place_id']
+        self.log.debug('NuWeather: saving %s,%s (place_id %s, %s) for location %s from GoogleMaps', lat, lon, place_id, display_name, location)
+        result = (lat, lon, display_name, place_id, "GoogleMaps")
+        self.geocode_db[location] = result  # Cache result persistently
+        return result
+
+    def _geocode (self, location):
+        geocode_backend = self.registryValue('geocodeBackend', dynamic.msg.args[0])
+        if geocode_backend not in GEOCODE_BACKENDS:
+            irc.error(_("Unknown geocode backend %s. Valid ones are: %s") % (geocode_backend, ', '.join(GEOCODE_BACKENDS)), Raise=True)
+
+        if location in self.geocode_db:
+            self.log.debug('NuWeather: using cached latlon %s for location %s', self.geocode_db[location], location)
+            if len(self.geocode_db[location]) > 4:
+                return self.geocode_db[location]
+            else:
+                self.geocode_db[location].append("OSM/Nominatim")
+                return self.geocode_db[location]
+
+        backend_func = getattr(self, '_%s_geocode' % geocode_backend)
+        result = backend_func(location)
+        return result
 
     def _format(self, data, forecast=False):
         """
@@ -363,7 +396,7 @@ class NuWeather(callbacks.Plugin):
         if not latlon:
             raise callbacks.Error("Unknown location %s." % location)
 
-        lat, lon, display_name, geocodeid = latlon
+        lat, lon, display_name, geocodeid, geocode_backend = latlon
 
         # Request US units - this is reflected (mi, mph) and processed in our output format as needed
         url = 'https://api.darksky.net/forecast/%s/%s,%s?units=us&exclude=minutely' % (apikey, lat, lon)
@@ -377,7 +410,7 @@ class NuWeather(callbacks.Plugin):
         # N.B. Dark Sky docs tell to not expect any values to exist except the timestamp attached to the response
         return {
             'location': display_name,
-            'poweredby': 'Dark\xa0Sky+' + self._geocode.backend,
+            'poweredby': 'DarkSky+' + geocode_backend,
             'url': 'https://darksky.net/forecast/%s,%s' % (lat, lon),
             'current': {
                 'condition': currentdata.get('summary', 'N/A'),
