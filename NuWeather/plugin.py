@@ -314,7 +314,8 @@ class NuWeather(callbacks.Plugin):
             if len(self.geocode_db[location]) > 4:
                 return self.geocode_db[location]
             else:
-                return self.geocode_db[location] + ("OSM/Nominatim",)
+                self.geocode_db[location].append("OSM/Nominatim")
+                return self.geocode_db[location]
 
         backend_func = getattr(self, '_%s_geocode' % geocode_backend)
         result = backend_func(location)
