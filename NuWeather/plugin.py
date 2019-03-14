@@ -305,6 +305,31 @@ class NuWeather(callbacks.Plugin):
         self.log.debug('NuWeather: saving %s,%s (place_id %s, %s) for location %s from Google Maps', lat, lon, place_id, display_name, location)
         result = (lat, lon, display_name, place_id, "Google\xa0Maps")
         return result
+    
+    def _opencagedata_geocode(self, location):
+        location = location.lower()
+        apikey = self.registryValue('apikeys.opencagedata')
+        if not apikey:
+            raise callbacks.Error("No OpenCage API key.", Raise=True)
+
+        url = "https://api.opencagedata.com/geocode/v1/json?q={0}&key={1}".format(utils.web.urlquote(location), apikey)
+        self.log.debug('NuWeather: using url %s (geocoding)', url)
+
+        f = utils.web.getUrl(url, headers=HEADERS).decode('utf-8')
+
+        data = json.loads(f)
+        if data['status']['message'] != "OK":
+            raise callbacks.Error("{0} from OpenCage for location {1}".format(data['status']['message'], location))
+
+        data = data['results'][0]
+        lat = data['geometry']['lat']
+        lon = data['geometry']['lng']
+        display_name = data['formatted']
+        place_id = data['annotations']['geohash']
+
+        self.log.debug('NuWeather: saving %s,%s (place_id %s, %s) for location %s from OpenCage', lat, lon, place_id, display_name, location)
+        result = (lat, lon, display_name, place_id, "OpenCage")
+        return result
 
     def _geocode(self, location):
         geocode_backend = self.registryValue('geocodeBackend', dynamic.msg.args[0])
