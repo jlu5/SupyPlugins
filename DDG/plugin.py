@@ -151,6 +151,11 @@ class DDG(callbacks.Plugin):
         """<text>
 
         Searches for <text> on DuckDuckGo's web search."""
+        badwords = self.registryValue('badWords')
+        checklist = text.split()
+        for word in checklist:
+            if word.lower() in badwords:
+                return
         results = self.search_core(text, msg.args[0])
         if not results:
             irc.error("No results found.")
