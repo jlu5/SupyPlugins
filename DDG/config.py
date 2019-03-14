@@ -49,6 +49,8 @@ def configure(advanced):
 
 
 DDG = conf.registerPlugin('DDG')
+conf.registerChannelValue(DDG, 'badWords',
+    registry.CommaSeparatedListOfStrings('', _("""List of words to ignore""")))
 conf.registerChannelValue(DDG, 'maxResults',
     registry.PositiveInteger(4, _("""Determines the maximum number of
     results the bot will respond with.""")))
