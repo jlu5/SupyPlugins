@@ -285,7 +285,7 @@ class NuWeather(callbacks.Plugin):
         location = location.lower()
         apikey = self.registryValue('apikeys.googlemaps')
         if not apikey:
-            raise callbacks.Error("No Google Maps API key.", Raise=True)
+            raise callbacks.Error("No Google Maps API key.")
 
         url = "https://maps.googleapis.com/maps/api/geocode/json?address={0}&key={1}".format(utils.web.urlquote(location), apikey)
         self.log.debug('NuWeather: using url %s (geocoding)', url)
@@ -310,7 +310,7 @@ class NuWeather(callbacks.Plugin):
         location = location.lower()
         apikey = self.registryValue('apikeys.opencage')
         if not apikey:
-            raise callbacks.Error("No OpenCage API key.", Raise=True)
+            raise callbacks.Error("No OpenCage API key.")
 
         url = "https://api.opencagedata.com/geocode/v1/json?q={0}&key={1}".format(utils.web.urlquote(location), apikey)
         self.log.debug('NuWeather: using url %s (geocoding)', url)
