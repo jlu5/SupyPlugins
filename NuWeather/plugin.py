@@ -286,25 +286,27 @@ class NuWeather(callbacks.Plugin):
         location = location.lower()
         apikey = self.registryValue('apikeys.googlemaps')
         if not apikey:
-            raise callbacks.Error("No Google Geocode API key.", Raise=True)
+            raise callbacks.Error("No Google Maps API key.", Raise=True)
+
         url = "https://maps.googleapis.com/maps/api/geocode/json?address={0}&key={1}".format(utils.web.urlquote(location), apikey)
         self.log.debug('NuWeather: using url %s (geocoding)', url)
-        # Custom User agent & caching are required for Nominatim per https://operations.osmfoundation.org/policies/nominatim/
+
         f = utils.web.getUrl(url, headers=HEADERS).decode('utf-8')
         data = json.loads(f)
         if data['status'] != "OK":
-            raise callbacks.Error("{0} from GoogleMaps for location {1}".format(data['status'], location))
+            raise callbacks.Error("{0} from Google Maps for location {1}".format(data['status'], location))
+
         data = data['results'][0]
         lat = data['geometry']['location']['lat']
         lon = data['geometry']['location']['lng']
         display_name = data['formatted_address']
         place_id = data['place_id']
-        self.log.debug('NuWeather: saving %s,%s (place_id %s, %s) for location %s from GoogleMaps', lat, lon, place_id, display_name, location)
-        result = (lat, lon, display_name, place_id, "GoogleMaps")
+        self.log.debug('NuWeather: saving %s,%s (place_id %s, %s) for location %s from Google Maps', lat, lon, place_id, display_name, location)
+        result = (lat, lon, display_name, place_id, "Google\xa0Maps")
         self.geocode_db[location] = result  # Cache result persistently
         return result
 
-    def _geocode (self, location):
+    def _geocode(self, location):
         geocode_backend = self.registryValue('geocodeBackend', dynamic.msg.args[0])
         if geocode_backend not in GEOCODE_BACKENDS:
             irc.error(_("Unknown geocode backend %s. Valid ones are: %s") % (geocode_backend, ', '.join(GEOCODE_BACKENDS)), Raise=True)
@@ -410,7 +412,7 @@ class NuWeather(callbacks.Plugin):
         # N.B. Dark Sky docs tell to not expect any values to exist except the timestamp attached to the response
         return {
             'location': display_name,
-            'poweredby': 'DarkSky+' + geocode_backend,
+            'poweredby': 'Dark\xa0Sky+' + geocode_backend,
             'url': 'https://darksky.net/forecast/%s,%s' % (lat, lon),
             'current': {
                 'condition': currentdata.get('summary', 'N/A'),
