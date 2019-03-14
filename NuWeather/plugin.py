@@ -305,10 +305,10 @@ class NuWeather(callbacks.Plugin):
         self.log.debug('NuWeather: saving %s,%s (place_id %s, %s) for location %s from Google Maps', lat, lon, place_id, display_name, location)
         result = (lat, lon, display_name, place_id, "Google\xa0Maps")
         return result
-    
-    def _opencagedata_geocode(self, location):
+
+    def _opencage_geocode(self, location):
         location = location.lower()
-        apikey = self.registryValue('apikeys.opencagedata')
+        apikey = self.registryValue('apikeys.opencage')
         if not apikey:
             raise callbacks.Error("No OpenCage API key.", Raise=True)
 
