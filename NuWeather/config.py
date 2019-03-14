@@ -60,13 +60,22 @@ conf.registerChannelValue(NuWeather.units, 'temperature',
         F/C means show "50F/10C", C means display only Celsius, and so on.""")))
 
 BACKENDS = ('darksky', 'apixu')
+GEOCODE_BACKENDS = ('nominatim', 'googlemaps')
 class NuWeatherBackend(registry.OnlySomeStrings):
     validStrings = BACKENDS
+class NuWeatherGeocode(registry.OnlySomeStrings):
+    validStrings = GEOCODE_BACKENDS
 
 conf.registerChannelValue(NuWeather, 'defaultBackend',
     NuWeatherBackend(BACKENDS[0], _("""Determines the default weather backend.""")))
+    
+conf.registerChannelValue(NuWeather, 'geocodeBackend',
+    NuWeatherGeocode(GEOCODE_BACKENDS[0], _("""Determines the default geocode backend.""")))
 
 for backend in BACKENDS:
+    conf.registerGlobalValue(NuWeather.apikeys, backend,
+        registry.String("", _("""Sets the API key for %s.""") % backend, private=True))
+for backend in GEOCODE_BACKENDS:
     conf.registerGlobalValue(NuWeather.apikeys, backend,
         registry.String("", _("""Sets the API key for %s.""") % backend, private=True))
 
