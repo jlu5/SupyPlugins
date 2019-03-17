@@ -1,19 +1,25 @@
 # NuWeather
 
-A weather plugin for Limnoria. It supports multiple backends:
+A weather plugin for Limnoria. It supports multiple weather and geocoding backends:
 
-- [Dark Sky](https://darksky.net) (default)
-- [Apixu](https://www.apixu.com/)
+**Weather Backends:**
+- [Dark Sky](https://darksky.net) (default, API key required)
+- [Apixu](https://www.apixu.com/) (API key required)
 
-For the Dark Sky backend, [OpenStreetMap Nominatim](https://nominatim.openstreetmap.org/) is used to translate locations into latitude/longitude pairs.
+**Geocoding Backends:**
+- [OpenStreetMap Nominatim](https://nominatim.openstreetmap.org/) (default, no API key required)
+- [Google Maps](https://developers.google.com/maps/documentation/geocoding/start) (API key required)
+- [OpenCage](https://opencagedata.com/) (API key required)
 
 ## Quick start
 
-1) Pick your preferred backend: `config help plugins.nuweather.defaultbackend`
+1) Pick your preferred weather backend: `config help plugins.NuWeather.defaultBackend`
 
-2) Grab an API key. [Dark Sky](https://darksky.net/dev) | [Apixu](https://www.apixu.com/)
+2) Pick your preferred geocoding backend: `config help plugins.NuWeather.geocodeBackend`
 
-3) Configure it: `/msg yourbot config plugins.nuweather.apikeys.BACKENDNAME YOUR-API-KEY`
+3) Grab relevant API keys. [Dark Sky](https://darksky.net/dev) | [Apixu](https://www.apixu.com/) | [Google Maps](https://developers.google.com/maps/documentation/geocoding/get-api-key) | [OpenCage](https://opencagedata.com/api)
+
+4) Configure it: `/msg yourbot config plugins.NuWeather.apikeys.BACKENDNAME YOUR-API-KEY`
 
 5) Set your default weather location: `setweather <your-preferred-location>`
 
