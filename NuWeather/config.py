@@ -76,12 +76,8 @@ for backend in BACKENDS:
     conf.registerGlobalValue(NuWeather.apikeys, backend,
         registry.String("", _("""Sets the API key for %s.""") % backend, private=True))
 for backend in GEOCODE_BACKENDS:
-    if backend == 'nominatim':
-        # nominatim doesn't require an API key, but valid_geo_backends checks for existence
-        # of API Keys
-        conf.registerGlobalValue(NuWeather.apikeys, backend,
-            registry.String("1", _("""Sets the API key for %s.""") % backend, private=True))
-    else:
+    if backend != 'nominatim':
+        # nominatim doesn't require an API key
         conf.registerGlobalValue(NuWeather.apikeys, backend,
             registry.String("", _("""Sets the API key for %s.""") % backend, private=True))
 
