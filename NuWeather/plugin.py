@@ -415,14 +415,14 @@ class NuWeather(callbacks.Plugin):
                           'summary': forecastdata['day']['condition']['text']} for idx, forecastdata in enumerate(data['forecast']['forecastday'])]
         }
 
-    def _darksky_fetcher(self, location, geobackend):
+    def _darksky_fetcher(self, location, geobackend=None):
         """Grabs weather data from Dark Sky."""
         apikey = self.registryValue('apikeys.darksky')
         if not apikey:
             raise callbacks.Error(_("Please configure the Dark Sky API key in plugins.nuweather.apikeys.darksky."))
 
         # Convert location to lat,lon first
-        latlon = self._geocode(location, geobackend)
+        latlon = self._geocode(location, geobackend=geobackend)
         if not latlon:
             raise callbacks.Error("Unknown location %s." % location)
 
@@ -459,17 +459,20 @@ class NuWeather(callbacks.Plugin):
                           'summary': forecastdata['summary'].rstrip('.')} for idx, forecastdata in enumerate(data['daily']['data'])]
         }
 
-    def _get_valid_backends(self):
+    def _get_available_weather_backends(self):
+        """Fetches valid weather backends by checking to see if API keys are set in registry"""
+        return [backend for backend in BACKENDS if self.registryValue('apikeys.{}'.format(backend))]
+
+    def _get_available_geocode_backends(self):
         """Fetches valid backends by checking to see if API keys are set in registry"""
-        w_backends = [backend for backend in BACKENDS if self.registryValue('apikeys.{}'.format(backend))]
-        g_backends = [backend for backend in GEOCODE_BACKENDS if self.registryValue('apikeys.{}'.format(backend))]
+        backends = [backend for backend in GEOCODE_BACKENDS if self.registryValue('apikeys.{}'.format(backend))]
+        backends.append('nominatim') # always available
+        return backends
 
-        return {'weather': w_backends, 'geo': g_backends}
 
-
-    @wrap([getopts({'user': 'nick', 'weatherbackend': None, 'geobackend': None, 'forecast': '', 'list': ''}), additional('text')])
+    @wrap([getopts({'user': 'nick', 'backend': None, 'weather-backend': None, 'geocode-backend': None, 'forecast': '', 'list-backends': ''}), additional('text')])
     def weather(self, irc, msg, args, optlist, location):
-        """[--user <othernick>] [--weatherbackend <weather backend>] [--geobackend <geocode backend>] [--forecast] [<location>]
+        """[--user <othernick>] [--weather-backend/--backend <weather backend>] [--geocode-backend <geocode backend>] [--forecast] [<location>]
 
         Fetches weather and forecast information for <location>. <location> can be left blank if you have a previously set location (via 'setweather').
 
@@ -477,17 +480,20 @@ class NuWeather(callbacks.Plugin):
 
         If the --user option is specified, show weather for the saved location of that nick, instead of the caller's.
 
-        If either --weatherbackend or --geobackend is specified, will override the default backends if provided backend is available.
+        If either --weather-backend/--backend or --geocode-backend is specified, will override the default backends if provided backend is available.
 
-        If --list is specified, will list all available backends.
+        If --list-backends is specified, will list all available backends.
         """
         optlist = dict(optlist)
-        valid_backends = self._get_valid_backends()
+        available_weather_backends = self._get_available_weather_backends()
+        available_geocode_backends = self._get_available_geocode_backends()
 
         # Check for --list option first
-        if optlist.get('list'):
-            irc.reply("Weather Backends: {0}".format(", ".join(valid_backends['weather'])))
-            irc.reply("Geocode Backends: {0}".format(", ".join(valid_backends['geo'])))
+        if optlist.get('list-backends'):
+            irc.reply("Available weather backends: {0} | Available geocode backends: {1}".format(
+                ", ".join(available_weather_backends),
+                ", ".join(available_geocode_backends)
+            ))
             return
 
         # Default to the caller
@@ -504,15 +510,15 @@ class NuWeather(callbacks.Plugin):
         if not location:
             irc.error(_("I did not find a preset location for you. Please set one via 'setweather <location>'."), Raise=True)
 
-        weatherbackend = optlist.get('weatherbackend', self.registryValue('defaultBackend', msg.args[0]))
-        if weatherbackend not in BACKENDS:
-            irc.error(_("Unknown weather backend %s. Valid ones are: %s") % (weatherbackend, ', '.join(valid_backends['weather'])), Raise=True)
-        geobackend = optlist.get('geobackend', self.registryValue('geocodeBackend', msg.args[0]))
-        if geobackend not in GEOCODE_BACKENDS:
-            irc.error(_("Unknown geocode backend %s. Valid ones are: %s") % (geobackend, ', '.join(valid_backends['geo'])), Raise=True)
+        weather_backend = optlist.get('weather-backend') or optlist.get('backend') or self.registryValue('defaultBackend', msg.args[0])
+        if weather_backend not in BACKENDS:
+            irc.error(_("Unknown weather backend %s. Available ones are: %s") % (weather_backend, ', '.join(available_weather_backends)), Raise=True)
+        geocode_backend = optlist.get('geocode-backend', self.registryValue('geocodeBackend', msg.args[0]))
+        if geocode_backend not in GEOCODE_BACKENDS:
+            irc.error(_("Unknown geocode backend %s. Available ones are: %s") % (geocode_backend, ', '.join(available_geocode_backends)), Raise=True)
 
-        backend_func = getattr(self, '_%s_fetcher' % weatherbackend)
-        raw_data = backend_func(location, geobackend)
+        backend_func = getattr(self, '_%s_fetcher' % weather_backend)
+        raw_data = backend_func(location, geocode_backend)
 
         s = self._format(raw_data, forecast='forecast' in optlist)
         irc.reply(s)
