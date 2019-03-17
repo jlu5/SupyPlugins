@@ -102,4 +102,7 @@ conf.registerChannelValue(NuWeather.outputFormat, 'forecast',
     registry.String("", _("""EXPERIMENTAL: configures NuWeather's output format for forecasts.
         Template names are not finalized and may change between releases. If in doubt, leave this
         option empty and the default format will be used: "%s\"""" % DEFAULT_FORECAST_FORMAT)))
+
+conf.registerChannelValue(NuWeather.outputFormat, 'shortDay',
+    registry.Boolean(False, _("""Configures NuWeather's output format to use short day codes. Sunday becomes Sun, etc.""")))
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:
