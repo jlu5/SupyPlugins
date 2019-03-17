@@ -237,13 +237,13 @@ class NuWeather(callbacks.Plugin):
             return 'N/A'
 
     @staticmethod
-    def _get_dayname(ts, idx, *, tz=None):
+    def _get_dayname(ts, idx, *, tz=None, shortDay=False):
         """
         Returns the day name given a Unix timestamp, day index and (optionally) a timezone.
         """
         if pendulum is not None:
             p = pendulum.from_timestamp(ts, tz=tz)
-            return p.format('dddd')
+            return p.format('dddd' if not shortDay else 'ddd')
         else:
             # Fallback
             if idx == 0:
@@ -374,6 +374,7 @@ class NuWeather(callbacks.Plugin):
     def _apixu_fetcher(self, location, geobackend=None):
         """Grabs weather data from Apixu."""
         apikey = self.registryValue('apikeys.apixu')
+        user_short_day = self.registryValue('outputFormat.shortDay')
         if not apikey:
             raise callbacks.Error(_("Please configure the apixu API key in plugins.nuweather.apikeys.apixu."))
         url = 'https://api.apixu.com/v1/forecast.json?' + utils.web.urlencode({
@@ -409,7 +410,7 @@ class NuWeather(callbacks.Plugin):
                 'uv': self._format_uv(currentdata['uv']),
                 'visibility': self._format_distance(currentdata.get('vis_miles'), currentdata.get('vis_km')),
             },
-            'forecast': [{'dayname': self._get_dayname(forecastdata['date_epoch'], idx, tz=locationdata['tz_id']),
+            'forecast': [{'dayname': self._get_dayname(forecastdata['date_epoch'], idx, tz=locationdata['tz_id'], shortDay=user_short_day),
                           'max': self._format_temp(forecastdata['day']['maxtemp_f'], forecastdata['day']['maxtemp_c']),
                           'min': self._format_temp(forecastdata['day']['mintemp_f'], forecastdata['day']['mintemp_c']),
                           'summary': forecastdata['day']['condition']['text']} for idx, forecastdata in enumerate(data['forecast']['forecastday'])]
@@ -418,6 +419,7 @@ class NuWeather(callbacks.Plugin):
     def _darksky_fetcher(self, location, geobackend=None):
         """Grabs weather data from Dark Sky."""
         apikey = self.registryValue('apikeys.darksky')
+        use_short_day = self.registryValue('outputFormat.shortDay')
         if not apikey:
             raise callbacks.Error(_("Please configure the Dark Sky API key in plugins.nuweather.apikeys.darksky."))
 
@@ -453,7 +455,7 @@ class NuWeather(callbacks.Plugin):
                 'uv': self._format_uv(currentdata.get('uvIndex')),
                 'visibility': self._format_distance(mi=currentdata['visibility']),
             },
-            'forecast': [{'dayname': self._get_dayname(forecastdata['time'], idx, tz=data['timezone']),
+            'forecast': [{'dayname': self._get_dayname(forecastdata['time'], idx, tz=data['timezone'], shortDay=use_short_day),
                           'max': self._format_temp(f=forecastdata['temperatureHigh']),
                           'min': self._format_temp(f=forecastdata['temperatureLow']),
                           'summary': forecastdata['summary'].rstrip('.')} for idx, forecastdata in enumerate(data['daily']['data'])]
