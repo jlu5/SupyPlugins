@@ -64,7 +64,7 @@ config plugins.NuWeather.DBAddressingMode nicks
 * Apixu provides weather lookup by place name directly, and does not need further configuration.
 * Dark Sky requires a separate lookup to translate place names into GPS coordinates, a process known as **geocoding**.
 
-The default backend for geocoding is [OpenStreetMap's Nominatim]((https://nominatim.openstreetmap.org/)) service, and can be configured via the `plugins.NuWeather.geocodeBackend` option.
+The default backend for geocoding is [OpenStreetMap's Nominatim](https://nominatim.openstreetmap.org/) service, and can be configured via the `plugins.NuWeather.geocodeBackend` option.
 
 Other supported options include [Google Maps](https://developers.google.com/maps/documentation/geocoding/start) and [OpenCage](https://opencagedata.com/),
 which may provide more relevant results for North America (e.g. U.S. ZIP codes). These services both require API keys: [Google Maps](https://developers.google.com/maps/documentation/geocoding/get-api-key) (credit card required) | [OpenCage](https://opencagedata.com/api)
