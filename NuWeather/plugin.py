@@ -500,6 +500,23 @@ class NuWeather(callbacks.Plugin):
         s = self._format(raw_data, forecast='forecast' in optlist)
         irc.reply(s)
 
+    @wrap([getopts({'user': 'nick', 'backend': None}), 'text'])
+    def geolookup(self, irc, msg, args, optlist, location):
+        """[--backend <backend>] <location>
+
+        Looks up <location> using a geocoding backend.
+        """
+        optlist = dict(optlist)
+        available_geocode_backends = self._get_available_geocode_backends()
+
+        geocode_backend = optlist.get('backend', self.registryValue('geocodeBackend', msg.args[0]))
+
+        data = self._geocode(location, geobackend=geocode_backend)
+        lat, lon, display_name, place_id, backend = data
+
+        s = 'From %s: \x02%s\x02 [ID: %s] \x02%s,%s' % (backend, display_name, place_id, lat, lon)
+        irc.reply(s)
+
     @wrap(['text'])
     def setweather(self, irc, msg, args, location):
         """<location>
