@@ -507,8 +507,6 @@ class NuWeather(callbacks.Plugin):
         Looks up <location> using a geocoding backend.
         """
         optlist = dict(optlist)
-        available_geocode_backends = self._get_available_geocode_backends()
-
         geocode_backend = optlist.get('backend', self.registryValue('geocodeBackend', msg.args[0]))
 
         data = self._geocode(location, geobackend=geocode_backend)
