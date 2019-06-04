@@ -68,8 +68,8 @@ class PkgInfoTestCase(PluginTestCase):
 
         #@unittest.skip("Remote server is too unreliable (2017-02-23)")
         def test_pkg_archaur(self):
-            self.assertNotError('pkg archaur yaourt')
-            self.assertNotError('pkgsearch archaur yaourt')
+            self.assertNotError('pkg archaur yay')
+            self.assertNotError('pkgsearch archaur yay')
             self.assertError('pkg archaur unittestinvalidpackageignore')
             self.assertError('pkgsearch archaur unittestinvalidpackageignore')
 
