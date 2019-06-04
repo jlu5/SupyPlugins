@@ -49,9 +49,6 @@ Most of these plugins also have their own READMEs in their folders; you can usua
 - Displays random entries from fmylife.com.
    - **Requires:** [Beautiful Soup 4](http://www.crummy.com/software/BeautifulSoup/bs4/doc/)
 
-##### Isup
-- Provides a simple command to check whether a website is up or down (using [isup.me](http://isup.me)).
-
 ##### LastFM
 - LastFM plugin, forked from [krf/supybot-lastfm](https://github.com/krf/supybot-lastfm).
 
