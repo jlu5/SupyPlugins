@@ -38,6 +38,9 @@ Please note that this list may not always be up to date; your best bet is to act
 
 Most of these plugins also have their own READMEs in their folders; you can usually find a usage demonstration or further explanation of what they do.
 
+##### AQI
+- Retrieves [air quality index](https://en.wikipedia.org/wiki/Air_quality_index) info from the [World Air Quality Index project](https://aqicn.org).
+
 ##### CtcpNext
 - Alternative to the official Ctcp plugin, with a database for configurable replies.
 
@@ -103,10 +106,6 @@ Most of these plugins also have their own READMEs in their folders; you can usua
 
 ##### Voteserv
 - A plugin for storing and manipulating votes/polls.
-
-##### [Weather](Weather/README.md) **[DEPRECATED]**
-- My fork of [reticulatingspline's Weather](https://github.com/reticulatingspline/Weather) plugin, with rewritten output handling, explicit location search, and many other tweaks.
-- **Update 2018012**: Weather Underground is shutting down free weather access, so this plugin will no longer be maintained. See the NuWeather plugin in this folder for an alternative using other backends.
 
 ##### Wikifetch
 - Fork of [ProgVal's Wikipedia plugin](https://github.com/ProgVal/Supybot-plugins), with support for other wikis (via a `--site` option) and other improvements.
