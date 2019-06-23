@@ -29,7 +29,7 @@
 ###
 import collections
 
-from supybot import utils, plugins, ircutils, callbacks
+from supybot import utils, plugins, ircutils, callbacks, log
 from supybot.commands import *
 try:
     from supybot.i18n import PluginInternationalization
@@ -52,21 +52,25 @@ class FML(callbacks.Plugin):
     @staticmethod
     def _parse_panel(panel, fml_id=None):
         """Parses a FML entry panel for data. Returns a (fml_id, text, num_upvotes, num_downvotes) tuple."""
-        if panel and panel.p:
-            text = panel.p.text.strip()
+        if panel:
+            content = panel.find(class_='article-link')
+            log.debug("FML: parsing panel %s", panel)
+            log.debug("FML: parsing content %s", content)
+
+            if not content:
+                return
+            text = content.text.strip()
             if not text.endswith(' FML'):  # Ignore ads, promos, previews
                 return
 
             # If not given, extract the FML ID from the link
-            if fml_id is None:
-                link = panel.p.a['href']
-                fml_id = link.split('_', 1)[-1].split('.', 1)[0]
+            if fml_id is None and content.name == 'a':
+                link = content['href']
+                fml_id = link.rsplit('_', 1)[-1].split('.', 1)[0]
 
-            voteup_btn = panel.find('button', class_='vote-up')
-            votedown_btn = panel.find('button', class_='vote-down')
-
-            upvotes = voteup_btn.text.strip()
-            downvotes = votedown_btn.text.strip()
+            vote_counts = panel.find_all('div', class_='vote-count')
+            upvotes = vote_counts[0].text.strip()
+            downvotes = vote_counts[1].text.strip()
 
             data = (fml_id, text, upvotes, downvotes)
             return data
@@ -77,7 +81,7 @@ class FML(callbacks.Plugin):
         soup = BeautifulSoup(html)
 
         results_count = 0
-        for panel in soup.find_all('div', class_='panel-content'):
+        for panel in soup.find_all('div', class_='article-contents'):
             data = self._parse_panel(panel)
             if data:
                 self.log.debug('FML: got entry: %s', str(data))
@@ -95,7 +99,7 @@ class FML(callbacks.Plugin):
         if query:  # Explicit ID given
             html = utils.web.getUrl(self.URL_ARTICLE % query)
             soup = BeautifulSoup(html)
-            panel = soup.find('div', class_='panel-content')
+            panel = soup.find('div', class_='article-contents')
             data = self._parse_panel(panel, fml_id=query)
         else:  # Random search
             if not len(self.cached_results):
