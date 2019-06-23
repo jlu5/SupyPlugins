@@ -118,6 +118,9 @@ class NuWeather(callbacks.Plugin):
         """
         Colorizes temperatures and formats them to show either Fahrenheit, Celsius, or both.
         """
+        if f is None:
+            return _('N/A')
+
         f = float(f)
         if f < 10:
             color = 'light blue'
@@ -451,11 +454,11 @@ class NuWeather(callbacks.Plugin):
                 'wind': self._format_distance(mi=currentdata.get('windSpeed', 0), speed=True),
                 'wind_dir': self._wind_direction(currentdata.get('windBearing')),
                 'uv': self._format_uv(currentdata.get('uvIndex')),
-                'visibility': self._format_distance(mi=currentdata['visibility']),
+                'visibility': self._format_distance(mi=currentdata.get('visibility')),
             },
             'forecast': [{'dayname': self._get_dayname(forecastdata['time'], idx, tz=data['timezone']),
-                          'max': self._format_temp(f=forecastdata['temperatureHigh']),
-                          'min': self._format_temp(f=forecastdata['temperatureLow']),
+                          'max': self._format_temp(f=forecastdata.get('temperatureHigh')),
+                          'min': self._format_temp(f=forecastdata.get('temperatureLow')),
                           'summary': forecastdata['summary'].rstrip('.')} for idx, forecastdata in enumerate(data['daily']['data'])]
         }
 
