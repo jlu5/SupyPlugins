@@ -1,5 +1,5 @@
 ###
-# Copyright (c) 2018, James Lu <james@overdrivenetworks.com>
+# Copyright (c) 2019, James Lu <james@overdrivenetworks.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -28,11 +28,56 @@
 
 ###
 
+import unittest
+
 from supybot.test import *
+from supybot import log
+from . import config
 
+NO_NETWORK_REASON = "Network-based tests are disabled by --no-network"
 
-class NuWeatherTestCase(PluginTestCase):
+class NuWeatherDarkSkyTestCase(PluginTestCase):
     plugins = ('NuWeather',)
+    BACKEND = 'darksky'
 
+    # These tests are not meant to be exhaustive, since we don't want to be hitting our
+    # API limits :(
+
+    def setUp(self):
+        super().setUp()
+        self.myVerbose = verbosity.MESSAGES  # Enable verbose logging of messages
+
+        if not network:
+            return  # Nothing to do if we've disabled network access
+
+        # Fetch our API key
+        varname = 'NUWEATHER_APIKEY_%s' % self.BACKEND.upper()
+        apikey = os.environ.get(varname)
+        if apikey:
+            log.info('NuWeather: Set API key for %s from env var %s', self.BACKEND, varname)
+            conf.supybot.plugins.NuWeather.apikeys.get(self.BACKEND).setValue(apikey)
+        else:
+            raise RuntimeError("Please set the %r environment variable to run this test" % varname)
+
+        # Update default backend
+        conf.supybot.plugins.NuWeather.defaultbackend.setValue(self.BACKEND)
+
+    @unittest.skipUnless(network, NO_NETWORK_REASON)
+    def testWeather(self):
+        self.assertRegexp('weather Vancouver', 'Vancouver, British Columbia')
+        self.assertRegexp('weather LAX', 'Los Angeles')
+        #self.assertRegexp('weather 76010', 'Arlington')  # US ZIP codes not supported by Nominatim (default)
+        self.assertError('weather InvalidLocationTest')
+
+    @unittest.skipUnless(network, NO_NETWORK_REASON)
+    def testSavedLocation(self):
+        self.assertError('weather')  # No location set
+        self.assertNotError('setweather Berlin')
+        self.assertRegexp('weather', 'Berlin')
+
+class NuWeatherApixuTestCase(NuWeatherDarkSkyTestCase):  # inherit settings from above
+    BACKEND = 'apixu'
+
+# TODO: test geocode backends
 
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:
