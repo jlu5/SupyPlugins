@@ -19,20 +19,20 @@ install:
 # Some plugins use external APIs, and can cause tests to fail due to them being slow/down.
 # --no-network disables these, and we can still allow tests that have network access to fail.
 env:
-    - SYSDNS_HOST_COMMAND="/usr/bin/unbound-host" TEST_ARGS="--no-network"
-    - SYSDNS_HOST_COMMAND="/usr/bin/unbound-host" TEST_ARGS=""
+    - TEST_ARGS="--no-network"
+    - TEST_ARGS=""
 
 script:
-    - 'if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then echo "Skipping tests that require secret API keys (Weather, LastFM)"; export SKIP_PLUGINS="--exclude=./LastFM"; fi'
-    # Don't test Weather, it hits my API limits too quickly
-    - supybot-test -c --plugins-dir=. $TEST_ARGS $SKIP_PLUGINS --exclude=./Weather
+    - 'if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then echo "Skipping tests that require secret API keys"; export SKIP_PLUGINS=("--exclude=./LastFM" "--exclude=./NuWeather" "--exclude=./AQI"); fi'
+    - export SYSDNS_HOST_COMMAND="/usr/bin/unbound-host"
+    - supybot-test -c --plugins-dir=. $TEST_ARGS ${SKIP_PLUGINS[@]} --exclude=./Weather --exclude=./FML
 
 notifications:
     email: false
 
 matrix:
     allow_failures:
-        - env: SYSDNS_HOST_COMMAND="/usr/bin/unbound-host" TEST_ARGS=""
+        - env: TEST_ARGS=""
 
 branches:
   except:
