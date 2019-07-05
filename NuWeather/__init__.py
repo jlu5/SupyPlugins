@@ -1,5 +1,5 @@
 ###
-# Copyright (c) 2018, James Lu <james@overdrivenetworks.com>
+# Copyright (c) 2018-2019, James Lu <james@overdrivenetworks.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -33,6 +33,10 @@ NuWeather: a weather plugin for Limnoria
 """
 
 import sys
+
+if sys.version_info[0] < 3:
+    raise RuntimeError("This plugin requires Python 3.")
+
 import supybot
 from supybot import world
 
