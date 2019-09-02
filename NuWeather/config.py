@@ -84,7 +84,7 @@ for backend in GEOCODE_BACKENDS:
 
 DEFAULT_FORMAT = ('\x02$location\x02 :: $c__condition $c__temperature '
                   '(Humidity: $c__humidity) | \x02Feels like:\x02 $c__feels_like '
-                  '| \x02Wind\x02: $c__wind $c__wind_dir '
+                  '| \x02Wind\x02: $c__wind $c__wind_dir | \x02Wind gust\x02: $c__wind_gust '
                   '| \x02$f__0__dayname\x02: $f__0__summary. High $f__0__max. Low $f__0__min. '
                   '| \x02$f__1__dayname\x02: $f__1__summary. High $f__1__max. Low $f__1__min. '
                   '| Powered by \x02$poweredby\x02 $url')

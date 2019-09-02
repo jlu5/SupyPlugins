@@ -409,6 +409,7 @@ class NuWeather(callbacks.Plugin):
                 'precip': self._format_precip(currentdata['precip_mm'], currentdata['precip_in']),
                 'wind': self._format_distance(currentdata['wind_mph'], currentdata['wind_kph'], speed=True),
                 'wind_dir': currentdata['wind_dir'],
+                'wind_gust': self._format_distance(currentdata['gust_mph'], currentdata['gust_kph'], speed=True),
                 'uv': self._format_uv(currentdata['uv']),
                 'visibility': self._format_distance(currentdata.get('vis_miles'), currentdata.get('vis_km')),
             },
@@ -452,6 +453,7 @@ class NuWeather(callbacks.Plugin):
                 'humidity': self._format_percentage(currentdata.get('humidity')),
                 'precip': self._format_precip(mm=currentdata.get('precipIntensity')),
                 'wind': self._format_distance(mi=currentdata.get('windSpeed', 0), speed=True),
+                'wind_gust': self._format_distance(mi=currentdata.get('windGust', 0), speed=True),
                 'wind_dir': self._wind_direction(currentdata.get('windBearing')),
                 'uv': self._format_uv(currentdata.get('uvIndex')),
                 'visibility': self._format_distance(mi=currentdata.get('visibility')),
@@ -473,8 +475,6 @@ class NuWeather(callbacks.Plugin):
         If the --user option is specified, show weather for the saved location of that nick, instead of the caller's.
 
         If either --weather-backend/--backend or --geocode-backend is specified, will override the default backends if provided backend is available.
-
-        If --list-backends is specified, will list all available backends.
         """
         optlist = dict(optlist)
 
