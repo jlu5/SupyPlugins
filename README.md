@@ -3,7 +3,7 @@
 [webchatlink]: https://webchat.overdrivenetworks.com/?channels=dev
 
 [![Travis-CI Build Status](https://travis-ci.org/jlu5/SupyPlugins.svg?branch=master)](https://travis-ci.org/jlu5/SupyPlugins)
-![Supported Python versions](https://img.shields.io/badge/python-3.4%20and%20later-blue.svg)
+![Supported Python versions](https://img.shields.io/badge/python-3.5%20and%20later-blue.svg)
 [![Live chat](https://img.shields.io/badge/IRC-live%20chat%20%C2%BB-green.svg)][webchatlink]
 
 My collection of plugins for [Limnoria](https://github.com/ProgVal/Limnoria). This repository is provided **AS IS**, **without any warranty**! It may glitch, break, or spontaneously combust at any time. You have been warned!
@@ -17,7 +17,7 @@ The recommended way of fetching plugins in this repository is to clone the git r
 
 and add the folder to your bot's `config directories.plugins`.
 
-**You will need a working copy of [Limnoria](https://github.com/ProgVal/Limnoria) running on Python 3.4+.** Python 2 users should consult the *python2-legacy* branch in Git instead. Anything older will *not* work.
+**You will need a working copy of [Limnoria](https://github.com/ProgVal/Limnoria) running on Python 3.5+.** Python 2 users should consult the *python2-legacy* branch in Git instead. Anything older will *not* work.
 
 If you are using a recent version of Limnoria's PluginDownloader, you can also fetch [individual plugins](#list-of-plugins) by running:
 
