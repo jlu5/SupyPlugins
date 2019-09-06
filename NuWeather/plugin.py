@@ -269,7 +269,7 @@ class NuWeather(callbacks.Plugin):
             log.debug('NuWeather: error searching for %r from Nominatim backend:', location, exc_info=True)
             data = None
         if not data:
-            raise callbacks.Error("Unknown location %s from OSM/Nominatim" % location)
+            raise callbacks.Error("Unknown location %r from OSM/Nominatim" % location)
 
         data = data[0]
         # Limit location verbosity to 3 divisions (e.g. City, Province/State, Country)
@@ -327,6 +327,8 @@ class NuWeather(callbacks.Plugin):
         data = json.loads(f)
         if data['status']['message'] != "OK":
             raise callbacks.Error("{0} from OpenCage for location {1}".format(data['status']['message'], location))
+        elif not data['results']:
+            raise callbacks.Error("Unknown location %r from OpenCage" % location)
 
         data = data['results'][0]
         lat = data['geometry']['lat']
