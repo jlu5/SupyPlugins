@@ -262,8 +262,12 @@ class NuWeather(callbacks.Plugin):
         url = 'https://nominatim.openstreetmap.org/search/%s?format=jsonv2' % utils.web.urlquote(location)
         self.log.debug('NuWeather: using url %s (geocoding)', url)
         # Custom User agent & caching are required for Nominatim per https://operations.osmfoundation.org/policies/nominatim/
-        f = utils.web.getUrl(url, headers=HEADERS).decode('utf-8')
-        data = json.loads(f)
+        try:
+            f = utils.web.getUrl(url, headers=HEADERS).decode('utf-8')
+            data = json.loads(f)
+        except utils.web.Error as e:
+            log.debug('NuWeather: error searching for %r from Nominatim backend:', location, exc_info=True)
+            data = None
         if not data:
             raise callbacks.Error("Unknown location %s from OSM/Nominatim" % location)
 
