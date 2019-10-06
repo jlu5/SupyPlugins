@@ -4,7 +4,8 @@ A weather plugin for Limnoria. It supports multiple weather and geocoding backen
 
 #### Weather Backends
 - [Dark Sky](https://darksky.net) (default, API key required)
-- [Apixu](https://www.apixu.com/) (API key required)
+- [OpenWeatherMap](https://openweathermap.org/) (API key required)
+- [weatherstack](https://weatherstack.com/), formerly Apixu (current conditions only, API key required)
 
 #### Geocoding Backends
 - [OpenStreetMap Nominatim](https://nominatim.openstreetmap.org/) (default, no API key required)
@@ -15,7 +16,7 @@ A weather plugin for Limnoria. It supports multiple weather and geocoding backen
 
 1) Pick your preferred weather backend: `config help plugins.NuWeather.defaultBackend`
 
-2) Grab an API key. [Dark Sky](https://darksky.net/dev) | [Apixu](https://www.apixu.com/)
+2) Grab an API key. [Dark Sky](https://darksky.net/dev) | [OpenWeatherMap](https://openweathermap.org/appid) | [weatherstack](https://www.apixu.com/)
 
 3) Configure it: `/msg yourbot config plugins.NuWeather.apikeys.BACKENDNAME YOUR-API-KEY`
 
@@ -61,12 +62,12 @@ config plugins.NuWeather.DBAddressingMode nicks
 
 ## Location lookup (Geocoding) backends
 
-* Apixu provides weather lookup by place name directly, and does not need further configuration.
-* Dark Sky requires a separate lookup to translate place names into GPS coordinates, a process known as **geocoding**.
+* weatherstack provides weather lookup by place name directly, and does not need further configuration.
+* Dark Sky and OpenStreetMap backends use a separate service to translate place names into GPS coordinates, a process known as **geocoding**.
 
-The default backend for geocoding is [OpenStreetMap's Nominatim](https://nominatim.openstreetmap.org/) service, and can be configured via the `plugins.NuWeather.geocodeBackend` option.
+The default geocoding backend is [OpenStreetMap's Nominatim](https://nominatim.openstreetmap.org/); this can be configured via the `plugins.NuWeather.geocodeBackend` option.
 
-Other supported options include [Google Maps](https://developers.google.com/maps/documentation/geocoding/start) and [OpenCage](https://opencagedata.com/),
-which may provide more relevant results for North America (e.g. U.S. ZIP codes). These services both require API keys: [Google Maps](https://developers.google.com/maps/documentation/geocoding/get-api-key) (credit card required) | [OpenCage](https://opencagedata.com/api)
+Other options include [Google Maps](https://developers.google.com/maps/documentation/geocoding/start) and [OpenCage](https://opencagedata.com/).
+These may provide more relevant results for North America (e.g. US ZIP codes), but both require API keys: [Google Maps](https://developers.google.com/maps/documentation/geocoding/get-api-key) (credit card required) | [OpenCage](https://opencagedata.com/api)
 
 API keys for geocoding backends are configured as `plugins.NuWeather.apikeys.BACKENDNAME`.
