@@ -387,50 +387,42 @@ class NuWeather(callbacks.Plugin):
 
         return template.safe_substitute(flat_data)
 
-    def _apixu_fetcher(self, location, geobackend=None):
-        """Grabs weather data from Apixu."""
-        apikey = self.registryValue('apikeys.apixu')
+    def _weatherstack_fetcher(self, location, geobackend=None):
+        """Grabs weather data from weatherstack (formerly Apixu)."""
+        apikey = self.registryValue('apikeys.weatherstack')
         if not apikey:
-            raise callbacks.Error(_("Please configure the apixu API key in plugins.nuweather.apikeys.apixu."))
-        url = 'https://api.apixu.com/v1/forecast.json?' + utils.web.urlencode({
-            'key': apikey,
-            'q': location,
-            'days': 5
+            raise callbacks.Error(_("Please configure the weatherstack API key in plugins.nuweather.apikeys.weatherstack . "
+                                    "Apixu users please see https://github.com/apilayer/weatherstack#readme"))
+        # HTTPS is not supported on free accounts. Don't ask me why
+        url = 'http://api.weatherstack.com/current?' + utils.web.urlencode({
+            'access_key': apikey,
+            'query': location,
+            'units': 'f',
         })
         self.log.debug('NuWeather: using url %s', url)
 
         f = utils.web.getUrl(url, headers=HEADERS).decode('utf-8')
         data = json.loads(f)
 
-        locationdata = data['location']
-        if locationdata['region']:
-            location = "%s, %s, %s" % (locationdata['name'], locationdata['region'], locationdata['country'])
-        else:
-            location = "%s, %s" % (locationdata['name'], locationdata['country'])
-
         currentdata = data['current']
 
         return {
-            'location': location,
-            'poweredby': 'Apixu',
+            'location': data['request']['query'],
+            'poweredby': 'weatherstack',
             'url': '',
             'current': {
-                'condition': currentdata['condition']['text'],
-                'temperature': self._format_temp(currentdata['temp_f'], currentdata['temp_c']),
-                'feels_like': self._format_temp(currentdata['feelslike_f'], currentdata['feelslike_c']),
+                'condition': currentdata['weather_descriptions'][0],
+                'temperature': self._format_temp(f=currentdata['temperature']),
+                'feels_like': self._format_temp(f=currentdata['feelslike']),
                 'humidity': self._format_percentage(currentdata['humidity']),
-                'precip': self._format_precip(currentdata['precip_mm'], currentdata['precip_in']),
-                'wind': self._format_distance(currentdata['wind_mph'], currentdata['wind_kph'], speed=True),
+                'precip': self._format_precip(inches=currentdata['precip']),
+                'wind': self._format_distance(mi=currentdata['wind_speed'], speed=True),
                 'wind_dir': currentdata['wind_dir'],
-                'wind_gust': self._format_distance(currentdata['gust_mph'], currentdata['gust_kph'], speed=True),
-                'uv': self._format_uv(currentdata['uv']),
-                'visibility': self._format_distance(currentdata.get('vis_miles'), currentdata.get('vis_km')),
-            },
-            'forecast': [{'dayname': self._get_dayname(forecastdata['date_epoch'], idx, tz=locationdata['tz_id']),
-                          'max': self._format_temp(forecastdata['day']['maxtemp_f'], forecastdata['day']['maxtemp_c']),
-                          'min': self._format_temp(forecastdata['day']['mintemp_f'], forecastdata['day']['mintemp_c']),
-                          'summary': forecastdata['day']['condition']['text']} for idx, forecastdata in enumerate(data['forecast']['forecastday'])]
+                'uv': self._format_uv(currentdata['uv_index']),
+                'visibility': self._format_distance(mi=currentdata.get('visibility')),
+            }
         }
+    _apixu_fetcher = _weatherstack_fetcher
 
     def _darksky_fetcher(self, location, geobackend=None):
         """Grabs weather data from Dark Sky."""

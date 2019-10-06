@@ -75,9 +75,13 @@ class NuWeatherDarkSkyTestCase(PluginTestCase):
         self.assertNotError('setweather Berlin')
         self.assertRegexp('weather', 'Berlin')
 
-class NuWeatherApixuTestCase(NuWeatherDarkSkyTestCase):  # inherit settings from above
-    BACKEND = 'apixu'
+# TODO: set up Weatherstack in CI
+'''
+class NuWeatherWeatherstackTestCase(NuWeatherDarkSkyTestCase):  # inherit settings from above
+    BACKEND = 'weatherstack'
+'''
 
-# TODO: test geocode backends
+# FIXME: test geocode backends
+
 
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:
