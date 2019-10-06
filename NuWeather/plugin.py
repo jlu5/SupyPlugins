@@ -48,7 +48,7 @@ except ImportError:
     pendulum = None
     log.warning('NuWeather: pendulum is not installed; extended forecasts will not be formatted properly')
 
-from .config import BACKENDS, GEOCODE_BACKENDS, DEFAULT_FORMAT, DEFAULT_FORECAST_FORMAT
+from .config import BACKENDS, GEOCODE_BACKENDS, DEFAULT_FORMAT, DEFAULT_FORECAST_FORMAT, DEFAULT_FORMAT_CURRENTONLY
 from .local import accountsdb
 
 HEADERS = {
@@ -366,16 +366,23 @@ class NuWeather(callbacks.Plugin):
         """
         # Work around IRC length limits for config opts...
         data['c'] = data['current']
-        data['f'] = data['forecast']
+        data['f'] = data.get('forecast')
 
         flat_data = flatten_subdicts(data)
         if flat_data.get('url'):
             flat_data['url'] = utils.str.url(flat_data['url'])
 
-        if forecast:
-            fmt = self.registryValue('outputFormat.forecast', dynamic.msg.args[0]) or DEFAULT_FORECAST_FORMAT
+        forecast_available = bool(data.get('forecast'))
+        if forecast:  # --forecast option was given
+            if forecast_available:
+                fmt = self.registryValue('outputFormat.forecast', dynamic.msg.args[0]) or DEFAULT_FORECAST_FORMAT
+            else:
+                raise callbacks.Error(_("Extended forecast info is not available from this backend."))
         else:
-            fmt = self.registryValue('outputFormat', dynamic.msg.args[0]) or DEFAULT_FORMAT
+            if forecast_available:
+                fmt = self.registryValue('outputFormat', dynamic.msg.args[0]) or DEFAULT_FORMAT
+            else:
+                fmt = self.registryValue('outputFormat.currentOnly', dynamic.msg.args[0]) or DEFAULT_FORMAT_CURRENTONLY
         template = string.Template(fmt)
 
         return template.safe_substitute(flat_data)

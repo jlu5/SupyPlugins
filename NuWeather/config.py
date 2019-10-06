@@ -68,7 +68,7 @@ class NuWeatherGeocode(registry.OnlySomeStrings):
 
 conf.registerChannelValue(NuWeather, 'defaultBackend',
     NuWeatherBackend(BACKENDS[0], _("""Determines the default weather backend.""")))
-    
+
 conf.registerChannelValue(NuWeather, 'geocodeBackend',
     NuWeatherGeocode(GEOCODE_BACKENDS[0], _("""Determines the default geocode backend.""")))
 
@@ -92,6 +92,17 @@ conf.registerChannelValue(NuWeather, 'outputFormat',
     registry.String("", _("""EXPERIMENTAL: configures NuWeather's output format.
         Template names are not finalized and may change between releases. If in doubt, leave this
         option empty and the default format will be used: "%s\"""" % DEFAULT_FORMAT)))
+
+DEFAULT_FORMAT_CURRENTONLY = ('\x02$location\x02 :: $c__condition $c__temperature '
+                  '(Humidity: $c__humidity) | \x02Feels like:\x02 $c__feels_like '
+                  '| \x02Wind\x02: $c__wind $c__wind_dir | \x02UV\x02: $c__uv '
+                  '| \x02Visibility\x02: $c__visibility '
+                  '| Powered by \x02$poweredby\x02 $url')
+conf.registerChannelValue(NuWeather.outputFormat, 'currentOnly',
+    registry.String("", _("""EXPERIMENTAL: configures NuWeather's output format when only current
+        weather data is available.
+        Template names are not finalized and may change between releases. If in doubt, leave this
+        option empty and the default format will be used: "%s\"""" % DEFAULT_FORMAT_CURRENTONLY)))
 
 forecastdays = []
 for idx in range(5):  # Build up a 5 day forecast. XXX: not a user friendly config format

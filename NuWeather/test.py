@@ -40,7 +40,7 @@ class NuWeatherDarkSkyTestCase(PluginTestCase):
     plugins = ('NuWeather',)
     BACKEND = 'darksky'
 
-    # These tests are not meant to be exhaustive, since we don't want to be hitting our
+    # These tests are not meant to be exhaustive, since I don't want to hit my free tier
     # API limits :(
 
     def setUp(self):
