@@ -469,6 +469,85 @@ class NuWeather(callbacks.Plugin):
                           'summary': forecastdata['summary'].rstrip('.')} for idx, forecastdata in enumerate(data['daily']['data'])]
         }
 
+    def _openweathermap_fetcher(self, location, geobackend=None):
+        """Grabs weather data from OpenWeatherMap."""
+        apikey = self.registryValue('apikeys.openweathermap')
+        if not apikey:
+            raise callbacks.Error(_("Please configure the OpenWeatherMap API key in plugins.nuweather.apikeys.openweathermap"))
+
+        # Convert location to lat,lon first
+        latlon = self._geocode(location, geobackend=geobackend)
+        if not latlon:
+            raise callbacks.Error("Unknown location %s." % location)
+
+        lat, lon, __, ___, geocode_backend = latlon
+        url = 'https://api.openweathermap.org/data/2.5/weather?' + utils.web.urlencode({
+            'appid': apikey,
+            'lat': lat,
+            'lon': lon,
+            'units': 'imperial',
+        })
+        self.log.debug('NuWeather: using url %s (current data)', url)
+
+        f = utils.web.getUrl(url, headers=HEADERS).decode('utf-8')
+        data = json.loads(f, strict=False)
+
+        output = {
+            'location': '%s, %s' % (data['name'], data['sys']['country']),
+            'poweredby': 'OpenWeatherMap+' + geocode_backend,
+            'url': 'https://openweathermap.org/weathermap?' + utils.web.urlencode({
+                'lat': lat,
+                'lon': lon,
+                'zoom': 12
+            }),
+            # Unfortunately not all of the fields we use are available
+            'current': {
+                'condition': data['weather'][0]['description'],
+                'temperature': self._format_temp(f=data['main']['temp']),
+                'feels_like': 'N/A',
+                'humidity': self._format_percentage(data['main']['humidity']),
+                'precip': 'N/A',
+                'wind': self._format_distance(mi=data['wind']['speed'], speed=True),
+                'wind_gust': 'N/A',
+                'wind_dir': self._wind_direction(data['wind']['deg']),
+                'uv': 'N/A',  # Requires a separate API call
+                'visibility': self._format_distance(km=data['visibility']/1000),
+            }
+        }
+        tzoffset = data['timezone']
+
+        # Get extended forecast (a separate API call)
+        url = 'https://api.openweathermap.org/data/2.5/forecast?' + utils.web.urlencode({
+            'appid': apikey,
+            'lat': lat,
+            'lon': lon,
+            'units': 'imperial',
+        })
+        self.log.debug('NuWeather: using url %s (extended forecast)', url)
+
+        f = utils.web.getUrl(url, headers=HEADERS).decode('utf-8')
+        data = json.loads(f, strict=False)
+        def _owm_make_dayname(utcts):
+            # OWM gives timestamps in UTC, but the /weather endpoint provides a timezone
+            # offset in seconds. Use this data with pendulum to generate a human readable time.
+            ts = utcts + tzoffset
+
+            if pendulum:
+                dt = pendulum.from_timestamp(ts)
+                return dt.format('dddd hA')  # Return strings like "Sunday 8PM"
+            return ts  # fallback
+
+        # OWM's 5 day forecast gives data by 3 hour intervals. The actual daily forecast
+        # requires a subscription.
+        output['forecast'] = [
+            {'dayname': _owm_make_dayname(forecast['dt']),
+             'max': self._format_temp(f=forecast['main']['temp_max']),
+             'min': self._format_temp(f=forecast['main']['temp_min']),
+             'summary': forecast['weather'][0]['description']}
+            for forecast in data['list'][1::2]  # grab data every 6 hours, excluding first pocket
+        ]
+        return output
+
     @wrap([getopts({'user': 'nick', 'backend': None, 'weather-backend': None, 'geocode-backend': None, 'forecast': ''}), additional('text')])
     def weather(self, irc, msg, args, optlist, location):
         """[--user <othernick>] [--weather-backend/--backend <weather backend>] [--geocode-backend <geocode backend>] [--forecast] [<location>]
