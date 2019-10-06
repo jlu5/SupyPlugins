@@ -437,8 +437,8 @@ class NuWeather(callbacks.Plugin):
 
         lat, lon, display_name, geocodeid, geocode_backend = latlon
 
-        # Request US units - this is reflected (mi, mph) and processed in our output format as needed
-        url = 'https://api.darksky.net/forecast/%s/%s,%s?units=us&exclude=minutely' % (apikey, lat, lon)
+        # We don't use minutely or hourly data; alerts are not supported yet
+        url = 'https://api.darksky.net/forecast/%s/%s,%s?units=us&exclude=minutely,hourly,alerts' % (apikey, lat, lon)
         self.log.debug('NuWeather: using url %s', url)
 
         f = utils.web.getUrl(url, headers=HEADERS).decode('utf-8')
