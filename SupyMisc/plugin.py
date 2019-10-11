@@ -212,11 +212,11 @@ class SupyMisc(callbacks.Plugin):
         Returns a URL for the source of this repository. If <file/folder>
         is specified, it will expand a link to it, if such file or folder
         exists."""
-        base = 'https://github.com/GLolol/SupyPlugins'
+        base = 'https://github.com/jlu5/SupyPlugins'
         if not text:
             irc.reply(format("SupyPlugins source is available at: %u", base))
             return
-        apiurl = 'https://api.github.com/repos/GLolol/SupyPlugins/contents/'
+        apiurl = 'https://api.github.com/repos/jlu5/SupyPlugins/contents/'
         text = re.sub("\/+", "/", text)
         try:
             text, line = text.split("#")

@@ -56,7 +56,7 @@ __contributors__ = {supybot.authors.progval: ['enhance configurability',
                                              ['formatting updates',
                                               'multiple wiki support']}
 
-__url__ = 'https://github.com/GLolol/SupyPlugins'
+__url__ = 'https://github.com/jlu5/SupyPlugins'
 
 from . import config
 from . import plugin

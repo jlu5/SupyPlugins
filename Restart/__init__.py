@@ -38,7 +38,7 @@ import supybot.world as world
 __version__ = "2019.07.09+git"
 __author__ = supybot.Author('James Lu', 'GLolol', 'james@overdrivenetworks.com')
 __contributors__ = {}
-__url__ = 'https://github.com/GLolol/SupyPlugins/'
+__url__ = 'https://github.com/jlu5/SupyPlugins/'
 
 from . import config
 from . import plugin
