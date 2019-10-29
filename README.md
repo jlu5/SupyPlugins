@@ -1,10 +1,7 @@
 # SupyPlugins
 
-[webchatlink]: https://webchat.overdrivenetworks.com/?channels=dev
-
 [![Travis-CI Build Status](https://travis-ci.org/jlu5/SupyPlugins.svg?branch=master)](https://travis-ci.org/jlu5/SupyPlugins)
 ![Supported Python versions](https://img.shields.io/badge/python-3.5%20and%20later-blue.svg)
-[![Live chat](https://img.shields.io/badge/IRC-live%20chat%20%C2%BB-green.svg)][webchatlink]
 
 My collection of plugins for [Limnoria](https://github.com/ProgVal/Limnoria). This repository is provided **AS IS**, **without any warranty**! It may glitch, break, or spontaneously combust at any time. You have been warned!
 
@@ -26,9 +23,9 @@ If you are using a recent version of Limnoria's PluginDownloader, you can also f
 on your bot.
 
 ## Support
-If you have any questions, concerns, or feature requests, please feel free to submit an issue. Pull requests are welcome.
+If you have any questions, concerns, or feature requests, feel free to submit an issue. Pull requests are welcome and appreciated.
 
-Or, you can find me on IRC at: `irc.overdrivenetworks.com #dev` ([webchat][webchatlink])
+Or, you can find me on IRC at: `irc.overdrivenetworks.com #dev`
 
 ## License
 Unless otherwise noted, all plugins are available under a 3 clause BSD license (inserted at the top of each file).
