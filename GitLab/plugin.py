@@ -1,5 +1,6 @@
 ###
 # Copyright (c) 2015, Moritz Lipp
+# Copyright (c) 2018-2019, James Lu <james@overdrivenetworks.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -40,7 +41,7 @@ import supybot.world as world
 try:
     from supybot.i18n import PluginInternationalization
     from supybot.i18n import internationalizeDocstring
-    _ = PluginInternationalization('Gitlab')
+    _ = PluginInternationalization('GitLab')
 except ImportError:
     # Placeholder that allows to run the plugin on a bot
     # without the i18n module
@@ -51,26 +52,26 @@ except ImportError:
         return x
 
 
-class GitlabHandler(object):
+class GitLabHandler(object):
 
     """Handle gitlab messages"""
 
     def __init__(self, plugin):
         self.plugin = plugin
-        self.log = log.getPluginLogger('Gitlab')
+        self.log = log.getPluginLogger('GitLab')
         # HACK: instead of refactoring everything, I can just replace this with each handle_payload() call.
         self.irc = None
 
     def handle_payload(self, headers, payload, irc):
-        if 'X-Gitlab-Event' not in headers:
-            self.log.info('Invalid header: Missing X-Gitlab-Event entry')
+        if 'X-GitLab-Event' not in headers:
+            self.log.info('Invalid header: Missing X-GitLab-Event entry')
             return
         self.irc = irc
         self.log.debug('GitLab: running on network %r', irc.network)
 
-        event_type = headers['X-Gitlab-Event']
+        event_type = headers['X-GitLab-Event']
         if event_type not in ['Push Hook', 'Tag Push Hook', 'Note Hook', 'Issue Hook', 'Merge Request Hook']:
-            self.log.info('Unsupported X-Gitlab-Event type')
+            self.log.info('Unsupported X-GitLab-Event type')
             return
 
         # Check if any channel has subscribed to this project
@@ -206,15 +207,15 @@ class GitlabHandler(object):
         self.irc.queueMsg(announce_msg)
 
 
-class GitlabWebHookService(httpserver.SupyHTTPServerCallback):
+class GitLabWebHookService(httpserver.SupyHTTPServerCallback):
     """https://gitlab.com/gitlab-org/gitlab-ce/blob/master/doc/web_hooks/web_hooks.md"""
 
-    name = "GitlabWebHookService"
+    name = "GitLabWebHookService"
     defaultResponse = """This plugin handles only POST request, please don't use other requests."""
 
     def __init__(self, plugin):
-        self.log = log.getPluginLogger('Gitlab')
-        self.gitlab = GitlabHandler(plugin)
+        self.log = log.getPluginLogger('GitLab')
+        self.gitlab = GitLabHandler(plugin)
         self.plugin = plugin
 
     def _send_error(self, handler, message):
@@ -266,8 +267,8 @@ class GitlabWebHookService(httpserver.SupyHTTPServerCallback):
         self._send_ok(handler)
 
 
-class Gitlab(callbacks.Plugin):
-    """Plugin for communication and notifications of a Gitlab project
+class GitLab(callbacks.Plugin):
+    """Plugin for communication and notifications of a GitLab project
     management tool instance"""
     threaded = True
 
@@ -275,11 +276,11 @@ class Gitlab(callbacks.Plugin):
         global instance
 
         # Store the super() information so that reloads don't fail
-        self.__parent = super(Gitlab, self)
+        self.__parent = super(GitLab, self)
         self.__parent.__init__(irc)
         instance = self
 
-        callback = GitlabWebHookService(self)
+        callback = GitLabWebHookService(self)
         httpserver.hook('gitlab', callback)
 
     def die(self):
@@ -305,7 +306,7 @@ class Gitlab(callbacks.Plugin):
             return False
 
     class gitlab(callbacks.Commands):
-        """Gitlab commands"""
+        """GitLab commands"""
 
         class project(callbacks.Commands):
             """Project commands"""
@@ -378,7 +379,7 @@ class Gitlab(callbacks.Plugin):
             list = wrap(list, ['channel'])
 
 
-Class = Gitlab
+Class = GitLab
 
 
 # vim:set shiftwidth=4 softtabstop=4 expandtab textwidth=79:

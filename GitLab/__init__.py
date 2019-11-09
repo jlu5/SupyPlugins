@@ -29,7 +29,7 @@
 ###
 
 """
-Gitlab: Plugin for communication and notifications with a Gitlab instance
+GitLab: Plugin for communication and notifications with a GitLab instance
 """
 
 import supybot

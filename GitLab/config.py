@@ -32,7 +32,7 @@ import supybot.conf as conf
 import supybot.registry as registry
 try:
     from supybot.i18n import PluginInternationalization
-    _ = PluginInternationalization('Gitlab')
+    _ = PluginInternationalization('GitLab')
 except:
     # Placeholder that allows to run the plugin on a bot
     # without the i18n module
@@ -45,70 +45,70 @@ def configure(advanced):
     # user or not.  You should effect your configuration by manipulating the
     # registry as appropriate.
     from supybot.questions import expect, anything, something, yn
-    conf.registerPlugin('Gitlab', True)
+    conf.registerPlugin('GitLab', True)
 
 
-Gitlab = conf.registerPlugin('Gitlab')
+GitLab = conf.registerPlugin('GitLab')
 
 # Settings
-conf.registerChannelValue(Gitlab, 'projects',
+conf.registerChannelValue(GitLab, 'projects',
     registry.Json({}, _("""List of projects""")))
 
 # Format
-conf.registerGroup(Gitlab, 'format')
+conf.registerGroup(GitLab, 'format')
 
-conf.registerChannelValue(Gitlab, 'use-notices',
+conf.registerChannelValue(GitLab, 'use-notices',
     registry.Boolean(False, _("""Determines whether the bot should announce using NOTICE instead of PRIVMSG.""")))
-conf.registerChannelValue(Gitlab.format, 'push',
+conf.registerChannelValue(GitLab.format, 'push',
     registry.String(_("""\x02[{project[name]}]\x02 {user_name} pushed \x02{total_commits_count} commit(s)\x02 to \x02{ref}\x02:"""),
                     _("""Format for push events.""")))
-conf.registerChannelValue(Gitlab.format, 'commit',
+conf.registerChannelValue(GitLab.format, 'commit',
     registry.String(_("""\x02[{project[name]}]\x02 {short_id} \x02{short_message}\x02 by {author[name]}"""),
                     _("""Format for commits.""")))
 
-conf.registerChannelValue(Gitlab.format, 'tag',
+conf.registerChannelValue(GitLab.format, 'tag',
     registry.String(_("""\x02[{project[name]}]\x02 {user_name} created a new tag {ref}"""),
                     _("""Format for tag push events.""")))
 
-conf.registerChannelValue(Gitlab.format, 'issue-open',
+conf.registerChannelValue(GitLab.format, 'issue-open',
     registry.String(_("""\x02[{project[name]}]\x02 Issue \x02#{issue[id]} {issue[title]}\x02 created by {user[name]} {issue[url]}"""),
                     _("""Format for issue/open events.""")))
-conf.registerChannelValue(Gitlab.format, 'issue-update',
+conf.registerChannelValue(GitLab.format, 'issue-update',
     registry.String(_("""\x02[{project[name]}]\x02 Issue \x02#{issue[id]} {issue[title]}\x02 updated by {user[name]} {issue[url]}"""),
                     _("""Format for issue/update events.""")))
-conf.registerChannelValue(Gitlab.format, 'issue-close',
+conf.registerChannelValue(GitLab.format, 'issue-close',
     registry.String(_("""\x02[{project[name]}]\x02 Issue \x02#{issue[id]} {issue[title]}\x02 closed by {user[name]} {issue[url]}"""),
                     _("""Format for issue/close events.""")))
-conf.registerChannelValue(Gitlab.format, 'issue-reopen',
+conf.registerChannelValue(GitLab.format, 'issue-reopen',
     registry.String(_("""\x02[{project[name]}]\x02 Issue \x02#{issue[id]} {issue[title]}\x02 reopend by {user[name]} {issue[url]}"""),
                     _("""Format for issue/reopen events.""")))
 
-conf.registerChannelValue(Gitlab.format, 'merge-request-open',
+conf.registerChannelValue(GitLab.format, 'merge-request-open',
     registry.String(_("""\x02[{project[name]}]\x02 Merge request \x02#{merge_request[id]} {merge_request[title]}\x02 created by {user[name]} {merge_request[url]}"""),
                     _("""Format for merge-request/open events.""")))
-conf.registerChannelValue(Gitlab.format, 'merge-request-update',
+conf.registerChannelValue(GitLab.format, 'merge-request-update',
     registry.String(_("""\x02[{project[name]}]\x02 Merge request \x02#{merge_request[id]} {merge_request[title]}\x02 updated by {user[name]} {merge_request[url]}"""),
                     _("""Format for merge-request/open events.""")))
-conf.registerChannelValue(Gitlab.format, 'merge-request-close',
+conf.registerChannelValue(GitLab.format, 'merge-request-close',
     registry.String(_("""\x02[{project[name]}]\x02 Merge request \x02#{merge_request[id]} {merge_request[title]}\x02 closed by {user[name]} {merge_request[url]}"""),
                     _("""Format for merge-request/open events.""")))
-conf.registerChannelValue(Gitlab.format, 'merge-request-reopen',
+conf.registerChannelValue(GitLab.format, 'merge-request-reopen',
     registry.String(_("""\x02[{project[name]}]\x02 Merge request \x02#{merge_request[id]} {merge_request[title]}\x02 reopened by {user[name]} {merge_request[url]}"""),
                     _("""Format for merge-request/open events.""")))
-conf.registerChannelValue(Gitlab.format, 'merge-request-merge',
+conf.registerChannelValue(GitLab.format, 'merge-request-merge',
     registry.String(_("""\x02[{project[name]}]\x02 Merge request \x02#{merge_request[id]} {merge_request[title]}\x02 merged by {user[name]} {merge_request[url]}"""),
                     _("""Format for merge-request/open events.""")))
 
-conf.registerChannelValue(Gitlab.format, 'note-merge-request',
+conf.registerChannelValue(GitLab.format, 'note-merge-request',
     registry.String(_("""\x02[{project[name]}]\x02 {user[name]} commented on Merge request \x02#{merge_request[id]} {merge_request[title]}\x02 {note[url]}"""),
                     _("""Format for note/merge-request events.""")))
-conf.registerChannelValue(Gitlab.format, 'note-commit',
+conf.registerChannelValue(GitLab.format, 'note-commit',
     registry.String(_("""\x02[{project[name]}]\x02 {user[name]} commented on Commit \x02#{commit[id]}\x02 {commit[url]}"""),
                     _("""Format for note/commit events.""")))
-conf.registerChannelValue(Gitlab.format, 'note-issue',
+conf.registerChannelValue(GitLab.format, 'note-issue',
     registry.String(_("""\x02[{project[name]}]\x02 {user[name]} commented on Issue \x02#{issue[id]} {issue[title]}\x02 {note[url]}"""),
                     _("""Format for note/issue events.""")))
-conf.registerChannelValue(Gitlab.format, 'note-snippet',
+conf.registerChannelValue(GitLab.format, 'note-snippet',
     registry.String(_("""\x02[{project[name]}]\x02 {user[name]} commented on Snippet \x02#{snippet[id]} {snippet[title]}\x02 {note[url]}"""),
                     _("""Format for note/snippet events.""")))
 
