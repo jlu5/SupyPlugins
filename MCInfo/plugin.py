@@ -127,7 +127,7 @@ class MCInfo(callbacks.Plugin):
         maxitemlength = 0
 
         # Now, parse the layout of the 3x3 crafting grid the wiki shows for items.
-        for rowdata in crafting_data.div.span.span.children:
+        for rowdata in crafting_data.find_all('span', class_='mcui-row'):
             rowitems = []
             # Iterate over the rows of the crafting grid, and then the items in each.
             for itemslot in rowdata.children:
@@ -146,7 +146,7 @@ class MCInfo(callbacks.Plugin):
                         maxitemlength = len(itemname)
 
                     rowitems.append(itemname)
-                elif itemslot.find('br'):
+                elif not itemslot.find('invslot-item'):
                     # Empty square.
                     rowitems.append('')
             if rowitems:
