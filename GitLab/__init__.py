@@ -38,6 +38,8 @@ import supybot.world as world
 __version__ = ""
 
 __author__ = supybot.Author('Moritz Lipp', 'mlq', 'mail@mlq.me')
+__maintainer__ = getattr(supybot.authors, 'jlu',
+                         supybot.Author('James Lu', 'GLolol', 'james@overdrivenetworks.com'))
 
 __contributors__ = {}
 

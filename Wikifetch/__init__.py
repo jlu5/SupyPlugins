@@ -40,20 +40,17 @@ import supybot.world as world
 # in here if you're keeping the plugin in CVS or some similar system.
 __version__ = "2019.07.09+git"
 
-# XXX Replace this with an appropriate author or supybot.Author instance.
 __author__ = supybot.Author('quantumlemur', 'quantumlemur',
         'quantumlemur@users.sourceforge.net')
+__maintainer__ = getattr(supybot.authors, 'jlu',
+                         supybot.Author('James Lu', 'GLolol', 'james@overdrivenetworks.com'))
 
 # This is a dictionary mapping supybot.Author instances to lists of
 # contributions.
-if not hasattr(supybot.authors, 'progval'):
-    supybot.authors.progval = supybot.Author('Valentin Lorentz', 'ProgVal',
-                                             'progval@gmail.com')
 __contributors__ = {supybot.authors.progval: ['enhance configurability',
                                               'many bug fixes',
                                               'internationalization'],
-                    supybot.Author('James Lu', 'GLolol', 'glolol@overdrivenetworks.com'):
-                                             ['formatting updates',
+                    __maintainer__:          ['formatting updates',
                                               'multiple wiki support']}
 
 __url__ = 'https://github.com/jlu5/SupyPlugins'

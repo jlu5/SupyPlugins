@@ -43,6 +43,9 @@ __version__ = "2019.07.09+git"
 
 # Replace this with an appropriate author or supybot.Author instance.
 __author__ = supybot.Author("Kevin Funk", "KRF", "krf@electrostorm.net")
+__maintainer__ = getattr(supybot.authors, 'jlu',
+                         supybot.Author('James Lu', 'GLolol', 'james@overdrivenetworks.com'))
+
 # This is a dictionary mapping supybot.Author instances to lists of
 # contributions.
 __contributors__ = {

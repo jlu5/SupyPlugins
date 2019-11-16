@@ -1,5 +1,5 @@
 ###
-# Copyright (c) 2014, James Lu (GLolol)
+# Copyright (c) 2014, James Lu <james@overdrivenetworks.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -29,8 +29,7 @@
 ###
 
 """
-Add a description of the plugin (to be presented to the user inside the wizard)
-here.  This should describe *what* the plugin does.
+Allows the bot to oper up on connect.
 """
 
 import supybot
@@ -40,9 +39,8 @@ import supybot.world as world
 # in here if you're keeping the plugin in CVS or some similar system.
 __version__ = "2019.07.09+git"
 
-# XXX Replace this with an appropriate author or supybot.Author instance.
-__author__ = supybot.Author('James Lu', 'GLolol',
-                            'james@overdrivenetworks.com')
+__author__ = getattr(supybot.authors, 'jlu',
+                     supybot.Author('James Lu', 'GLolol', 'james@overdrivenetworks.com'))
 
 # This is a dictionary mapping supybot.Author instances to lists of
 # contributions.
