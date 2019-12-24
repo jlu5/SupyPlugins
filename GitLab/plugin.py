@@ -63,15 +63,15 @@ class GitLabHandler(object):
         self.irc = None
 
     def handle_payload(self, headers, payload, irc):
-        if 'X-GitLab-Event' not in headers:
-            self.log.info('Invalid header: Missing X-GitLab-Event entry')
+        if 'X-Gitlab-Event' not in headers:
+            self.log.info('Invalid header: Missing X-Gitlab-Event entry')
             return
         self.irc = irc
         self.log.debug('GitLab: running on network %r', irc.network)
 
-        event_type = headers['X-GitLab-Event']
+        event_type = headers['X-Gitlab-Event']
         if event_type not in ['Push Hook', 'Tag Push Hook', 'Note Hook', 'Issue Hook', 'Merge Request Hook']:
-            self.log.info('Unsupported X-GitLab-Event type')
+            self.log.info('Unsupported X-Gitlab-Event type')
             return
 
         # Check if any channel has subscribed to this project
