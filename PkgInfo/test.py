@@ -1,5 +1,5 @@
 ###
-# Copyright (c) 2014-2017, James Lu
+# Copyright (c) 2014-2019, James Lu
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -95,12 +95,5 @@ class PkgInfoTestCase(PluginTestCase):
 
         def test_filesearch(self):
             self.assertRegexp('filesearch sid supybot', 'limnoria')
-
-        def test_centos(self):
-            self.assertRegexp('centos 7 os git-', 'git-all')
-            self.assertRegexp('centos 6 os bash --arch i386', 'i686.rpm')
-            self.assertNotError('centos 7 extras python')
-            # This should be stripped.
-            self.assertNotRegexp('centos 7 extras "a"', 'Parent Directory')
 
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:

@@ -1,6 +1,5 @@
 Fetches package information from the repositories of various \*nix distributions. Currently it supports:
 - Arch Linux
-- CentOS (via a separate `centos` command)
 - Debian
 - Fedora
 - FreeBSD
@@ -84,19 +83,6 @@ The `pkgsearch` command provides package searches on various distros. This suppo
 
 <GLolol> `vlist ubuntu libreoffice --reverse
 <atlas> Found 55 results: cosmic/universe (1:6.0.3-0ubuntu1 [amd64, i386]), cosmic (1:6.0.3-0ubuntu1 [source]), bionic/universe (1:6.0.3-0ubuntu1 [amd64, i386]), bionic (1:6.0.3-0ubuntu1 [source]), artful-updates/universe (1:5.4.6-0ubuntu0.17.10.1 [amd64, i386]), artful-updates (1:5.4.6-0ubuntu0.17.10.1 [source]), artful-security/universe (1:5.4.5-0ubuntu0.17.10.5 [amd64, i386]), artful-security  (7 more messages)
-```
-
-### CentOS packages
-
-**Synopsis**: `centos <release> [<repository> <package name>] [--arch <arch>] [--startswith|--exact]`
-
-This lookup command is provided as a separate command due to very limited searching abilities through the CentOS website.
-
-```
-<GLolol> `centos 7 os zsh
-<Atlas> Available RPMs: zsh-5.0.2-7.el7.x86_64.rpm and zsh-html-5.0.2-7.el7.x86_64.rpm
-<GLolol> `centos 7 os python
-<Atlas> Available RPMs: MySQL-python-1.2.3-11.el7.x86_64.rpm, OpenIPMI-python-2.0.19-11.el7.x86_64.rpm, abrt-addon-python-2.1.11-19.el7.centos.0.3.x86_64.rpm, abrt-python-2.1.11-19.el7.centos.0.3.x86_64.rpm, abrt-python-doc-2.1.11-19.el7.centos.0.3.noarch.rpm, antlr-python-2.7.7-30.el7.noarch.rpm, at-spi-python-1.32.0-12.el7.x86_64.rpm, audit-libs-python-2.4.1-5.el7.x86_64.rpm, (25 more messages)
 ```
 
 ## Implementation Details
