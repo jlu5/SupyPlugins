@@ -482,7 +482,7 @@ class PkgInfo(callbacks.Plugin):
 
             return (name, version, category, desc, url)
 
-    def _debian_vlist_fetcher(self, pkg, dist, reverse=False):
+    def _debian_vlist_fetcher(self, pkg, dist, showNewestFirst=True):
         """Parser for the madison API at https://qa.debian.org/madison.php."""
         # This arch value implies 'all' (architecture-independent packages)
         # and 'source' (source packages), in order to prevent misleading
@@ -500,9 +500,10 @@ class PkgInfo(callbacks.Plugin):
             name, version, release, archs = map(str.strip, L)
             d[release] = (version, archs)
         if d:
-            if reverse:
+            if showNewestFirst:
                 # *sigh*... I wish there was a better way to do this
                 d = OrderedDict(reversed(tuple(d.items())))
+
             if self.registryValue('verbose'):
                 items = ["{name} \x02({version} [{archs}])\x02".format(name=k,
                          version=v[0], archs=v[1]) for (k, v) in d.items()]
@@ -616,7 +617,7 @@ class PkgInfo(callbacks.Plugin):
 
         Supported distributions include 'debian', 'ubuntu', 'derivatives', and 'all'.
 
-        If --reverse is given, show the newest package versions first."""
+        If --reverse is given, show the oldest package versions first."""
         pkg, distro = map(str.lower, (pkg, distro))
         supported = ("debian", "ubuntu", "derivatives", "all")
         if distro not in supported:
@@ -625,7 +626,7 @@ class PkgInfo(callbacks.Plugin):
                 irc.error("Unknown distribution. This command only supports "
                           "package lookup for Debian and Ubuntu.", Raise=True)
 
-        d = self._debian_vlist_fetcher(pkg, distro, reverse='reverse' in dict(opts))
+        d = self._debian_vlist_fetcher(pkg, distro, showNewestFirst='reverse' not in dict(opts))
         if not d:
             irc.error("No results found.", Raise=True)
         try:
