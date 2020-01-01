@@ -53,7 +53,10 @@ from bs4 import BeautifulSoup
 mcwiki_url = 'http://minecraft.gamepedia.com'
 
 def format_text(text):
-    return utils.str.normalizeWhitespace(text).strip()
+    text = text.replace('\xa0', '')
+    text = utils.str.normalizeWhitespace(text)
+    text = text.strip()
+    return text
 
 class MCInfo(callbacks.Plugin):
     """Fetches crafting recipes and other interesting information from the Minecraft Wiki."""
