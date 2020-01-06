@@ -35,7 +35,7 @@ GitLab: Plugin for communication and notifications with a GitLab instance
 import supybot
 import supybot.world as world
 
-__version__ = ""
+__version__ = "2020.01.05"
 
 __author__ = supybot.Author('Moritz Lipp', 'mlq', 'mail@mlq.me')
 __maintainer__ = getattr(supybot.authors, 'jlu',
