@@ -326,7 +326,7 @@ class RelayNext(callbacks.Plugin):
                             self.log.debug("RelayNext: message to network %r"
                                            " dropped, we are not connected "
                                            "there!", net)
-                            return
+                            continue
 
                         target_chanobj = otherIrc.state.channels.get(target)
                         if (not target_chanobj) or otherIrc.nick not in target_chanobj.users:
