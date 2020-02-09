@@ -60,7 +60,7 @@ conf.registerChannelValue(NuWeather.units, 'temperature',
         F/C means show "50F/10C", C means display only Celsius, and so on.""")))
 
 BACKENDS = ('darksky', 'weatherstack', 'openweathermap', 'apixu')
-GEOCODE_BACKENDS = ('nominatim', 'googlemaps', 'opencage')
+GEOCODE_BACKENDS = ('nominatim', 'googlemaps', 'opencage', 'weatherstack')
 class NuWeatherBackend(registry.OnlySomeStrings):
     validStrings = BACKENDS
 class NuWeatherGeocode(registry.OnlySomeStrings):
