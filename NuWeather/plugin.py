@@ -340,6 +340,30 @@ class NuWeather(callbacks.Plugin):
         result = (lat, lon, display_name, place_id, "OpenCage")
         return result
 
+    def _weatherstack_geocode(self, location):
+        location = location.lower()
+        apikey = self.registryValue('apikeys.weatherstack')
+        if not apikey:
+            raise callbacks.Error("No weatherstack API key.")
+
+        url = "http://api.weatherstack.com/current?access_key={0}&query={1}".format(apikey, utils.web.urlquote(location))
+        self.log.debug('NuWeather: using url %s (geocoding)', url)
+
+        f = utils.web.getUrl(url, headers=HEADERS).decode('utf-8')
+
+        data = json.loads(f)
+        if data.get('error'):
+            raise callbacks.Error("{0} From weatherstack for location {1}".format(data['error']['info'], location))
+
+        lat = data['location']['lat']
+        lon = data['location']['lon']
+        display_name = data['request']['query']
+        place_id = "{0},{1}".format(lat, lon)
+
+        self.log.debug('NuWeather: saving %s,%s (place_id %s,%s) for location %s from weatherstack', lat, lon, place_id, display_name, location)
+        result = (lat, lon, display_name, place_id, "weatherstack")
+        return result
+
     def _geocode(self, location, geobackend=None):
         geocode_backend = geobackend or self.registryValue('geocodeBackend', dynamic.msg.args[0])
         if geocode_backend not in GEOCODE_BACKENDS:
