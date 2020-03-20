@@ -3,9 +3,7 @@
 [![Travis-CI Build Status](https://travis-ci.org/jlu5/SupyPlugins.svg?branch=master)](https://travis-ci.org/jlu5/SupyPlugins)
 ![Supported Python versions](https://img.shields.io/badge/python-3.5%20and%20later-blue.svg)
 
-My collection of plugins for [Limnoria](https://github.com/ProgVal/Limnoria). This repository is provided **AS IS**, **without any warranty**! It may glitch, break, or spontaneously combust at any time. You have been warned!
-
-**WARNING: Python 2 is no longer supported in the SupyPlugins *master* branch as of August 2017. Please migrate your bots to Python 3, or use the *python2-legacy* branch instead.**
+My collection of plugins for [Limnoria](https://github.com/ProgVal/Limnoria).
 
 ## Installation
 The recommended way of fetching plugins in this repository is to clone the git repository:
@@ -18,7 +16,7 @@ and add the folder to your bot's `config directories.plugins`.
 
 If you are using a recent version of Limnoria's PluginDownloader, you can also fetch [individual plugins](#list-of-plugins) by running:
 
-* `install GLolol <plugin>`
+* `install jlu5 <plugin>`
 
 on your bot.
 
