@@ -50,8 +50,10 @@ __url__ = 'https://github.com/jlu5/SupyPlugins'
 
 from . import config
 from . import plugin
-from imp import reload
+from . import constants
+from importlib import reload
 
+reload(constants)
 reload(config)
 reload(plugin)
 
