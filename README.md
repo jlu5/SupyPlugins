@@ -86,9 +86,6 @@ Most of these plugins also have their own READMEs in their folders; you can usua
 - Fetches rhymes from http://rhymezone.com/.
    - **Requires:** [Beautiful Soup 4](http://www.crummy.com/software/BeautifulSoup/bs4/doc/)
 
-##### SedRegex
-- History replacer using sed-style expressions. Fork of [t3chguy's Replacer plugin](https://github.com/t3chguy/Limnoria-Plugins/tree/master/Replacer).
-
 ##### SupyMisc
 - Some assorted commands that don't seem to fit anywhere else.
 
