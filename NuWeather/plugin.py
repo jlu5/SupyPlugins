@@ -490,7 +490,7 @@ class NuWeather(callbacks.Plugin):
             'forecast': [{'dayname': self._get_dayname(forecastdata['time'], idx, tz=data['timezone']),
                           'max': self._format_temp(f=forecastdata.get('temperatureHigh')),
                           'min': self._format_temp(f=forecastdata.get('temperatureLow')),
-                          'summary': forecastdata['summary'].rstrip('.')} for idx, forecastdata in enumerate(data['daily']['data'])]
+                          'summary': forecastdata.get('summary', 'N/A').rstrip('.')} for idx, forecastdata in enumerate(data['daily']['data'])]
         }
 
     def _openweathermap_fetcher(self, location, geobackend=None):
