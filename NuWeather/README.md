@@ -3,9 +3,9 @@
 A weather plugin for Limnoria. It supports multiple weather and geocoding backends:
 
 #### Weather Backends
-- [Dark Sky](https://darksky.net) (default, API key required)
-- [OpenWeatherMap](https://openweathermap.org/) (API key required)
+- [OpenWeatherMap](https://openweathermap.org/) (default, API key required)
 - [weatherstack](https://weatherstack.com/), formerly Apixu (current conditions only, API key required)
+- [Dark Sky](https://darksky.net) (API key required, but new signups are no longer accepted)
 
 #### Geocoding Backends
 - [OpenStreetMap Nominatim](https://nominatim.openstreetmap.org/) (default, no API key required)
@@ -16,7 +16,7 @@ A weather plugin for Limnoria. It supports multiple weather and geocoding backen
 
 1) Pick your preferred weather backend: `config help plugins.NuWeather.defaultBackend`
 
-2) Grab an API key. [Dark Sky](https://darksky.net/dev) | [OpenWeatherMap](https://openweathermap.org/appid) | [weatherstack](https://www.apixu.com/)
+2) Grab an API key. [OpenWeatherMap](https://openweathermap.org/appid) | [weatherstack](https://weatherstack.com/) | ~~[Dark Sky](https://darksky.net/dev)~~ (new signups no longer accepted)
 
 3) Configure it: `/msg yourbot config plugins.NuWeather.apikeys.BACKENDNAME YOUR-API-KEY`
 
