@@ -446,7 +446,6 @@ class NuWeather(callbacks.Plugin):
                 'visibility': self._format_distance(mi=currentdata.get('visibility')),
             }
         }
-    _apixu_fetcher = _weatherstack_fetcher
 
     def _darksky_fetcher(self, location, geobackend=None):
         """Grabs weather data from Dark Sky."""
