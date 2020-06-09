@@ -121,7 +121,4 @@ if network:
         def testMediaWiki(self):
             self.assertNotError('wiki --site mediawiki.org Sites using MediaWiki')
 
-        def testWikimediaCommons(self):
-            self.assertNotError('wiki --site commons.wikimedia.org America')
-
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:
