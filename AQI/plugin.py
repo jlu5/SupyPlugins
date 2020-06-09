@@ -101,7 +101,7 @@ class AQI(callbacks.Plugin):
             # Set location to geo:lat:lon, per https://aqicn.org/json-api/doc/#api-Geolocalized_Feed-GetGeolocFeed
             location = 'geo:%s;%s' % (result[0], result[1])
 
-        url = 'https://api.waqi.info/feed/%s/?%s' % (location, utils.web.urlencode({'token': apikey}))
+        url = 'https://api.waqi.info/feed/%s/?%s' % (utils.web.urlquote(location), utils.web.urlencode({'token': apikey}))
         self.log.debug('AQI: using URL %s', url)
 
         f = utils.web.getUrl(url)
