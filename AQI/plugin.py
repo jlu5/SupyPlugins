@@ -80,13 +80,13 @@ class AQI(callbacks.Plugin):
 
         Looks up Air Quality Index information for <location> using aqicn.org.
 
-        --geocode-backend can be set to "native" or any geocoding backend supported by the NuWeather plugin. If nothing is given, this defaults to the backend set in 'plugins.aqicn.geocodeBackend'
+        --geocode-backend can be set to "native" or any geocoding backend supported by the NuWeather plugin. If nothing is given, this defaults to the backend set in 'plugins.aqi.geocodeBackend'
 
         If the geocoding backend is empty, aqicn's built-in city search will be used: this supports only basic city names as well as aqicn station IDs in the form "@1234".
         """
         apikey = self.registryValue("apiKey")
         if not apikey:
-            irc.error("The API Key is not set. Please set it via the 'plugins.aqicn.apikey' config "
+            irc.error("The API Key is not set. Please set it via the 'plugins.aqi.apikey' config "
                       "variable. You can sign up for an API key at https://aqicn.org/api", Raise=True)
 
         # We can use aqicn.org's builtin search or one of NuWeather's geocoding backends
