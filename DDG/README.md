@@ -1,7 +1,3 @@
-Provides an interface to DuckDuckGo's web search. This plugin requires the [Beautiful Soup 4](http://www.crummy.com/software/BeautifulSoup/bs4/doc/) Python module.
+# DDG
 
-#### Example
-
-> <+GLolol> %ddg search eiffel tower
-
-> <@Atlas> The Eiffel Tower is an iron lattice tower located on the Champ de Mars in Paris. It was named after the engineer Gustave Eiffel, whose company designed and built the tower. - <https://en.wikipedia.org/wiki/Eiffel_Tower>
+Looking for DDG? As of 2020-07-01 this plugin has been moved into Limnoria core: https://github.com/ProgVal/Limnoria/tree/master/plugins/DDG
