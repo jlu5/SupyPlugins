@@ -36,13 +36,6 @@ Most of these plugins also have their own READMEs in their folders; you can usua
 ##### AQI
 - Retrieves [air quality index](https://en.wikipedia.org/wiki/Air_quality_index) info from the [World Air Quality Index project](https://aqicn.org).
 
-##### CtcpNext
-- Alternative to the official Ctcp plugin, with a database for configurable replies.
-
-##### DDG
-- Provides an interface to DuckDuckGo's web search.
-   - **Requires:** [Beautiful Soup 4](http://www.crummy.com/software/BeautifulSoup/bs4/doc/)
-
 ##### FML
 - Displays random entries from fmylife.com.
    - **Requires:** [Beautiful Soup 4](http://www.crummy.com/software/BeautifulSoup/bs4/doc/)
@@ -54,9 +47,6 @@ Most of these plugins also have their own READMEs in their folders; you can usua
 - Fetches information from [minecraft.gamepedia.com](https://minecraft.gamepedia.com/).
    - **Requires:** [Beautiful Soup 4](http://www.crummy.com/software/BeautifulSoup/bs4/doc/)
 
-##### [Namegen](Namegen/README.md)
-- A small random name generator.
-
 ##### [NoTrigger](NoTrigger/README.md)
 - Anti-abuse script; prevents the bot from triggering other bots by modifying its output slightly. For more information, see [NoTrigger/README.md](NoTrigger/README.md).
 
@@ -65,9 +55,6 @@ Most of these plugins also have their own READMEs in their folders; you can usua
 
 ##### [OperUp](OperUp/README.md)
 - Allows Supybot to oper up on configured networks, automatically (on connect) and on demand.
-
-##### PassGen
-- Generates random passwords on the fly!
 
 ##### [PkgInfo](PkgInfo/README.md)
 - Fetches package information from various Linux and BSD distros' software repositories.
