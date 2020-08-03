@@ -75,11 +75,11 @@ class NuWeatherDarkSkyTestCase(PluginTestCase):
         self.assertNotError('setweather Berlin')
         self.assertRegexp('weather', 'Berlin')
 
-# TODO: set up Weatherstack in CI
-'''
 class NuWeatherWeatherstackTestCase(NuWeatherDarkSkyTestCase):  # inherit settings from above
     BACKEND = 'weatherstack'
-'''
+
+class NuWeatherOpenWeatherMapTestCase(NuWeatherDarkSkyTestCase):
+    BACKEND = 'openweathermap'
 
 # FIXME: test geocode backends
 
