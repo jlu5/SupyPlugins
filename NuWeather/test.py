@@ -1,5 +1,5 @@
 ###
-# Copyright (c) 2019, James Lu <james@overdrivenetworks.com>
+# Copyright (c) 2019-2020, James Lu <james@overdrivenetworks.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,6 @@ import unittest
 
 from supybot.test import *
 from supybot import log
-from . import config
 
 NO_NETWORK_REASON = "Network-based tests are disabled by --no-network"
 
@@ -44,7 +43,7 @@ class NuWeatherDarkSkyTestCase(PluginTestCase):
     # API limits :(
 
     def setUp(self):
-        super().setUp()
+        PluginTestCase.setUp(self)
         self.myVerbose = verbosity.MESSAGES  # Enable verbose logging of messages
 
         if not network:
