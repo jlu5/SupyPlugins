@@ -113,7 +113,7 @@ class LastFM(callbacks.Plugin):
             tformat = conf.supybot.reply.format.time()
             time = "at %s" % datetime.fromtimestamp(time).strftime(tformat)
         except KeyError:  # Nothing given by the API?
-            time = "just now"
+            time = None
 
         public_url = ''
         # If the DDG plugin from this repository is loaded, we can integrate
@@ -148,8 +148,12 @@ class LastFM(callbacks.Plugin):
             except KeyError:
                 pass
 
-        s = '%s listened to %s by %s %s %s%s. %s' % (ircutils.bold(user), ircutils.bold(track),
-            ircutils.bold(artist), album, time, ext_info, public_url)
+        if time is None:
+            s = '%s is listening to %s by %s %s %s. %s' % (ircutils.bold(user), ircutils.bold(track),
+                ircutils.bold(artist), album, ext_info, public_url)
+        else:
+            s = '%s listened to %s by %s %s %s%s. %s' % (ircutils.bold(user), ircutils.bold(track),
+                ircutils.bold(artist), album, time, ext_info, public_url)
         irc.reply(utils.str.normalizeWhitespace(s))
 
     @wrap(["something"])
