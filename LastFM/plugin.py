@@ -148,8 +148,12 @@ class LastFM(callbacks.Plugin):
             except KeyError:
                 pass
 
-        s = '%s listened to %s by %s %s %s%s. %s' % (ircutils.bold(user), ircutils.bold(track),
-            ircutils.bold(artist), album, time, ext_info, public_url)
+        if time == 'just now':
+            s = '%s is listening to %s by %s %s %s. %s' % (ircutils.bold(user), ircutils.bold(track),
+                ircutils.bold(artist), album, ext_info, public_url)
+        else:
+            s = '%s listened to %s by %s %s %s%s. %s' % (ircutils.bold(user), ircutils.bold(track),
+                ircutils.bold(artist), album, time, ext_info, public_url)
         irc.reply(utils.str.normalizeWhitespace(s))
 
     @wrap(["something"])
