@@ -35,9 +35,8 @@ from supybot import log
 
 NO_NETWORK_REASON = "Network-based tests are disabled by --no-network"
 
-class NuWeatherDarkSkyTestCase(PluginTestCase):
+class NuWeatherTestCase():
     plugins = ('NuWeather',)
-    BACKEND = 'darksky'
 
     # These tests are not meant to be exhaustive, since I don't want to hit my free tier
     # API limits :(
@@ -63,7 +62,7 @@ class NuWeatherDarkSkyTestCase(PluginTestCase):
 
     @unittest.skipUnless(network, NO_NETWORK_REASON)
     def testWeather(self):
-        self.assertRegexp('weather Vancouver', 'Vancouver, British Columbia')
+        self.assertRegexp('weather Vancouver', 'Vancouver,')
         self.assertRegexp('weather LAX', 'Los Angeles')
         #self.assertRegexp('weather 76010', 'Arlington')  # US ZIP codes not supported by Nominatim (default)
         self.assertError('weather InvalidLocationTest')
@@ -74,10 +73,13 @@ class NuWeatherDarkSkyTestCase(PluginTestCase):
         self.assertNotError('setweather Berlin')
         self.assertRegexp('weather', 'Berlin')
 
-class NuWeatherWeatherstackTestCase(NuWeatherDarkSkyTestCase):  # inherit settings from above
+class NuWeatherDarkSkyTestCase(NuWeatherTestCase, PluginTestCase):
+    BACKEND = 'darksky'
+
+class NuWeatherWeatherstackTestCase(NuWeatherTestCase, PluginTestCase):
     BACKEND = 'weatherstack'
 
-class NuWeatherOpenWeatherMapTestCase(NuWeatherDarkSkyTestCase):
+class NuWeatherOpenWeatherMapTestCase(NuWeatherTestCase, PluginTestCase):
     BACKEND = 'openweathermap'
 
 # FIXME: test geocode backends
