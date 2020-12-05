@@ -12,7 +12,7 @@ The recommended way of fetching plugins in this repository is to clone the git r
 
 and add the folder to your bot's `config directories.plugins`.
 
-**You will need a working copy of [Limnoria](https://github.com/ProgVal/Limnoria) running on Python 3.5+.** Python 2 users should consult the *python2-legacy* branch in Git instead. Anything older will *not* work.
+**You will need a working copy of [Limnoria](https://github.com/ProgVal/Limnoria) running on Python 3.5+.** Python 2 is no longer supported.
 
 If you are using a recent version of Limnoria's PluginDownloader, you can also fetch [individual plugins](#list-of-plugins) by running:
 
@@ -21,9 +21,7 @@ If you are using a recent version of Limnoria's PluginDownloader, you can also f
 on your bot.
 
 ## Support
-If you have any questions, concerns, or feature requests, feel free to submit an issue. Pull requests are welcome and appreciated.
-
-Or, you can find me on IRC at: `irc.overdrivenetworks.com #dev`
+Feel free to post to the issue tracker if you have any problems, or find me on IRC: #limnoria @ freenode.
 
 ## License
 Unless otherwise noted, all plugins are available under a 3 clause BSD license (inserted at the top of each file).
