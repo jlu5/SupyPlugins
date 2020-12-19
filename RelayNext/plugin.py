@@ -237,8 +237,8 @@ class RelayNext(callbacks.Plugin):
             s = "\x02[%s]\x02 %s" % (netname, s)
         return s
 
-    def relay(self, irc, msg, channel=None):
-        channel = (channel or msg.args[0]).lower()
+    def relay(self, irc, msg, channel):
+        channel = channel.lower()
         self.log.debug("RelayNext (%s): got channel %s", irc.network, channel)
         if not channel in irc.state.channels:
             return
@@ -345,11 +345,12 @@ class RelayNext(callbacks.Plugin):
                             otherIrc.queueMsg(out_msg)
 
     def doPrivmsg(self, irc, msg):
-        self.relay(irc, msg)
+        self.relay(irc, msg, channel=msg.args[0])
 
     def doNonPrivmsg(self, irc, msg):
-        if self.registryValue("events.relay%ss" % msg.command, msg.args[0]):
-            self.relay(irc, msg)
+        channel = msg.args[0]
+        if self.registryValue("events.relay%ss" % msg.command, channel):
+            self.relay(irc, msg, channel)
 
     doTopic = doPart = doKick = doMode = doJoin = doNonPrivmsg
 
@@ -358,12 +359,12 @@ class RelayNext(callbacks.Plugin):
     def doNick(self, irc, msg):
         for channel in msg.tagged('channels'):
             if self.registryValue("events.relaynicks", channel):
-                self.relay(irc, msg, channel=channel)
+                self.relay(irc, msg, channel)
 
     def doQuit(self, irc, msg):
         for channel in msg.tagged('channels'):
             if self.registryValue("events.relayquits", channel):
-                self.relay(irc, msg, channel=channel)
+                self.relay(irc, msg, channel)
 
     def outFilter(self, irc, msg):
         # Catch our own messages and send them into the relay (this is
