@@ -1,5 +1,5 @@
 ###
-# Copyright (c) 2015-2018 James Lu <james@overdrivenetworks.com>
+# Copyright (c) 2015-2020 James Lu <james@overdrivenetworks.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -95,5 +95,9 @@ for ev in _events:
 conf.registerChannelValue(RelayNext.events, 'userIgnored',
     registry.SpaceSeparatedListOfStrings(['PRIVMSG', 'MODE'], ("""Determines what events
         the relay should ignore from ignored users. Ignores are added using
-        Supybot's global ignore system.""")))
+        Limnoria's global ignore system.""")))
+conf.registerChannelValue(RelayNext.events, 'relaySelfMessages',
+    registry.Boolean(True, ("""Determines whether the bot should relay its own messages.
+        You may wish to disable this if you are running plugins that announce to the same channel
+        on multiple networks (e.g. RSS).""")))
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:

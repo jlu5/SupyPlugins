@@ -1,5 +1,5 @@
 ###
-# Copyright (c) 2015-2018 James Lu <james@overdrivenetworks.com>
+# Copyright (c) 2015-2020 James Lu <james@overdrivenetworks.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -367,7 +367,8 @@ class RelayNext(callbacks.Plugin):
         # Catch our own messages and send them into the relay (this is
         # useful because Supybot is often a multi-purpose bot!)
         try:
-            if msg.command == 'PRIVMSG' and not msg.relayedMsg:
+            if msg.command == 'PRIVMSG' and not msg.relayedMsg and \
+                    self.registryValue("events.relaySelfMessages", msg.args[0]):
                 new_msg = deepcopy(msg)
                 new_msg.nick = irc.nick
                 self.relay(irc, new_msg, channel=msg.args[0])
