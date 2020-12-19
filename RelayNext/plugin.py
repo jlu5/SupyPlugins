@@ -32,6 +32,7 @@ from copy import deepcopy
 import pickle
 import re
 import textwrap
+import time
 
 import supybot.world as world
 import supybot.irclib as irclib
@@ -294,16 +295,19 @@ class RelayNext(callbacks.Plugin):
                             maximum = self.registryValue("antiflood.maximum.nonPrivmsgs",
                                                          channel)
 
-                        if len(self.msgcounters[(source, msg.command)]) > maximum:
+                        lastFloodTrigger = self.floodTriggered.get((source, msg.command))
+                        if lastFloodTrigger is not None and (time.time() - lastFloodTrigger) > timeout:
+                            # Antiflood timeout passed
+                            self.floodTriggered[(source, msg.command)] = False
+                        elif lastFloodTrigger:
+                            # Antiflood was previously triggered
+                            return
+                        elif len(self.msgcounters[(source, msg.command)]) > maximum:
                             # Amount of messages in the counter surpassed our limit,
                             # announce the flood and block relaying messages of the
                             # same type for X seconds
                             self.log.debug("RelayNext (%s): message from %s blocked by "
                                            "flood protection.", irc.network, channel)
-
-                            if self.floodTriggered.get((source, msg.command)):
-                                # However, only send the announcement once.
-                                return
 
                             c = msg.command
                             e = format("Flood detected on %s (%s %ss/%s seconds), "
@@ -311,10 +315,8 @@ class RelayNext(callbacks.Plugin):
                                        maximum, c, seconds, c, timeout)
                             out_s = self._format(irc, msg, channel, announcement=e)
 
-                            self.floodTriggered[(source, msg.command)] = True
+                            self.floodTriggered[(source, msg.command)] = time.time()
                             self.log.info("RelayNext (%s): %s", irc.network, e)
-                        else:
-                            self.floodTriggered[(source, msg.command)] = False
 
                     for cn in targets:
                         # Iterate over all the relay targets for this message:
