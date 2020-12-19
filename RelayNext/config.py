@@ -51,21 +51,20 @@ def configure(advanced):
 RelayNext = conf.registerPlugin('RelayNext')
 
 conf.registerChannelValue(RelayNext, 'color',
-    registry.Boolean(True, _("""Determines whether the bot will color relayed
-    PRIVMSGs so as to make the messages easier to read.""")))
+    registry.Boolean(True, _("""Determines whether the bot will color networks and nicks when
+    relaying messages.""")))
 conf.registerChannelValue(RelayNext, 'hostmasks',
-    registry.Boolean(True, _("""Determines whether the bot will relay the
-    hostmask of the person joining or parting the channel when he or she joins
-    or parts.""")))
+    registry.Boolean(True, _("""Determines whether the bot will relay the ident@host of people
+    that join or part a channel.""")))
 conf.registerChannelValue(RelayNext, 'noHighlight',
-    registry.Boolean(False, _("""Determines whether the bot should prefix nicks
-    with a hyphen (-) to prevent excess highlights (in PRIVMSGs and actions).""")))
+    registry.Boolean(False, _("""Determines whether the bot should prefix nicks with zero-width
+    (ZWS) to prevent them from being highlighted / mentioned by the relayer.""")))
 conf.registerChannelValue(RelayNext, 'showPrefixes',
-    registry.Boolean(False, _("""Determines whether the bot should status prefixes
+    registry.Boolean(False, _("""Determines whether the bot should show status prefixes
     (@, %, +) when relaying.""")))
 conf.registerChannelValue(RelayNext, 'ignoreRegexp',
     registry.Regexp(None, _("""If configured, text, part, and quit messages matching this regexp
-                            will not be relayed. This may be useful for spam blocking.""")))
+                            will not be relayed. This may be useful for blocking spam.""")))
 
 conf.registerGroup(RelayNext, 'antiflood')
 conf.registerChannelValue(RelayNext.antiflood, 'enable',
@@ -82,7 +81,7 @@ conf.registerChannelValue(RelayNext.antiflood.maximum, 'nonPrivmsgs',
         the bot will allow from a relay channel before flood protection is triggered.""")))
 conf.registerChannelValue(RelayNext.antiflood, 'timeout',
     registry.PositiveInteger(60, _("""Determines the amount of time in seconds the bot should
-        block messages if flood protection is triggered.""")))
+        block messages when flood protection is triggered.""")))
 
 conf.registerGroup(RelayNext, 'events')
 
