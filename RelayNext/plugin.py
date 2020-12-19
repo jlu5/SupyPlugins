@@ -120,7 +120,7 @@ class RelayNext(callbacks.Plugin):
         """Block highlights in relaying by sticking a zero-width-space in the middle."""
         return (nick[0] + "\u200b" + nick[1:] if len(nick) > 0 else "")
 
-    def _format(self, irc, msg, channel, announcement=False):
+    def _format(self, irc, msg, channel, isAnnouncement=False):
         """
         Formats a relay given the IRC object, msg object, and channel.
         """
@@ -148,9 +148,9 @@ class RelayNext(callbacks.Plugin):
             except:
                 pass
 
-        if announcement:
+        if isAnnouncement:
             # Announcements use a special syntax
-            s = '*** %s' % announcement
+            s = '*** %s' % msg.args[1]
         else:
             ignoreRegexp = self.registryValue("ignoreRegexp", channel)
             if msg.command == 'NICK':
@@ -237,7 +237,62 @@ class RelayNext(callbacks.Plugin):
             s = "\x02[%s]\x02 %s" % (netname, s)
         return s
 
-    def relay(self, irc, msg, channel):
+    def checkAntiFlood(self, irc, msg, source, channel):
+        """
+        Run antiflood on the given network / channel / message, returning True if the given message
+        should be processed (i.e. it has not been blocked by antiflood).
+        """
+        if self.registryValue("antiflood.enable", channel):
+            # Flood prevention timeout - how long commands of a certain type
+            # should cease being relayed after flood prevention triggers
+            timeout = self.registryValue("antiflood.timeout", channel)
+
+            # If <maximum> messages of the same kind on one channel is
+            # received in <seconds> seconds, flood prevention timeout is
+            # triggered.
+            maximum = self.registryValue("antiflood.maximum", channel)
+            seconds = self.registryValue("antiflood.seconds", channel)
+
+            # Store the message in a counter, with the keys taking the
+            # form of (source channel@network, command name). If the counter
+            # doesn't already exist, create one here.
+            source = "%s@%s" % (channel, irc.network)
+            try:
+                self.msgcounters[(source, msg.command)].enqueue(msg.prefix)
+            except KeyError:
+                self.msgcounters[(source, msg.command)] = TimeoutQueue(seconds)
+
+            # Two different limits: one for messages and one for all others
+            if msg.command == "PRIVMSG":
+                maximum = self.registryValue("antiflood.maximum", channel)
+            else:
+                maximum = self.registryValue("antiflood.maximum.nonPrivmsgs",
+                                             channel)
+
+            lastFloodTrigger = self.floodTriggered.get((source, msg.command))
+            if lastFloodTrigger is not None and (time.time() - lastFloodTrigger) > timeout:
+                # Antiflood timeout passed
+                self.floodTriggered[(source, msg.command)] = False
+            elif lastFloodTrigger:
+                # Antiflood was previously triggered
+                return False
+            elif len(self.msgcounters[(source, msg.command)]) > maximum:
+                # Amount of messages in the counter surpassed our limit,
+                # announce the flood and block relaying messages of the
+                # same type for X seconds
+
+                announce_text = format("Flood detected on %s (%s %ss/%s seconds), "
+                                       "not relaying %ss for %s seconds!", channel,
+                                       maximum, msg.command, seconds, msg.command, timeout)
+                announce_msg = ircmsgs.privmsg(channel, announce_text)
+
+                self.floodTriggered[(source, msg.command)] = time.time()
+                self.log.info("RelayNext (%s): %s", irc.network, announce_text)
+                self.relay(irc, announce_msg, channel, isAnnouncement=True)
+                return False
+        return True
+
+    def relay(self, irc, msg, channel, isAnnouncement=False):
         channel = channel.lower()
         self.log.debug("RelayNext (%s): got channel %s", irc.network, channel)
         if not channel in irc.state.channels:
@@ -245,18 +300,19 @@ class RelayNext(callbacks.Plugin):
 
         # Check for ignored events first. Checking for "'.' not in msg.nick" is for skipping
         # ignore checks from servers.
-        ignoredevents = map(str.upper, self.registryValue('events.userIgnored', channel))
-        if msg.command in ignoredevents and msg.nick != irc.nick and '.' not in msg.nick and\
-                ircdb.checkIgnored(msg.prefix, channel):
-            self.log.debug("RelayNext (%s): ignoring message from %s",
-                           irc.network, msg.prefix)
-            return
+        if not isAnnouncement:
+            ignoredevents = map(str.upper, self.registryValue('events.userIgnored', channel))
+            if msg.command in ignoredevents and msg.nick != irc.nick and '.' not in msg.nick and\
+                    ircdb.checkIgnored(msg.prefix, channel):
+                self.log.debug("RelayNext (%s): ignoring message from %s",
+                               irc.network, msg.prefix)
+                return
 
         # Get the source channel
         source = "%s@%s" % (channel, irc.network)
         source = source.lower()
 
-        out_s = self._format(irc, msg, channel)
+        out_s = self._format(irc, msg, channel, isAnnouncement=isAnnouncement)
         if out_s:
             for relay in self.db.values():
                 self.log.debug("RelayNext (%s): check if %s in %s", irc.network, source, relay)
@@ -268,55 +324,10 @@ class RelayNext(callbacks.Plugin):
                     targets.remove(source)
 
                     self.log.debug("RelayNext: found targets %s for relay %s", targets, relay)
-
-                    if self.registryValue("antiflood.enable", channel):
-                        # Flood prevention timeout - how long commands of a certain type
-                        # should cease being relayed after flood prevention triggers
-                        timeout = self.registryValue("antiflood.timeout", channel)
-
-                        # If <maximum> messages of the same kind on one channel is
-                        # received in <seconds> seconds, flood prevention timeout is
-                        # triggered.
-                        maximum = self.registryValue("antiflood.maximum", channel)
-                        seconds = self.registryValue("antiflood.seconds", channel)
-
-                        # Store the message in a counter, with the keys taking the
-                        # form of (source channel@network, command name). If the counter
-                        # doesn't already exist, create one here.
-                        try:
-                            self.msgcounters[(source, msg.command)].enqueue(msg.prefix)
-                        except KeyError:
-                            self.msgcounters[(source, msg.command)] = TimeoutQueue(seconds)
-
-                        # Two different limits: one for messages and one for all others
-                        if msg.command == "PRIVMSG":
-                            maximum = self.registryValue("antiflood.maximum", channel)
-                        else:
-                            maximum = self.registryValue("antiflood.maximum.nonPrivmsgs",
-                                                         channel)
-
-                        lastFloodTrigger = self.floodTriggered.get((source, msg.command))
-                        if lastFloodTrigger is not None and (time.time() - lastFloodTrigger) > timeout:
-                            # Antiflood timeout passed
-                            self.floodTriggered[(source, msg.command)] = False
-                        elif lastFloodTrigger:
-                            # Antiflood was previously triggered
-                            return
-                        elif len(self.msgcounters[(source, msg.command)]) > maximum:
-                            # Amount of messages in the counter surpassed our limit,
-                            # announce the flood and block relaying messages of the
-                            # same type for X seconds
-                            self.log.debug("RelayNext (%s): message from %s blocked by "
-                                           "flood protection.", irc.network, channel)
-
-                            c = msg.command
-                            e = format("Flood detected on %s (%s %ss/%s seconds), "
-                                       "not relaying %ss for %s seconds!", channel,
-                                       maximum, c, seconds, c, timeout)
-                            out_s = self._format(irc, msg, channel, announcement=e)
-
-                            self.floodTriggered[(source, msg.command)] = time.time()
-                            self.log.info("RelayNext (%s): %s", irc.network, e)
+                    if (not isAnnouncement) and not self.checkAntiFlood(irc, msg, source, channel):
+                        self.log.debug("RelayNext: antiflood blocked event %s from %s",
+                                       msg.command, source)
+                        return
 
                     for cn in targets:
                         # Iterate over all the relay targets for this message:
@@ -325,16 +336,14 @@ class RelayNext(callbacks.Plugin):
                         target, net = cn.split("@")
                         otherIrc = world.getIrc(net)
                         if otherIrc is None:
-                            self.log.debug("RelayNext: message to network %r"
-                                           " dropped, we are not connected "
-                                           "there!", net)
+                            self.log.debug("RelayNext: message to network %r dropped, we are not "
+                                           "connected there!", net)
                             continue
 
                         target_chanobj = otherIrc.state.channels.get(target)
                         if (not target_chanobj) or otherIrc.nick not in target_chanobj.users:
                             # We're not in the target relay channel!
-                            self.log.debug("RelayNext: message to %s@%s "
-                                           "dropped, we are not in that "
+                            self.log.debug("RelayNext: message to %s@%s dropped, we are not in that "
                                            "channel!", target, net)
                         else:
                             out_msg = ircmsgs.privmsg(target, out_s)
