@@ -147,13 +147,13 @@ class NuWeather(callbacks.Plugin):
 
         displaymode = self.registryValue('units.temperature', dynamic.msg.args[0])
         if displaymode == 'F/C':
-            string = '%sF/%sC' % (f, c)
+            string = '%s°F/%s°C' % (f, c)
         elif displaymode == 'C/F':
-            string = '%sC/%sF' % (c, f)
+            string = '%s°C/%s°F' % (c, f)
         elif displaymode == 'F':
-            string = '%sF' % f
+            string = '%s°F' % f
         elif displaymode == 'C':
-            string = '%sC' % c
+            string = '%s°C' % c
         else:
             raise ValueError("Unknown display mode for temperature.")
         return ircutils.mircColor(string, color)
@@ -225,7 +225,7 @@ class NuWeather(callbacks.Plugin):
             km = round(mi * 1.609, 1)
 
         if speed:
-            return _('%smph/%skph') % (mi, km)
+            return _('%smph/%sKm/h') % (mi, km)
         else:
             return _('%smi/%skm') % (mi, km)
 
