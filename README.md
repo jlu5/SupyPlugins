@@ -21,7 +21,7 @@ If you are using a recent version of Limnoria's PluginDownloader, you can also f
 on your bot.
 
 ## Support
-Feel free to post to the issue tracker if you have any problems, or find me on IRC: #limnoria @ freenode.
+Feel free to post to the issue tracker if you have any problems, or find me on IRC: #limnoria @ Libera.chat.
 
 ## License
 Unless otherwise noted, all plugins are available under a 3 clause BSD license (inserted at the top of each file).
