@@ -1,5 +1,5 @@
 ###
-# Copyright (c) 2015, James Lu
+# Copyright (c) 2015,2021 James Lu
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,10 +27,12 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 ###
+import time
+import uuid
 
 from supybot.test import *
 
-class RelayNextTestCase(PluginTestCase):
+class RelayNextDBTestCase(PluginTestCase):
     plugins = ('RelayNext',)
 
     def testAdd(self):
@@ -48,7 +50,7 @@ class RelayNextTestCase(PluginTestCase):
         self.assertRegexp("relaynext list", "#channel2@othernet")
         self.assertError("relaynext set test")
         self.assertError("relaynext set test #channel1@somenet")
-    
+
     def testList(self):
         # This should error if no relays are defined
         self.assertError("relaynext list")
@@ -57,13 +59,17 @@ class RelayNextTestCase(PluginTestCase):
         self.assertRegexp("relaynext list", "#test@test")
 
     def testSetCaseInsensitive(self):
-        self.assertError("relaynext set derp #dev@overdrive-irc #DEV@OVERdrive-IRC")
+        self.assertError("relaynext set foobar #deV@overdrive-irc #DEV@overdrive-irc")
+        self.assertError("relaynext set foobar #dev@overdrive-irc #DEV@OVERdrive-IRC")
+        self.assertError("relaynext set foobar #dev@overdrive-irc #dev@OVERdrive-IRC")
         self.assertNotError("relaynext set abcd #moo@moo #MOO@mOO #test@test")
         self.assertRegexp("relaynext list", "#moo@moo")
         self.assertRegexp("relaynext list", "#test@test")
 
     def testAddCaseInsensitive(self):
-        self.assertError("relaynext add derp #dev@overdrive-irc #DEV@OVERdrive-IRC")
+        self.assertError("relaynext add foobar #deV@overdrive-irc #DEV@overdrive-irc")
+        self.assertError("relaynext add foobar #dev@overdrive-irc #DEV@OVERdrive-IRC")
+        self.assertError("relaynext add foobar #dev@overdrive-irc #dev@OVERdrive-IRC")
         self.assertNotError("relaynext add abcd #moo@moo #MOO@mOO #test@test")
         self.assertRegexp("relaynext list", "#moo@moo")
         self.assertRegexp("relaynext list", "#test@test")
@@ -103,5 +109,65 @@ class RelayNextTestCase(PluginTestCase):
         self.assertNotError("relaynext set test #channel1@somenet #channel2@othernet")
         self.assertNotError("relaynext clear")
         self.assertError("relaynext list")
+
+
+class RelayNextTestCase(PluginTestCase):
+    plugins = ('RelayNext',)
+    # Disable colours to make output checking more predictable
+    config = {'plugins.RelayNext.color': False}
+
+    def setUp(self):
+        super().setUp()
+        # These test network names are defined in scripts/supybot-test. Anything unknown will fail with:
+        #     supybot.registry.NonExistentRegistryEntry: 'net1' is not a valid entry in 'supybot.networks'
+        self.irc1 = getTestIrc("testnet1")
+        self.chan1 = irclib.ChannelState()
+        self.chan1name = '#' + uuid.uuid4().hex
+        self.chan1.addUser(self.irc1.nick)  # Add the bot to the channel
+        self.irc1.state.channels = {self.chan1name: self.chan1}
+
+        self.irc2 = getTestIrc("testnet2")
+        self.chan2 = irclib.ChannelState()
+        self.chan2.addUser(self.irc2.nick)
+        self.chan2name = '#' + uuid.uuid4().hex
+        self.irc2.state.channels = {self.chan2name: self.chan2}
+        self.assertNotError("relaynext set testRelay %s@testnet1 %s@testnet2" % (self.chan1name, self.chan2name))
+
+    def getCommandResponse(self, irc):
+        # Adapted from PluginTestCase._feedMsg() to account for other irc objects
+        response = irc.takeMsg()
+        fed = time.time()
+        while response is None and time.time() - fed < self.timeout:
+            time.sleep(0.01)
+            drivers.run()
+            response = irc.takeMsg()
+        return response
+
+    def testJoin(self):
+        msg = ircmsgs.join(self.chan1name, prefix='testUser1!testuser@example.com')
+        self.irc1.feedMsg(msg)
+        output = self.getCommandResponse(self.irc2)
+        self.assertEqual('\x02[testnet1]\x02 testUser1 (testuser@example.com) has joined %s' % self.chan1name, output.args[1])
+
+    def testPartBare(self):
+        msg = ircmsgs.part(self.chan1name, prefix='foo!bar@baz')
+        self.irc1.feedMsg(msg)
+        output = self.getCommandResponse(self.irc2)
+        self.assertEqual('\x02[testnet1]\x02 foo (bar@baz) has left %s' % self.chan1name, output.args[1])
+
+    def testPartWithReason(self):
+        msg = ircmsgs.part(self.chan1name, 'foobar', prefix='foo!bar@baz')
+        self.irc1.feedMsg(msg)
+        output = self.getCommandResponse(self.irc2)
+        self.assertEqual('\x02[testnet1]\x02 foo (bar@baz) has left %s (foobar)' % self.chan1name, output.args[1])
+
+    # TODO: all other messages
+    # TODO: toggles to show/hide specific events
+    # TODO: colours
+    # TODO: blockHighlights
+    # TODO: relaySelfMessages and ignores
+    # TODO: !nicks command
+    # TODO: antiflood
+    # TODO: announcement routing (trigger relay() manually)
 
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:
