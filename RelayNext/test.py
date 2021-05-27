@@ -143,6 +143,26 @@ class RelayNextTestCase(PluginTestCase):
             response = irc.takeMsg()
         return response
 
+    def testPrivmsg(self):
+        msg = ircmsgs.privmsg(self.chan1name, "hello world", prefix='abc!def@ghi.jkl')
+        self.irc1.feedMsg(msg)
+        output = self.getCommandResponse(self.irc2)
+        self.assertEqual('\x02[testnet1]\x02 <abc> hello world', output.args[1])
+
+    def testPrivmsgAction(self):
+        msg = ircmsgs.privmsg(self.chan2name, "\x01ACTION waves hello\x01", prefix='jlu5!~jlu5@user/jlu5')
+        self.irc2.feedMsg(msg)  # irc2 is source
+        output = self.getCommandResponse(self.irc1)
+        self.assertEqual('\x02[testnet2]\x02 * jlu5 waves hello', output.args[1])
+
+    def testPrivmsgIgnoreCTCPs(self):  # irc2 is source
+        self.irc2.feedMsg(ircmsgs.privmsg(self.chan2name, "\x01VERSION\x01", prefix='StatServ!StatServ@services.mytestnet.internal'))
+        # Check that the first message isn't relayed
+        self.irc2.feedMsg(ircmsgs.privmsg(self.chan2name, "dummy test message", prefix='StatServ!StatServ@services.mytestnet.internal'))
+        output = self.getCommandResponse(self.irc1)
+        self.assertIn("dummy test", output.args[1])
+        self.assertNotIn("VERSION", output.args[1])
+
     def testJoin(self):
         msg = ircmsgs.join(self.chan1name, prefix='testUser1!testuser@example.com')
         self.irc1.feedMsg(msg)
@@ -161,11 +181,25 @@ class RelayNextTestCase(PluginTestCase):
         output = self.getCommandResponse(self.irc2)
         self.assertEqual('\x02[testnet1]\x02 foo (bar@baz) has left %s (foobar)' % self.chan1name, output.args[1])
 
-    # TODO: all other messages
+    def testTopic(self):
+        with conf.supybot.plugins.relayNext.events.relayTopics.context(True):
+            msg = ircmsgs.topic(self.chan1name, 'Some topic text', prefix='user5!~test@user/test')
+            self.irc1.feedMsg(msg)
+            output = self.getCommandResponse(self.irc2)
+            self.assertEqual('\x02[testnet1]\x02 user5 set topic on %s to: Some topic text' % self.chan1name, output.args[1])
+
+    def testKick(self):
+        msg = ircmsgs.kick(self.chan1name, 'soccerball', 'some ambiguous reason', prefix='foo!bar@foobar.example')
+        self.irc1.state.nicksToHostmasks['soccerball'] = 'soccerball!dummy@dummy.test.client'
+        self.irc1.feedMsg(msg)
+        output = self.getCommandResponse(self.irc2)
+        self.assertEqual('\x02[testnet1]\x02 soccerball (dummy@dummy.test.client) has been kicked from %s by foo (some ambiguous reason)' % self.chan1name, output.args[1])
+
+    # TODO: MODE, QUIT, NICK events
     # TODO: toggles to show/hide specific events
     # TODO: colours
-    # TODO: blockHighlights
-    # TODO: relaySelfMessages and ignores
+    # TODO: blockHighlights (PRIVMSG / NICK / KICK), showPrefixes (PRIVMSG only)
+    # TODO: bot ignores, ignoreRegexp, relaySelfMessages
     # TODO: !nicks command
     # TODO: antiflood
     # TODO: announcement routing (trigger relay() manually)
