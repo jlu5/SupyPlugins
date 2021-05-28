@@ -241,7 +241,16 @@ class RelayNextTestCase(PluginTestCase):
         # XXX: this should probably show the hostmask for consistency?
         self.assertEqual('\x02[testnet1]\x02 OldNick is now known as newnick', output.args[1])
 
-    # TODO: toggles to show/hide specific events
+    def testToggleEvents(self):
+        with conf.supybot.plugins.relayNext.events.relayJoins.context(False):
+            with conf.supybot.plugins.relayNext.events.relayParts.context(False):
+                self.irc2.feedMsg(ircmsgs.join(self.chan2name, prefix='ChanServ!ChanServ@services.testnet.internal'))
+                self.irc2.feedMsg(ircmsgs.part(self.chan2name, prefix='ChanServ!ChanServ@services.testnet.internal'))
+                self.irc2.feedMsg(ircmsgs.privmsg(self.chan2name, 'Your channel is now registered =]', prefix='ChanServ!ChanServ@services.testnet.internal'))
+        output = self.getCommandResponse(self.irc1)
+        self.assertEqual(self.chan1name, output.args[0])
+        self.assertEqual('\x02[testnet2]\x02 <ChanServ> Your channel is now registered =]', output.args[1])
+
     # TODO: colours
     # TODO: blockHighlights (PRIVMSG / NICK / KICK), showPrefixes (PRIVMSG only)
     # TODO: bot ignores, ignoreRegexp, relaySelfMessages
