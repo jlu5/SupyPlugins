@@ -115,6 +115,7 @@ class RelayNextTestCase(PluginTestCase):
     plugins = ('RelayNext',)
     # Disable colours to make output checking more predictable
     config = {'plugins.RelayNext.color': False}
+    timeout = 3
 
     def setUp(self):
         super().setUp()
@@ -218,7 +219,28 @@ class RelayNextTestCase(PluginTestCase):
         self.assertEqual(self.chan2name, output.args[0])
         self.assertEqual('\x02[testnet1]\x02 foo (bar@foobar.example) set mode +ov foo foo on %s' % self.chan1name, output.args[1])
 
-    # TODO: QUIT, NICK events
+    def testQuit(self):
+        msg = ircmsgs.quit('goodbye', prefix='Tester1234!bar@example.org')
+        self.irc1.feedMsg(msg)  # Because the source is not in the channel, their message doesn't get relayed
+        self.chan1.addUser('nobody')
+        msg = ircmsgs.quit('Leaving', prefix='Nobody!~nobody@test.user')
+        self.irc1.feedMsg(msg)
+        output = self.getCommandResponse(self.irc2)
+        self.assertEqual(self.chan2name, output.args[0])
+        # XXX: this should probably show the hostmask for consistency?
+        self.assertEqual('\x02[testnet1]\x02 Nobody has quit (Leaving)', output.args[1])
+
+    def testNick(self):
+        msg = ircmsgs.nick('OldNick', prefix='oldnick!~ident@hidden-1234abcd.example.net')
+        self.irc1.feedMsg(msg)  # Because the source is not in the channel, their message doesn't get relayed
+        self.chan1.addUser('OldNick')
+        msg = ircmsgs.nick('newnick', prefix='OldNick!~ident@hidden-1234abcd.example.net')
+        self.irc1.feedMsg(msg)
+        output = self.getCommandResponse(self.irc2)
+        self.assertEqual(self.chan2name, output.args[0])
+        # XXX: this should probably show the hostmask for consistency?
+        self.assertEqual('\x02[testnet1]\x02 OldNick is now known as newnick', output.args[1])
+
     # TODO: toggles to show/hide specific events
     # TODO: colours
     # TODO: blockHighlights (PRIVMSG / NICK / KICK), showPrefixes (PRIVMSG only)
