@@ -147,12 +147,14 @@ class RelayNextTestCase(PluginTestCase):
         msg = ircmsgs.privmsg(self.chan1name, "hello world", prefix='abc!def@ghi.jkl')
         self.irc1.feedMsg(msg)
         output = self.getCommandResponse(self.irc2)
+        self.assertEqual(self.chan2name, output.args[0])
         self.assertEqual('\x02[testnet1]\x02 <abc> hello world', output.args[1])
 
     def testPrivmsgAction(self):
         msg = ircmsgs.privmsg(self.chan2name, "\x01ACTION waves hello\x01", prefix='jlu5!~jlu5@user/jlu5')
         self.irc2.feedMsg(msg)  # irc2 is source
         output = self.getCommandResponse(self.irc1)
+        self.assertEqual(self.chan1name, output.args[0])
         self.assertEqual('\x02[testnet2]\x02 * jlu5 waves hello', output.args[1])
 
     def testPrivmsgIgnoreCTCPs(self):  # irc2 is source
@@ -160,6 +162,7 @@ class RelayNextTestCase(PluginTestCase):
         # Check that the first message isn't relayed
         self.irc2.feedMsg(ircmsgs.privmsg(self.chan2name, "dummy test message", prefix='StatServ!StatServ@services.mytestnet.internal'))
         output = self.getCommandResponse(self.irc1)
+        self.assertEqual(self.chan1name, output.args[0])
         self.assertIn("dummy test", output.args[1])
         self.assertNotIn("VERSION", output.args[1])
 
@@ -167,18 +170,21 @@ class RelayNextTestCase(PluginTestCase):
         msg = ircmsgs.join(self.chan1name, prefix='testUser1!testuser@example.com')
         self.irc1.feedMsg(msg)
         output = self.getCommandResponse(self.irc2)
+        self.assertEqual(self.chan2name, output.args[0])
         self.assertEqual('\x02[testnet1]\x02 testUser1 (testuser@example.com) has joined %s' % self.chan1name, output.args[1])
 
     def testPartBare(self):
         msg = ircmsgs.part(self.chan1name, prefix='foo!bar@baz')
         self.irc1.feedMsg(msg)
         output = self.getCommandResponse(self.irc2)
+        self.assertEqual(self.chan2name, output.args[0])
         self.assertEqual('\x02[testnet1]\x02 foo (bar@baz) has left %s' % self.chan1name, output.args[1])
 
     def testPartWithReason(self):
         msg = ircmsgs.part(self.chan1name, 'foobar', prefix='foo!bar@baz')
         self.irc1.feedMsg(msg)
         output = self.getCommandResponse(self.irc2)
+        self.assertEqual(self.chan2name, output.args[0])
         self.assertEqual('\x02[testnet1]\x02 foo (bar@baz) has left %s (foobar)' % self.chan1name, output.args[1])
 
     def testTopic(self):
@@ -186,6 +192,7 @@ class RelayNextTestCase(PluginTestCase):
             msg = ircmsgs.topic(self.chan1name, 'Some topic text', prefix='user5!~test@user/test')
             self.irc1.feedMsg(msg)
             output = self.getCommandResponse(self.irc2)
+            self.assertEqual(self.chan2name, output.args[0])
             self.assertEqual('\x02[testnet1]\x02 user5 set topic on %s to: Some topic text' % self.chan1name, output.args[1])
 
     def testKick(self):
@@ -193,9 +200,25 @@ class RelayNextTestCase(PluginTestCase):
         self.irc1.state.nicksToHostmasks['soccerball'] = 'soccerball!dummy@dummy.test.client'
         self.irc1.feedMsg(msg)
         output = self.getCommandResponse(self.irc2)
-        self.assertEqual('\x02[testnet1]\x02 soccerball (dummy@dummy.test.client) has been kicked from %s by foo (some ambiguous reason)' % self.chan1name, output.args[1])
+        self.assertEqual(self.chan2name, output.args[0])
+        self.assertEqual('\x02[testnet1]\x02 soccerball (dummy@dummy.test.client) has been kicked from %s by foo '
+                         '(some ambiguous reason)' % self.chan1name, output.args[1])
 
-    # TODO: MODE, QUIT, NICK events
+    def testMode(self):
+        msg = ircmsgs.mode(self.chan1name, ('-m'), prefix='foo!bar@foobar.example')
+        self.irc1.feedMsg(msg)
+        output = self.getCommandResponse(self.irc2)
+        self.assertEqual(self.chan2name, output.args[0])
+        self.assertEqual('\x02[testnet1]\x02 foo (bar@foobar.example) set mode -m on %s' % self.chan1name, output.args[1])
+
+    def testModeWithArgs(self):
+        msg = ircmsgs.mode(self.chan1name, ('+ov', 'foo', 'foo'), prefix='foo!bar@foobar.example')
+        self.irc1.feedMsg(msg)
+        output = self.getCommandResponse(self.irc2)
+        self.assertEqual(self.chan2name, output.args[0])
+        self.assertEqual('\x02[testnet1]\x02 foo (bar@foobar.example) set mode +ov foo foo on %s' % self.chan1name, output.args[1])
+
+    # TODO: QUIT, NICK events
     # TODO: toggles to show/hide specific events
     # TODO: colours
     # TODO: blockHighlights (PRIVMSG / NICK / KICK), showPrefixes (PRIVMSG only)
