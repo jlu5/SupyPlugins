@@ -112,7 +112,7 @@ class RelayNextDBTestCase(PluginTestCase):
 
 
 class RelayNextTestCase(PluginTestCase):
-    plugins = ('RelayNext',)
+    plugins = ('RelayNext', 'Admin', 'Utilities')
     # Disable colours to make output checking more predictable
     config = {'plugins.RelayNext.color': False}
     timeout = 3
@@ -338,9 +338,47 @@ class RelayNextTestCase(PluginTestCase):
                         output = self.getCommandResponse(self.irc1)
                         self.assertRegex(output.args[1], '<[%s]\x03\\d{1,2}%s\u200b%s\x03>' % (status, nick[0], nick[1:]))
 
-    # TODO: bot ignores, ignoreRegexp, relaySelfMessages
+    def testIgnore(self):
+        self.assertNotError("admin ignore add *!*@*/bot/*")
+        self.irc1.feedMsg(ircmsgs.privmsg(self.chan1name, "Message from bot", prefix='testbot!testbot@user/test/bot/testbot'))
+        self.irc1.feedMsg(ircmsgs.privmsg(self.chan1name, "Message from user", prefix='tester!test@user/test'))
+        output = self.getCommandResponse(self.irc2)
+        self.assertEqual('\x02[testnet1]\x02 <tester> Message from user', output.args[1])
+
+    def testIgnoreRegexp(self):
+        cfgvar = conf.supybot.plugins.relayNext.ignoreRegexp
+        try:
+            cfgvar.set("m/xnopyt/")
+            self.irc1.feedMsg(ircmsgs.privmsg(self.chan1name, "!ud xnopyt", prefix='abc!def@efg.user'))
+            self.irc1.feedMsg(ircmsgs.privmsg(self.chan1name, "!ud IRC", prefix='abc!def@efg.user'))
+            output = self.getCommandResponse(self.irc2)
+            self.assertIn('<abc> !ud IRC', output.args[1])
+        finally:
+            cfgvar.set(cfgvar._default)
+
+    @unittest.skip("Not working yet...")
+    def testRelaySelfMessages(self):
+        self.irc1.nick = 'RelayBot'
+        self.chan1.addUser('RelayBot')
+        self.chan1.addUser('caller')
+        with conf.supybot.plugins.relayNext.events.relaySelfMessages.context(True):
+            cmd = "RelayBot: echo abcd"
+            self.irc1.feedMsg(ircmsgs.privmsg(self.chan1name, cmd, prefix='caller!caller@abc.internal'))
+            output = self.getCommandResponse(self.irc2)
+            self.assertIn('<caller> ' + cmd, output.args[1])
+            output = self.getCommandResponse(self.irc2)
+            self.assertIn('<RelayBot> abcd', output.args[1])
+        with conf.supybot.plugins.relayNext.events.relaySelfMessages.context(False):
+            self.irc1.feedMsg(ircmsgs.privmsg(self.chan1name, "RelayNext: echo xyzzy", prefix='caller!caller@abc.internal'))
+            self.irc1.feedMsg(ircmsgs.privmsg(self.chan1name, "\o/", prefix='botty!mcbotface@bots.fancy.example'))
+            output = self.getCommandResponse(self.irc2)
+            self.assertIn('<botty> \o/', output.args[1])
+
+
+    # TODO: relaySelfMessages
     # TODO: !nicks command
     # TODO: antiflood
     # TODO: announcement routing (trigger relay() manually)
+    # TODO: a >= 3 net relay?
 
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:
