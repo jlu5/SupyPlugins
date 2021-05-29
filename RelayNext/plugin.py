@@ -399,7 +399,7 @@ class RelayNext(callbacks.Plugin):
         If --count is specified, only the amount of users in the relay is given."""
         opts = dict(optlist)
 
-        if irc.nested and 'count' not in keys:
+        if irc.nested and 'count' not in opts:
             irc.error('This command cannot be nested.', Raise=True)
 
         try:
