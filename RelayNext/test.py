@@ -31,6 +31,7 @@ import random
 import re
 import string
 import time
+import typing
 import uuid
 
 from supybot.test import *
@@ -518,7 +519,8 @@ class RelayNextTestCase(PluginTestCase):
                 output = self.getCommandResponse(self.irc2)
                 print("Expected:", expected_msg)
                 print("Actual:", output)
-                if isinstance(expected_msg, re.Pattern):
+                # https://stackoverflow.com/a/34178375
+                if isinstance(expected_msg, typing.Pattern):
                     self.assertRegex(output.args[1], expected_msg)
                 else:
                     self.assertIn(expected_msg, output.args[1])
@@ -549,7 +551,8 @@ class RelayNextTestCase(PluginTestCase):
                 output = self.getCommandResponse(self.irc2)
                 print("Expected:", expected_msg)
                 print("Actual:", output)
-                if isinstance(expected_msg, re.Pattern):
+                # https://stackoverflow.com/a/34178375
+                if isinstance(expected_msg, typing.Pattern):
                     self.assertRegex(output.args[1], expected_msg)
                 else:
                     self.assertIn(expected_msg, output.args[1])
