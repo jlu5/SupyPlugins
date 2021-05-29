@@ -251,8 +251,93 @@ class RelayNextTestCase(PluginTestCase):
         self.assertEqual(self.chan1name, output.args[0])
         self.assertEqual('\x02[testnet2]\x02 <ChanServ> Your channel is now registered =]', output.args[1])
 
-    # TODO: colours
-    # TODO: blockHighlights (PRIVMSG / NICK / KICK), showPrefixes (PRIVMSG only)
+    def testRelayColorNoHostmask(self):
+        with conf.supybot.plugins.relayNext.color.context(True):
+            with conf.supybot.plugins.relayNext.hostmasks.context(False):
+                # Join message
+                self.irc2.feedMsg(ircmsgs.join(self.chan2name, prefix='ChanServ!ChanServ@services.testnet.internal'))
+                output = self.getCommandResponse(self.irc1)
+                self.assertRegex(output.args[1], '\x02\\[\x03\\d{1,2}testnet2\x03\\]\x02 \x03\\d{1,2}ChanServ\x03 has joined')
+
+                # PRIVMSG
+                self.irc2.feedMsg(ircmsgs.privmsg(self.chan2name, 'Your channel is now registered =]', prefix='ChanServ!ChanServ@services.testnet.internal'))
+                output = self.getCommandResponse(self.irc1)
+                self.assertRegex(output.args[1], '\x02\\[\x03\\d{1,2}testnet2\x03\\]\x02 <\x03\\d{1,2}ChanServ\x03> Your channel is now registered =]')
+
+                # Nick change
+                self.chan2.addUser('old345')
+                self.irc2.feedMsg(ircmsgs.nick('new123', prefix='old345!old345@Clk-12345678.lan'))
+                output = self.getCommandResponse(self.irc1)
+                self.assertRegex(output.args[1], '\x03\\d{1,2}old345\\x03 is now known as \x03\\d{1,2}new123\\x03')
+
+    def testBlockHighlightsSimple(self):
+        with conf.supybot.plugins.relayNext.noHighlight.context(True):
+            with conf.supybot.plugins.relayNext.hostmasks.context(False):
+                # Join message
+                self.irc2.feedMsg(ircmsgs.join(self.chan2name, prefix='ChanServ!ChanServ@services.testnet.internal'))
+                output = self.getCommandResponse(self.irc1)
+                self.assertIn('C\u200bhanServ has joined', output.args[1])
+                self.assertNotIn('ChanServ', output.args[1])
+
+                # PRIVMSG
+                self.irc2.feedMsg(ircmsgs.privmsg(self.chan2name, 'hi everyone', prefix='samplenick!user@host'))
+                output = self.getCommandResponse(self.irc1)
+                self.assertIn('<s\u200bamplenick>', output.args[1])
+                self.assertNotIn('<samplenick>', output.args[1])
+
+    def testBlockHighlightsNick(self):
+        with conf.supybot.plugins.relayNext.noHighlight.context(True):
+            with conf.supybot.plugins.relayNext.hostmasks.context(False):
+                # Nick change
+                self.chan2.addUser('old345')
+                self.irc2.feedMsg(ircmsgs.nick('new123', prefix='old345!old345@Clk-12345678.lan'))
+                output = self.getCommandResponse(self.irc1)
+                self.assertIn('o\u200bld345', output.args[1])
+                self.assertNotIn('old345', output.args[1])
+                self.assertIn('n\u200bew123', output.args[1])
+                self.assertNotIn('new123', output.args[1])
+
+    def testBlockHighlightsKick(self):
+        with conf.supybot.plugins.relayNext.noHighlight.context(True):
+            with conf.supybot.plugins.relayNext.hostmasks.context(False):
+                # KICK
+                self.irc2.state.nicksToHostmasks['evilbot'] = 'evilbot!bot@test.client'
+                self.chan2.addUser('evilbot')
+                self.irc2.feedMsg(ircmsgs.kick(self.chan2name, 'evilbot', 'spam', prefix='a!b@c.d.e.f'))
+                output = self.getCommandResponse(self.irc1)
+                self.assertIn('e\u200bvilbot', output.args[1])
+                self.assertNotIn('evilbot', output.args[1])
+                self.assertIn('a\u200b', output.args[1])
+
+    def testBlockHighlightsColor(self):
+        with conf.supybot.plugins.relayNext.color.context(True):
+            with conf.supybot.plugins.relayNext.noHighlight.context(True):
+                # PRIVMSG
+                self.irc2.feedMsg(ircmsgs.privmsg(self.chan2name, 'The quick brown fox jumps over the lazy dog', prefix='Limnoria!limnoria@bot/limnoria'))
+                output = self.getCommandResponse(self.irc1)
+                self.assertRegex(output.args[1], '<\x03\\d{1,2}L\u200bimnoria\x03>')
+
+    def testShowPrefixes(self):  # currently only implemented for PRIVMSG
+        with conf.supybot.plugins.relayNext.showPrefixes.context(True):
+            users = {"foo": "@", "bar": "%", "baz": "+"}
+            for nick, status in users.items():
+                self.chan2.addUser(status+nick)
+                self.irc2.feedMsg(ircmsgs.privmsg(self.chan2name, 'Hi', prefix='%s!user@monotonous.example' % nick))
+                output = self.getCommandResponse(self.irc1)
+                self.assertIn('<%s%s>' % (status, nick), output.args[1])
+                self.assertNotIn('<%s>' % nick, output.args[1])
+
+    def testShowPrefixesColorNoHighlight(self):
+        with conf.supybot.plugins.relayNext.showPrefixes.context(True):
+            with conf.supybot.plugins.relayNext.color.context(True):
+                with conf.supybot.plugins.relayNext.noHighlight.context(True):
+                    users = {"foo": "@", "bar": "%", "baz": "+"}
+                    for nick, status in users.items():
+                        self.chan2.addUser(status+nick)
+                        self.irc2.feedMsg(ircmsgs.privmsg(self.chan2name, 'Hi', prefix='%s!user@monotonous.example' % nick))
+                        output = self.getCommandResponse(self.irc1)
+                        self.assertRegex(output.args[1], '<[%s]\x03\\d{1,2}%s\u200b%s\x03>' % (status, nick[0], nick[1:]))
+
     # TODO: bot ignores, ignoreRegexp, relaySelfMessages
     # TODO: !nicks command
     # TODO: antiflood
