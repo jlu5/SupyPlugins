@@ -257,10 +257,9 @@ class RelayNext(callbacks.Plugin):
             # form of (source channel@network, command name). If the counter
             # doesn't already exist, create one here.
             source = "%s@%s" % (channel, irc.network)
-            try:
-                self.msgcounters[(source, msg.command)].enqueue(msg.prefix)
-            except KeyError:
+            if (source, msg.command) not in self.msgcounters:
                 self.msgcounters[(source, msg.command)] = TimeoutQueue(seconds)
+            self.msgcounters[(source, msg.command)].enqueue(msg.prefix)
 
             # Two different limits: one for messages and one for all others
             if msg.command == "PRIVMSG":

@@ -27,6 +27,9 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 ###
+import random
+import re
+import string
 import time
 import uuid
 
@@ -42,6 +45,7 @@ class RelayNextDBTestCase(PluginTestCase):
         # Incorrect amount of arguments
         self.assertError("relaynext add test")
         self.assertError("relaynext add test afdasfader agkajeoig #validchannel@othernet")
+        # needs at least 2 channels
         self.assertError("relaynext add nonexistant-relay #channel1@somenet")
 
     def testSet(self):
@@ -102,7 +106,7 @@ class RelayNextDBTestCase(PluginTestCase):
         self.assertNotError("relaynext add test #channel1@somenet #channel2@othernet")
         self.assertNotError("relaynext add test #somewhereElse@mynet")
         self.assertRegexp("relaynext list", "#channel1@somenet")
-        self.assertRegexp("relaynext list", "#channel2@otherne")
+        self.assertRegexp("relaynext list", "#channel2@othernet")
         self.assertRegexp("relaynext list", "#somewhereelse@mynet")
 
     def testClear(self):
@@ -117,21 +121,32 @@ class RelayNextTestCase(PluginTestCase):
     config = {'plugins.RelayNext.color': False}
     timeout = 3
 
+    @staticmethod
+    def randomString(length=12):
+        return ''.join(random.choice(string.ascii_letters) for _ in range(length))
+
+    @staticmethod
+    def _createChannel(irc, channelname):
+        """
+        Prepares a channel's state for Relay.
+        """
+        channel = irclib.ChannelState()
+        # Add the bot to the channel. The bot needs to be in both ends of a relay for it to relay messages.
+        channel.addUser(irc.nick)
+        irc.state.channels[channelname] = channel
+        return channel
+
     def setUp(self):
         super().setUp()
         # These test network names are defined in scripts/supybot-test. Anything unknown will fail with:
         #     supybot.registry.NonExistentRegistryEntry: 'net1' is not a valid entry in 'supybot.networks'
         self.irc1 = getTestIrc("testnet1")
-        self.chan1 = irclib.ChannelState()
         self.chan1name = '#' + uuid.uuid4().hex
-        self.chan1.addUser(self.irc1.nick)  # Add the bot to the channel
-        self.irc1.state.channels = {self.chan1name: self.chan1}
+        self.chan1 = self._createChannel(self.irc1, self.chan1name)
 
         self.irc2 = getTestIrc("testnet2")
-        self.chan2 = irclib.ChannelState()
-        self.chan2.addUser(self.irc2.nick)
         self.chan2name = '#' + uuid.uuid4().hex
-        self.irc2.state.channels = {self.chan2name: self.chan2}
+        self.chan2 = self._createChannel(self.irc2, self.chan2name)
         self.assertNotError("relaynext set testRelay %s@testnet1 %s@testnet2" % (self.chan1name, self.chan2name))
 
     def getCommandResponse(self, irc):
@@ -328,15 +343,15 @@ class RelayNextTestCase(PluginTestCase):
                 self.assertNotIn('<%s>' % nick, output.args[1])
 
     def testShowPrefixesColorNoHighlight(self):
-        with conf.supybot.plugins.relayNext.showPrefixes.context(True):
-            with conf.supybot.plugins.relayNext.color.context(True):
-                with conf.supybot.plugins.relayNext.noHighlight.context(True):
-                    users = {"foo": "@", "bar": "%", "baz": "+"}
-                    for nick, status in users.items():
-                        self.chan2.addUser(status+nick)
-                        self.irc2.feedMsg(ircmsgs.privmsg(self.chan2name, 'Hi', prefix='%s!user@monotonous.example' % nick))
-                        output = self.getCommandResponse(self.irc1)
-                        self.assertRegex(output.args[1], '<[%s]\x03\\d{1,2}%s\u200b%s\x03>' % (status, nick[0], nick[1:]))
+        with conf.supybot.plugins.relayNext.showPrefixes.context(True), \
+                    conf.supybot.plugins.relayNext.color.context(True), \
+                    conf.supybot.plugins.relayNext.noHighlight.context(True):
+            users = {"foo": "@", "bar": "%", "baz": "+"}
+            for nick, status in users.items():
+                self.chan2.addUser(status+nick)
+                self.irc2.feedMsg(ircmsgs.privmsg(self.chan2name, 'Hi', prefix='%s!user@monotonous.example' % nick))
+                output = self.getCommandResponse(self.irc1)
+                self.assertRegex(output.args[1], '<[%s]\x03\\d{1,2}%s\u200b%s\x03>' % (status, nick[0], nick[1:]))
 
     def testIgnore(self):
         self.assertNotError("admin ignore add *!*@*/bot/*")
@@ -374,11 +389,173 @@ class RelayNextTestCase(PluginTestCase):
             output = self.getCommandResponse(self.irc2)
             self.assertIn('<botty> \o/', output.args[1])
 
+    def testAntifloodSingleSource(self):
+        max_messages = random.randint(4, 10)
+        timeout = random.randint(10, 120)
+        with conf.supybot.plugins.relayNext.antiflood.enable.context(True), \
+                conf.supybot.plugins.relayNext.antiflood.timeout.context(timeout), \
+                conf.supybot.plugins.relayNext.antiflood.maximum.context(max_messages), \
+                conf.supybot.plugins.relayNext.antiflood.seconds.context(60):
+            prefix = 'spammer!spammer@aaaaaaaaaaaaaaaaaaaaa.aaaaaaaaaaa'
+            for i in range(max_messages*2):
+                text = "This is message #%i" % i
+                self.irc1.feedMsg(ircmsgs.privmsg(self.chan1name, text, prefix=prefix))
+
+            expected_msgs = ["<spammer> This is message #%i" % i for i in range(max_messages)]
+            expected_msgs += ['*** Flood detected', '<spammer> All clear']
+            timeFastForward(timeout//2)
+            self.irc1.feedMsg(ircmsgs.privmsg(self.chan1name, "This message will also get filtered", prefix=prefix))
+            self.irc1.feedMsg(ircmsgs.privmsg(self.chan1name, "This message will also get filtered!!!11!", prefix=prefix))
+            timeFastForward(timeout//2 + 2)
+            self.irc1.feedMsg(ircmsgs.privmsg(self.chan1name, "All clear", prefix=prefix))
+
+            for expected_msg in expected_msgs:
+                output = self.getCommandResponse(self.irc2)
+                print("Expected substring:", expected_msg)
+                print("Actual:", output)
+                self.assertIn(expected_msg, output.args[1])
+
+    def testAntifloodMultiSource(self):
+        max_messages = random.randint(5, 15)
+        with conf.supybot.plugins.relayNext.antiflood.enable.context(True), \
+                conf.supybot.plugins.relayNext.antiflood.timeout.context(30), \
+                conf.supybot.plugins.relayNext.antiflood.maximum.context(max_messages), \
+                conf.supybot.plugins.relayNext.antiflood.seconds.context(60):
+            for i in range(max_messages*2):
+                text = "This is message #%i" % i
+                self.irc1.feedMsg(ircmsgs.privmsg(self.chan1name, text, prefix='spam%s!foo@test.user' % i))
+
+            expected_msgs = ["<spam%i> This is message #%i" % (i, i) for i in range(max_messages)]
+            expected_msgs += ['*** Flood detected', '<notSpam> All clear']
+            timeFastForward(15)
+            self.irc1.feedMsg(ircmsgs.privmsg(self.chan1name, "This message will also get filtered", prefix='spamLater!foo@test.user.'))
+            self.irc1.feedMsg(ircmsgs.privmsg(self.chan1name, "This message will also get filtered", prefix='spamLater!foo@test.user.'))
+            timeFastForward(16)
+            self.irc1.feedMsg(ircmsgs.privmsg(self.chan1name, "All clear", prefix='notSpam!foo@test.user.'))
+
+            for expected_msg in expected_msgs:
+                output = self.getCommandResponse(self.irc2)
+                print("Expected substring:", expected_msg)
+                print("Actual:", output)
+                self.assertIn(expected_msg, output.args[1])
+
+    def testAntifloodFastExpire(self):
+        # In this test, messages are sent with a higher interval than "antiflood.seconds",
+        # so flood protection should never trigger.
+        expiry = random.randint(3, 120)
+        print("Antiflood expiry set to", expiry, "seconds")
+        with conf.supybot.plugins.relayNext.antiflood.enable.context(True), \
+                conf.supybot.plugins.relayNext.antiflood.timeout.context(30), \
+                conf.supybot.plugins.relayNext.antiflood.maximum.context(1), \
+                conf.supybot.plugins.relayNext.antiflood.seconds.context(expiry):
+            expected_msgs = []
+            for i in range(12):
+                text = "This is message #%i" % i
+                timeFastForward(expiry+1)
+                self.irc1.feedMsg(ircmsgs.privmsg(self.chan1name, text, prefix='spam%s!foo@test.user' % i))
+                expected_msgs.append("<spam%i> %s" % (i, text))
+
+            for expected_msg in expected_msgs:
+                output = self.getCommandResponse(self.irc2)
+                print("Expected substring:", expected_msg)
+                print("Actual:", output)
+                self.assertIn(expected_msg, output.args[1])
+
+    def testAntifloodCountsChannelSpecific(self):
+        # Check that antiflood is triggered on a per-channel basis
+
+        self._createChannel(self.irc1, "#foo")
+        self._createChannel(self.irc2, "#bar")
+        self.assertNotError("relaynext add otherRelay #foo@testnet1 #bar@testnet2")
+
+        max_messages = 3
+        with conf.supybot.plugins.relayNext.antiflood.enable.context(True), \
+                conf.supybot.plugins.relayNext.antiflood.timeout.context(30), \
+                conf.supybot.plugins.relayNext.antiflood.maximum.context(max_messages), \
+                conf.supybot.plugins.relayNext.antiflood.seconds.context(42):
+            for i in range(max_messages*2):
+                text = "This is message #%i" % i
+                self.irc1.feedMsg(ircmsgs.privmsg(self.chan1name, text, prefix='spam%i!aaaa@test.user' % i))
+
+            # Without any fast forwarding, the message sent to #foo should go through
+            self.irc1.feedMsg(ircmsgs.privmsg("#foo", "evening", prefix='jlu5!~jlu5@bnc.jlu5.com'))
+
+            expected_msgs = [("<spam%i> This is message #%i" % (i, i), self.chan2name)
+                             for i in range(max_messages)]
+            expected_msgs += [('*** Flood detected on %s' % self.chan1name, self.chan2name),
+                              ('<jlu5> evening', "#bar")]
+
+            for expected_tuple in expected_msgs:
+                expected_msg, output_channel = expected_tuple
+                output = self.getCommandResponse(self.irc2)
+                print("Expected substring:", expected_msg)
+                print("Actual:", output)
+                self.assertEqual(output_channel, output.args[0])
+                self.assertIn(expected_msg, output.args[1])
+
+    def testAntifloodJoin(self):
+        # Check that antiflood counts are per command
+        max_messages = random.randint(3, 8)
+        with conf.supybot.plugins.relayNext.antiflood.enable.context(True), \
+                conf.supybot.plugins.relayNext.antiflood.timeout.context(30), \
+                conf.supybot.plugins.relayNext.antiflood.maximum.nonPrivmsgs.context(max_messages), \
+                conf.supybot.plugins.relayNext.antiflood.seconds.context(60), \
+                conf.supybot.plugins.relayNext.hostmasks.context(False):
+            for i in range(max_messages*2):
+                prefix = '%s!%s@%s.%s' % (self.randomString(), self.randomString(), self.randomString(), self.randomString())
+                self.irc1.feedMsg(ircmsgs.join(self.chan1name, prefix=prefix))
+            self.irc1.feedMsg(ircmsgs.privmsg(self.chan1name, "This message will go through", prefix='nobody!~nobody@nogroup.'))
+            self.irc1.feedMsg(ircmsgs.part(self.chan1name, "As will this one", prefix='nobody!~nobody@nogroup.'))
+
+            expected_msgs = [" has joined %s" % self.chan1name for i in range(max_messages)]
+            expected_msgs += [
+                re.compile(r'\*\*\* Flood detected on.*, not relaying JOINs for .* seconds'),
+                '<nobody> This message will go through',
+                'nobody has left %s (As will this one)' % self.chan1name
+            ]
+
+            for expected_msg in expected_msgs:
+                output = self.getCommandResponse(self.irc2)
+                print("Expected:", expected_msg)
+                print("Actual:", output)
+                if isinstance(expected_msg, re.Pattern):
+                    self.assertRegex(output.args[1], expected_msg)
+                else:
+                    self.assertIn(expected_msg, output.args[1])
+
+    def testAntifloodJoinPart(self):
+        # Check that antiflood counts are per command (variant)
+        max_messages = random.randint(3, 15)
+        with conf.supybot.plugins.relayNext.antiflood.enable.context(True), \
+                conf.supybot.plugins.relayNext.antiflood.timeout.context(30), \
+                conf.supybot.plugins.relayNext.antiflood.maximum.nonPrivmsgs.context(max_messages), \
+                conf.supybot.plugins.relayNext.antiflood.seconds.context(60):
+            expected_msgs = []
+
+            for i in range(int(max_messages*1.5)+1):
+                prefix = '%s!%s@%s.%s' % (self.randomString(random.randint(9, 21)), self.randomString(8),
+                                                      self.randomString(20), self.randomString())
+                self.irc1.feedMsg(ircmsgs.join(self.chan1name, prefix=prefix))
+                self.irc1.feedMsg(ircmsgs.part(self.chan1name, self.randomString(30), prefix=prefix))
+                if i < max_messages:
+                    expected_msgs += [" has joined %s" % self.chan1name, " has left %s" % self.chan1name]
+
+            expected_msgs += [
+                re.compile(r'\*\*\* Flood detected on.*, not relaying JOINs for .* seconds'),
+                re.compile(r'\*\*\* Flood detected on.*, not relaying PARTs for .* seconds'),
+            ]
+
+            for expected_msg in expected_msgs:
+                output = self.getCommandResponse(self.irc2)
+                print("Expected:", expected_msg)
+                print("Actual:", output)
+                if isinstance(expected_msg, re.Pattern):
+                    self.assertRegex(output.args[1], expected_msg)
+                else:
+                    self.assertIn(expected_msg, output.args[1])
 
     # TODO: relaySelfMessages
     # TODO: !nicks command
-    # TODO: antiflood
-    # TODO: announcement routing (trigger relay() manually)
     # TODO: a >= 3 net relay?
 
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:
