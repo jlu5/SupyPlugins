@@ -43,9 +43,8 @@ class SysDNSTestCase(PluginTestCase):
     config = {'supybot.plugins.SysDNS.command': host_cmd}
 
     print('SysDNS: using %r as host binary' % host_cmd)
-    
-    def testBasics(self):
+
+    def testSysDNS(self):
         self.assertNotError('sysdns dns google.com')
-        self.assertRegexp('sysdns dns localhost', '127\.0\.0\.1')
 
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:

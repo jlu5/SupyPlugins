@@ -55,8 +55,7 @@ if network:
         def testDisambig(self):
             self.assertRegexp('wiki Python', 'is a disambiguation page.*'
                               'Possible results include:.*?Pythonidae.*?;.*?;')
-            self.assertRegexp('wiki Windows 3', '.*is a disambiguation page.*'
-                              'Possible results include:.*?Windows 3.0.*?;.*?Windows 3.1x')
+            self.assertRegexp('wiki Fire (disambiguation)', '.*Possible results include:.*')
 
         def testDisambigStripSpaces(self):
             self.assertNotRegexp('wiki Na', '\n')
@@ -82,11 +81,7 @@ if network:
 
         def testSiteCombinations(self):
             self.assertNotError('wiki --site en.wikipedia.org Bread')
-            self.assertNotError('wiki --site EN.WikiPedia.Org Bread')  # god forbid if anyone actually types like this
-            self.assertNotError('wiki --site http://en.wikipedia.org/ Bread')
-            self.assertNotError('wiki --site en.wikipedia.org/wiki Bread')
             self.assertNotError('wiki --site https://en.wikipedia.org Bread')
-            self.assertNotError('wiki --site https://en.wikipedia.org/wiki Bread')
 
         def testNonEnglishWikipedia(self):
             self.assertNotError('wiki --site fr.wikipedia.org Paris')
@@ -94,14 +89,11 @@ if network:
             self.assertNotError('wiki --site zh.wikipedia.org 中文')
             self.assertNotError('wiki --site ar.wikipedia.org 2017')
 
-    class Wikia(PluginTestCase):
+    class Fandom(PluginTestCase):
         plugins = ('Wikifetch',)
 
-        def testWikia(self):
-            self.assertNotError('wiki --site help.wikia.com Help:Wikitext')
-
-        def testWikiaDisambig(self):
-            self.assertRegexp('wiki --site danball.wikia.com Fire', '.*?disambiguation.*?')
+        def testFandom(self):
+            self.assertNotError('wiki --site help.fandom.com Formatting')
 
     class ArchLinuxWiki(PluginTestCase):
         plugins = ('Wikifetch',)
