@@ -30,6 +30,7 @@
 import random
 import re
 import string
+import sys
 import time
 import typing
 import uuid
@@ -412,8 +413,8 @@ class RelayNextTestCase(PluginTestCase):
 
             for expected_msg in expected_msgs:
                 output = self.getCommandResponse(self.irc2)
-                print("Expected substring:", expected_msg)
-                print("Actual:", output)
+                print("Expected substring:", expected_msg, file=sys.stderr)
+                print("Actual:", output, file=sys.stderr)
                 self.assertIn(expected_msg, output.args[1])
 
     def testAntifloodMultiSource(self):
@@ -436,15 +437,15 @@ class RelayNextTestCase(PluginTestCase):
 
             for expected_msg in expected_msgs:
                 output = self.getCommandResponse(self.irc2)
-                print("Expected substring:", expected_msg)
-                print("Actual:", output)
+                print("Expected substring:", expected_msg, file=sys.stderr)
+                print("Actual:", output, file=sys.stderr)
                 self.assertIn(expected_msg, output.args[1])
 
     def testAntifloodFastExpire(self):
         # In this test, messages are sent with a higher interval than "antiflood.seconds",
         # so flood protection should never trigger.
         expiry = random.randint(3, 120)
-        print("Antiflood expiry set to", expiry, "seconds")
+        print("Antiflood expiry set to", expiry, "seconds", file=sys.stderr)
         with conf.supybot.plugins.relayNext.antiflood.enable.context(True), \
                 conf.supybot.plugins.relayNext.antiflood.timeout.context(30), \
                 conf.supybot.plugins.relayNext.antiflood.maximum.context(1), \
@@ -458,8 +459,8 @@ class RelayNextTestCase(PluginTestCase):
 
             for expected_msg in expected_msgs:
                 output = self.getCommandResponse(self.irc2)
-                print("Expected substring:", expected_msg)
-                print("Actual:", output)
+                print("Expected substring:", expected_msg, file=sys.stderr)
+                print("Actual:", output, file=sys.stderr)
                 self.assertIn(expected_msg, output.args[1])
 
     def testAntifloodCountsChannelSpecific(self):
@@ -489,8 +490,8 @@ class RelayNextTestCase(PluginTestCase):
             for expected_tuple in expected_msgs:
                 expected_msg, output_channel = expected_tuple
                 output = self.getCommandResponse(self.irc2)
-                print("Expected substring:", expected_msg)
-                print("Actual:", output)
+                print("Expected substring:", expected_msg, file=sys.stderr)
+                print("Actual:", output, file=sys.stderr)
                 self.assertEqual(output_channel, output.args[0])
                 self.assertIn(expected_msg, output.args[1])
 
@@ -517,8 +518,8 @@ class RelayNextTestCase(PluginTestCase):
 
             for expected_msg in expected_msgs:
                 output = self.getCommandResponse(self.irc2)
-                print("Expected:", expected_msg)
-                print("Actual:", output)
+                print("Expected:", expected_msg, file=sys.stderr)
+                print("Actual:", output, file=sys.stderr)
                 # https://stackoverflow.com/a/34178375
                 if isinstance(expected_msg, typing.Pattern):
                     self.assertRegex(output.args[1], expected_msg)
@@ -549,8 +550,8 @@ class RelayNextTestCase(PluginTestCase):
 
             for expected_msg in expected_msgs:
                 output = self.getCommandResponse(self.irc2)
-                print("Expected:", expected_msg)
-                print("Actual:", output)
+                print("Expected:", expected_msg, file=sys.stderr)
+                print("Actual:", output, file=sys.stderr)
                 # https://stackoverflow.com/a/34178375
                 if isinstance(expected_msg, typing.Pattern):
                     self.assertRegex(output.args[1], expected_msg)
