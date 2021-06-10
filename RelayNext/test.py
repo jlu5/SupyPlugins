@@ -143,10 +143,12 @@ class RelayNextTestCase(PluginTestCase):
         # These test network names are defined in scripts/supybot-test. Anything unknown will fail with:
         #     supybot.registry.NonExistentRegistryEntry: 'net1' is not a valid entry in 'supybot.networks'
         self.irc1 = getTestIrc("testnet1")
+        self.irc1.nick = 'supy-' + self.randomString(7)
         self.chan1name = '#' + uuid.uuid4().hex
         self.chan1 = self._createChannel(self.irc1, self.chan1name)
 
         self.irc2 = getTestIrc("testnet2")
+        self.irc2.nick = 'relay-' + self.randomString(6)
         self.chan2name = '#' + uuid.uuid4().hex
         self.chan2 = self._createChannel(self.irc2, self.chan2name)
         self.assertNotError("relaynext set testRelay %s@testnet1 %s@testnet2" % (self.chan1name, self.chan2name))
@@ -161,6 +163,7 @@ class RelayNextTestCase(PluginTestCase):
             response = irc.takeMsg()
         return response
 
+    ### Events
     def testPrivmsg(self):
         msg = ircmsgs.privmsg(self.chan1name, "hello world", prefix='abc!def@ghi.jkl')
         self.irc1.feedMsg(msg)
@@ -258,6 +261,7 @@ class RelayNextTestCase(PluginTestCase):
         # XXX: this should probably show the hostmask for consistency?
         self.assertEqual('\x02[testnet1]\x02 OldNick is now known as newnick', output.args[1])
 
+    ### Display options
     def testToggleEvents(self):
         with conf.supybot.plugins.relayNext.events.relayJoins.context(False):
             with conf.supybot.plugins.relayNext.events.relayParts.context(False):
@@ -355,6 +359,7 @@ class RelayNextTestCase(PluginTestCase):
                 output = self.getCommandResponse(self.irc1)
                 self.assertRegex(output.args[1], '<[%s]\x03\\d{1,2}%s\u200b%s\x03>' % (status, nick[0], nick[1:]))
 
+    ### Ignores
     def testIgnore(self):
         self.assertNotError("admin ignore add *!*@*/bot/*")
         self.irc1.feedMsg(ircmsgs.privmsg(self.chan1name, "Message from bot", prefix='testbot!testbot@user/test/bot/testbot'))
@@ -391,6 +396,7 @@ class RelayNextTestCase(PluginTestCase):
             output = self.getCommandResponse(self.irc2)
             self.assertIn('<botty> \o/', output.args[1])
 
+    ### Antiflood
     def testAntifloodSingleSource(self):
         max_messages = random.randint(4, 10)
         timeout = random.randint(10, 120)
@@ -558,8 +564,77 @@ class RelayNextTestCase(PluginTestCase):
                 else:
                     self.assertIn(expected_msg, output.args[1])
 
+    ### !nicks command
+    def testNicksCommand(self):
+        for nick in {'@Vancouver', 'Burnaby', 'Richmond', '%Surrey', '@citiesBot', 'Delta'}:
+            self.chan1.addUser(nick)
+        for nick in {'+alpha', 'Beta', '@GAMMA', '%delta', 'Epsilon'}:
+            self.chan2.addUser(nick)
+
+        # The current implementation sorts nicks alphabetically, without looking at status prefixes
+        # The order of the two replies is not deterministic, so I've folded them both into the same regexp
+        str1 = r'7 users in %s on testnet1: Burnaby, @citiesBot, Delta, .*%s' % (self.chan1name, self.irc1.nick)
+        str2 = r'6 users in %s on testnet2: \+alpha, Beta, %%delta, Epsilon' % self.chan2name
+        userlist_re = re.compile('%s|%s' % (str1, str2))
+        expected_msgs = [
+            re.compile(userlist_re),
+            re.compile(userlist_re),
+            'Total users across 2 channels: 13. Unique nicks: 12',
+            re.compile('^13$')
+        ]
+        seen = set()
+
+        self.irc1.feedMsg(ircmsgs.privmsg(self.irc1.nick, 'nicks %s' % self.chan1name, prefix='citiesBot!cities@a.b.c.d.e.f'))
+        self.irc1.feedMsg(ircmsgs.privmsg(self.irc1.nick, 'nicks %s --count' % self.chan1name.upper(), prefix='citiesBot!cities@a.b.c.d.e.f'))
+        for expected_msg in expected_msgs:
+            output = self.getCommandResponse(self.irc1)
+            print("Expected:", expected_msg, file=sys.stderr)
+            print("Actual:", output, file=sys.stderr)
+
+            if isinstance(expected_msg, typing.Pattern):  # https://stackoverflow.com/a/34178375
+                self.assertRegex(output.args[1], expected_msg)
+            else:
+                self.assertIn(expected_msg, output.args[1])
+            self.assertNotIn(output.args[1], seen) # Make sure all messages are unique
+            self.assertEqual(output.args[0], 'citiesBot')  # Replies should be in private to prevent highlight spam
+            seen.add(output.args[1])
+
+    def testNicksCommandErrors(self):
+        for nick in {'ocean', 'River'}:
+            self.chan1.addUser(nick)
+        for nick in {'LAKE', 'Ocean'}:
+            self.chan2.addUser(nick)
+
+        # Error: caller not in channel
+        self.irc1.feedMsg(ircmsgs.privmsg(self.irc1.nick, 'nicks %s' % self.chan1name, prefix='anon!anon@aaaaa.'))
+        # Error: unknown channel
+        self.irc1.feedMsg(ircmsgs.privmsg(self.irc1.nick, 'nicks #asfdsafas', prefix='ocean!~ocean@oceans.away'))
+
+        # Error: channel has no relays
+        chan3 = self._createChannel(self.irc1, "#news")
+        chan3.addUser("wanderer")
+        self.irc1.feedMsg(ircmsgs.privmsg(self.irc1.nick, 'nicks #news', prefix='wanderer!~ident@random.wanderer'))
+
+        self.irc1.feedMsg(ircmsgs.privmsg(self.irc1.nick, 'echo [nicks #%s]' % self.chan1name, prefix='river!~stream@rapids.internal'))
+
+        expected_msgs = [
+            re.compile('You are not in %r' % self.chan1name),
+            re.compile('Unknown channel'),
+            re.compile("No relays for '#news' exist"),
+            re.compile("cannot be nested")
+        ]
+
+        for expected_msg in expected_msgs:
+            output = self.getCommandResponse(self.irc1)
+            print("Expected:", expected_msg, file=sys.stderr)
+            print("Actual:", output, file=sys.stderr)
+
+            if isinstance(expected_msg, typing.Pattern):  # https://stackoverflow.com/a/34178375
+                self.assertRegex(output.args[1], expected_msg)
+            else:
+                self.assertIn(expected_msg, output.args[1])
+
     # TODO: relaySelfMessages
-    # TODO: !nicks command
     # TODO: a >= 3 net relay?
 
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:
