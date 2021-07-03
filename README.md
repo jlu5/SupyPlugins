@@ -81,9 +81,6 @@ Most of these plugins also have their own READMEs in their folders; you can usua
 ##### [TranslateParty](TranslateParty/README.md)
 - Translates text through Google Translate multiple times in order to get amusing results.
 
-##### Voteserv
-- A plugin for storing and manipulating votes/polls.
-
 ##### Wikifetch
 - Fork of [ProgVal's Wikipedia plugin](https://github.com/ProgVal/Supybot-plugins), with support for other wikis (via a `--site` option) and other improvements.
    - **Requires:** [lxml](https://lxml.de/installation.html)
