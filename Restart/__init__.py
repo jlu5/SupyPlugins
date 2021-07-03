@@ -37,7 +37,7 @@ import supybot.world as world
 
 __version__ = "2020.01.05+git"
 __author__ = getattr(supybot.authors, 'jlu',
-                     supybot.Author('James Lu', 'GLolol', 'james@overdrivenetworks.com'))
+                     supybot.Author('James Lu', 'jlu5', 'james@overdrivenetworks.com'))
 __contributors__ = {}
 __url__ = 'https://github.com/jlu5/SupyPlugins/'
 

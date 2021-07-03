@@ -13,7 +13,7 @@ is allowed, since auto-detection is used to translate text back to your desired 
 Samples:
 
 ```
-<GLolol> %tp This text will be scrambled to near perfection.
+<jlu5> %tp This text will be scrambled to near perfection.
 <@Atlas> This message was standing almost completely.
 ```
 
@@ -23,6 +23,6 @@ Samples:
 ```
 
 ```
-<GLolol> %tp An evil monster lurks beneath the forest.
+<jlu5> %tp An evil monster lurks beneath the forest.
 <@Atlas> Error Evil Xasa woude.
 ```

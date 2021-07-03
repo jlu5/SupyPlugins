@@ -40,7 +40,7 @@ import supybot.world as world
 __version__ = "2020.01.05+git"
 
 __author__ = getattr(supybot.authors, 'jlu',
-                     supybot.Author('James Lu', 'GLolol', 'james@overdrivenetworks.com'))
+                     supybot.Author('James Lu', 'jlu5', 'james@overdrivenetworks.com'))
 
 # This is a dictionary mapping supybot.Author instances to lists of
 # contributions.

@@ -44,7 +44,7 @@ __version__ = "2020.01.05+git"
 # Replace this with an appropriate author or supybot.Author instance.
 __author__ = supybot.Author("Kevin Funk", "KRF", "krf@electrostorm.net")
 __maintainer__ = getattr(supybot.authors, 'jlu',
-                         supybot.Author('James Lu', 'GLolol', 'james@overdrivenetworks.com'))
+                         supybot.Author('James Lu', 'jlu5', 'james@overdrivenetworks.com'))
 
 # This is a dictionary mapping supybot.Author instances to lists of
 # contributions.
@@ -52,7 +52,7 @@ __contributors__ = {
             supybot.Author("Ilya Kuznetsov", "worklez", "worklez@gmail.com"): ["profile"],
             supybot.Author("Pavel Dvořák", "czshadow", "czshadow@gmail.com"):
             ["misc"],
-            supybot.Author('James Lu', 'GLolol',
+            supybot.Author('James Lu', 'jlu5',
                         'james@overdrivenetworks.com'):
                         ['Python 3 support', 'rewriting most of the plugin']
         }

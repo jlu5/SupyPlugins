@@ -27,20 +27,20 @@ This command supports:
 This command replaces the `archlinux`, `archaur`, `freebsd`, and `linuxmint` commands from earlier versions of PkgInfo.
 
 ```
-<GLolol> `pkg stretch nginx
+<jlu5> `pkg stretch nginx
 <Atlas> Package: nginx (1.10.3-1+deb9u1) in stretch - small, powerful, scalable web/proxy server <https://packages.debian.org/stretch/nginx>
-<GLolol> `pkg stretch bash --source
+<jlu5> `pkg stretch bash --source
 <Atlas> Package: bash (4.4-5) in stretch - Built packages: bash, bash-builtins, bash-doc, and bash-static <https://packages.debian.org/source/stretch/bash>
 
-<GLolol> `pkg arch chromium
+<jlu5> `pkg arch chromium
 <Atlas> Package: chromium (66.0.3359.139) in extra - A web browser built for speed, simplicity, and security <https://www.archlinux.org/packages/extra/x86_64/chromium>
-<GLolol> `pkg archaur chromium-beta
+<jlu5> `pkg archaur chromium-beta
 <Atlas> Package: chromium-beta (64.0.3282.99-1) in Arch Linux AUR - A web browser built for speed, simplicity, and security (beta channel) [Popularity: 0; Votes: 0] <https://aur.archlinux.org/packages/chromium-beta/>
 
-<GLolol> `pkg freebsd python36
+<jlu5> `pkg freebsd python36
 <Atlas> Package: python36 (3.6.5) in FreeBSD Ports - Interpreted object-oriented programming language <https://www.freebsd.org/cgi/ports.cgi?stype=name&query=python36>
 
-<GLolol> `pkg fedora gnome-shell
+<jlu5> `pkg fedora gnome-shell
 <Atlas> Package: gnome-shell (3.29.1) in Fedora - no description available <https://apps.fedoraproject.org/packages/gnome-shell>
 ```
 
@@ -49,10 +49,10 @@ This command replaces the `archlinux`, `archaur`, `freebsd`, and `linuxmint` com
 --depends is only supported for Arch Linux, Arch AUR, Debian, FreeBSD, and Ubuntu.
 
 ```
-<GLolol> `pkg sid bash --source --depends
+<jlu5> `pkg sid bash --source --depends
 <Atlas> Package bash dependencies: adep: autoconf, adep: autotools-dev, adep: bison, adep: libncurses5-dev, adep: texinfo, adep: texi2html, adep: debhelper (>= 5), adep: locales, adep: gettext, adep: sharutils, adep: time, adep: xz-utils, adep: dpkg-dev (>= 1.16.1), idep: texlive-latex-base, idep: ghostscript, idep: (1 more message)
 
-<GLolol> `pkg freebsd screen --depends
+<jlu5> `pkg freebsd screen --depends
 <Atlas> screen requires: gettext-runtime-0.19.8.1_1, gmake-4.2.1_2, indexinfo-0.3.1
 ```
 
@@ -63,13 +63,13 @@ This command replaces the `archlinux`, `archaur`, `freebsd`, and `linuxmint` com
 The `pkgsearch` command provides package searches on various distros. This supports all distros that `pkg` does except for Fedora.
 
 ```
-<GLolol> `pkgsearch arch firefox
+<jlu5> `pkgsearch arch firefox
 <Atlas> Found 207 results: arch-firefox-search, bluegriffon, firefox, firefox-adblock-plus, firefox-developer-edition, firefox-developer-edition-i18n-ach, firefox-developer-edition-i18n-af, firefox-developer-edition-i18n-an, firefox-developer-edition-i18n-ar, firefox-developer-edition-i18n-as, firefox-developer-edition-i18n-ast, firefox-developer-edition-i18n-az, firefox-developer- (14 more messages)
 
-<GLolol> `pkgsearch debian geany-plugin
+<jlu5> `pkgsearch debian geany-plugin
 <Atlas> Found 86 results: geany-plugin-addons, geany-plugin-addons-dbgsym, geany-plugin-autoclose, geany-plugin-autoclose-dbgsym, geany-plugin-automark, geany-plugin-automark-dbgsym, geany-plugin-codenav, geany-plugin-codenav-dbgsym, geany-plugin-commander, geany-plugin-commander-dbgsym, geany-plugin-ctags, geany-plugin-ctags-dbgsym, geany-plugin-debugger, geany-plugin-defineformat,  (6 more messages)
 
-<GLolol> `pkgsearch ubuntu unity-scope
+<jlu5> `pkgsearch ubuntu unity-scope
 <Atlas> Found 54 results: libunity-scopes-cli, libunity-scopes-dev, libunity-scopes-doc, libunity-scopes-json-def-desktop, libunity-scopes-json-def-phone, libunity-scopes-qt-dev, libunity-scopes-qt-doc, libunity-scopes-qt0.2, libunity-scopes1, libunity-scopes1.0, unity-scope-audacious, unity-scope-calculator, unity-scope-chromiumbookmarks, unity-scope-clementine, unity-scope-click,  (3 more messages)
 ```
 
@@ -78,10 +78,10 @@ The `pkgsearch` command provides package searches on various distros. This suppo
 **Synopsis:**: `vlist <distribution> <package name> [--reverse]`
 
 ```
-<GLolol> `vlist debian variety
+<jlu5> `vlist debian variety
 <Atlas> Found 4 results: jessie-backports (0.6.3-5~bpo8+1 [source, all]), stretch (0.6.3-5 [source, all]), buster (0.6.7-1 [source, all]), and sid (0.6.7-1 [source, all]); View more at: <https://packages.debian.org/search?keywords=variety>
 
-<GLolol> `vlist ubuntu libreoffice --reverse
+<jlu5> `vlist ubuntu libreoffice --reverse
 <atlas> Found 55 results: cosmic/universe (1:6.0.3-0ubuntu1 [amd64, i386]), cosmic (1:6.0.3-0ubuntu1 [source]), bionic/universe (1:6.0.3-0ubuntu1 [amd64, i386]), bionic (1:6.0.3-0ubuntu1 [source]), artful-updates/universe (1:5.4.6-0ubuntu0.17.10.1 [amd64, i386]), artful-updates (1:5.4.6-0ubuntu0.17.10.1 [source]), artful-security/universe (1:5.4.5-0ubuntu0.17.10.5 [amd64, i386]), artful-security  (7 more messages)
 ```
 

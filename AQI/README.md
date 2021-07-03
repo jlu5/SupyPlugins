@@ -11,7 +11,7 @@ This plugin retrieves [air quality index](https://en.wikipedia.org/wiki/Air_qual
 ## Usage
 
 ```
-<@GL> `aqi Vancouver
+<@jlu5> `aqi Vancouver
 <%bitmonster> Vancouver International Airport #2, British Comlumbia, Canada ::  7 (Good)  <https://aqicn.org/city/british-comlumbia/vancouver-international-airport--2>; from British Columbia, Canada Air Quality Monitoring Agency and World Air Quality Index Project
 ```
 
