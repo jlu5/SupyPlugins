@@ -143,10 +143,13 @@ class LastFM(callbacks.Plugin):
 
                 # We currently show play count and tags - more could be added in the future...
                 userplaycount = ext_data['userplaycount']
-                tags = [tag['name'] for tag in ext_data['toptags']['tag']]
+                if ext_data['toptags']:
+                    tags = [tag['name'] for tag in ext_data['toptags']['tag']]
+                else:
+                    tags = []
                 ext_info = ' (Playcount: %s / Tags: %s)' % (userplaycount, ', '.join(tags) or 'N/A')
-            except KeyError:
-                pass
+            except KeyError as e:
+                log.debug("LastFM: error getting extended info", exc_info=True)
 
         if time is None:
             s = '%s is listening to %s by %s %s %s. %s' % (ircutils.bold(user), ircutils.bold(track),
