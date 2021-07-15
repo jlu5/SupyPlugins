@@ -82,24 +82,24 @@ class LastFM(callbacks.Plugin):
         url = "%sapi_key=%s&method=user.getrecenttracks&user=%s&format=json" % (self.APIURL, apiKey, user)
         try:
             f = utils.web.getUrl(url).decode("utf-8")
-        except utils.web.Error:
-            irc.error("Unknown user %s." % user, Raise=True)
-        self.log.debug("LastFM.nowPlaying: url %s", url)
+        except utils.web.Error as e:
+            irc.error(str(e), Raise=True)
+        self.log.debug("LastFM.np: url %s", url)
 
-        try:
-            data = json.loads(f)["recenttracks"]
-        except KeyError:
-            irc.error("Unknown user %s." % user, Raise=True)
+        data = json.loads(f)
+        if "error" in data:
+            irc.error("%s: %s" % (data["error"], data.get("message")), Raise=True)
+        elif "recenttracks" not in data:
+            irc.error("No recenttracks data found for %s" % user, Raise=True)
 
-        user = data["@attr"]["user"]
-        tracks = data["track"]
+        user = data["recenttracks"]["@attr"]["user"]
+        tracks = data["recenttracks"]["track"]
 
         # Work with only the first track.
-        try:
-            trackdata = tracks[0]
-        except IndexError:
+        if not tracks:
             irc.error("%s doesn't seem to have listened to anything." % user, Raise=True)
 
+        trackdata = tracks[0]
         artist = trackdata["artist"]["#text"].strip()  # Artist name
         track = trackdata["name"].strip()  # Track name
         # Album name (may or may not be present)
