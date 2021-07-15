@@ -158,7 +158,7 @@ class RelayNextTestCase(PluginTestCase):
         response = irc.takeMsg()
         fed = time.time()
         while response is None and time.time() - fed < self.timeout:
-            time.sleep(0.01)
+            time.sleep(0.05)
             drivers.run()
             response = irc.takeMsg()
         return response
