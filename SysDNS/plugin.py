@@ -71,18 +71,17 @@ class SysDNS(callbacks.Plugin):
 
             try:
                 with open(os.devnull) as null:
-                    inst = subprocess.Popen(args,
-                                            stdout=subprocess.PIPE,
-                                            stderr=subprocess.PIPE,
+                    inst = subprocess.Popen(args, encoding='utf-8', errors='replace',
+                                            stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                             stdin=null)
             except OSError as e:
                 irc.error('It seems the configured \'host\' command was '
                           'not available (%s).' % e, Raise=True)
             result = inst.communicate()
             if result[1]: # stderr
-                irc.error(' '.join(result[1].decode('utf8').split()))
+                irc.error(' '.join(result[1].split()))
             if result[0]: # stdout
-                response = result[0].decode('utf8').splitlines()
+                response = result[0].splitlines()
                 response = [l for l in response if l]
                 irc.replies(response)
             elif not result[1]:
