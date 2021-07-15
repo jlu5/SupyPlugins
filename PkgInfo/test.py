@@ -47,10 +47,10 @@ class PkgInfoTestCase(PluginTestCase):
             self.assertNotError('pkgsearch debian python')
 
         def test_pkg_ubuntu(self):
-            self.assertNotError('pkg xenial apt')
-            self.assertNotError('pkg xenial python3 --depends')
-            self.assertNotError('pkg xenial ubuntu-meta --source')
-            self.assertNotError('pkg xenial ubuntu-meta --source --depends')
+            self.assertNotError('pkg focal apt')
+            self.assertNotError('pkg focal python3 --depends')
+            self.assertNotError('pkg focal ubuntu-meta --source')
+            self.assertNotError('pkg focal ubuntu-meta --source --depends')
             self.assertNotError('pkgsearch ubuntu gtk')
 
         def test_vlist(self):

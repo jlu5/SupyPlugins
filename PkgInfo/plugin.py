@@ -107,7 +107,7 @@ class PkgInfo(callbacks.Plugin):
         debian = ("oldoldstable", "oldstable", "wheezy", "stable",
                   "jessie", "testing", "sid", "unstable", "stretch", "buster",
                   "experimental", "bullseye", "bookworm")
-        ubuntu = ("trusty", "xenial", "artful", "bionic", "disco", "eoan", "focal")
+        ubuntu = ("bionic", "focal", "groovy", "hirsute", "impish")
         mint = ("betsy", "cindy", "qiana", "rebecca", "rafaela", "rosa",
                 "sarah", "serena", "sonya", "sylvia", "tara")
 
