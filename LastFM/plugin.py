@@ -54,8 +54,8 @@ class LastFM(callbacks.Plugin):
         self.db = accountsdb.AccountsDB("LastFM", "LastFM.db", self.registryValue(accountsdb.CONFIG_OPTION_NAME))
         world.flushers.append(self.db.flush)
 
-        # 2.0 API (see http://www.lastfm.de/api/intro)
-        self.APIURL = "http://ws.audioscrobbler.com/2.0/?"
+        # 2.0 API (see https://www.last.fm/api/intro)
+        self.APIURL = "https://ws.audioscrobbler.com/2.0/?"
 
     def die(self):
         world.flushers.remove(self.db.flush)
@@ -75,10 +75,10 @@ class LastFM(callbacks.Plugin):
             irc.error("The API Key is not set. Please set it via "
                       "'config plugins.lastfm.apikey' and reload the plugin. "
                       "You can sign up for an API Key using "
-                      "http://www.last.fm/api/account/create", Raise=True)
+                      "https://www.last.fm/api/account/create", Raise=True)
         user = (user or self.db.get(msg.prefix) or msg.nick)
 
-        # see http://www.lastfm.de/api/show/user.getrecenttracks
+        # see https://www.last.fm/api/show/user.getRecentTracks
         url = "%sapi_key=%s&method=user.getrecenttracks&user=%s&format=json" % (self.APIURL, apiKey, user)
         try:
             f = utils.web.getUrl(url).decode("utf-8")
@@ -182,7 +182,7 @@ class LastFM(callbacks.Plugin):
             irc.error("The API Key is not set. Please set it via "
                       "'config plugins.lastfm.apikey' and reload the plugin. "
                       "You can sign up for an API Key using "
-                      "http://www.last.fm/api/account/create", Raise=True)
+                      "https://www.last.fm/api/account/create", Raise=True)
         user = (user or self.db.get(msg.prefix) or msg.nick)
 
         url = "%sapi_key=%s&method=user.getInfo&user=%s&format=json" % (self.APIURL, apiKey, user)
