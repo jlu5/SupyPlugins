@@ -35,7 +35,7 @@ RhymeZone: Fetches rhymes from http://rhymezone.com/.
 import supybot
 import supybot.world as world
 
-__version__ = "2021.08.01"
+__version__ = "2021.08.01+git"
 
 __author__ = getattr(supybot.authors, 'jlu',
                      supybot.Author('James Lu', 'jlu5', 'james@overdrivenetworks.com'))
