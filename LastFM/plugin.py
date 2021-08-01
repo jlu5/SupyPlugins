@@ -42,6 +42,7 @@ import supybot.log as log
 import supybot.ircdb as ircdb
 
 import json
+import urllib.error
 from datetime import datetime
 from .local import accountsdb
 
@@ -80,15 +81,20 @@ class LastFM(callbacks.Plugin):
 
         # see https://www.last.fm/api/show/user.getRecentTracks
         url = "%sapi_key=%s&method=user.getrecenttracks&user=%s&format=json" % (self.APIURL, apiKey, user)
+        self.log.debug("LastFM.np: url %s", url)
         try:
             f = utils.web.getUrl(url).decode("utf-8")
         except utils.web.Error as e:
-            irc.error(str(e), Raise=True)
-        self.log.debug("LastFM.np: url %s", url)
+            if isinstance(e.__cause__, urllib.error.HTTPError):
+                # When receiving an HTTP error, try reading and showing the API response anyways
+                # This requires a Limnoria version > 2021-08-01
+                f = e.__cause__.read().decode("utf-8")
+            else:
+               irc.error(str(e), Raise=True)
 
         data = json.loads(f)
         if "error" in data:
-            irc.error("%s: %s" % (data["error"], data.get("message")), Raise=True)
+            irc.error("LastFM API Error %s: %s" % (data["error"], data.get("message")), Raise=True)
         elif "recenttracks" not in data:
             irc.error("No recenttracks data found for %s" % user, Raise=True)
 
