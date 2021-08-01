@@ -33,7 +33,7 @@ except ImportError:
 class Qalculate(callbacks.Plugin):
     """Frontend for the Qalculate! desktop calculator"""
 
-    @wrap([getopts({'update-exrates': ''}), 'text'])
+    @wrap([('checkCapability', 'trusted'), getopts({'update-exrates': ''}), 'text'])
     def calc(self, irc, msg, args, optlist, expression):
         """[--update-exrates] <expression>
 
