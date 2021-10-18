@@ -1,6 +1,7 @@
 import re
 
 from dataclasses import dataclass, field
+from typing import List
 
 @dataclass
 class BirdRouteResult:
@@ -11,7 +12,7 @@ class BirdRouteResult:
 
     route_origin: str = field(default=None)
     via: str = field(default=None)
-    bgp_as_path: list[str] = field(default_factory=list)
+    bgp_as_path: List[str] = field(default_factory=list)
     bgp_community: str = field(default=None)
     bgp_large_community: str = field(default=None)
 

@@ -3,12 +3,13 @@ import sys
 import subprocess
 
 from dataclasses import dataclass, field
+from typing import List
 
 @dataclass
 class TraceResult:
-    ips: list[str]
+    ips: List[str]
     latency: str = field(default=None)
-    notes: list[str] = field(default_factory=list)
+    notes: List[str] = field(default_factory=list)
 
 class TraceParseError(ValueError):
     pass
