@@ -1,6 +1,6 @@
-This is a [bird-lg-go](https://github.com/xddxdd/bird-lg-go/) API client for Limnoria.
+This is a [bird-lg-go](https://github.com/xddxdd/bird-lg-go/) API client for Limnoria. It depends on the requests Python library (`pip install requests`)
 
-## Configure
+## Configuration
 
 First configure the following variables:
 
