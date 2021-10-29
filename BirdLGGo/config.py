@@ -47,11 +47,15 @@ def configure(advanced):
     conf.registerPlugin('BirdLGGo', True)
 
 
+class _traceHopFormat(registry.OnlySomeStrings):
+    validStrings = ('ip', 'ptr', 'both')
+
 BirdLGGo = conf.registerPlugin('BirdLGGo')
 conf.registerChannelValue(BirdLGGo, 'lgServer',
-     registry.String("", _("""Looking glass server to query, including the scheme (http(s)://)""")))
+     registry.String("", _("""Looking glass server to query, including the scheme (http(s)://).""")))
 conf.registerChannelValue(BirdLGGo, 'nodes',
-     registry.SpaceSeparatedListOfStrings([], _("""List of nodes to query (space separated list)""")))
-
+     registry.SpaceSeparatedListOfStrings([], _("""List of nodes to query (space separated list).""")))
+conf.registerChannelValue(BirdLGGo, 'traceHopFormat',
+     _traceHopFormat(_traceHopFormat.validStrings[0], _("""Whether the plugin should show IPs, reverse DNS (PTR records), or both for each hop in a traceroute.""")))
 
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=120:

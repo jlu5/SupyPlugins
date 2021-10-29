@@ -65,6 +65,7 @@ class BirdLGGo(callbacks.Plugin):
         else:
             return resp["result"]
 
+
     @wrap(['something'])
     def traceroute(self, irc, msg, args, target):
         """<target>
@@ -78,18 +79,28 @@ class BirdLGGo(callbacks.Plugin):
             "args": target
         }
         results = self.lg_post_request(irc, msg, query)
+        hop_display_mode = self.registryValue("traceHopFormat", network=irc.network, channel=msg.channel)
+
+        def _format_tracehop(hop):
+            if hop_display_mode == 'ip' or hop.ip == hop.ptr:
+                return hop.ip
+            elif hop_display_mode == 'ptr':
+                return hop.ptr
+            elif hop_display_mode == 'both':
+                return f'{hop.ptr}[{hop.ip}]'
+            irc.error("Unknown traceHopFormat setting %r" % hop_display_mode)
 
         for result in results:
             parsed_result = parsetrace.parse_traceroute(result["data"])
             server = result["server"]
 
-            ips = " ".join(parsed_result.ips)
+            hops = " ".join(map(_format_tracehop, parsed_result.hops))
             latency = parsed_result.latency or "(timed out)"
             notes = ""
             if parsed_result.notes:
                 notes = "- " + ", ".join(parsed_result.notes)
 
-            irc.reply(f"{server} -> {target}: {latency} | {ips} {notes}")
+            irc.reply(f"{server} -> {target}: {latency} | {hops} {notes}")
 
     @wrap(['something'])
     def showroute(self, irc, msg, args, target):

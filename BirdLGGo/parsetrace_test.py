@@ -1,5 +1,9 @@
+from pprint import pprint
 import unittest
-from parsetrace import parse_traceroute, TraceResult
+from parsetrace import parse_traceroute, TraceResult, TraceHop
+
+def _bareip(ip: str):
+    return TraceHop(ip=ip, ptr=ip)
 
 class ParseTraceTestCase(unittest.TestCase):
     maxDiff = None
@@ -14,14 +18,14 @@ class ParseTraceTestCase(unittest.TestCase):
  6  2001:4860:0:1::5737 (2001:4860:0:1::5737)  0.870 ms
  7  ord37s33-in-x0e.1e100.net (2607:f8b0:4009:809::200e)  46.306 ms
 """
-        self.assertEqual(TraceResult(ips=[
-            "2605:4840:3::1",
-            "2604:6600:2700:11::1",
-            "2001:418:0:5000::ec0",
-            "2001:504:0:4:0:1:5169:1",
-            "*",
-            "2001:4860:0:1::5737",
-            "2607:f8b0:4009:809::200e"
+        self.assertEqual(TraceResult(hops=[
+            _bareip("2605:4840:3::1"),
+            _bareip("2604:6600:2700:11::1"),
+            TraceHop("2001:418:0:5000::ec0", "ce-0-7-0-2.r07.chcgil09.us.bb.gin.ntt.net"),
+            TraceHop("2001:504:0:4:0:1:5169:1", "eqix-ch-200g-1.google.com"),
+            _bareip("*"),
+            _bareip("2001:4860:0:1::5737"),
+            TraceHop("2607:f8b0:4009:809::200e", "ord37s33-in-x0e.1e100.net")
         ], latency="46.306 ms"), parse_traceroute(s))
 
     def testTracerouteMultiQuery(self):
@@ -32,12 +36,12 @@ class ParseTraceTestCase(unittest.TestCase):
  4  cloudflare.slix.net (149.112.13.27)  9.057 ms  9.060 ms  9.504 ms
  5  one.one.one.one (1.1.1.1)  8.567 ms  8.688 ms  8.764 ms
 """
-        self.assertEqual(TraceResult(ips=[
-            '205.185.112.1',
-            '172.18.0.29',
-            '184.104.194.81',
-            '149.112.13.27',
-            '1.1.1.1'
+        self.assertEqual(TraceResult(hops=[
+            _bareip('205.185.112.1'),
+            _bareip('172.18.0.29'),
+            TraceHop('184.104.194.81', '100ge3-2.core1.slc1.he.net'),
+            TraceHop('149.112.13.27', 'cloudflare.slix.net'),
+            TraceHop('1.1.1.1', 'one.one.one.one')
         ], latency="8.567 ms"), parse_traceroute(s))
 
     def testTracerouteMultiQueryDifferentPaths(self):
@@ -56,20 +60,21 @@ class ParseTraceTestCase(unittest.TestCase):
 12  142.250.210.209 (142.250.210.209)  3.812 ms 108.170.252.18 (108.170.252.18)  3.763 ms 142.250.210.209 (142.250.210.209)  3.685 ms
 13  fra16s51-in-f14.1e100.net (142.250.185.174)  3.895 ms  3.871 ms  3.945 ms
 """
-        self.assertEqual(TraceResult(ips=[
-            '172.31.1.1',
-            '49.12.142.82',
-            '*',
-            '78.47.3.237',
-            '85.10.239.169',
-            '85.10.228.85',
-            '213.239.245.250',
-            '213.239.224.217',
-            '142.250.169.172',
-            '*',
-            '142.250.226.148',
-            '142.250.210.209',
-            '142.250.185.174'], latency="3.895 ms"), parse_traceroute(s))
+        self.assertEqual(TraceResult(hops=[
+            TraceHop(ip='172.31.1.1', ptr='172.31.1.1'),
+            TraceHop(ip='49.12.142.82', ptr='17476.your-cloud.host'),
+            TraceHop(ip='*', ptr='*'),
+            TraceHop(ip='78.47.3.237', ptr='static.237.3.47.78.clients.your-server.de'),
+            TraceHop(ip='85.10.239.169', ptr='static.85.10.239.169.clients.your-server.de'),
+            TraceHop(ip='85.10.228.85', ptr='static.85-10-228-85.clients.your-server.de'),
+            TraceHop(ip='213.239.245.250', ptr='core1.fra.hetzner.com'),
+            TraceHop(ip='213.239.224.217', ptr='core8.fra.hetzner.com'),
+            TraceHop(ip='142.250.169.172', ptr='142.250.169.172'),
+            TraceHop(ip='*', ptr='*'),
+            TraceHop(ip='142.250.226.148', ptr='142.250.226.148'),
+            TraceHop(ip='142.250.210.209', ptr='142.250.210.209'),
+            TraceHop(ip='142.250.185.174', ptr='fra16s51-in-f14.1e100.net')],
+            latency='3.895 ms'), parse_traceroute(s))
 
     def testTracerouteTimedOut(self):
         s = """
@@ -105,15 +110,16 @@ traceroute to azure.microsoft.com (13.107.42.16), 30 hops max, 60 byte packets
 29  * * *
 30  * * *
 """
-        self.assertEqual(TraceResult(ips=[
-            '172.31.1.1',
-            '49.12.142.82',
-            '*',
-            '78.47.3.237',
-            '85.10.248.221',
-            '213.239.208.221',
-            '213.239.224.238',
-            '104.44.37.193'] + ["*"]*(30-9+1)), parse_traceroute(s))
+        self.assertEqual(TraceResult(hops=[
+            TraceHop(ip='172.31.1.1', ptr='172.31.1.1'),
+            TraceHop(ip='49.12.142.82', ptr='17476.your-cloud.host'),
+            TraceHop(ip='*', ptr='*'),
+            TraceHop(ip='78.47.3.237', ptr='static.237.3.47.78.clients.your-server.de'),
+            TraceHop(ip='85.10.248.221', ptr='static.85.10.248.221.clients.your-server.de'),
+            TraceHop(ip='213.239.208.221', ptr='core11.nbg1.hetzner.com'),
+            TraceHop(ip='213.239.224.238', ptr='core5.fra.hetzner.com'),
+            TraceHop(ip='104.44.37.193', ptr='ae72-0.fra-96cbe-1b.ntwk.msn.net')] +
+            [_bareip("*")]*(30-9+1)), parse_traceroute(s))
 
 
     def testTracerouteTimedOutTruncated(self):
@@ -131,14 +137,15 @@ traceroute to azure.microsoft.com (13.107.42.16), 30 hops max, 60 byte packets
 23 hops not responding.
 
 """
-        self.assertEqual(TraceResult(ips=[
-            '172.31.1.1',
-            '49.12.142.82',
-            '78.47.3.237',
-            '85.10.248.217',
-            '85.10.250.209',
-            '213.239.245.254',
-            '104.44.197.103'], notes=["23 hops not responding."]), parse_traceroute(s))
+        self.assertEqual(TraceResult(hops=[
+            TraceHop(ip='172.31.1.1', ptr='172.31.1.1'),
+            TraceHop(ip='49.12.142.82', ptr='17476.your-cloud.host'),
+            TraceHop(ip='78.47.3.237', ptr='static.237.3.47.78.clients.your-server.de'),
+            TraceHop(ip='85.10.248.217', ptr='static.85.10.248.217.clients.your-server.de'),
+            TraceHop(ip='85.10.250.209', ptr='core11.nbg1.hetzner.com'),
+            TraceHop(ip='213.239.245.254', ptr='core1.fra.hetzner.com'),
+            TraceHop(ip='104.44.197.103', ptr='hetzner.fra-96cbe-1a.ntwk.msn.net')],
+            notes=["23 hops not responding."]), parse_traceroute(s))
 
     def testTracerouteNoDNS(self):
         s = """
@@ -152,15 +159,15 @@ traceroute to irc.hackint.dn42 (172.20.66.67), 30 hops max, 60 byte packets
  7  172.23.96.1  165.631 ms  182.696 ms  182.695 ms
  8  172.20.66.67  182.695 ms  167.117 ms  187.094 ms"""
 
-        self.assertEqual(TraceResult(ips=[
-            '172.20.229.114',
-            '172.20.229.113',
-            '172.20.229.123',
-            '*',
-            '*',
-            '172.20.129.169',
-            '172.23.96.1',
-            '172.20.66.67'], latency="182.695 ms"), parse_traceroute(s))
+        self.assertEqual(TraceResult(hops=[
+            _bareip('172.20.229.114'),
+            _bareip('172.20.229.113'),
+            _bareip('172.20.229.123'),
+            _bareip('*'),
+            _bareip('*'),
+            _bareip('172.20.129.169'),
+            _bareip('172.23.96.1'),
+            _bareip('172.20.66.67')], latency="182.695 ms"), parse_traceroute(s))
 
     def testTracerouteNoDNSv6(self):
         s = """traceroute to map.dn42 (fd42:4242:2189:e9::1), 30 hops max, 80 byte packets
@@ -170,19 +177,19 @@ traceroute to irc.hackint.dn42 (172.20.66.67), 30 hops max, 60 byte packets
  4  fd42:4242:2189:e9::1  208.400 ms  208.398 ms  208.543 ms
 """
 
-        self.assertEqual(TraceResult(ips=[
-            'fd86:bad:11b7:34::1',
-            'fd86:bad:11b7:22::1',
-            'fd42:4242:2189:ef::1',
-            'fd42:4242:2189:e9::1'], latency="208.400 ms"), parse_traceroute(s))
+        self.assertEqual(TraceResult(hops=[
+            _bareip('fd86:bad:11b7:34::1'),
+            _bareip('fd86:bad:11b7:22::1'),
+            _bareip('fd42:4242:2189:ef::1'),
+            _bareip('fd42:4242:2189:e9::1')], latency="208.400 ms"), parse_traceroute(s))
 
     def testTracerouteError(self):
         s = """traceroute to 192.168.123.123 (192.168.123.123), 30 hops max, 60 byte packets
  1  192.168.123.1 (192.168.123.1)  3079.329 ms !H  3079.304 ms !H  3079.299 ms !H
 """
 
-        self.assertEqual(TraceResult(ips=[
-            '192.168.123.1'], latency="3079.329 ms !H"), parse_traceroute(s))
+        self.assertEqual(TraceResult(hops=[
+            _bareip('192.168.123.1')], latency="3079.329 ms !H"), parse_traceroute(s))
 
 if __name__ == '__main__':
     unittest.main()
