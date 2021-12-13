@@ -1,7 +1,7 @@
 # SupyPlugins
 
 [![Travis-CI Build Status](https://travis-ci.org/jlu5/SupyPlugins.svg?branch=master)](https://travis-ci.org/jlu5/SupyPlugins)
-![Supported Python versions](https://img.shields.io/badge/python-3.5%20and%20later-blue.svg)
+![Supported Python versions](https://img.shields.io/badge/python-3.7%20and%20later-blue.svg)
 
 My collection of plugins for [Limnoria](https://github.com/ProgVal/Limnoria).
 
@@ -12,7 +12,7 @@ The recommended way of fetching plugins in this repository is to clone the git r
 
 and add the folder to your bot's `config directories.plugins`.
 
-**You will need a working copy of [Limnoria](https://github.com/ProgVal/Limnoria) running on Python 3.5+.** Python 2 is no longer supported.
+**You will need a working copy of [Limnoria](https://github.com/ProgVal/Limnoria) running on Python >= 3.7** (prefer the latest Python 3.x when available).
 
 If you are using a recent version of Limnoria's PluginDownloader, you can also fetch [individual plugins](#list-of-plugins) by running:
 
@@ -31,52 +31,52 @@ Please note that this list may not always be up to date; your best bet is to act
 
 Most of these plugins also have their own READMEs in their folders; you can usually find a usage demonstration or further explanation of what they do.
 
-##### AQI
+### AQI
 - Retrieves [air quality index](https://en.wikipedia.org/wiki/Air_quality_index) info from the [World Air Quality Index project](https://aqicn.org).
 
-##### LastFM
+### LastFM
 - LastFM plugin, forked from [krf/supybot-lastfm](https://github.com/krf/supybot-lastfm).
 
-##### MCInfo
+### MCInfo
 - Fetches information from [minecraft.gamepedia.com](https://minecraft.gamepedia.com/).
    - **Requires:** [Beautiful Soup 4](http://www.crummy.com/software/BeautifulSoup/bs4/doc/)
 
-##### [NoTrigger](NoTrigger/README.md)
+### [NoTrigger](NoTrigger/README.md)
 - Anti-abuse script; prevents the bot from triggering other bots by modifying its output slightly. For more information, see [NoTrigger/README.md](NoTrigger/README.md).
 
-##### [NuWeather](NuWeather/README.md)
+### [NuWeather](NuWeather/README.md)
 - A weather plugin for Limnoria supporting multiple backends.
 
-##### [OperUp](OperUp/README.md)
+### [OperUp](OperUp/README.md)
 - Allows Supybot to oper up on configured networks, automatically (on connect) and on demand.
 
-##### [PkgInfo](PkgInfo/README.md)
+### [PkgInfo](PkgInfo/README.md)
 - Fetches package information from various Linux and BSD distros' software repositories.
    - **Requires:** [Beautiful Soup 4](http://www.crummy.com/software/BeautifulSoup/bs4/doc/)
 
-##### QuakeNet
+### QuakeNet
 - Log in to Quakenet's Q Service via CHALLENGEAUTH. This plugin was written by request and not officially supported.
 
-##### Restart
+### Restart
 - **EXPERIMENTAL**: provides a command to restart Limnoria from IRC.
 
-##### [RelayNext](RelayNext/README.md)
+### [RelayNext](RelayNext/README.md)
 - Next generation relayer plugin, designed with two-way relays in mind.
 
-##### RhymeZone
+### RhymeZone
 - Fetches rhymes from http://rhymezone.com/.
    - **Requires:** [Beautiful Soup 4](http://www.crummy.com/software/BeautifulSoup/bs4/doc/)
 
-##### SupyMisc
+### SupyMisc
 - Some assorted commands that don't seem to fit anywhere else.
 
-##### SysDNS
+### SysDNS
 - An alternative to Supybot's built-in DNS function, using the `host` DNS lookup utility on the host machine.
     * **Requires:** `host` DNS lookup binary (as in `/usr/bin/host`)
 
-##### [TranslateParty](TranslateParty/README.md)
+### [TranslateParty](TranslateParty/README.md)
 - Translates text through Google Translate multiple times in order to get amusing results.
 
-##### Wikifetch
+### Wikifetch
 - Fork of [ProgVal's Wikipedia plugin](https://github.com/ProgVal/Supybot-plugins), with support for other wikis (via a `--site` option) and other improvements.
    - **Requires:** [lxml](https://lxml.de/installation.html)
