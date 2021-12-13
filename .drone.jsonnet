@@ -6,7 +6,7 @@ local test_with(version, use_network=false) = {
     steps: [
         {
             name: "test",
-            image: "python:" + version + "-buster",
+            image: "python:" + version + "-bullseye",
             commands: [
                 "pip install -r requirements.txt",
                 "apt-get update",
