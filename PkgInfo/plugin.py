@@ -475,7 +475,7 @@ class PkgInfo(callbacks.Plugin):
             and
             Ubuntu (use a release codename such as 'trusty' or 'xenial').
 
-        This command replaces the 'archlinux', 'archaur', 'freebsd', commands from earlier versions of PkgInfo."""
+        This command replaces the 'archlinux', 'archaur', and 'freebsd' commands from earlier versions of PkgInfo."""
         opts = dict(opts)
         fetch_source = 'source' in opts
         fetch_depends = 'depends' in opts
@@ -540,11 +540,10 @@ class PkgInfo(callbacks.Plugin):
             Debian (distro name 'debian'),
             FreeBSD (distro name 'freebsd'),
             Gentoo (distro name 'gentoo'),
-            Linux Mint (use a release codename such as 'sonya' or 'betsy'),
             and
             Ubuntu (distro name 'ubuntu').
 
-        This command replaces the 'archlinux', 'archaur', 'freebsd', and 'linuxmint' commands from earlier versions of PkgInfo."""
+        This command replaces the 'archlinux', 'archaur', and 'freebsd' commands from earlier versions of PkgInfo."""
 
         return self.package(irc, msg, args, dist, query, {'search': True})
     pkgsearch = wrap(pkgsearch, ['somethingWithoutSpaces',
