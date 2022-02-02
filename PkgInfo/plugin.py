@@ -108,15 +108,11 @@ class PkgInfo(callbacks.Plugin):
                   "jessie", "testing", "sid", "unstable", "stretch", "buster",
                   "experimental", "bullseye", "bookworm")
         ubuntu = ("bionic", "focal", "groovy", "hirsute", "impish")
-        mint = ("betsy", "cindy", "qiana", "rebecca", "rafaela", "rosa",
-                "sarah", "serena", "sonya", "sylvia", "tara")
 
         if release.startswith(debian):
             return "debian"
         elif release.startswith(ubuntu):
             return "ubuntu"
-        elif release.startswith(mint):
-            return "mint"
 
     def _get_distro_fetcher(self, dist, multi=False):
         dist = dist.lower()
@@ -126,8 +122,6 @@ class PkgInfo(callbacks.Plugin):
             raise AmbiguousDistributionError("You must specify a distribution version (e.g. 'stretch' or 'unstable')")
         elif dist == 'ubuntu' and not multi:
             raise AmbiguousDistributionError("You must specify a distribution version (e.g. 'trusty' or 'xenial')")
-        elif dist in ('mint', 'linuxmint'):
-            raise AmbiguousDistributionError("You must specify a distribution version (e.g. 'sonya' or 'betsy')")
         elif dist == 'master':
             raise AmbiguousDistributionError("'master' is ambiguous: for Fedora rawhide, use the release 'rawhide'")
 
@@ -141,8 +135,6 @@ class PkgInfo(callbacks.Plugin):
             return self._freebsd_fetcher
         elif guess_dist == 'ubuntu' or dist == 'ubuntu':
             return self._ubuntu_fetcher
-        elif guess_dist == 'mint':
-            return self._mint_fetcher
         elif dist == 'fedora':
             return self._fedora_fetcher
         elif dist == 'gentoo':
@@ -374,56 +366,6 @@ class PkgInfo(callbacks.Plugin):
         result = results[0]
         return (result['name'], result['version'], 'Fedora', 'no description available', friendly_url)
 
-    def _mint_fetcher(self, release, query, fetch_source=False, fetch_depends=False, multi=False):
-        if fetch_depends:
-            raise UnsupportedOperationError("--depends lookup is not supported for Linux Mint")
-
-        if fetch_source:
-            addr = 'http://packages.linuxmint.com/list-src.php?'
-        else:
-            addr = 'http://packages.linuxmint.com/list.php?'
-        addr += urlencode({'release': release})
-
-        fd = utils.web.getUrl(addr).decode("utf-8")
-
-        soup = BeautifulSoup(fd)
-
-        # Linux Mint puts their package lists in tables, so use HTML parsing
-        results = soup.find_all("td")
-
-        versions = {}
-        query = query.lower()
-
-        multi_results = []
-        for result in results:
-            name = result.contents[0].string  # Package name
-
-            if query in name and multi:
-                multi_results.append(name)
-
-            elif query == name:
-                # This feels like really messy code, but we have to find tags
-                # relative to our results.
-                # Ascend to find the section name (in <h2>):
-                section = result.parent.parent.parent.previous_sibling.\
-                    previous_sibling.string
-
-                # Find the package version in the next <td>; for some reason we
-                # have to go two siblings further, as the first .next_sibling
-                # returns '\n'. This is mentioned briefly in Beautiful Soup 4's
-                # documentation...
-                version = result.next_sibling.next_sibling.string
-
-                # Create a list of versions because a package can exist multiple
-                # times in different sections of the repository (e.g. one in Main,
-                # one in Backports, etc.)
-                versions[section] = version
-
-        if multi:
-            return multi_results
-        return (query, ', '.join('%s: %s' % (k, v) for k, v in versions.items()),
-                'Linux Mint %s' % release.title(), 'no description available', addr)
-
     def _freebsd_fetcher(self, release, query, fetch_source=False, fetch_depends=False, multi=False):
         if fetch_source:
             raise UnsupportedOperationError("--source lookup is not supported for FreeBSD")
@@ -530,11 +472,10 @@ class PkgInfo(callbacks.Plugin):
             Debian (use a release codename such as 'sid', 'unstable', 'stretch', or 'stable'),
             FreeBSD (distro name 'freebsd'),
             Gentoo (distro name 'gentoo'; use category/package-name for package names),
-            Linux Mint (use a release codename such as 'sonya' or 'betsy'),
             and
             Ubuntu (use a release codename such as 'trusty' or 'xenial').
 
-        This command replaces the 'archlinux', 'archaur', 'freebsd', and 'linuxmint' commands from earlier versions of PkgInfo."""
+        This command replaces the 'archlinux', 'archaur', 'freebsd', commands from earlier versions of PkgInfo."""
         opts = dict(opts)
         fetch_source = 'source' in opts
         fetch_depends = 'depends' in opts

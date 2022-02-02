@@ -73,12 +73,6 @@ class PkgInfoTestCase(PluginTestCase):
             self.assertError('pkg archaur unittestinvalidpackageignore')
             self.assertError('pkgsearch archaur unittestinvalidpackageignore')
 
-        def test_pkg_mint(self):
-            self.assertNotError('pkgsearch sonya cinnamon')
-            self.assertNotError('pkg sonya cinnamon')
-            self.assertError('pkg mint unittestinvalidpackageignore')
-            self.assertError('pkgsearch mint unittestinvalidpackageignore')
-
         def test_pkg_freebsd(self):
             self.assertNotError('pkg freebsd lxterminal')
             self.assertNotError('pkgsearch freebsd gnome')
