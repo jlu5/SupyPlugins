@@ -37,7 +37,7 @@ import supybot.world as world
 
 # Use this for the version of this plugin.  You may wish to put a CVS keyword
 # in here if you're keeping the plugin in CVS or some similar system.
-__version__ = "2021.08.01+git"
+__version__ = "2022.02.01"
 
 __author__ = getattr(supybot.authors, 'jlu',
                      supybot.Author('James Lu', 'jlu5', 'james@overdrivenetworks.com'))
