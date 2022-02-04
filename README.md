@@ -1,6 +1,6 @@
 # SupyPlugins
 
-[![Travis-CI Build Status](https://travis-ci.org/jlu5/SupyPlugins.svg?branch=master)](https://travis-ci.org/jlu5/SupyPlugins)
+[![Build Status](https://drone.overdrivenetworks.com/api/badges/jlu5/SupyPlugins/status.svg)](https://drone.overdrivenetworks.com/jlu5/SupyPlugins)
 ![Supported Python versions](https://img.shields.io/badge/python-3.7%20and%20later-blue.svg)
 
 My collection of plugins for [Limnoria](https://github.com/ProgVal/Limnoria).
