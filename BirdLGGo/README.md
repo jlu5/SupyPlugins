@@ -7,6 +7,8 @@ First configure the following variables:
 - `plugins.birdlggo.lgserver` - point this to your looking glass server (e.g. `http://lg.highdef.dn42/`)
 - `plugins.birdlggo.nodes` - a space separated list of nodes to query. These should use internal server names (as shown in request URLs to the frontend), not the display names that the frontend shows in the navigation bar.
 
+In the bird-lg-go proxy settings I recommend enabling `BIRDLG_TRACEROUTE_RAW`, as only Linux's native traceroute format is fully supported.
+
 ## Usage
 
 Currently this provides a slimmed down UI for traceroute and BIRD's `show route`:

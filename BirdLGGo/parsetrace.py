@@ -43,14 +43,10 @@ def parse_traceroute(text):
             hops.append(TraceHop(ip, ptr))
             latency = m.group("latency")
 
-        # bird-lg-go specific truncation
-        if "hops not responding" in ''.join(notes):
-            latency = None
-
         return TraceResult(hops, latency, notes)
 
 if __name__ == '__main__':
-    proc = subprocess.run(['traceroute', *sys.argv[1:]], encoding='utf-8', stdout=subprocess.PIPE)
+    proc = subprocess.run(['traceroute', *sys.argv[1:]], check=False, encoding='utf-8', stdout=subprocess.PIPE)
     print(parse_traceroute(proc.stdout))
 
     if proc.returncode:

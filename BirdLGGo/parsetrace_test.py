@@ -123,7 +123,8 @@ traceroute to azure.microsoft.com (13.107.42.16), 30 hops max, 60 byte packets
 
 
     def testTracerouteTimedOutTruncated(self):
-        # bird-lg-go specific - set latency to None in this case
+        # bird-lg-go specific - ignore the "hops not responding message" since the sum
+        # counts ALL hops, even those in between
         s = """
 traceroute to azure.microsoft.com (13.107.42.16), 30 hops max, 60 byte packets
  1  172.31.1.1 (172.31.1.1)  6.362 ms
@@ -145,7 +146,7 @@ traceroute to azure.microsoft.com (13.107.42.16), 30 hops max, 60 byte packets
             TraceHop(ip='85.10.250.209', ptr='core11.nbg1.hetzner.com'),
             TraceHop(ip='213.239.245.254', ptr='core1.fra.hetzner.com'),
             TraceHop(ip='104.44.197.103', ptr='hetzner.fra-96cbe-1a.ntwk.msn.net')],
-            notes=["23 hops not responding."]), parse_traceroute(s))
+            notes=["23 hops not responding."], latency="8.055 ms"), parse_traceroute(s))
 
     def testTracerouteNoDNS(self):
         s = """
