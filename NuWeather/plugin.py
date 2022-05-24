@@ -1,6 +1,5 @@
 ###
-# Copyright (c) 2011-2014, Valentin Lorentz
-# Copyright (c) 2018-2020, James Lu <james@overdrivenetworks.com>
+# Copyright (c) 2018-2022, James Lu <james@overdrivenetworks.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -29,8 +28,6 @@
 ###
 import json
 import os
-import re
-import string
 
 from supybot import utils, plugins, ircutils, callbacks, world, conf, log
 from supybot.commands import *
@@ -42,47 +39,13 @@ except ImportError:
     # without the i18n module
     _ = lambda x: x
 
-try:
-    import pendulum
-except ImportError:
-    pendulum = None
-    log.warning('NuWeather: pendulum is not installed; extended forecasts will not be formatted properly')
-
-from .config import BACKENDS, GEOCODE_BACKENDS, DEFAULT_FORMAT, DEFAULT_FORECAST_FORMAT, DEFAULT_FORMAT_CURRENTONLY
+from .config import BACKENDS, GEOCODE_BACKENDS
 from .local import accountsdb
+from . import formatter
 
 HEADERS = {
     'User-agent': 'Mozilla/5.0 (compatible; Supybot/Limnoria %s; NuWeather weather plugin)' % conf.version
 }
-
-# Based off https://github.com/ProgVal/Supybot-plugins/blob/master/GitHub/plugin.py
-def flatten_subdicts(dicts, flat=None):
-    """Flattens a dict containing dicts or lists of dicts. Useful for string formatting."""
-    if flat is None:
-        # Instanciate the dictionnary when the function is run and now when it
-        # is declared; otherwise the same dictionnary instance will be kept and
-        # it will have side effects (memory exhaustion, ...)
-        flat = {}
-    if isinstance(dicts, list):
-        return flatten_subdicts(dict(enumerate(dicts)))
-    elif isinstance(dicts, dict):
-        for key, value in dicts.items():
-            if isinstance(value, dict):
-                value = dict(flatten_subdicts(value))
-                for subkey, subvalue in value.items():
-                    flat['%s__%s' % (key, subkey)] = subvalue
-            elif isinstance(value, list):
-                for num, subvalue in enumerate(value):
-                    if isinstance(subvalue, dict):
-                        for subkey, subvalue in subvalue.items():
-                            flat['%s__%s__%s' % (key, num, subkey)] = subvalue
-                    else:
-                        flat['%s__%s' % (key, num)] = subvalue
-            else:
-                flat[key] = value
-        return flat
-    else:
-        return dicts
 
 class NuWeather(callbacks.Plugin):
     """Weather plugin for Limnoria"""
@@ -101,7 +64,8 @@ class NuWeather(callbacks.Plugin):
             self.geocode_db = {}
         world.flushers.append(self.db.flush)
         world.flushers.append(self._flush_geocode_db)
-        self._channel_context = None
+        # this is hacky but less annoying than navigating the registry ourselves
+        formatter._registryValue = self.registryValue
 
     def _flush_geocode_db(self):
         geocode_db_filename = conf.supybot.directories.data.dirize("NuWeather-geocode.json")
@@ -114,150 +78,6 @@ class NuWeather(callbacks.Plugin):
         self.db.flush()
         self._flush_geocode_db()
         super().die()
-
-    def _format_temp(self, f, c=None):
-        """
-        Colorizes temperatures and formats them to show either Fahrenheit, Celsius, or both.
-        """
-        if f is None:
-            return _('N/A')
-
-        f = float(f)
-        if f < 10:
-            color = 'light blue'
-        elif f < 32:
-            color = 'teal'
-        elif f < 50:
-            color = 'blue'
-        elif f < 60:
-            color = 'light green'
-        elif f < 70:
-            color = 'green'
-        elif f < 80:
-            color = 'yellow'
-        elif f < 90:
-            color = 'orange'
-        else:
-            color = 'red'
-        # Round to nearest tenth for display purposes
-        if c is None:
-            c = round((f - 32) * 5/9, 1)
-        else:
-            c = round(c, 1)
-        f = round(f, 1)
-
-        displaymode = self.registryValue('units.temperature', channel=self._channel_context)
-        if displaymode == 'F/C':
-            string = '%sF/%sC' % (f, c)
-        elif displaymode == 'C/F':
-            string = '%sC/%sF' % (c, f)
-        elif displaymode == 'F':
-            string = '%sF' % f
-        elif displaymode == 'C':
-            string = '%sC' % c
-        else:
-            raise ValueError("Unknown display mode for temperature.")
-        return ircutils.mircColor(string, color)
-
-    _temperatures_re = re.compile(r'((\d+)°?F)')  # Only need FtoC conversion so far
-    def _mangle_temperatures(self, forecast):
-        """Runs _format_temp() on temperature values embedded within forecast strings."""
-        if not forecast:
-            return forecast
-        for (text, value) in set(self._temperatures_re.findall(forecast)):
-            forecast = forecast.replace(text, self._format_temp(f=value))
-        return forecast
-
-    @staticmethod
-    def _wind_direction(angle):
-        """Returns wind direction (N, W, S, E, etc.) given an angle."""
-        # Adapted from https://stackoverflow.com/a/7490772
-        directions = ('N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW')
-        if angle is None:
-            return directions[0] # dummy output
-        angle = int(angle)
-        idx = int((angle/(360/len(directions)))+.5)
-        return directions[idx % len(directions)]
-
-    @staticmethod
-    def _format_uv(uv):
-        if uv is None:
-            return _('N/A')
-        # From https://en.wikipedia.org/wiki/Ultraviolet_index#Index_usage 2018-12-30
-        uv = float(uv)
-        if uv <= 2.9:
-            color, risk = 'green', 'Low'
-        elif uv <= 5.9:
-            color, risk = 'yellow', 'Moderate'
-        elif uv <= 7.9:
-            color, risk = 'orange', 'High'
-        elif uv <= 10.9:
-            color, risk = 'red', 'Very high'
-        else:
-            # Closest we have to violet
-            color, risk = 'pink', 'Extreme'
-        string = '%d (%s)' % (uv, risk)
-        return ircutils.mircColor(string, color)
-
-    @staticmethod
-    def _format_precip(mm=None, inches=None):
-        if mm is None and inches is None:
-            return _('N/A')
-        elif mm == 0 or inches == 0:
-            return '0'  # Don't bother with 2 units if the value is 0
-
-        if mm is None:
-            mm = round(inches * 25.4, 1)
-        elif inches is None:
-            inches = round(mm / 25.4, 1)
-
-        return _('%smm/%sin') % (mm, inches)
-
-    @staticmethod
-    def _format_distance(mi=None, km=None, speed=False):
-        if mi is None and km is None:
-            return _('N/A')
-        elif mi == 0 or km == 0:
-            return '0'  # Don't bother with 2 units if the value is 0
-
-        if mi is None:
-            mi = round(km / 1.609, 1)
-        elif km is None:
-            km = round(mi * 1.609, 1)
-
-        if speed:
-            return _('%smph/%skph') % (mi, km)
-        else:
-            return _('%smi/%skm') % (mi, km)
-
-    @staticmethod
-    def _format_percentage(value):
-        """
-        Formats percentage values given either as an int (value%) or float (0 <= value <= 1).
-        """
-        if isinstance(value, float):
-            return '%.0f%%' % (value * 100)
-        elif isinstance(value, int):
-            return '%d%%' % value
-        else:
-            return 'N/A'
-
-    @staticmethod
-    def _get_dayname(ts, idx, *, tz=None):
-        """
-        Returns the day name given a Unix timestamp, day index and (optionally) a timezone.
-        """
-        if pendulum is not None:
-            p = pendulum.from_timestamp(ts, tz=tz)
-            return p.format('dddd')
-        else:
-            # Fallback
-            if idx == 0:
-                return 'Today'
-            elif idx == 1:
-                return 'Tomorrow'
-            else:
-                return 'Day_%d' % idx
 
     def _nominatim_geocode(self, location):
         location = location.lower()
@@ -368,7 +188,7 @@ class NuWeather(callbacks.Plugin):
         return result
 
     def _geocode(self, location, geobackend=None):
-        geocode_backend = geobackend or self.registryValue('geocodeBackend', channel=self._channel_context)
+        geocode_backend = geobackend or self.registryValue('geocodeBackend', channel=formatter._channel_context)
         if geocode_backend not in GEOCODE_BACKENDS:
             raise callbacks.Error(_("Unknown geocode backend %r. Valid ones are: %s") % (geocode_backend, ', '.join(GEOCODE_BACKENDS)))
 
@@ -386,33 +206,6 @@ class NuWeather(callbacks.Plugin):
         result = backend_func(location)
         self.geocode_db[result_pair] = result  # Cache result persistently
         return result
-
-    def _format(self, data, forecast=False):
-        """
-        Formats and returns current conditions.
-        """
-        # Work around IRC length limits for config opts...
-        data['c'] = data['current']
-        data['f'] = data.get('forecast')
-
-        flat_data = flatten_subdicts(data)
-        if flat_data.get('url'):
-            flat_data['url'] = utils.str.url(flat_data['url'])
-
-        forecast_available = bool(data.get('forecast'))
-        if forecast:  # --forecast option was given
-            if forecast_available:
-                fmt = self.registryValue('outputFormat.forecast', channel=self._channel_context) or DEFAULT_FORECAST_FORMAT
-            else:
-                raise callbacks.Error(_("Extended forecast info is not available from this backend."))
-        else:
-            if forecast_available:
-                fmt = self.registryValue('outputFormat', channel=self._channel_context) or DEFAULT_FORMAT
-            else:
-                fmt = self.registryValue('outputFormat.currentOnly', channel=self._channel_context) or DEFAULT_FORMAT_CURRENTONLY
-        template = string.Template(fmt)
-
-        return template.safe_substitute(flat_data)
 
     def _weatherstack_fetcher(self, location, geobackend=None):
         """Grabs weather data from weatherstack (formerly Apixu)."""
@@ -439,14 +232,14 @@ class NuWeather(callbacks.Plugin):
             'url': '',
             'current': {
                 'condition': currentdata['weather_descriptions'][0],
-                'temperature': self._format_temp(f=currentdata['temperature']),
-                'feels_like': self._format_temp(f=currentdata['feelslike']),
-                'humidity': self._format_percentage(currentdata['humidity']),
-                'precip': self._format_precip(inches=currentdata['precip']),
-                'wind': self._format_distance(mi=currentdata['wind_speed'], speed=True),
+                'temperature': formatter.format_temp(f=currentdata['temperature']),
+                'feels_like': formatter.format_temp(f=currentdata['feelslike']),
+                'humidity': formatter.format_percentage(currentdata['humidity']),
+                'precip': formatter.format_precip(inches=currentdata['precip']),
+                'wind': formatter.format_distance(mi=currentdata['wind_speed'], speed=True),
                 'wind_dir': currentdata['wind_dir'],
-                'uv': self._format_uv(currentdata['uv_index']),
-                'visibility': self._format_distance(mi=currentdata.get('visibility')),
+                'uv': formatter.format_uv(currentdata['uv_index']),
+                'visibility': formatter.format_distance(mi=currentdata.get('visibility')),
             }
         }
 
@@ -479,19 +272,19 @@ class NuWeather(callbacks.Plugin):
             'url': 'https://darksky.net/forecast/%s,%s' % (lat, lon),
             'current': {
                 'condition': currentdata.get('summary', 'N/A'),
-                'temperature': self._format_temp(f=currentdata.get('temperature')),
-                'feels_like': self._format_temp(f=currentdata.get('apparentTemperature')),
-                'humidity': self._format_percentage(currentdata.get('humidity')),
-                'precip': self._format_precip(mm=currentdata.get('precipIntensity')),
-                'wind': self._format_distance(mi=currentdata.get('windSpeed', 0), speed=True),
-                'wind_gust': self._format_distance(mi=currentdata.get('windGust', 0), speed=True),
-                'wind_dir': self._wind_direction(currentdata.get('windBearing')),
-                'uv': self._format_uv(currentdata.get('uvIndex')),
-                'visibility': self._format_distance(mi=currentdata.get('visibility')),
+                'temperature': formatter.format_temp(f=currentdata.get('temperature')),
+                'feels_like': formatter.format_temp(f=currentdata.get('apparentTemperature')),
+                'humidity': formatter.format_percentage(currentdata.get('humidity')),
+                'precip': formatter.format_precip(mm=currentdata.get('precipIntensity')),
+                'wind': formatter.format_distance(mi=currentdata.get('windSpeed', 0), speed=True),
+                'wind_gust': formatter.format_distance(mi=currentdata.get('windGust', 0), speed=True),
+                'wind_dir': formatter.wind_direction(currentdata.get('windBearing')),
+                'uv': formatter.format_uv(currentdata.get('uvIndex')),
+                'visibility': formatter.format_distance(mi=currentdata.get('visibility')),
             },
-            'forecast': [{'dayname': self._get_dayname(forecastdata['time'], idx, tz=data['timezone']),
-                          'max': self._format_temp(f=forecastdata.get('temperatureHigh')),
-                          'min': self._format_temp(f=forecastdata.get('temperatureLow')),
+            'forecast': [{'dayname': formatter.get_dayname(forecastdata['time'], idx, tz=data['timezone']),
+                          'max': formatter.format_temp(f=forecastdata.get('temperatureHigh')),
+                          'min': formatter.format_temp(f=forecastdata.get('temperatureLow')),
                           'summary': forecastdata.get('summary', 'N/A').rstrip('.')} for idx, forecastdata in enumerate(data['daily']['data'])]
         }
 
@@ -522,9 +315,9 @@ class NuWeather(callbacks.Plugin):
 
         # XXX: are the units for this consistent across APIs?
         if currentdata.get('snow'):
-            precip = self._format_precip(mm=currentdata['snow']['1h'] * 10)
+            precip = formatter.format_precip(mm=currentdata['snow']['1h'] * 10)
         elif currentdata.get('rain'):
-            precip = self._format_precip(mm=currentdata['rain']['1h'])
+            precip = formatter.format_precip(mm=currentdata['rain']['1h'])
         else:
             precip = 'N/A'
 
@@ -538,22 +331,22 @@ class NuWeather(callbacks.Plugin):
             }),
             'current': {
                 'condition': currentdata['weather'][0]['description'],
-                'temperature': self._format_temp(f=currentdata['temp']),
-                'feels_like': self._format_temp(f=currentdata['feels_like']),
-                'humidity': self._format_percentage(currentdata['humidity']),
+                'temperature': formatter.format_temp(f=currentdata['temp']),
+                'feels_like': formatter.format_temp(f=currentdata['feels_like']),
+                'humidity': formatter.format_percentage(currentdata['humidity']),
                 'precip': precip,
-                'wind': self._format_distance(mi=currentdata['wind_speed'], speed=True),
-                'wind_dir': self._wind_direction(currentdata['wind_deg']),
-                'wind_gust': self._format_distance(mi=currentdata.get('wind_gust'), speed=True),
-                'uv': self._format_uv(currentdata.get('uvi')),
-                'visibility': self._format_distance(km=currentdata['visibility']/1000),
+                'wind': formatter.format_distance(mi=currentdata['wind_speed'], speed=True),
+                'wind_dir': formatter.wind_direction(currentdata['wind_deg']),
+                'wind_gust': formatter.format_distance(mi=currentdata.get('wind_gust'), speed=True),
+                'uv': formatter.format_uv(currentdata.get('uvi')),
+                'visibility': formatter.format_distance(km=currentdata['visibility']/1000),
             }
         }
 
         output['forecast'] = [
-            {'dayname': self._get_dayname(forecast['dt'], idx, tz=data['timezone']),
-             'max': self._format_temp(f=forecast['temp']['max']),
-             'min': self._format_temp(f=forecast['temp']['min']),
+            {'dayname': formatter.get_dayname(forecast['dt'], idx, tz=data['timezone']),
+             'max': formatter.format_temp(f=forecast['temp']['max']),
+             'min': formatter.format_temp(f=forecast['temp']['min']),
              'summary': forecast['weather'][0]['description']}
             for idx, forecast in enumerate(data['daily'])
         ]
@@ -592,11 +385,11 @@ class NuWeather(callbacks.Plugin):
             irc.error(_("Unknown weather backend %s. Valid ones are: %s") % (weather_backend, ', '.join(BACKENDS)), Raise=True)
         geocode_backend = optlist.get('geocode-backend', self.registryValue('geocodeBackend', msg.args[0]))
 
-        self._channel_context = msg.channel
+        formatter._channel_context = msg.channel
         backend_func = getattr(self, '_%s_fetcher' % weather_backend)
         raw_data = backend_func(location, geocode_backend)
 
-        s = self._format(raw_data, forecast='forecast' in optlist)
+        s = formatter.format_weather(raw_data, forecast='forecast' in optlist)
         irc.reply(s)
 
     @wrap([getopts({'user': 'nick', 'backend': None}), 'text'])
