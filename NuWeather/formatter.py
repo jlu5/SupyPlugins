@@ -182,8 +182,8 @@ def format_distance(mi=None, km=None, speed=False):
     """Formats distance or speed values in miles and kilometers"""
     if mi is None and km is None:
         return _('N/A')
-    elif mi == 0 or km == 0:
-        return '0'  # Don't bother with 2 units if the value is 0
+    if mi == 0 or km == 0:
+        return '0'  # Don't bother with multiple units if the value is 0
 
     if mi is None:
         mi = round(km / 1.609, 1)
@@ -191,9 +191,18 @@ def format_distance(mi=None, km=None, speed=False):
         km = round(mi * 1.609, 1)
 
     if speed:
-        return _('%smph/%skph') % (mi, km)
+        m = f'{round(km / 3.6, 1)}m/s'
+        mi = f'{mi}mph'
+        km = f'{km}km/h'
+        displaymode = _registryValue('units.speed', channel=_channel_context)
     else:
-        return _('%smi/%skm') % (mi, km)
+        m = f'{round(km * 1000, 1)}m'
+        mi = f'{mi}mi'
+        km = f'{km}km'
+        displaymode = _registryValue('units.distance', channel=_channel_context)
+    return string.Template(displaymode).safe_substitute(
+        {'mi': mi, 'km': km, 'm': m}
+    )
 
 def format_percentage(value):
     """

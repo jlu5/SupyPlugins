@@ -59,6 +59,23 @@ conf.registerChannelValue(NuWeather.units, 'temperature',
     NuWeatherTemperatureDisplayMode('F/C', _("""Determines how temperatures will be displayed.
         F/C means show "50F/10C", C means display only Celsius, and so on.""")))
 
+class NuWeatherDistanceDisplayMode(registry.String):
+    """Value must contain one of $mi, $km, or $m"""
+    def setValue(self, v):
+        if any(x in v for x in ('$mi', '$km', '$mi')):
+            registry.String.setValue(self, v)
+        else:
+            self.error()
+
+conf.registerChannelValue(NuWeather.units, 'distance',
+    NuWeatherDistanceDisplayMode('$mi / $km', _("""Determines how distance values will be displayed.
+        The following template variables are supported, and at least one must be included:
+        $mi = miles, $km = kilometers, $m = meters.""")))
+conf.registerChannelValue(NuWeather.units, 'speed',
+    NuWeatherDistanceDisplayMode('$mi / $km', _("""Determines how speed values will be displayed.
+        The following template variables are supported, and at least one must be included:
+        $mi = mph, $km = km/h, $m = m/s.""")))
+
 # List of supported backends for weather & geocode. This is reused by plugin.py
 BACKENDS = ('openweathermap', 'darksky', 'weatherstack')
 GEOCODE_BACKENDS = ('nominatim', 'googlemaps', 'opencage', 'weatherstack')

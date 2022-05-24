@@ -102,13 +102,36 @@ class NuWeatherFormatterTestCase(unittest.TestCase):
         with conf.supybot.plugins.NuWeather.units.temperature.context('F'):
             self.assertEqual(func(f=72), '\x030872.0F\x03')
 
-    def test_format_distance_speed(self):
+    def test_format_distance(self):
         func = formatter.format_distance
-        self.assertEqual(func(mi=123), '123mi/197.9km')
-        self.assertEqual(func(km=42.6), '26.5mi/42.6km')
-        self.assertEqual(func(mi=26, km=42), '26mi/42km')
+        self.assertEqual(func(mi=123), '123mi / 197.9km')
+        self.assertEqual(func(km=42.6), '26.5mi / 42.6km')
+        self.assertEqual(func(mi=26, km=42), '26mi / 42km')
         self.assertEqual(func(mi=0), '0')  # special case
         self.assertEqual(func(), 'N/A')
+
+    def test_format_distance_speed(self):
+        func = lambda *args, **kwargs: formatter.format_distance(*args, speed=True, **kwargs)
+        self.assertEqual(func(mi=123), '123mph / 197.9km/h')
+        self.assertEqual(func(km=42.6), '26.5mph / 42.6km/h')
+        self.assertEqual(func(mi=26, km=42), '26mph / 42km/h')
+        self.assertEqual(func(mi=0), '0')  # special case
+        self.assertEqual(func(), 'N/A')
+
+    def test_format_distance_displaymode(self):
+        func = formatter.format_distance
+        with conf.supybot.plugins.NuWeather.units.distance.context('$mi / $km / $m'):
+            self.assertEqual(func(mi=123), '123mi / 197.9km / 197900.0m')
+            self.assertEqual(func(km=42.6), '26.5mi / 42.6km / 42600.0m')
+        with conf.supybot.plugins.NuWeather.units.distance.context('$m/$km'):
+            self.assertEqual(func(km=2), '2000m/2km')
+
+    def test_format_distance_speed_displaymode(self):
+        func = lambda *args, **kwargs: formatter.format_distance(*args, speed=True, **kwargs)
+        with conf.supybot.plugins.NuWeather.units.speed.context('$mi / $km / $m'):
+            self.assertEqual(func(mi=123), '123mph / 197.9km/h / 55.0m/s')
+        with conf.supybot.plugins.NuWeather.units.speed.context('$m / $km'):
+            self.assertEqual(func(km=2), '0.6m/s / 2km/h')
 
     def test_format_default(self):
         data = {'location': "Narnia",
@@ -137,8 +160,8 @@ class NuWeatherFormatterTestCase(unittest.TestCase):
         self.assertEqual(formatter.format_weather(data),
                          '\x02Narnia\x02 :: Sunny \x030780.0F/26.7C\x03 (Humidity: 80%) | '
                          '\x02Feels like:\x02 \x030785.0F/29.4C\x03 | '
-                         '\x02Wind\x02: 12mph/19.3kph NNE | '
-                         '\x02Wind gust\x02: 20mph/32.2kph | '
+                         '\x02Wind\x02: 12mph / 19.3km/h NNE | '
+                         '\x02Wind gust\x02: 20mph / 32.2km/h | '
                          '\x02Today\x02: Cloudy. High \x0304100.0F/37.8C\x03. Low \x030360.0F/15.6C\x03. | '
                          '\x02Tomorrow\x02: Light rain. High \x030870.0F/21.1C\x03. Low \x030955.0F/12.8C\x03. | '
                          'Powered by \x02Dummy\x02 <http://dummy.invalid/api/>')
