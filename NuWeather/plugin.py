@@ -101,6 +101,7 @@ class NuWeather(callbacks.Plugin):
             self.geocode_db = {}
         world.flushers.append(self.db.flush)
         world.flushers.append(self._flush_geocode_db)
+        self._channel_context = None
 
     def _flush_geocode_db(self):
         geocode_db_filename = conf.supybot.directories.data.dirize("NuWeather-geocode.json")
@@ -145,7 +146,7 @@ class NuWeather(callbacks.Plugin):
             c = round(c, 1)
         f = round(f, 1)
 
-        displaymode = self.registryValue('units.temperature', dynamic.msg.args[0])
+        displaymode = self.registryValue('units.temperature', channel=self._channel_context)
         if displaymode == 'F/C':
             string = '%sF/%sC' % (f, c)
         elif displaymode == 'C/F':
@@ -367,7 +368,7 @@ class NuWeather(callbacks.Plugin):
         return result
 
     def _geocode(self, location, geobackend=None):
-        geocode_backend = geobackend or self.registryValue('geocodeBackend', dynamic.msg.args[0])
+        geocode_backend = geobackend or self.registryValue('geocodeBackend', channel=self._channel_context)
         if geocode_backend not in GEOCODE_BACKENDS:
             raise callbacks.Error(_("Unknown geocode backend %r. Valid ones are: %s") % (geocode_backend, ', '.join(GEOCODE_BACKENDS)))
 
@@ -401,14 +402,14 @@ class NuWeather(callbacks.Plugin):
         forecast_available = bool(data.get('forecast'))
         if forecast:  # --forecast option was given
             if forecast_available:
-                fmt = self.registryValue('outputFormat.forecast', dynamic.msg.args[0]) or DEFAULT_FORECAST_FORMAT
+                fmt = self.registryValue('outputFormat.forecast', channel=self._channel_context) or DEFAULT_FORECAST_FORMAT
             else:
                 raise callbacks.Error(_("Extended forecast info is not available from this backend."))
         else:
             if forecast_available:
-                fmt = self.registryValue('outputFormat', dynamic.msg.args[0]) or DEFAULT_FORMAT
+                fmt = self.registryValue('outputFormat', channel=self._channel_context) or DEFAULT_FORMAT
             else:
-                fmt = self.registryValue('outputFormat.currentOnly', dynamic.msg.args[0]) or DEFAULT_FORMAT_CURRENTONLY
+                fmt = self.registryValue('outputFormat.currentOnly', channel=self._channel_context) or DEFAULT_FORMAT_CURRENTONLY
         template = string.Template(fmt)
 
         return template.safe_substitute(flat_data)
@@ -591,6 +592,7 @@ class NuWeather(callbacks.Plugin):
             irc.error(_("Unknown weather backend %s. Valid ones are: %s") % (weather_backend, ', '.join(BACKENDS)), Raise=True)
         geocode_backend = optlist.get('geocode-backend', self.registryValue('geocodeBackend', msg.args[0]))
 
+        self._channel_context = msg.channel
         backend_func = getattr(self, '_%s_fetcher' % weather_backend)
         raw_data = backend_func(location, geocode_backend)
 
