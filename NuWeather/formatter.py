@@ -186,9 +186,9 @@ def format_distance(mi=None, km=None, speed=False):
         return '0'  # Don't bother with multiple units if the value is 0
 
     if mi is None:
-        mi = km / 1.609
+        mi = km / 1.609344
     elif km is None:
-        km = mi * 1.609
+        km = mi * 1.609344
 
     if speed:
         m = f'{round(km / 3.6, 1)}m/s'

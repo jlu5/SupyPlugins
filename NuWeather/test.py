@@ -121,7 +121,7 @@ class NuWeatherFormatterTestCase(unittest.TestCase):
     def test_format_distance_displaymode(self):
         func = formatter.format_distance
         with conf.supybot.plugins.NuWeather.units.distance.context('$mi / $km / $m'):
-            self.assertEqual(func(mi=123), '123mi / 197.9km / 197900.0m')
+            self.assertEqual(func(mi=123), '123mi / 197.9km / 197949.3m')
             self.assertEqual(func(km=42.6), '26.5mi / 42.6km / 42600.0m')
         with conf.supybot.plugins.NuWeather.units.distance.context('$m/$km'):
             self.assertEqual(func(km=2), '2000m/2km')
