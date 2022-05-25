@@ -77,7 +77,7 @@ conf.registerChannelValue(NuWeather.units, 'speed',
         $mi = mph, $km = km/h, $m = m/s.""")))
 
 # List of supported backends for weather & geocode. This is reused by plugin.py
-BACKENDS = ('openweathermap', 'darksky', 'weatherstack')
+BACKENDS = ('openweathermap', 'darksky', 'weatherstack', 'wwis')
 GEOCODE_BACKENDS = ('nominatim', 'googlemaps', 'opencage', 'weatherstack')
 class NuWeatherBackend(registry.OnlySomeStrings):
     validStrings = BACKENDS
@@ -91,8 +91,9 @@ conf.registerChannelValue(NuWeather, 'geocodeBackend',
     NuWeatherGeocode(GEOCODE_BACKENDS[0], _("""Determines the default geocode backend.""")))
 
 for backend in BACKENDS:
-    conf.registerGlobalValue(NuWeather.apikeys, backend,
-        registry.String("", _("""Sets the API key for %s.""") % backend, private=True))
+    if backend != 'wwis':
+        conf.registerGlobalValue(NuWeather.apikeys, backend,
+            registry.String("", _("""Sets the API key for %s.""") % backend, private=True))
 for backend in GEOCODE_BACKENDS:
     if backend != 'nominatim':
         # nominatim doesn't require an API key

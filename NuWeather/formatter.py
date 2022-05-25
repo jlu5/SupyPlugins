@@ -186,19 +186,19 @@ def format_distance(mi=None, km=None, speed=False):
         return '0'  # Don't bother with multiple units if the value is 0
 
     if mi is None:
-        mi = round(km / 1.609, 1)
+        mi = km / 1.609
     elif km is None:
-        km = round(mi * 1.609, 1)
+        km = mi * 1.609
 
     if speed:
         m = f'{round(km / 3.6, 1)}m/s'
-        mi = f'{mi}mph'
-        km = f'{km}km/h'
+        mi = f'{round(mi, 1)}mph'
+        km = f'{round(km, 1)}km/h'
         displaymode = _registryValue('units.speed', channel=_channel_context)
     else:
         m = f'{round(km * 1000, 1)}m'
-        mi = f'{mi}mi'
-        km = f'{km}km'
+        mi = f'{round(mi, 1)}mi'
+        km = f'{round(km, 1)}km'
         displaymode = _registryValue('units.distance', channel=_channel_context)
     return string.Template(displaymode).safe_substitute(
         {'mi': mi, 'km': km, 'm': m}
@@ -215,7 +215,7 @@ def format_percentage(value):
     else:
         return 'N/A'
 
-def get_dayname(ts, idx, *, tz=None):
+def get_dayname(ts, idx, *, tz=None, fallback=None):
     """
     Returns the day name given a Unix timestamp, day index and (optionally) a timezone.
     """
@@ -223,6 +223,8 @@ def get_dayname(ts, idx, *, tz=None):
         p = pendulum.from_timestamp(ts, tz=tz)
         return p.format('dddd')
     else:
+        if fallback:
+            return fallback
         # Fallback
         if idx == 0:
             return 'Today'

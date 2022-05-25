@@ -28,6 +28,7 @@
 ###
 import json
 import os
+import time
 
 from supybot import utils, plugins, ircutils, callbacks, world, conf, log
 from supybot.commands import *
@@ -103,8 +104,8 @@ class NuWeather(callbacks.Plugin):
                 display_name_parts.pop(-2)
             display_name = ', '.join([display_name_parts[0]] + display_name_parts[-2:])
 
-        lat = data['lat']
-        lon = data['lon']
+        lat = float(data['lat'])
+        lon = float(data['lon'])
         osm_id = data.get('osm_id')
         self.log.debug('NuWeather: saving %s,%s (osm_id %s, %s) for location %s from OSM/Nominatim', lat, lon, osm_id, display_name, location)
 
@@ -194,8 +195,12 @@ class NuWeather(callbacks.Plugin):
 
         result_pair = str((location, geocode_backend))  # escape for json purposes
         if result_pair in self.geocode_db:
-            self.log.debug('NuWeather: using cached latlon %s for location %r', self.geocode_db[result_pair], location)
-            return self.geocode_db[result_pair]
+            # 2022-05-24: fix Nominatim returning the wrong type
+            if not isinstance(result_pair[0], float):
+                del self.geocode_db[result_pair]
+            else:
+                self.log.debug('NuWeather: using cached latlon %s for location %r', self.geocode_db[result_pair], location)
+                return self.geocode_db[result_pair]
         elif location in self.geocode_db:
             # Old DBs from < 2019-03-14 only had one field storing location, and always
             # used OSM/Nominatim. Remove these old entries and regenerate them.
@@ -241,6 +246,109 @@ class NuWeather(callbacks.Plugin):
                 'uv': formatter.format_uv(currentdata['uv_index']),
                 'visibility': formatter.format_distance(mi=currentdata.get('visibility')),
             }
+        }
+
+    def _load_check_time(self, url, cache_path, desc, cache_ttl):
+        if not os.path.exists(cache_path) or \
+                (time.time() - os.path.getmtime(cache_path)) > cache_ttl:
+            log.debug(f'NuWeather: refreshing {desc} from {url}')
+            data_text = utils.web.getUrl(url, headers=HEADERS).decode('utf-8')
+            with open(cache_path, 'w', encoding='utf-8') as f:
+                log.debug(f'NuWeather: saving {desc} to {cache_path}')
+                f.write(data_text)
+            data = json.loads(data_text)
+            self._wwis_cities.clear()
+        else:
+            with open(cache_path, encoding='utf-8') as f:
+                log.debug(f'NuWeather: reloading existing {desc} from {cache_path}')
+                data = json.load(f)
+        return data
+
+    _WWIS_CITIES_REFRESH_INTERVAL = 2592000  # 30 days
+    _wwis_cities = {}
+    def _wwis_load_cities(self, lang='en'):
+        wwis_cache_path = conf.supybot.directories.data.dirize("wwis-cities.json")
+        # Ignore the xml extension, this is actually json!
+        url = 'https://worldweather.wmo.int/en/json/Country_en.xml'
+        wwis_cities_raw = self._load_check_time(url, wwis_cache_path, "WWIS cities data", self._WWIS_CITIES_REFRESH_INTERVAL)
+
+        if not self._wwis_cities:
+            # Process WWIS data to map (lat, lon) -> (cityId, cityName)
+            for _membid, member_info in wwis_cities_raw['member'].items():
+                if not isinstance(member_info, dict):
+                    continue
+                for city in member_info['city']:
+                    if city['forecast'] == 'Y':
+                        lat, lon = float(city['cityLatitude']), float(city['cityLongitude'])
+                        self._wwis_cities[(lat, lon)] = city['cityId']
+
+    def _wwis_get_closest_city(self, location, geobackend=None):
+        # WWIS equivalent of geocode - finding the closest major city
+        try:
+            import haversine
+        except ImportError as e:
+            raise callbacks.Error("This feature requires the 'haversine' Python module - see https://pypi.org/project/haversine/") from e
+
+        latlon = self._geocode(location, geobackend=geobackend)
+        if not latlon:
+            raise callbacks.Error("Unknown location %s." % location)
+
+        lat, lon, _display_name, _geocodeid, geocode_backend = latlon
+        self._wwis_load_cities()
+
+        closest_cities = sorted(self._wwis_cities, key=lambda k: haversine.haversine((lat, lon), k))
+        return self._wwis_cities[closest_cities[0]], geocode_backend
+
+    _WWIS_CURRENT_REFRESH_INTERVAL = 300     # 5 minutes
+    def _wwis_load_current(self, lang='en'):
+        # Load current conditions (wind, humidity, ...)
+        # These are served from a separate endpoint with all(!) locations at once!
+        wwis_cache_path = conf.supybot.directories.data.dirize("wwis-current.json")
+        # Ignore the xml extension, this is actually json!
+        url = 'https://worldweather.wmo.int/en/json/present.xml'
+        return self._load_check_time(url, wwis_cache_path, "WWIS current data",
+                                     self._WWIS_CITIES_REFRESH_INTERVAL)
+
+
+    def _wwis_fetcher(self, location, geobackend=None):
+        """Grabs weather data from the World Weather Information Service."""
+        cityid, geocode_backend = self._wwis_get_closest_city(location, geobackend=geobackend)
+
+        city_url = f'https://worldweather.wmo.int/en/json/{cityid}_en.json'
+        city_data = utils.web.getUrl(city_url, headers=HEADERS).decode('utf-8')
+        city_data = json.loads(city_data)
+        city_data = city_data['city']
+        current_data = self._wwis_load_current()
+        display_name = f"{city_data['cityName']}, {city_data['member']['shortMemName'] or city_data['member']['memName']}"
+
+        for current_data_city in current_data['present'].values():
+            if current_data_city['cityId'] == cityid:
+                break
+        else:
+            log.error(current_data_city)
+            raise ValueError(f"Could not find current conditions for cityID {cityid} ({display_name})")
+        return {
+            'location': display_name,
+            'poweredby': 'WWIS+' + geocode_backend,
+            'url': f'https://worldweather.wmo.int/en/city.html?cityId={cityid}',
+            'current': {
+                'condition': current_data_city["wxdesc"],
+                'temperature': formatter.format_temp(c=current_data_city['temp']) if current_data_city['temp'] else _("N/A"),
+                'feels_like': _("N/A"),
+                'humidity': formatter.format_percentage(current_data_city['rh']) if current_data_city['rh'] else _("N/A"),
+                'precip': _("N/A"),
+                'wind': formatter.format_distance(km=float(current_data_city['ws'])*3.6, speed=True) if current_data_city['ws'] else _("N/A"),
+                'wind_gust': _("N/A"),
+                'wind_dir': current_data_city['wd'],
+                'uv': _("N/A"),
+                'visibility': _("N/A"),
+            },
+            'forecast': [{'dayname': formatter.get_dayname(forecastdata['forecastDate'], -1,
+                                                           fallback=forecastdata['forecastDate']),
+                          'max': formatter.format_temp(c=int(forecastdata['maxTemp']) if forecastdata['maxTemp'] else None),
+                          'min': formatter.format_temp(c=int(forecastdata['minTemp']) if forecastdata['minTemp'] else None),
+                          'summary': forecastdata.get('weather', 'N/A')}
+                        for forecastdata in city_data['forecast']['forecastDay']]
         }
 
     def _darksky_fetcher(self, location, geobackend=None):
