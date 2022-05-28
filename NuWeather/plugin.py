@@ -268,8 +268,7 @@ class NuWeather(callbacks.Plugin):
     _wwis_cities = {}
     def _wwis_load_cities(self, lang='en'):
         wwis_cache_path = conf.supybot.directories.data.dirize("wwis-cities.json")
-        # Ignore the xml extension, this is actually json!
-        url = 'https://worldweather.wmo.int/en/json/Country_en.xml'
+        url = 'https://worldweather.wmo.int/en/json/Country_en.json'
         wwis_cities_raw = self._load_check_time(url, wwis_cache_path, "WWIS cities data", self._WWIS_CITIES_REFRESH_INTERVAL)
 
         if not self._wwis_cities:
@@ -304,8 +303,7 @@ class NuWeather(callbacks.Plugin):
         # Load current conditions (wind, humidity, ...)
         # These are served from a separate endpoint with all(!) locations at once!
         wwis_cache_path = conf.supybot.directories.data.dirize("wwis-current.json")
-        # Ignore the xml extension, this is actually json!
-        url = 'https://worldweather.wmo.int/en/json/present.xml'
+        url = 'https://worldweather.wmo.int/en/json/present.json'
         return self._load_check_time(url, wwis_cache_path, "WWIS current data",
                                      self._WWIS_CURRENT_REFRESH_INTERVAL)
 
@@ -315,6 +313,7 @@ class NuWeather(callbacks.Plugin):
         cityid, geocode_backend = self._wwis_get_closest_city(location, geobackend=geobackend)
 
         city_url = f'https://worldweather.wmo.int/en/json/{cityid}_en.json'
+        log.debug('NuWeather: fetching current conditions for %s from %s', location, city_url)
         city_data = utils.web.getUrl(city_url, headers=HEADERS).decode('utf-8')
         city_data = json.loads(city_data)
         city_data = city_data['city']
