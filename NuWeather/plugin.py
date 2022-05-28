@@ -320,11 +320,11 @@ class NuWeather(callbacks.Plugin):
         current_data = self._wwis_load_current()
         display_name = f"{city_data['cityName']}, {city_data['member']['shortMemName'] or city_data['member']['memName']}"
 
+        current_data_city = None
         for current_data_city in current_data['present'].values():
             if current_data_city['cityId'] == cityid:
                 break
-        else:
-            log.error(current_data_city)
+        if not current_data_city:
             raise ValueError(f"Could not find current conditions for cityID {cityid} ({display_name})")
         return {
             'location': display_name,
