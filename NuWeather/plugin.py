@@ -307,7 +307,7 @@ class NuWeather(callbacks.Plugin):
         # Ignore the xml extension, this is actually json!
         url = 'https://worldweather.wmo.int/en/json/present.xml'
         return self._load_check_time(url, wwis_cache_path, "WWIS current data",
-                                     self._WWIS_CITIES_REFRESH_INTERVAL)
+                                     self._WWIS_CURRENT_REFRESH_INTERVAL)
 
 
     def _wwis_fetcher(self, location, geobackend=None):
