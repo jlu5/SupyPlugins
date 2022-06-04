@@ -277,9 +277,8 @@ class NuWeather(callbacks.Plugin):
                 if not isinstance(member_info, dict):
                     continue
                 for city in member_info['city']:
-                    if city['forecast'] == 'Y':
-                        lat, lon = float(city['cityLatitude']), float(city['cityLongitude'])
-                        self._wwis_cities[(lat, lon)] = city['cityId']
+                    lat, lon = float(city['cityLatitude']), float(city['cityLongitude'])
+                    self._wwis_cities[(lat, lon)] = city['cityId']
 
     def _wwis_get_closest_city(self, location, geobackend=None):
         # WWIS equivalent of geocode - finding the closest major city
