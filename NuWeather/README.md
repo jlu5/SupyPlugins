@@ -4,8 +4,9 @@ A weather plugin for Limnoria. It supports multiple weather and geocoding backen
 
 #### Weather Backends
 - [OpenWeatherMap](https://openweathermap.org/) (default, API key required)
-- [weatherstack](https://weatherstack.com/), formerly Apixu (current conditions only, API key required)
-- [Dark Sky](https://darksky.net) (API key required, but new signups are no longer accepted)
+- [WWIS](https://worldweather.wmo.int/) (**no** API key required, major cities only)
+- [weatherstack](https://weatherstack.com/) (current conditions only, API key required)
+- [Dark Sky](https://darksky.net) (**DEPRECATED**: API key required; new signups closed)
 
 #### Geocoding Backends
 - [OpenStreetMap Nominatim](https://nominatim.openstreetmap.org/) (default, no API key required)
@@ -17,6 +18,8 @@ A weather plugin for Limnoria. It supports multiple weather and geocoding backen
 1) Pick your preferred weather backend: `config help plugins.NuWeather.defaultBackend`
 
 2) Grab an API key. [OpenWeatherMap](https://openweathermap.org/appid) | [weatherstack](https://weatherstack.com/) | ~~[Dark Sky](https://darksky.net/dev)~~ (new signups no longer accepted)
+
+    - WWIS is another option that requires no API key, but is limited (in most countries) to major cities
 
 3) Configure it: `/msg yourbot config plugins.NuWeather.apikeys.BACKENDNAME YOUR-API-KEY`
 
@@ -58,16 +61,18 @@ config plugins.NuWeather.DBAddressingMode nicks
 
 5) Load the plugin again for these changes to take effect.
 
-(If you're comfortable with re-creating your database from scratch, the other options tell NuWeather to save location by Supybot account (the default) or ident@host.)
+(If you're comfortable with re-creating your database from scratch, the other options tell NuWeather to save location by Limnoria account (the default) or ident@host.)
 
 ## Location lookup (Geocoding) backends
 
 * weatherstack provides weather lookup by place name directly, and does not need further configuration.
-* Dark Sky and OpenStreetMap backends use a separate service to translate place names into GPS coordinates, a process known as **geocoding**.
+* OpenStreetMap, WWIS, and Dark Sky backends use a separate service to translate place names into GPS coordinates, a process known as **geocoding**.
 
 The default geocoding backend is [OpenStreetMap's Nominatim](https://nominatim.openstreetmap.org/); this can be configured via the `plugins.NuWeather.geocodeBackend` option.
 
 Other options include [Google Maps](https://developers.google.com/maps/documentation/geocoding/start) and [OpenCage](https://opencagedata.com/).
-These may provide more relevant results for North America (e.g. US ZIP codes), but both require API keys: [Google Maps](https://developers.google.com/maps/documentation/geocoding/get-api-key) (credit card required) | [OpenCage](https://opencagedata.com/api)
+These may provide more relevant results for North America (e.g. US ZIP codes), but both require API keys:
 
-API keys for geocoding backends are configured as `plugins.NuWeather.apikeys.BACKENDNAME`.
+- [Google Maps](https://developers.google.com/maps/documentation/geocoding/get-api-key) (requires credit card billing) | [OpenCage](https://opencagedata.com/api)
+
+API keys for geocoding backends are similarly configured as `plugins.NuWeather.apikeys.BACKENDNAME`.
