@@ -127,9 +127,9 @@ class RelayNext(callbacks.Plugin):
         s = ''
         nick = real_nick = msg.nick
         userhost = ''
-        noHighlight = self.registryValue('noHighlight', channel)
-        useHostmask = self.registryValue('hostmasks', channel)
-        color = self.registryValue('color', channel)
+        noHighlight = self.registryValue('noHighlight', channel=channel, network=irc.network)
+        useHostmask = self.registryValue('hostmasks', channel=channel, network=irc.network)
+        color = self.registryValue('color', channel=channel, network=irc.network)
         netname = irc.network
 
         # Adding a zero-width space to prevent being highlighted by clients
@@ -145,14 +145,14 @@ class RelayNext(callbacks.Plugin):
         if useHostmask and '.' not in nick:
             try:
                 userhost = ' (%s)' % msg.prefix.split('!', 1)[1]
-            except:
+            except IndexError:
                 pass
 
         if isAnnouncement:
             # Announcements use a special syntax
             s = '*** %s' % msg.args[1]
         else:
-            ignoreRegexp = self.registryValue("ignoreRegexp", channel)
+            ignoreRegexp = self.registryValue("ignoreRegexp", channel=channel, network=irc.network)
             if msg.command == 'NICK':
                 newnick = msg.args[0]
                 if noHighlight:
@@ -168,7 +168,7 @@ class RelayNext(callbacks.Plugin):
 
                 # Show status prefixes (@%+) in front of the nick if enabled,
                 # but only the highest prefix.
-                if self.registryValue("showPrefixes", channel):
+                if self.registryValue("showPrefixes", channel=channel, network=irc.network):
                     chobj = irc.state.channels[channel]
                     if chobj.isOp(real_nick):
                         nick = '@' + nick
@@ -242,16 +242,16 @@ class RelayNext(callbacks.Plugin):
         Run antiflood on the given network / channel / message, returning True if the given message
         should be processed (i.e. it has not been blocked by antiflood).
         """
-        if self.registryValue("antiflood.enable", channel):
+        if self.registryValue("antiflood.enable", channel=channel, network=irc.network):
             # Flood prevention timeout - how long commands of a certain type
             # should cease being relayed after flood prevention triggers
-            timeout = self.registryValue("antiflood.timeout", channel)
+            timeout = self.registryValue("antiflood.timeout", channel=channel, network=irc.network)
 
             # If <maximum> messages of the same kind on one channel is
             # received in <seconds> seconds, flood prevention timeout is
             # triggered.
-            maximum = self.registryValue("antiflood.maximum", channel)
-            seconds = self.registryValue("antiflood.seconds", channel)
+            maximum = self.registryValue("antiflood.maximum", channel=channel, network=irc.network)
+            seconds = self.registryValue("antiflood.seconds", channel=channel, network=irc.network)
 
             # Store the message in a counter, with the keys taking the
             # form of (source channel@network, command name). If the counter
@@ -263,10 +263,10 @@ class RelayNext(callbacks.Plugin):
 
             # Two different limits: one for messages and one for all others
             if msg.command == "PRIVMSG":
-                maximum = self.registryValue("antiflood.maximum", channel)
+                maximum = self.registryValue("antiflood.maximum", channel=channel, network=irc.network)
             else:
                 maximum = self.registryValue("antiflood.maximum.nonPrivmsgs",
-                                             channel)
+                                             channel=channel, network=irc.network)
 
             lastFloodTrigger = self.floodTriggered.get((source, msg.command))
             if lastFloodTrigger is not None and (time.time() - lastFloodTrigger) > timeout:
@@ -300,7 +300,7 @@ class RelayNext(callbacks.Plugin):
         # Check for ignored events first. Checking for "'.' not in msg.nick" is for skipping
         # ignore checks from servers.
         if not isAnnouncement:
-            ignoredevents = map(str.upper, self.registryValue('events.userIgnored', channel))
+            ignoredevents = map(str.upper, self.registryValue('events.userIgnored', channel=channel, network=irc.network))
             if msg.command in ignoredevents and msg.nick != irc.nick and '.' not in msg.nick and\
                     ircdb.checkIgnored(msg.prefix, channel):
                 self.log.debug("RelayNext (%s): ignoring message from %s",
@@ -353,12 +353,11 @@ class RelayNext(callbacks.Plugin):
                             otherIrc.queueMsg(out_msg)
 
     def doPrivmsg(self, irc, msg):
-        self.relay(irc, msg, channel=msg.args[0])
+        self.relay(irc, msg, channel=msg.channel)
 
     def doNonPrivmsg(self, irc, msg):
-        channel = msg.args[0]
-        if self.registryValue("events.relay%ss" % msg.command, channel):
-            self.relay(irc, msg, channel)
+        if self.registryValue("events.relay%ss" % msg.command, channel=msg.channel, network=irc.network):
+            self.relay(irc, msg, channel=msg.channel)
 
     doTopic = doPart = doKick = doMode = doJoin = doNonPrivmsg
 
@@ -366,12 +365,12 @@ class RelayNext(callbacks.Plugin):
     # of extra handling
     def doNick(self, irc, msg):
         for channel in msg.tagged('channels'):
-            if self.registryValue("events.relaynicks", channel):
+            if self.registryValue("events.relaynicks", channel=channel, network=irc.network):
                 self.relay(irc, msg, channel)
 
     def doQuit(self, irc, msg):
         for channel in msg.tagged('channels'):
-            if self.registryValue("events.relayquits", channel):
+            if self.registryValue("events.relayquits", channel=channel, network=irc.network):
                 self.relay(irc, msg, channel)
 
     def outFilter(self, irc, msg):
@@ -379,10 +378,10 @@ class RelayNext(callbacks.Plugin):
         # useful because Supybot is often a multi-purpose bot!)
         try:
             if msg.command == 'PRIVMSG' and not msg.relayedMsg and \
-                    self.registryValue("events.relaySelfMessages", msg.args[0]):
+                    self.registryValue("events.relaySelfMessages", channel=msg.channel, network=irc.network):
                 new_msg = deepcopy(msg)
                 new_msg.nick = irc.nick
-                self.relay(irc, new_msg, channel=msg.args[0])
+                self.relay(irc, new_msg, channel=msg.channel)
         except Exception:
             # We want to log errors, but not block the bot's output
             log.exception("RelayNext: Caught error in outFilter:")
