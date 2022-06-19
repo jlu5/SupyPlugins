@@ -143,19 +143,7 @@ class Wikifetch(callbacks.Plugin):
             self.log.debug('Wikifetch: following search result:')
             tree, article, addr = self._get_article_tree(None, searchresults[0].get('href'))
             search = redirect
-        # otherwise, simply return the title and whether it redirected
-        elif self.registryValue('showRedirects', msg.args[0]):
-            redirect = re.search(r'\(%s <a href=[^>]*>([^<]*)</a>\)' %
-                                 _('Redirected from'), article)
-            if redirect:
-                try:
-                    redirect = tree.xpath('//span[@class="mw-redirectedfrom"]/a')[0]
-                    redirect = redirect.text_content().strip()
-                    title = tree.xpath('//*[@class="firstHeading"]')
-                    title = title[0].text_content().strip()
-                    reply += '"%s" (Redirected from "%s"): ' % (title, redirect)
-                except IndexError:
-                    pass
+
         # extract the address we got it from - most sites have the perm link
         # inside the page itself
         try:

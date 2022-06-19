@@ -55,8 +55,5 @@ Wikifetch = conf.registerPlugin('Wikifetch')
 conf.registerChannelValue(Wikifetch, 'url',
         registry.String(_('en.wikipedia.org'), _("""Default URL of the
         website to pull from.""")))
-conf.registerChannelValue(Wikifetch, 'showRedirects',
-        registry.Boolean(True, _("""Determines whether redirect paths will
-        be shown in the output.""")))
 
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:

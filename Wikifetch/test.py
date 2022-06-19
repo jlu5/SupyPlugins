@@ -66,9 +66,8 @@ if network:
             self.assertNotError('wiki GNU/Linux')
             self.assertNotError('wiki --site en.wikipedia.org /')
 
-        def testRedirects(self):
-            self.assertRegexp('wiki Foo', '"Foobar" \(Redirected from "Foo"\): '
-                                          'The terms \x02foobar\x02')
+        def testFollowRedirects(self):
+            self.assertRegexp('wiki YVR', 'Vancouver International Airport')
 
         def testWikiBold(self):
             self.assertRegexp('wiki Apple', '\x02')
