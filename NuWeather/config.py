@@ -79,6 +79,10 @@ conf.registerChannelValue(NuWeather.units, 'speed',
 # List of supported backends for weather & geocode. This is reused by plugin.py
 BACKENDS = ('openweathermap', 'darksky', 'weatherstack', 'wwis')
 GEOCODE_BACKENDS = ('nominatim', 'googlemaps', 'opencage', 'weatherstack')
+
+def backend_requires_apikey(backend):
+    return backend not in ('wwis', 'nominatim')
+
 class NuWeatherBackend(registry.OnlySomeStrings):
     validStrings = BACKENDS
 class NuWeatherGeocode(registry.OnlySomeStrings):
@@ -90,16 +94,10 @@ conf.registerChannelValue(NuWeather, 'defaultBackend',
 conf.registerChannelValue(NuWeather, 'geocodeBackend',
     NuWeatherGeocode(GEOCODE_BACKENDS[0], _("""Determines the default geocode backend.""")))
 
-for backend in BACKENDS:
-    if backend != 'wwis':
+for backend in BACKENDS + GEOCODE_BACKENDS:
+    if backend_requires_apikey(backend):
         conf.registerGlobalValue(NuWeather.apikeys, backend,
             registry.String("", _("""Sets the API key for %s.""") % backend, private=True))
-for backend in GEOCODE_BACKENDS:
-    if backend != 'nominatim':
-        # nominatim doesn't require an API key
-        conf.registerGlobalValue(NuWeather.apikeys, backend,
-            registry.String("", _("""Sets the API key for %s.""") % backend, private=True))
-
 
 DEFAULT_FORMAT = ('\x02$location\x02 :: $c__condition $c__temperature '
                   '(Humidity: $c__humidity) | \x02Feels like:\x02 $c__feels_like '

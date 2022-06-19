@@ -28,7 +28,7 @@
 ###
 import json
 import os
-import time
+import string
 
 from supybot import utils, plugins, ircutils, callbacks, world, conf, log
 from supybot.commands import *
@@ -41,8 +41,10 @@ except ImportError:
     _ = lambda x: x
 
 from .config import BACKENDS, GEOCODE_BACKENDS
+from .config import DEFAULT_FORMAT, DEFAULT_FORECAST_FORMAT, DEFAULT_FORMAT_CURRENTONLY
 from .local import accountsdb
 from . import formatter, request_cache as cache
+
 
 HEADERS = {
     'User-agent': 'Mozilla/5.0 (compatible; Supybot/Limnoria %s; NuWeather weather plugin)' % conf.version
@@ -65,8 +67,8 @@ class NuWeather(callbacks.Plugin):
             self.geocode_db = {}
         world.flushers.append(self.db.flush)
         world.flushers.append(self._flush_geocode_db)
-        # this is hacky but less annoying than navigating the registry ourselves
-        formatter._registryValue = self.registryValue
+
+        self._last_channel = None
 
     def _flush_geocode_db(self):
         geocode_db_filename = conf.supybot.directories.data.dirize("NuWeather-geocode.json")
@@ -189,7 +191,7 @@ class NuWeather(callbacks.Plugin):
         return result
 
     def _geocode(self, location, geobackend=None):
-        geocode_backend = geobackend or self.registryValue('geocodeBackend', channel=formatter._channel_context)
+        geocode_backend = geobackend or self.registryValue('geocodeBackend', channel=self._last_channel)
         if geocode_backend not in GEOCODE_BACKENDS:
             raise callbacks.Error(_("Unknown geocode backend %r. Valid ones are: %s") % (geocode_backend, ', '.join(GEOCODE_BACKENDS)))
 
@@ -211,6 +213,17 @@ class NuWeather(callbacks.Plugin):
         result = backend_func(location)
         self.geocode_db[result_pair] = result  # Cache result persistently
         return result
+
+    def _format_tmpl_temp(self, *args, **kwargs):
+        displaymode = self.registryValue('units.temperature', channel=self._last_channel)
+        return formatter.format_temp(displaymode, *args, **kwargs)
+
+    def _format_tmpl_distance(self, *args, **kwargs):
+        if kwargs.get('speed'):
+            displaymode = self.registryValue('units.speed', channel=self._last_channel)
+        else:
+            displaymode = self.registryValue('units.distance', channel=self._last_channel)
+        return formatter.format_distance(displaymode, *args, **kwargs)
 
     def _weatherstack_fetcher(self, location, geobackend=None):
         """Grabs weather data from weatherstack (formerly Apixu)."""
@@ -237,14 +250,14 @@ class NuWeather(callbacks.Plugin):
             'url': '',
             'current': {
                 'condition': currentdata['weather_descriptions'][0],
-                'temperature': formatter.format_temp(f=currentdata['temperature']),
-                'feels_like': formatter.format_temp(f=currentdata['feelslike']),
+                'temperature': self._format_tmpl_temp(f=currentdata['temperature']),
+                'feels_like': self._format_tmpl_temp(f=currentdata['feelslike']),
                 'humidity': formatter.format_percentage(currentdata['humidity']),
                 'precip': formatter.format_precip(inches=currentdata['precip']),
-                'wind': formatter.format_distance(mi=currentdata['wind_speed'], speed=True),
+                'wind': self._format_tmpl_distance(mi=currentdata['wind_speed'], speed=True),
                 'wind_dir': currentdata['wind_dir'],
                 'uv': formatter.format_uv(currentdata['uv_index']),
-                'visibility': formatter.format_distance(mi=currentdata.get('visibility')),
+                'visibility': self._format_tmpl_distance(mi=currentdata.get('visibility')),
             }
         }
 
@@ -341,11 +354,11 @@ class NuWeather(callbacks.Plugin):
             'url': f'https://worldweather.wmo.int/en/city.html?cityId={cityid}',
             'current': {
                 'condition': current_data_city["wxdesc"],
-                'temperature': formatter.format_temp(c=current_data_city['temp']) if current_data_city['temp'] else _("N/A"),
+                'temperature': self._format_tmpl_temp(c=current_data_city['temp']) if current_data_city['temp'] else _("N/A"),
                 'feels_like': _("N/A"),
                 'humidity': formatter.format_percentage(current_data_city['rh']) if current_data_city['rh'] else _("N/A"),
                 'precip': _("N/A"),
-                'wind': formatter.format_distance(km=float(current_data_city['ws'])*3.6, speed=True) if current_data_city['ws'] else _("N/A"),
+                'wind': self._format_tmpl_distance(km=float(current_data_city['ws'])*3.6, speed=True) if current_data_city['ws'] else _("N/A"),
                 'wind_gust': _("N/A"),
                 'wind_dir': current_data_city['wd'],
                 'uv': _("N/A"),
@@ -353,8 +366,8 @@ class NuWeather(callbacks.Plugin):
             },
             'forecast': [{'dayname': formatter.get_dayname(forecastdata['forecastDate'], -1,
                                                            fallback=forecastdata['forecastDate']),
-                          'max': formatter.format_temp(c=int(forecastdata['maxTemp']) if forecastdata['maxTemp'] else None),
-                          'min': formatter.format_temp(c=int(forecastdata['minTemp']) if forecastdata['minTemp'] else None),
+                          'max': self._format_tmpl_temp(c=int(forecastdata['maxTemp']) if forecastdata['maxTemp'] else None),
+                          'min': self._format_tmpl_temp(c=int(forecastdata['minTemp']) if forecastdata['minTemp'] else None),
                           'summary': forecastdata.get('weather', 'N/A')}
                         for forecastdata in city_data['forecast']['forecastDay']]
         }
@@ -388,19 +401,19 @@ class NuWeather(callbacks.Plugin):
             'url': 'https://darksky.net/forecast/%s,%s' % (lat, lon),
             'current': {
                 'condition': currentdata.get('summary', 'N/A'),
-                'temperature': formatter.format_temp(f=currentdata.get('temperature')),
-                'feels_like': formatter.format_temp(f=currentdata.get('apparentTemperature')),
+                'temperature': self._format_tmpl_temp(f=currentdata.get('temperature')),
+                'feels_like': self._format_tmpl_temp(f=currentdata.get('apparentTemperature')),
                 'humidity': formatter.format_percentage(currentdata.get('humidity')),
                 'precip': formatter.format_precip(mm=currentdata.get('precipIntensity')),
-                'wind': formatter.format_distance(mi=currentdata.get('windSpeed', 0), speed=True),
-                'wind_gust': formatter.format_distance(mi=currentdata.get('windGust', 0), speed=True),
+                'wind': self._format_tmpl_distance(mi=currentdata.get('windSpeed', 0), speed=True),
+                'wind_gust': self._format_tmpl_distance(mi=currentdata.get('windGust', 0), speed=True),
                 'wind_dir': formatter.wind_direction(currentdata.get('windBearing')),
                 'uv': formatter.format_uv(currentdata.get('uvIndex')),
-                'visibility': formatter.format_distance(mi=currentdata.get('visibility')),
+                'visibility': self._format_tmpl_distance(mi=currentdata.get('visibility')),
             },
             'forecast': [{'dayname': formatter.get_dayname(forecastdata['time'], idx, tz=data['timezone']),
-                          'max': formatter.format_temp(f=forecastdata.get('temperatureHigh')),
-                          'min': formatter.format_temp(f=forecastdata.get('temperatureLow')),
+                          'max': self._format_tmpl_temp(f=forecastdata.get('temperatureHigh')),
+                          'min': self._format_tmpl_temp(f=forecastdata.get('temperatureLow')),
                           'summary': forecastdata.get('summary', 'N/A').rstrip('.')} for idx, forecastdata in enumerate(data['daily']['data'])]
         }
 
@@ -447,26 +460,53 @@ class NuWeather(callbacks.Plugin):
             }),
             'current': {
                 'condition': currentdata['weather'][0]['description'],
-                'temperature': formatter.format_temp(f=currentdata['temp']),
-                'feels_like': formatter.format_temp(f=currentdata['feels_like']),
+                'temperature': self._format_tmpl_temp(f=currentdata['temp']),
+                'feels_like': self._format_tmpl_temp(f=currentdata['feels_like']),
                 'humidity': formatter.format_percentage(currentdata['humidity']),
                 'precip': precip,
-                'wind': formatter.format_distance(mi=currentdata['wind_speed'], speed=True),
+                'wind': self._format_tmpl_distance(mi=currentdata['wind_speed'], speed=True),
                 'wind_dir': formatter.wind_direction(currentdata['wind_deg']),
-                'wind_gust': formatter.format_distance(mi=currentdata.get('wind_gust'), speed=True),
+                'wind_gust': self._format_tmpl_distance(mi=currentdata.get('wind_gust'), speed=True),
                 'uv': formatter.format_uv(currentdata.get('uvi')),
-                'visibility': formatter.format_distance(km=currentdata['visibility']/1000),
+                'visibility': self._format_tmpl_distance(km=currentdata['visibility']/1000),
             }
         }
 
         output['forecast'] = [
             {'dayname': formatter.get_dayname(forecast['dt'], idx, tz=data['timezone']),
-             'max': formatter.format_temp(f=forecast['temp']['max']),
-             'min': formatter.format_temp(f=forecast['temp']['min']),
+             'max': self._format_tmpl_temp(f=forecast['temp']['max']),
+             'min': self._format_tmpl_temp(f=forecast['temp']['min']),
              'summary': forecast['weather'][0]['description']}
             for idx, forecast in enumerate(data['daily'])
         ]
         return output
+
+    def _format_weather(self, data, channel, forecast=False):
+        """
+        Formats and returns current conditions.
+        """
+        # Work around IRC length limits for config opts...
+        data['c'] = data['current']
+        data['f'] = data.get('forecast')
+
+        flat_data = formatter.flatten_subdicts(data)
+        if flat_data.get('url'):
+            flat_data['url'] = utils.str.url(flat_data['url'])
+
+        forecast_available = bool(data.get('forecast'))
+        if forecast:  # --forecast option was given
+            if forecast_available:
+                fmt = self.registryValue('outputFormat.forecast', channel=channel) or DEFAULT_FORECAST_FORMAT
+            else:
+                raise callbacks.Error(_("Extended forecast info is not available from this backend."))
+        else:
+            if forecast_available:
+                fmt = self.registryValue('outputFormat', channel=channel) or DEFAULT_FORMAT
+            else:
+                fmt = self.registryValue('outputFormat.currentOnly', channel=channel) or DEFAULT_FORMAT_CURRENTONLY
+        template = string.Template(fmt)
+
+        return template.safe_substitute(flat_data)
 
     @wrap([getopts({'user': 'nick', 'backend': None, 'weather-backend': None, 'geocode-backend': None, 'forecast': ''}), additional('text')])
     def weather(self, irc, msg, args, optlist, location):
@@ -481,6 +521,7 @@ class NuWeather(callbacks.Plugin):
         If either --weather-backend/--backend or --geocode-backend is specified, will override the default backends if provided backend is available.
         """
         optlist = dict(optlist)
+        self._last_channel = msg.channel
 
         # Default to the caller
         if optlist.get('user'):
@@ -501,11 +542,11 @@ class NuWeather(callbacks.Plugin):
             irc.error(_("Unknown weather backend %s. Valid ones are: %s") % (weather_backend, ', '.join(BACKENDS)), Raise=True)
         geocode_backend = optlist.get('geocode-backend', self.registryValue('geocodeBackend', msg.args[0]))
 
-        formatter._channel_context = msg.channel
         backend_func = getattr(self, '_%s_fetcher' % weather_backend)
         raw_data = backend_func(location, geocode_backend)
 
-        s = formatter.format_weather(raw_data, forecast='forecast' in optlist)
+        s = self._format_weather(raw_data, msg.channel, forecast='forecast' in optlist)
+
         irc.reply(s)
 
     @wrap([getopts({'user': 'nick', 'backend': None}), 'text'])
@@ -515,6 +556,7 @@ class NuWeather(callbacks.Plugin):
         Looks up <location> using a geocoding backend.
         """
         optlist = dict(optlist)
+        self._last_channel = msg.channel
         geocode_backend = optlist.get('backend', self.registryValue('geocodeBackend', msg.args[0]))
 
         data = self._geocode(location, geobackend=geocode_backend)
