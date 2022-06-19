@@ -27,11 +27,9 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 ###
-
-import re
 import string
 
-from supybot import callbacks, conf, ircutils, log, utils
+from supybot import ircutils, log
 
 try:
     import pendulum
@@ -44,12 +42,6 @@ try:
     _ = PluginInternationalization('NuWeather')
 except ImportError:
     _ = lambda x: x
-
-from .config import DEFAULT_FORMAT, DEFAULT_FORECAST_FORMAT, DEFAULT_FORMAT_CURRENTONLY
-
-_channel_context = None
-# dummy fallback for testing
-_registryValue = lambda *args, **kwargs: ''
 
 # Based off https://github.com/ProgVal/Supybot-plugins/blob/master/GitHub/plugin.py
 def flatten_subdicts(dicts, flat=None):
@@ -80,7 +72,7 @@ def flatten_subdicts(dicts, flat=None):
     else:
         return dicts
 
-def format_temp(f=None, c=None):
+def format_temp(displaymode, f=None, c=None):
     """
     Colorizes temperatures and formats them to show either Fahrenheit, Celsius, or both.
     """
@@ -112,7 +104,6 @@ def format_temp(f=None, c=None):
     c = '%.1f' % c
     f = '%.1f' % f
 
-    displaymode = _registryValue('units.temperature', channel=_channel_context)
     if displaymode == 'F/C':
         s = '%sF/%sC' % (f, c)
     elif displaymode == 'C/F':
@@ -124,15 +115,6 @@ def format_temp(f=None, c=None):
     else:
         raise ValueError("Unknown display mode for temperature.")
     return ircutils.mircColor(s, color)
-
-_TEMPERATURES_RE = re.compile(r'((\d+)°?F)')  # Only need FtoC conversion so far
-def mangle_temperatures(forecast):
-    """Runs _format_temp() on temperature values embedded within forecast strings."""
-    if not forecast:
-        return forecast
-    for (text, value) in set(_TEMPERATURES_RE.findall(forecast)):
-        forecast = forecast.replace(text, format_temp(f=value))
-    return forecast
 
 def wind_direction(angle):
     """Returns wind direction (N, W, S, E, etc.) given an angle."""
@@ -178,7 +160,7 @@ def format_precip(mm=None, inches=None):
 
     return _('%smm/%sin') % (mm, inches)
 
-def format_distance(mi=None, km=None, speed=False):
+def format_distance(displaymode, mi=None, km=None, speed=False):
     """Formats distance or speed values in miles and kilometers"""
     if mi is None and km is None:
         return _('N/A')
@@ -186,20 +168,18 @@ def format_distance(mi=None, km=None, speed=False):
         return '0'  # Don't bother with multiple units if the value is 0
 
     if mi is None:
-        mi = round(km / 1.609, 1)
+        mi = km / 1.609344
     elif km is None:
-        km = round(mi * 1.609, 1)
+        km = mi * 1.609344
 
     if speed:
         m = f'{round(km / 3.6, 1)}m/s'
-        mi = f'{mi}mph'
-        km = f'{km}km/h'
-        displaymode = _registryValue('units.speed', channel=_channel_context)
+        mi = f'{round(mi, 1)}mph'
+        km = f'{round(km, 1)}km/h'
     else:
         m = f'{round(km * 1000, 1)}m'
-        mi = f'{mi}mi'
-        km = f'{km}km'
-        displaymode = _registryValue('units.distance', channel=_channel_context)
+        mi = f'{round(mi, 1)}mi'
+        km = f'{round(km, 1)}km'
     return string.Template(displaymode).safe_substitute(
         {'mi': mi, 'km': km, 'm': m}
     )
@@ -215,7 +195,7 @@ def format_percentage(value):
     else:
         return 'N/A'
 
-def get_dayname(ts, idx, *, tz=None):
+def get_dayname(ts, idx, *, tz=None, fallback=None):
     """
     Returns the day name given a Unix timestamp, day index and (optionally) a timezone.
     """
@@ -223,6 +203,8 @@ def get_dayname(ts, idx, *, tz=None):
         p = pendulum.from_timestamp(ts, tz=tz)
         return p.format('dddd')
     else:
+        if fallback:
+            return fallback
         # Fallback
         if idx == 0:
             return 'Today'
@@ -231,29 +213,4 @@ def get_dayname(ts, idx, *, tz=None):
         else:
             return 'Day_%d' % idx
 
-def format_weather(data, forecast=False):
-    """
-    Formats and returns current conditions.
-    """
-    # Work around IRC length limits for config opts...
-    data['c'] = data['current']
-    data['f'] = data.get('forecast')
 
-    flat_data = flatten_subdicts(data)
-    if flat_data.get('url'):
-        flat_data['url'] = utils.str.url(flat_data['url'])
-
-    forecast_available = bool(data.get('forecast'))
-    if forecast:  # --forecast option was given
-        if forecast_available:
-            fmt = _registryValue('outputFormat.forecast', channel=_channel_context) or DEFAULT_FORECAST_FORMAT
-        else:
-            raise callbacks.Error(_("Extended forecast info is not available from this backend."))
-    else:
-        if forecast_available:
-            fmt = _registryValue('outputFormat', channel=_channel_context) or DEFAULT_FORMAT
-        else:
-            fmt = _registryValue('outputFormat.currentOnly', channel=_channel_context) or DEFAULT_FORMAT_CURRENTONLY
-    template = string.Template(fmt)
-
-    return template.safe_substitute(flat_data)
