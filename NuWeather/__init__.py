@@ -54,12 +54,13 @@ __contributors__ = {}
 # This is a url where the most recent plugin package can be downloaded.
 __url__ = 'https://github.com/jlu5/SupyPlugins/tree/master/NuWeather'
 
-from . import config, formatter, plugin
+from . import config, formatter, plugin, request_cache
 from importlib import reload
 # In case we're being reloaded.
 reload(config)
 reload(formatter)
 reload(plugin)
+reload(request_cache)
 
 from .local import accountsdb
 reload(accountsdb)

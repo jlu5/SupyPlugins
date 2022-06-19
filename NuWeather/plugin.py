@@ -42,7 +42,7 @@ except ImportError:
 
 from .config import BACKENDS, GEOCODE_BACKENDS
 from .local import accountsdb
-from . import formatter
+from . import formatter, request_cache as cache
 
 HEADERS = {
     'User-agent': 'Mozilla/5.0 (compatible; Supybot/Limnoria %s; NuWeather weather plugin)' % conf.version
@@ -248,37 +248,28 @@ class NuWeather(callbacks.Plugin):
             }
         }
 
-    def _load_check_time(self, url, cache_path, desc, cache_ttl):
-        if not os.path.exists(cache_path) or \
-                (time.time() - os.path.getmtime(cache_path)) > cache_ttl:
-            log.debug(f'NuWeather: refreshing {desc} from {url}')
-            data_text = utils.web.getUrl(url, headers=HEADERS).decode('utf-8')
-            with open(cache_path, 'w', encoding='utf-8') as f:
-                log.debug(f'NuWeather: saving {desc} to {cache_path}')
-                f.write(data_text)
-            data = json.loads(data_text)
-            self._wwis_cities.clear()
-        else:
-            with open(cache_path, encoding='utf-8') as f:
-                log.debug(f'NuWeather: reloading existing {desc} from {cache_path}')
-                data = json.load(f)
-        return data
-
     _WWIS_CITIES_REFRESH_INTERVAL = 2592000  # 30 days
     _wwis_cities = {}
-    def _wwis_load_cities(self, lang='en'):
-        wwis_cache_path = conf.supybot.directories.data.dirize("wwis-cities.json")
-        url = 'https://worldweather.wmo.int/en/json/Country_en.json'
-        wwis_cities_raw = self._load_check_time(url, wwis_cache_path, "WWIS cities data", self._WWIS_CITIES_REFRESH_INTERVAL)
+    def _wwis_load_cities(self):
+        wwis_cities_cache_path = conf.supybot.directories.data.dirize("wwis-cities.json")
+        if cache.check_cache_outdated(wwis_cities_cache_path, self._WWIS_CITIES_REFRESH_INTERVAL):
+            # FIXME: support other languages?
+            url = 'https://worldweather.wmo.int/en/json/Country_en.json'
+            wwis_cities_raw = cache.get_json_save_cache(url, wwis_cities_cache_path, HEADERS)
+        elif self._wwis_cities:
+            # already loaded and up to date; nothing to do
+            return
+        else:
+            wwis_cities_raw = cache.load_json_cache(wwis_cities_cache_path)
 
-        if not self._wwis_cities:
-            # Process WWIS data to map (lat, lon) -> (cityId, cityName)
-            for _membid, member_info in wwis_cities_raw['member'].items():
-                if not isinstance(member_info, dict):
-                    continue
-                for city in member_info['city']:
-                    lat, lon = float(city['cityLatitude']), float(city['cityLongitude'])
-                    self._wwis_cities[(lat, lon)] = city['cityId']
+        self._wwis_cities.clear()
+        # Process WWIS data to map (lat, lon) -> (cityId, cityName)
+        for _membid, member_info in wwis_cities_raw['member'].items():
+            if not isinstance(member_info, dict):
+                continue
+            for city in member_info['city']:
+                lat, lon = float(city['cityLatitude']), float(city['cityLongitude'])
+                self._wwis_cities[(lat, lon)] = city['cityId']
 
     def _wwis_get_closest_city(self, location, geobackend=None):
         # WWIS equivalent of geocode - finding the closest major city
@@ -297,30 +288,49 @@ class NuWeather(callbacks.Plugin):
         closest_cities = sorted(self._wwis_cities, key=lambda k: haversine.haversine((lat, lon), k))
         return self._wwis_cities[closest_cities[0]], geocode_backend
 
-    _WWIS_CURRENT_REFRESH_INTERVAL = 300     # 5 minutes
-    def _wwis_load_current(self, lang='en'):
+    def _wwis_get_current(self):
         # Load current conditions (wind, humidity, ...)
         # These are served from a separate endpoint with all(!) locations at once!
-        wwis_cache_path = conf.supybot.directories.data.dirize("wwis-current.json")
-        url = 'https://worldweather.wmo.int/en/json/present.json'
-        return self._load_check_time(url, wwis_cache_path, "WWIS current data",
-                                     self._WWIS_CURRENT_REFRESH_INTERVAL)
+        wwis_current_cache_path = conf.supybot.directories.data.dirize("wwis-current.json")
 
+        if cache.check_cache_outdated(wwis_current_cache_path, self._WWIS_CURRENT_REFRESH_INTERVAL):
+            url = 'https://worldweather.wmo.int/en/json/present.json'
+            return cache.get_json_save_cache(url, wwis_current_cache_path, HEADERS)
+        return cache.load_json_cache(wwis_current_cache_path)
 
+    _WWIS_CURRENT_REFRESH_INTERVAL = 300     # 5 minutes
+    _wwis_current = None
     def _wwis_fetcher(self, location, geobackend=None):
         """Grabs weather data from the World Weather Information Service."""
         cityid, geocode_backend = self._wwis_get_closest_city(location, geobackend=geobackend)
 
+        # Load forecast and city metadata (name, country, etc.)
+        # I don't bother caching these because they're unique to every city
         city_url = f'https://worldweather.wmo.int/en/json/{cityid}_en.json'
-        log.debug('NuWeather: fetching current conditions for %s from %s', location, city_url)
+        log.debug('NuWeather: fetching city info & forecasts for %r from %s', location, city_url)
         city_data = utils.web.getUrl(city_url, headers=HEADERS).decode('utf-8')
         city_data = json.loads(city_data)
         city_data = city_data['city']
-        current_data = self._wwis_load_current()
-        display_name = f"{city_data['cityName']}, {city_data['member']['shortMemName'] or city_data['member']['memName']}"
+
+        # Load current conditions (wind, humidity, ...)
+        # These are served from a separate endpoint with all(!) locations at once!
+        # The file altogether is sizable (~1MB), so I cached them to disk
+        wwis_current_cache_path = conf.supybot.directories.data.dirize("wwis-current.json")
+        if cache.check_cache_outdated(wwis_current_cache_path, self._WWIS_CURRENT_REFRESH_INTERVAL):
+            url = 'https://worldweather.wmo.int/en/json/present.json'
+            self._wwis_current = cache.get_json_save_cache(url, wwis_current_cache_path, HEADERS)
+        elif not self._wwis_current:
+            # First run, e.g. after reload
+            self._wwis_current = cache.load_json_cache(wwis_current_cache_path)
+        current_data = self._wwis_current
+
+        display_name = f"{city_data['cityName']}, " \
+                       f"{city_data['member']['shortMemName'] or city_data['member']['memName']}"
 
         current_data_city = None
         for current_data_city in current_data['present'].values():
+            # FIXME: This is really inefficient; I have no idea why current city info isn't already
+            # indexed by city ID ...
             if current_data_city['cityId'] == cityid:
                 break
         if not current_data_city:
