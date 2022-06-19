@@ -64,7 +64,6 @@ class NuWeatherTestCase(PluginTestCase):
                 self.assertRegexp('weather Vancouver', 'Vancouver,')
                 self.assertRegexp('weather LAX', 'Los Angeles')
                 #self.assertRegexp('weather 76010', 'Arlington')  # US ZIP codes not supported by Nominatim (default)
-                self.assertError('weather InvalidLocationTest')
 
     @unittest.skipUnless(network, NO_NETWORK_REASON)
     def testSavedLocation(self):

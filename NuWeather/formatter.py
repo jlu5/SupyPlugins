@@ -27,11 +27,9 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 ###
-
-import re
 import string
 
-from supybot import callbacks, conf, ircutils, log, utils
+from supybot import ircutils, log
 
 try:
     import pendulum

@@ -60,7 +60,7 @@ class NuWeather(callbacks.Plugin):
         self.db = accountsdb.AccountsDB("NuWeather", 'NuWeather.db', self.registryValue(accountsdb.CONFIG_OPTION_NAME))
         geocode_db_filename = conf.supybot.directories.data.dirize("NuWeather-geocode.json")
         if os.path.exists(geocode_db_filename):
-            with open(geocode_db_filename) as f:
+            with open(geocode_db_filename, encoding='utf-8') as f:
                 self.geocode_db = json.load(f)
         else:
             self.log.info("NuWeather: Creating new geocode DB")
@@ -72,7 +72,7 @@ class NuWeather(callbacks.Plugin):
 
     def _flush_geocode_db(self):
         geocode_db_filename = conf.supybot.directories.data.dirize("NuWeather-geocode.json")
-        with open(geocode_db_filename, 'w') as f:
+        with open(geocode_db_filename, 'w', encoding='utf-8') as f:
             json.dump(self.geocode_db, f)
 
     def die(self):
@@ -91,7 +91,7 @@ class NuWeather(callbacks.Plugin):
         try:
             f = utils.web.getUrl(url, headers=HEADERS).decode('utf-8')
             data = json.loads(f)
-        except utils.web.Error as e:
+        except utils.web.Error:
             log.debug('NuWeather: error searching for %r from Nominatim backend:', location, exc_info=True)
             data = None
         if not data:
