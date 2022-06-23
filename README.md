@@ -37,10 +37,6 @@ Most of these plugins also have their own READMEs in their folders; you can usua
 ### LastFM
 - LastFM plugin, forked from [krf/supybot-lastfm](https://github.com/krf/supybot-lastfm).
 
-### MCInfo
-- Fetches information from [minecraft.gamepedia.com](https://minecraft.gamepedia.com/).
-   - **Requires:** [Beautiful Soup 4](http://www.crummy.com/software/BeautifulSoup/bs4/doc/)
-
 ### [NoTrigger](NoTrigger/README.md)
 - Anti-abuse script; prevents the bot from triggering other bots by modifying its output slightly. For more information, see [NoTrigger/README.md](NoTrigger/README.md).
 
