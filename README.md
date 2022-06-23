@@ -48,7 +48,7 @@ Most of these plugins also have their own READMEs in their folders; you can usua
 - A weather plugin for Limnoria supporting multiple backends.
 
 ### [OperUp](OperUp/README.md)
-- Allows Supybot to oper up on configured networks, automatically (on connect) and on demand.
+- Allows Limnoria to oper up on configured networks, automatically (on connect) and on demand.
 
 ### [PkgInfo](PkgInfo/README.md)
 - Fetches package information from various Linux and BSD distros' software repositories.
@@ -71,7 +71,7 @@ Most of these plugins also have their own READMEs in their folders; you can usua
 - Some assorted commands that don't seem to fit anywhere else.
 
 ### SysDNS
-- An alternative to Supybot's built-in DNS function, using the `host` DNS lookup utility on the host machine.
+- An alternative to Limnoria's built-in DNS command, using the `host` DNS lookup utility on the host machine.
     * **Requires:** `host` DNS lookup binary (as in `/usr/bin/host`)
 
 ### [TranslateParty](TranslateParty/README.md)
