@@ -175,6 +175,7 @@ class Grapnel(callbacks.Plugin):
 
         network = networkIrc.network
         token = secrets.token_hex(TOKEN_LENGTH)
+        channel = ircutils.toLower(channel)
 
         cur = self.conn.cursor()
         cur.execute("""
@@ -198,6 +199,7 @@ class Grapnel(callbacks.Plugin):
         <network> and <channel> default to the current network and channel if not specified.
         """
         network = networkIrc.network
+        channel = ircutils.toLower(channel)
         cur = self.conn.cursor()
         cur.execute("""
         SELECT id FROM webhooks
