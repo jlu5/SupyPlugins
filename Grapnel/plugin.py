@@ -34,7 +34,7 @@ import sqlite3
 import urllib.parse
 
 from supybot import ircmsgs, ircutils, callbacks, httpserver, log, world
-from supybot.commands import conf, getopts, wrap
+from supybot.commands import conf, wrap
 from supybot.i18n import PluginInternationalization
 
 
@@ -155,32 +155,22 @@ class Grapnel(callbacks.Plugin):
         self.conn.close()
         super().die()
 
-    def _get_target(self, irc, msg, opts):
-        opts = dict(opts)
-        network = opts.get('network', irc.network)
-        channel = opts.get('channel', msg.channel)
-        if not channel:
-            raise callbacks.Error(_("No webhook channel specified"))
-        return network, ircutils.toLower(channel)
-
     def _format_url(self, hookID, token):
         baseurl = self.registryValue("baseURL")
         url = urllib.parse.urljoin(baseurl, f"/{HTTP_ENDPOINT_NAME}/{hookID}?token={token}&sender=change-this")
         return url
 
-    @wrap([getopts({'network': 'something', 'channel': 'channel'}), ('checkCapability', 'grapnel')])
-    def add(self, irc, msg, args, opts):
-        """[--network <network>] [--channel <channel>]
+    @wrap(['networkIrc', 'channel', 'admin'])
+    def add(self, irc, msg, args, networkIrc, channel):
+        """[<network>] [<channel>]
 
         Creates a new Slack-compatible webhook endpoint for a given network + channel.
         <network> and <channel> default to the current network and channel if not specified.
         """
-        network, channel = self._get_target(irc, msg, opts)
         if not self.registryValue("baseurl"):
             raise callbacks.Error(_("Webhook base URL missing; set the config option plugins.grapnel.baseurl"))
-        if not world.getIrc(network):
-            raise callbacks.Error(_("Network %r is not connected.") % network)
 
+        network = networkIrc.network
         token = secrets.token_hex(TOKEN_LENGTH)
 
         cur = self.conn.cursor()
@@ -197,14 +187,14 @@ class Grapnel(callbacks.Plugin):
         log.debug("Grapnel: created webhook %s for %s@%s: %s", newID, channel, network, url)
         irc.reply(s, private=True)
 
-    @wrap([getopts({'network': 'something', 'channel': 'channel'}), ('checkCapability', 'grapnel')])
-    def listhooks(self, irc, msg, args, opts):
-        """[--network <network>] [--channel <channel>]
+    @wrap(['networkIrc', 'channel', 'admin'])
+    def listhooks(self, irc, msg, args, networkIrc, channel):
+        """[<network>] [<channel>]
 
+        Lists webhooks set on the network + channel pair.
         <network> and <channel> default to the current network and channel if not specified.
         """
-        network, channel = self._get_target(irc, msg, opts)
-
+        network = networkIrc.network
         cur = self.conn.cursor()
         cur.execute("""
         SELECT id FROM webhooks
@@ -217,7 +207,7 @@ class Grapnel(callbacks.Plugin):
             results_s = _('(none)')
         irc.reply(_("Webhooks for %s@%s: %s") % (channel, network, results_s))
 
-    @wrap(['nonNegativeInt', ('checkCapability', 'grapnel')])
+    @wrap(['nonNegativeInt', 'admin'])
     def get(self, irc, msg, args, hookID):
         """<webhook ID>
 
@@ -237,7 +227,7 @@ class Grapnel(callbacks.Plugin):
             s = _("Webhook #%d for %s@%s: %s") % (hookID, channel, network, url)
             irc.reply(s, private=True)
 
-    @wrap(['nonNegativeInt', ('checkCapability', 'grapnel')])
+    @wrap(['nonNegativeInt', 'admin'])
     def resettoken(self, irc, msg, args, hookID):
         """<webhook ID>
 
@@ -258,11 +248,11 @@ class Grapnel(callbacks.Plugin):
         else:
             irc.error(_("No such webhook #%d.") % hookID)
 
-    @wrap(['nonNegativeInt', ('checkCapability', 'grapnel')])
+    @wrap(['nonNegativeInt', 'admin'])
     def remove(self, irc, msg, args, hookID):
         """<webhook ID>
 
-        Removes given webhook ID.
+        Removes the given webhook ID.
         """
         cur = self.conn.cursor()
         cur.execute("""
