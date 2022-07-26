@@ -43,9 +43,12 @@ _ = PluginInternationalization('Grapnel')
 class GrappleHTTPCallback(httpserver.SupyHTTPServerCallback):
     name = 'Grapnel'
 
-    def _send_response(self, handler, code, text):
+    def _send_response(self, handler, code, text, extra_headers=None):
         handler.send_response(code)
         handler.send_header('Content-type', 'text/plain')
+        if extra_headers:
+            for header_pair in extra_headers:
+                handler.send_header(*header_pair)
         handler.end_headers()
         handler.wfile.write(text.encode('utf-8'))
         handler.wfile.write(b'\n')
@@ -120,6 +123,10 @@ class GrappleHTTPCallback(httpserver.SupyHTTPServerCallback):
         except:
             self._send_response(handler, 500, "Unspecified internal error")
             raise
+
+    def doGet(self, handler, path):
+        self._send_response(handler, 405, "Only POST requests are supported by this service",
+                            extra_headers=[('Allow', 'POST')])
 
 HTTP_ENDPOINT_NAME = 'grapnel'
 
