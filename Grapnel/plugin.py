@@ -157,7 +157,10 @@ class Grapnel(callbacks.Plugin):
 
     def _format_url(self, hookID, token):
         baseurl = self.registryValue("baseURL")
-        url = urllib.parse.urljoin(baseurl, f"/{HTTP_ENDPOINT_NAME}/{hookID}?token={token}&sender=change-this")
+        url = urllib.parse.urljoin(baseurl, f"/{HTTP_ENDPOINT_NAME}/{hookID}?" + urllib.parse.urlencode({
+            'token': token,
+            'sender': 'your-cool-app-name'
+        }))
         return url
 
     @wrap(['networkIrc', 'channel', 'admin'])
