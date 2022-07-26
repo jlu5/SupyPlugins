@@ -1,7 +1,7 @@
 # SupyPlugins
 
 [![Build Status](https://drone.overdrivenetworks.com/api/badges/jlu5/SupyPlugins/status.svg)](https://drone.overdrivenetworks.com/jlu5/SupyPlugins)
-![Supported Python versions](https://img.shields.io/badge/python-3.7%20and%20later-blue.svg)
+![Supported Python versions](https://img.shields.io/badge/python-3.8%20and%20later-blue.svg)
 
 My collection of plugins for [Limnoria](https://github.com/ProgVal/Limnoria).
 
@@ -12,7 +12,7 @@ The recommended way of fetching plugins in this repository is to clone the git r
 
 and add the folder to your bot's `config directories.plugins`.
 
-**You will need a working copy of [Limnoria](https://github.com/ProgVal/Limnoria) running on Python >= 3.7** (prefer the latest Python 3.x when available).
+**You will need a working copy of [Limnoria](https://github.com/ProgVal/Limnoria) running on Python >= 3.8** (prefer the latest Python 3.x when available).
 
 If you are using a recent version of Limnoria's PluginDownloader, you can also fetch [individual plugins](#list-of-plugins) by running:
 
