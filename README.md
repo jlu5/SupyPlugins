@@ -34,6 +34,9 @@ Most of these plugins also have their own READMEs in their folders; you can usua
 ### AQI
 - Retrieves [air quality index](https://en.wikipedia.org/wiki/Air_quality_index) info from the [World Air Quality Index project](https://aqicn.org).
 
+### [Grapnel](Grapnel/README.md)
+- Announce Slack-compatible webhooks to IRC
+
 ### LastFM
 - LastFM plugin, forked from [krf/supybot-lastfm](https://github.com/krf/supybot-lastfm).
 
