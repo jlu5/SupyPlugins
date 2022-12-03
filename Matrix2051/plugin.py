@@ -111,7 +111,7 @@ class Matrix2051(callbacks.Plugin):
                         new_msg = ircmsgs.IrcMsg(args=(dmroom, *msg.args[1:]), msg=msg)
                         return new_msg
                     self.log.warning("Matrix2051: attempted to send message to %s but "
-                                     "could not find a suitable room", target, dmroom)
+                                     "could not find a suitable room", target)
         return msg
 
 
