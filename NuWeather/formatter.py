@@ -84,22 +84,22 @@ def format_temp(displaymode, f=None, c=None):
         c = (f - 32) * 5/9
 
     f = float(f)
-    if f < 10:
-        color = 'light blue'
-    elif f < 32:
-        color = 'teal'
-    elif f < 50:
-        color = 'blue'
-    elif f < 60:
-        color = 'light green'
-    elif f < 70:
-        color = 'green'
-    elif f < 80:
-        color = 'yellow'
-    elif f < 90:
-        color = 'orange'
+    # Roughly inspired by https://www.esri.com/arcgis-blog/products/arcgis-pro/mapping/a-meaningful-temperature-palette/
+    if f > 100:
+        color = '4'  # red
+    elif f > 85:
+        color = '7'  # orange
+    elif f > 75:
+        color = '8'  # yellow
+    elif f > 60:
+        color = '9'  # light green
+    elif f > 40:
+        color = '11' # cyan
+    elif f > 10:
+        color = '12' # light blue
     else:
-        color = 'red'
+        color = '15' # light grey
+
     # Show temp values to one decimal place
     c = '%.1f' % c
     f = '%.1f' % f
@@ -114,7 +114,7 @@ def format_temp(displaymode, f=None, c=None):
         s = '%sC' % c
     else:
         raise ValueError("Unknown display mode for temperature.")
-    return ircutils.mircColor(s, color)
+    return f'\x03{color.zfill(2)}{s}\x03'
 
 def wind_direction(angle):
     """Returns wind direction (N, W, S, E, etc.) given an angle."""
