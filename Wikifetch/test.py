@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 ###
-# Copyright (c) 2010, quantumlemur
-# Copyright (c) 2011, Valentin Lorentz
-# Copyright (c) 2015,2017 James Lu <james@overdrivenetworks.com>
+# Copyright (c) 2023 James Lu
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -37,79 +35,27 @@ if network:
         plugins = ('Wikifetch',)
 
         def testWikipedia(self):
-            self.assertRegexp('wiki Monty Python',
-                              r'\x02Monty Python\x02.*?\.')
-            self.assertRegexp('wiki roegdfjpoepo',
-                              'Not found, or page malformed.*')
+            self.assertRegexp('wiki Vancouver',
+                              r'^Vancouver.*Canada')
+            self.assertRegexp('wiki Python (programming language)',
+                              'Python')
+            # Follow redirects
+            self.assertRegexp('wiki CYVR',
+                              'Vancouver International Airport')
 
-        def testStripInlineCitations(self):
-            self.assertNotRegexp('wiki UNICEF', '\[\d+\]')
+            # Display MW errors
+            self.assertRegexp('wiki NotFoundTest',
+                              "missingtitle - The page you specified doesn't exist")
 
-        def testIgnoreCoordinates(self):
-            # Articles for countries, cities, landmarks, etc. have GPS coordinates added to the top right.
-            # These should be ignored because we want to focus on the actual article text.
-            self.assertNotRegexp('wiki Canada', 'Coordinates\:')
-            self.assertNotRegexp('wiki Eiffel Tower', 'Coordinates\:')
-            self.assertNotRegexp('wiki Poland', 'Coordinates\:')
+        def testWikipediaLang(self):
+            self.assertRegexp('wiki --lang fr Paris', 'Paris.*capitale')
 
-        def testDisambig(self):
-            self.assertRegexp('wiki Python', 'is a disambiguation page.*'
-                              'Possible results include:.*?Pythonidae.*?;.*?;')
-            self.assertRegexp('wiki Fire (disambiguation)', '.*Possible results include:.*')
-
-        def testDisambigStripSpaces(self):
-            self.assertNotRegexp('wiki Na', '\n')
-
-        def testArticlesWithSymbolsInName(self):
-            self.assertNotError('wiki /')
-            self.assertNotError('wiki *')
-            self.assertNotError('wiki GNU/Linux')
-            self.assertNotError('wiki --site en.wikipedia.org /')
-
-        def testFollowRedirects(self):
-            self.assertRegexp('wiki YVR', 'Vancouver International Airport')
-
-        def testWikiBold(self):
-            self.assertRegexp('wiki Apple', '\x02')
-            # Complex combination of the <a> tag inside a <b> tag; we should always use
-            # empty bold content instead of the text "None".
-            self.assertNotRegexp('wiki Fallstreak hole', 'None')
-
-        def testWikiRandom(self):
-            self.assertNotError('random')
-
-        def testSiteCombinations(self):
-            self.assertNotError('wiki --site en.wikipedia.org Bread')
-            self.assertNotError('wiki --site https://en.wikipedia.org Bread')
-
-        def testNonEnglishWikipedia(self):
-            self.assertNotError('wiki --site fr.wikipedia.org Paris')
-            self.assertNotError('wiki --site de.wikipedia.org Berlin')
-            self.assertNotError('wiki --site zh.wikipedia.org 中文')
-            self.assertNotError('wiki --site ar.wikipedia.org 2017')
-
-    class Fandom(PluginTestCase):
-        plugins = ('Wikifetch',)
+            with conf.supybot.plugins.Wikifetch.Wikipedia.lang.context('zh'):
+                self.assertRegexp('wiki 地球', '地球.*太阳系')
 
         def testFandom(self):
-            self.assertNotError('wiki --site help.fandom.com Formatting')
+            self.assertRegexp('fandom minecraft Ender Dragon',
+                              r'[Ee]nder [Dd]ragon.*boss')
 
-    class ArchLinuxWiki(PluginTestCase):
-        plugins = ('Wikifetch',)
+            self.assertRegexp('fandom terraria Ocean', r'Ocean.*biome')
 
-        def testArchWiki(self):
-            self.assertNotError('wiki --site wiki.archlinux.org Bash')
-
-    class GentooWiki(PluginTestCase):
-        plugins = ('Wikifetch',)
-
-        def testGentooWiki(self):
-            self.assertNotError('wiki --site wiki.gentoo.org OpenRC')
-
-    class WikimediaSites(PluginTestCase):
-        plugins = ('Wikifetch',)
-
-        def testMediaWiki(self):
-            self.assertNotError('wiki --site mediawiki.org Sites using MediaWiki')
-
-# vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:

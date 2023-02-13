@@ -77,5 +77,5 @@ Most of these plugins also have their own READMEs in their folders; you can usua
 - Translates text through Google Translate multiple times in order to get amusing results.
 
 ### Wikifetch
-- Fork of [ProgVal's Wikipedia plugin](https://github.com/ProgVal/Supybot-plugins), with support for other wikis (via a `--site` option) and other improvements.
-   - **Requires:** [lxml](https://lxml.de/installation.html)
+- Fetch content from MediaWiki-powered sites (Wikipedia, Fandom)
+   - **Requires:** [Beautiful Soup 4](http://www.crummy.com/software/BeautifulSoup/bs4/doc/), [mwparserfromhell](https://mwparserfromhell.readthedocs.io/)

@@ -1,7 +1,5 @@
 ###
-# Copyright (c) 2010, quantumlemur
-# Copyright (c) 2011, Valentin Lorentz
-# Copyright (c) 2015, James Lu
+# Copyright (c) 2023 James Lu
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -30,11 +28,9 @@
 
 ###
 
-import supybot.conf as conf
-import supybot.registry as registry
+from supybot import conf, registry
 try:
-    from supybot.i18n import PluginInternationalization
-    from supybot.i18n import internationalizeDocstring
+    from supybot.i18n import PluginInternationalization, internationalizeDocstring
     _ = PluginInternationalization('Wikifetch')
 except:
     # This are useless functions that's allow to run the plugin on a bot
@@ -50,10 +46,8 @@ def configure(advanced):
     from supybot.questions import expect, anything, something, yn
     conf.registerPlugin('Wikifetch', True)
 
-
 Wikifetch = conf.registerPlugin('Wikifetch')
-conf.registerChannelValue(Wikifetch, 'url',
-        registry.String(_('en.wikipedia.org'), _("""Default URL of the
-        website to pull from.""")))
 
-# vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:
+conf.registerGroup(Wikifetch, 'wikipedia')
+conf.registerChannelValue(Wikifetch.wikipedia, 'lang',
+        registry.String('en', _("""Default Wikipedia language""")))
