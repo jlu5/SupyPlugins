@@ -55,7 +55,24 @@ class Wikifetch(callbacks.Plugin):
     """Grabs data from Wikipedia and other MediaWiki-powered sites."""
     threaded = True
 
-    def _mediawiki_fetch(self, baseurl, title):
+    def _mw_api_call(self, baseurl, params):
+        """Performs a GET call to the MediaWiki API."""
+        url = f"{baseurl}?{params}"
+
+        self.log.debug('Wikifetch: fetching link %s', url)
+        with utils.web.getUrlFd(url, headers=HEADERS) as fd:
+            api_data = json.load(fd)
+
+        if isinstance(api_data, dict):
+            if error := api_data.get('error'):
+                error_code = error['code']
+                error_info = error['info']
+                raise callbacks.Error(f"MediaWiki API Error: {error_code} - {error_info} - {url}")
+
+        return api_data
+
+    def _mw_fetch_article(self, baseurl, title):
+        """Return the first paragraph and canonical URL of a wiki page."""
         params = urllib.parse.urlencode({
             'action': 'parse',
             'page': title,
@@ -64,16 +81,7 @@ class Wikifetch(callbacks.Plugin):
             'format': 'json',
             'redirects': True
         })
-        url = f"{baseurl}?{params}"
-
-        self.log.debug('Wikifetch: fetching link %s', url)
-        with utils.web.getUrlFd(url, headers=HEADERS) as fd:
-            api_data = json.load(fd)
-
-        if error := api_data.get('error'):
-            error_code = error['code']
-            error_info = error['info']
-            raise callbacks.Error(f"MediaWiki API Error: {error_code} - {error_info} - {url}")
+        api_data = self._mw_api_call(baseurl, params)
 
         page_title = api_data['parse']['title']
         content = api_data['parse']['wikitext']
@@ -101,8 +109,24 @@ class Wikifetch(callbacks.Plugin):
 
         return (text, url)
 
-    def _wiki(self, irc, baseurl, title):
-        text, url = self._mediawiki_fetch(baseurl, title)
+    def _mw_search(self, baseurl, searchquery):
+        """Return results from a MediaWiki search."""
+        params = urllib.parse.urlencode({
+            'action': 'opensearch',
+            'search': searchquery,
+            'format': 'json',
+        })
+        api_data = self._mw_api_call(baseurl, params)
+
+        search_result_titles = api_data[1]
+        if not search_result_titles:
+            raise callbacks.Error(f"No search results for {searchquery!r}")
+        return search_result_titles
+
+    def _wiki(self, irc, baseurl, query):
+        search_results = self._mw_search(baseurl, query)
+        page_title = search_results[0]
+        text, url = self._mw_fetch_article(baseurl, page_title)
         if url:
             irc.reply(utils.str.format("%s - %u", text, url))
         else:
@@ -110,8 +134,8 @@ class Wikifetch(callbacks.Plugin):
 
     @internationalizeDocstring
     @wrap([getopts({'lang': 'somethingWithoutSpaces'}), 'text'])
-    def wiki(self, irc, msg, args, optlist, title):
-        """<page title>
+    def wiki(self, irc, msg, args, optlist, searchquery):
+        """<search query>
 
         Returns the first paragraph of a Wikipedia article.
         """
@@ -120,16 +144,16 @@ class Wikifetch(callbacks.Plugin):
             self.registryValue('wikipedia.lang', channel=msg.channel, network=irc.network)
 
         baseurl = f'https://{lang}.wikipedia.org/w/api.php'
-        self._wiki(irc, baseurl, title)
+        self._wiki(irc, baseurl, searchquery)
 
     @wrap(['somethingWithoutSpaces', 'text'])
-    def fandom(self, irc, msg, args, wiki_subdomain, title):
+    def fandom(self, irc, msg, args, wiki_subdomain, searchquery):
         """<wiki subdomain> <title>
 
         Returns the first paragraph of a Fandom article.
         """
         baseurl = f'https://{wiki_subdomain}.fandom.com/api.php'
-        self._wiki(irc, baseurl, title)
+        self._wiki(irc, baseurl, searchquery)
 
 
 Class = Wikifetch

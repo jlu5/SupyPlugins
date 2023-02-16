@@ -38,14 +38,15 @@ if network:
             self.assertRegexp('wiki Vancouver',
                               r'^Vancouver.*Canada')
             self.assertRegexp('wiki Python (programming language)',
-                              'Python')
-            # Follow redirects
+                              'Python.*programming language')
+
+        def testWikipediaFollowRedirects(self):
             self.assertRegexp('wiki CYVR',
                               'Vancouver International Airport')
 
-            # Display MW errors
-            self.assertRegexp('wiki NotFoundTest',
-                              "missingtitle - The page you specified doesn't exist")
+        def testWikipediaSearch(self):
+            self.assertRegexp('wiki Python language',
+                              'Python.*programming language')
 
         def testWikipediaLang(self):
             self.assertRegexp('wiki --lang fr Paris', 'Paris.*capitale')
