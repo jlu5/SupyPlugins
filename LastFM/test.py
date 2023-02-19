@@ -48,10 +48,10 @@ class LastFMTestCase(PluginTestCase):
             conf.supybot.plugins.LastFM.apiKey.setValue(apiKey)
 
         def testNowPlaying(self):
-            self.assertNotError("np krf")
+            self.assertNotError("np RJ")
 
         def testLastfmDB(self):
-            self.assertNotError("lastfm set jlu5") # test db
+            self.assertNotError("lastfm set test") # test db
             self.assertNotError("np")
 
         def testProfile(self):
