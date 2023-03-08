@@ -77,7 +77,7 @@ conf.registerChannelValue(NuWeather.units, 'speed',
         $mi = mph, $km = km/h, $m = m/s.""")))
 
 # List of supported backends for weather & geocode. This is reused by plugin.py
-BACKENDS = ('openweathermap', 'darksky', 'weatherstack', 'wwis')
+BACKENDS = ('openweathermap', 'pirateweather', 'weatherstack', 'wwis')
 GEOCODE_BACKENDS = ('nominatim', 'googlemaps', 'opencage', 'weatherstack')
 
 def backend_requires_apikey(backend):

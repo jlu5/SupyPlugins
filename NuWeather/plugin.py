@@ -372,11 +372,11 @@ class NuWeather(callbacks.Plugin):
                         for forecastdata in city_data['forecast']['forecastDay']]
         }
 
-    def _darksky_fetcher(self, location, geobackend=None):
-        """Grabs weather data from Dark Sky."""
-        apikey = self.registryValue('apikeys.darksky')
+    def _pirateweather_fetcher(self, location, geobackend=None):
+        """Grabs weather data from Pirate Weather."""
+        apikey = self.registryValue('apikeys.pirateweather')
         if not apikey:
-            raise callbacks.Error(_("Please configure the Dark Sky API key in plugins.nuweather.apikeys.darksky."))
+            raise callbacks.Error(_("Please configure the Pirate Weather API key in plugins.nuweather.apikeys.pirateweather."))
 
         # Convert location to lat,lon first
         latlon = self._geocode(location, geobackend=geobackend)
@@ -386,7 +386,7 @@ class NuWeather(callbacks.Plugin):
         lat, lon, display_name, geocodeid, geocode_backend = latlon
 
         # We don't use minutely or hourly data; alerts are not supported yet
-        url = 'https://api.darksky.net/forecast/%s/%s,%s?units=us&exclude=minutely,hourly,alerts' % (apikey, lat, lon)
+        url = 'https://api.pirateweather.net/forecast/%s/%s,%s?units=us&exclude=minutely,hourly,alerts' % (apikey, lat, lon)
         self.log.debug('NuWeather: using url %s', url)
 
         f = utils.web.getUrl(url, headers=HEADERS).decode('utf-8')
@@ -397,8 +397,8 @@ class NuWeather(callbacks.Plugin):
         # N.B. Dark Sky docs tell to not expect any values to exist except the timestamp attached to the response
         return {
             'location': display_name,
-            'poweredby': 'Dark\xa0Sky+' + geocode_backend,
-            'url': 'https://darksky.net/forecast/%s,%s' % (lat, lon),
+            'poweredby': 'Pirate\xa0Weather+' + geocode_backend,
+            'url': 'https://merrysky.net/forecast/%s,%s' % (lat, lon),
             'current': {
                 'condition': currentdata.get('summary', 'N/A'),
                 'temperature': self._format_tmpl_temp(f=currentdata.get('temperature')),

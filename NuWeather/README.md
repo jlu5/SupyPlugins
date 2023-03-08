@@ -6,7 +6,7 @@ A weather plugin for Limnoria. It supports multiple weather and geocoding backen
 - [OpenWeatherMap](https://openweathermap.org/) (default, API key required)
 - [WWIS](https://worldweather.wmo.int/) (**no** API key required, major cities only)
 - [weatherstack](https://weatherstack.com/) (current conditions only, API key required)
-- [Dark Sky](https://darksky.net) (**DEPRECATED**: API key required; new signups closed)
+- [Pirate Weather](https://pirateweather.net/) (API key required)
 
 #### Geocoding Backends
 - [OpenStreetMap Nominatim](https://nominatim.openstreetmap.org/) (default, no API key required)
@@ -17,9 +17,9 @@ A weather plugin for Limnoria. It supports multiple weather and geocoding backen
 
 1) Pick your preferred weather backend: `config help plugins.NuWeather.defaultBackend`
 
-2) Grab an API key. [OpenWeatherMap](https://openweathermap.org/appid) | [weatherstack](https://weatherstack.com/) | ~~[Dark Sky](https://darksky.net/dev)~~ (new signups no longer accepted)
+2) Grab an API key. [OpenWeatherMap](https://openweathermap.org/appid) | [weatherstack](https://weatherstack.com/) | [Pirate Weather](https://pirateweather.net/getting-started)
 
-    - WWIS is another option that requires no API key, but is limited (in most countries) to major cities
+    - WWIS is another option that requires no API key, but is limited (in most countries) to major cities only
 
 3) Configure it: `/msg yourbot config plugins.NuWeather.apikeys.BACKENDNAME YOUR-API-KEY`
 
@@ -66,7 +66,7 @@ config plugins.NuWeather.DBAddressingMode nicks
 ## Location lookup (Geocoding) backends
 
 * weatherstack provides weather lookup by place name directly, and does not need further configuration.
-* OpenStreetMap, WWIS, and Dark Sky backends use a separate service to translate place names into GPS coordinates, a process known as **geocoding**.
+* OpenStreetMap, WWIS, and Pirate Weather backends use a separate service to translate place names into GPS coordinates, a process known as **geocoding**.
 
 The default geocoding backend is [OpenStreetMap's Nominatim](https://nominatim.openstreetmap.org/); this can be configured via the `plugins.NuWeather.geocodeBackend` option.
 
