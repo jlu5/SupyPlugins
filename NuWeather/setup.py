@@ -5,5 +5,6 @@ plugin_setup(
     'NuWeather',
     install_requires=[
         'pendulum',
+        'haversine',
     ],
 )
