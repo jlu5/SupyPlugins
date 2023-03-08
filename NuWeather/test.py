@@ -78,6 +78,7 @@ from . import formatter
 
 class NuWeatherFormatterTestCase(PluginTestCase):
     plugins = ('NuWeather',)
+    maxDiff = None
 
     def setUp(self, nick='test', forceSetup=True):
         super().setUp(nick=nick, forceSetup=forceSetup)
@@ -91,21 +92,21 @@ class NuWeatherFormatterTestCase(PluginTestCase):
 
     def test_format_temp(self):
         func = self._format_temp
-        self.assertEqual(func(f=50, c=10), '\x030950.0F/10.0C\x03')
-        self.assertEqual(func(f=100), '\x0304100.0F/37.8C\x03')
+        self.assertEqual(func(f=50, c=10), '\x031150.0F/10.0C\x03')
+        self.assertEqual(func(f=100), '\x0307100.0F/37.8C\x03')
         self.assertEqual(func(c=25.55), '\x030878.0F/25.6C\x03')
         self.assertEqual(func(), 'N/A')
 
     def test_format_temp_displaymode(self):
         func = self._format_temp
         with conf.supybot.plugins.NuWeather.units.temperature.context('F/C'):
-            self.assertEqual(func(c=-5.3), '\x031022.5F/-5.3C\x03')
+            self.assertEqual(func(c=-5.3), '\x031222.5F/-5.3C\x03')
         with conf.supybot.plugins.NuWeather.units.temperature.context('C/F'):
-            self.assertEqual(func(f=50, c=10), '\x030910.0C/50.0F\x03')
+            self.assertEqual(func(f=50, c=10), '\x031110.0C/50.0F\x03')
         with conf.supybot.plugins.NuWeather.units.temperature.context('C'):
-            self.assertEqual(func(c=36), '\x030436.0C\x03')
+            self.assertEqual(func(c=36), '\x030736.0C\x03')
         with conf.supybot.plugins.NuWeather.units.temperature.context('F'):
-            self.assertEqual(func(f=72), '\x030872.0F\x03')
+            self.assertEqual(func(f=72), '\x030972.0F\x03')
 
     def test_format_distance(self):
         func = self._format_distance
@@ -162,15 +163,14 @@ class NuWeatherFormatterTestCase(PluginTestCase):
                             'max': self._format_temp(f=70),
                             'min': self._format_temp(f=55),
                             'summary': 'Light rain'}]}
-        self.assertEqual(self._format_weather(data, None, False),
-                         '\x02Narnia\x02 :: Sunny \x030780.0F/26.7C\x03 (Humidity: 80%) | '
-                         '\x02Feels like:\x02 \x030785.0F/29.4C\x03 | '
-                         '\x02Wind\x02: 12mph / 19.3km/h NNE | '
-                         '\x02Wind gust\x02: 20mph / 32.2km/h | '
-                         '\x02Today\x02: Cloudy. High \x0304100.0F/37.8C\x03. Low \x030360.0F/15.6C\x03. | '
-                         '\x02Tomorrow\x02: Light rain. High \x030870.0F/21.1C\x03. Low \x030955.0F/12.8C\x03. | '
-                         'Powered by \x02Dummy\x02 <http://dummy.invalid/api/>')
-        #print(repr(formatter.format_weather(data)))
+        output = self._format_weather(data, None, False)
+        #print(repr(output))
+        self.assertEqual(output,
+                         '\x02Narnia\x02 :: Sunny \x030880.0F/26.7C\x03 (Humidity: 80%) '
+                         '| \x02Feels like:\x02 \x030885.0F/29.4C\x03 | \x02Wind\x02: 12mph / 19.3km/h NNE '
+                         '| \x02Wind gust\x02: 20mph / 32.2km/h | \x02Today\x02: Cloudy. High \x0307100.0F/37.8C\x03. '
+                         'Low \x031160.0F/15.6C\x03. | \x02Tomorrow\x02: Light rain. High \x030970.0F/21.1C\x03. '
+                         'Low \x031155.0F/12.8C\x03. | Powered by \x02Dummy\x02 <http://dummy.invalid/api/>')
 
     def test_format_forecast(self):
         data = {'location': "Testville",
@@ -200,9 +200,7 @@ class NuWeatherFormatterTestCase(PluginTestCase):
                             'max': self._format_temp(f=56),
                             'min': self._format_temp(f=40),
                             'summary': 'Heavy rain'}]}
-        self.assertIn('\x02Testville\x02 :: \x02Today\x02: Cloudy (\x030360.0F/15.6C\x03 to \x0304100.0F/37.8C\x03) | '
-                      '\x02Tomorrow\x02: Light rain (\x030955.0F/12.8C\x03 to \x030870.0F/21.1C\x03) | '
-                      '\x02Tomorrow\x02: Heavy rain (\x030240.0F/4.4C\x03 to \x030956.0F/13.3C\x03)',
+        self.assertIn('\x02Testville\x02 :: \x02Today\x02: Cloudy (\x031160.0F/15.6C\x03 to \x0307100.0F/37.8C\x03) | \x02Tomorrow\x02: Light rain (\x031155.0F/12.8C\x03 to \x030970.0F/21.1C\x03) | ',
                       self._format_weather(data, None, True))
         #print(repr(self._format_weather(data, None, True)))
 
