@@ -2,3 +2,5 @@ git+https://github.com/ProgVal/Limnoria.git@testing
 beautifulsoup4
 lxml
 requests
+haversine
+pendulum
