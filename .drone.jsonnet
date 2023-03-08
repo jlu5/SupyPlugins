@@ -35,5 +35,6 @@ local test_with(version, use_network=false) = {
     test_with("3.8"),
     test_with("3.9"),
     test_with("3.10"),
-    test_with("3.10", use_network=true),
+    test_with("3.11"),
+    test_with("3.11", use_network=true),
 ]
