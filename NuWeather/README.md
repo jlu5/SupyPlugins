@@ -20,6 +20,7 @@ A weather plugin for Limnoria. It supports multiple weather and geocoding backen
 2) Grab an API key. [OpenWeatherMap](https://openweathermap.org/appid) | [weatherstack](https://weatherstack.com/) | [Pirate Weather](https://pirateweather.net/getting-started)
 
     - WWIS is another option that requires no API key, but is limited (in most countries) to major cities only
+    - Note that for OpenWeatherMap this plugin uses the "Professional collections" APIs, not the OneCall 3.0 API!
 
 3) Configure it: `/msg yourbot config plugins.NuWeather.apikeys.BACKENDNAME YOUR-API-KEY`
 

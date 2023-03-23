@@ -428,56 +428,62 @@ class NuWeather(callbacks.Plugin):
         if not latlon:
             raise callbacks.Error("Unknown location %s." % location)
 
-        lat, lon, display_name, _geocode_id, geocode_backend = latlon
-        url = 'https://api.openweathermap.org/data/2.5/onecall?' + utils.web.urlencode({
+        lat, lon, __, ___, geocode_backend = latlon
+        url = 'https://api.openweathermap.org/data/2.5/weather?' + utils.web.urlencode({
             'appid': apikey,
             'lat': lat,
             'lon': lon,
             'units': 'imperial',
         })
-        self.log.debug('NuWeather: using url %s', url)
+        self.log.debug('NuWeather: using url %s (current data)', url)
 
         f = utils.web.getUrl(url, headers=HEADERS).decode('utf-8')
         data = json.loads(f, strict=False)
 
-        currentdata = data['current']
-
-        # XXX: are the units for this consistent across APIs?
-        if currentdata.get('snow'):
-            precip = formatter.format_precip(mm=currentdata['snow']['1h'] * 10)
-        elif currentdata.get('rain'):
-            precip = formatter.format_precip(mm=currentdata['rain']['1h'])
-        else:
-            precip = 'N/A'
-
         output = {
-            'location': display_name,
+            'location': '%s, %s' % (data['name'], data['sys']['country']),
             'poweredby': 'OpenWeatherMap+' + geocode_backend,
             'url': 'https://openweathermap.org/weathermap?' + utils.web.urlencode({
                 'lat': lat,
                 'lon': lon,
                 'zoom': 12
             }),
+            # Unfortunately not all of the fields we use are available
             'current': {
-                'condition': currentdata['weather'][0]['description'],
-                'temperature': self._format_tmpl_temp(f=currentdata['temp']),
-                'feels_like': self._format_tmpl_temp(f=currentdata['feels_like']),
-                'humidity': formatter.format_percentage(currentdata['humidity']),
-                'precip': precip,
-                'wind': self._format_tmpl_distance(mi=currentdata['wind_speed'], speed=True),
-                'wind_dir': formatter.wind_direction(currentdata['wind_deg']),
-                'wind_gust': self._format_tmpl_distance(mi=currentdata.get('wind_gust'), speed=True),
-                'uv': formatter.format_uv(currentdata.get('uvi')),
-                'visibility': self._format_tmpl_distance(km=currentdata['visibility']/1000),
+                'condition': data['weather'][0]['description'],
+                'temperature': self._format_tmpl_temp(f=data['main']['temp']),
+                'feels_like': 'N/A',
+                'humidity': formatter.format_percentage(data['main']['humidity']),
+                'precip': 'N/A',
+                'wind': self._format_tmpl_distance(mi=data['wind']['speed'], speed=True),
+                'wind_gust': 'N/A',
+                'wind_dir': formatter.wind_direction(data['wind']['deg']),
+                'uv': 'N/A',  # Requires a separate API call
+                'visibility': self._format_tmpl_distance(km=data['visibility']/1000),
             }
         }
+        tzoffset = data['timezone']
 
+        # Get extended forecast (a separate API call)
+        url = 'https://api.openweathermap.org/data/2.5/forecast?' + utils.web.urlencode({
+            'appid': apikey,
+            'lat': lat,
+            'lon': lon,
+            'units': 'imperial',
+        })
+        self.log.debug('NuWeather: using url %s (extended forecast)', url)
+        f = utils.web.getUrl(url, headers=HEADERS).decode('utf-8')
+        data = json.loads(f, strict=False)
+
+        # OWM's 5 day forecast gives data by 3 hour intervals. The actual daily forecast
+        # requires a subscription.
         output['forecast'] = [
-            {'dayname': formatter.get_dayname(forecast['dt'], idx, tz=data['timezone']),
-             'max': self._format_tmpl_temp(f=forecast['temp']['max']),
-             'min': self._format_tmpl_temp(f=forecast['temp']['min']),
+            {'dayname': formatter.get_dayname(forecast['dt'], -1, fallback=forecast['dt_txt']),
+             'max': self._format_tmpl_temp(f=forecast['main']['temp_max']),
+             'min': self._format_tmpl_temp(f=forecast['main']['temp_min']),
              'summary': forecast['weather'][0]['description']}
-            for idx, forecast in enumerate(data['daily'])
+            # grab data every 6 hours, excluding first pocket
+            for forecast in data['list'][1::2]
         ]
         return output
 
