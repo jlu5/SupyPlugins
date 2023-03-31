@@ -14,7 +14,9 @@ and add the folder to your bot's `config directories.plugins`. Then, you can upd
 
 **You will need a copy of [Limnoria](https://github.com/ProgVal/Limnoria) running on Python >= 3.8** (prefer the latest Python 3.x available).
 
-You can also install individual plugins using pip: `pip3 install "git+https://github.com/jlu5/SupyPlugins.git#subdirectory=PLUGIN_NAME"`
+You can also install individual plugins using pip:
+
+* `$ pip3 install "git+https://github.com/jlu5/SupyPlugins.git#subdirectory=PLUGIN_NAME"`
 
 ## Support
 Feel free to post to the issue tracker if you have any problems, or find me on the Limnoria discussion channel `#limnoria @ Libera.chat`.
