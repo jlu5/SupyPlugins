@@ -58,5 +58,8 @@ if network:
             self.assertRegexp('fandom minecraft Ender Dragon',
                               r'[Ee]nder [Dd]ragon.*boss')
 
-            self.assertRegexp('fandom terraria Ocean', r'Ocean.*biome')
+            self.assertRegexp('fandom warframe Warframe', r'[Ww]arframe')
 
+        def testWikigg(self):
+            self.assertRegexp('wikigg terraria Ocean',
+                              r'Ocean.*biome')

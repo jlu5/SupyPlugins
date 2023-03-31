@@ -155,5 +155,13 @@ class Wikifetch(callbacks.Plugin):
         baseurl = f'https://{wiki_subdomain}.fandom.com/api.php'
         self._wiki(irc, baseurl, searchquery)
 
+    @wrap(['somethingWithoutSpaces', 'text'])
+    def wikigg(self, irc, msg, args, wiki_subdomain, searchquery):
+        """<wiki subdomain> <title>
+
+        Returns the first paragraph of a wiki.gg article.
+        """
+        baseurl = f'https://{wiki_subdomain}.wiki.gg/api.php'
+        self._wiki(irc, baseurl, searchquery)
 
 Class = Wikifetch
