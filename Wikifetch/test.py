@@ -174,3 +174,12 @@ if network:
         def testWikigg(self):
             self.assertRegexp('wikigg terraria Ocean',
                               r'Ocean.*biome')
+
+        def testCustomArchWiki(self):
+            self.assertRegexp('customwiki https://wiki.archlinux.org/api.php KDE',
+                              r'KDE is.*desktop')
+
+        def testCustomParadoxWikis(self):
+            # api.php will be appended if not present
+            self.assertRegexp('customwiki https://skylines.paradoxwikis.com/ Zoning',
+                              r'Zones.*buildings')

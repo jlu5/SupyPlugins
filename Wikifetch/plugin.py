@@ -162,4 +162,19 @@ class Wikifetch(callbacks.Plugin):
         baseurl = f'https://{wiki_subdomain}.wiki.gg/api.php'
         self._wiki(irc, baseurl, searchquery)
 
+    @wrap(['somethingWithoutSpaces', 'text'])
+    def customwiki(self, irc, msg, args, baseurl, searchquery):
+        """<site base URL> <title>
+
+        Returns the first paragraph of a page on MediaWiki powered site of your choice.
+
+        This requires the URL of your desired wiki's API URL: usually you can find this by opening the Source code of
+        any wiki page and looking for links ending with `api.php`.
+        """
+        if '://' not in baseurl:
+            baseurl = 'https://' + baseurl
+        if not baseurl.lower().endswith('/api.php'):
+            baseurl += '/api.php'
+        self._wiki(irc, baseurl, searchquery)
+
 Class = Wikifetch
