@@ -40,27 +40,23 @@ import supybot.world as world
 # in here if you're keeping the plugin in CVS or some similar system.
 __version__ = "2022.02.01+git"
 
-__author__ = supybot.Author('quantumlemur', 'quantumlemur',
-        'quantumlemur@users.sourceforge.net')
-__maintainer__ = getattr(supybot.authors, 'jlu',
-                         supybot.Author('James Lu', 'jlu5', 'james@overdrivenetworks.com'))
+__author__ = getattr(supybot.authors, 'jlu',
+                     supybot.Author('James Lu', 'jlu5', 'james@overdrivenetworks.com'))
 
 # This is a dictionary mapping supybot.Author instances to lists of
 # contributions.
-__contributors__ = {supybot.authors.progval: ['enhance configurability',
-                                              'many bug fixes',
-                                              'internationalization'],
-                    __maintainer__:          ['formatting updates',
-                                              'multiple wiki support']}
+__contributors__ = {}
 
 __url__ = 'https://github.com/jlu5/SupyPlugins'
 
-from . import config
+from . import config, formatter
+# separate import line so that plugindownloader before 2022-06-23 doesn't run 2to3
 from . import plugin
-from imp import reload
-reload(plugin) # In case we're being reloaded.
-# Add more reloads here if you add third-party modules and want them to be
-# reloaded when this plugin is reloaded.  Don't forget to import them as well!
+
+from importlib import reload
+reload(config)
+reload(formatter)
+reload(plugin)
 
 if world.testing:
     from . import test

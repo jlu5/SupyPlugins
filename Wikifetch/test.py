@@ -27,8 +27,119 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 ###
+import unittest
+
+from . import formatter
 
 from supybot.test import *
+
+class WikifetchFormatterTest(unittest.TestCase):
+    def assertFormatEqual(self, wikitext, expected, **kwargs):
+        output = formatter.fmt(wikitext, **kwargs)
+        self.assertEqual(output, expected)
+
+    def test_basic(self):
+        self.assertFormatEqual('', '')
+        self.assertFormatEqual(
+            'The quick brown fox jumps over the lazy dog',
+            'The quick brown fox jumps over the lazy dog')
+
+    def test_format_tags(self):
+        self.assertFormatEqual(
+            "'''Lorem ipsum''' dolor sit amet, consectetur adipiscing elit",
+            "Lorem ipsum dolor sit amet, consectetur adipiscing elit")
+        self.assertFormatEqual(
+            "Test '''bold''' and ''italics'' and '''''both'''''.",
+            "Test bold and italics and both.")
+
+    def test_format_wikilinks(self):
+        self.assertFormatEqual(
+            "Abc [[def ghi]]", "Abc def ghi")
+        self.assertFormatEqual(
+            "Abc [[def|custom title]]  xyz", "Abc custom title  xyz")
+        # namespaced links get dropped
+        self.assertFormatEqual(
+            "hello world [[File:test.jpg]]", "hello world")
+        self.assertFormatEqual(
+            "[[Special:RecentChanges]]   [[en:Test]]", "")
+
+    def test_format_images(self):
+        self.assertFormatEqual(
+            "[[File:Foo.png|foo]]\nsome text",
+            "some text", summary=True)
+        self.assertFormatEqual(
+            "[[File:Foo.png|foo]]\n\nsome text again",
+            "some text again")
+
+        # Adapted from https://en.wikipedia.org/wiki/Wikipedia:Extended_image_syntax#Examples
+        self.assertFormatEqual("""text text text
+[[File:Westminstpalace.jpg|150px|alt=A large clock tower and other buildings line a great river.|The Palace of Westminster]]
+aa bb cc dd
+[[File:tst.png|100px|alt=Tiny globe|This is a globe.]]
+eee fff""", "text text text\n\naa bb cc dd\n\neee fff")
+        self.assertFormatEqual("""[[File:Westminstpalace.jpg|150px|alt=A large clock tower and other buildings line a great river.|The Palace of Westminster]]
+aa bb cc dd
+[[File:tst.png|100px|alt=Tiny globe|This is a globe.]]
+eee fff""", "aa bb cc dd", summary=True)
+
+    def test_format_external_links(self):
+        self.assertFormatEqual(
+            "first [http://example.com] last", "first http://example.com last")
+        self.assertFormatEqual(
+            "first [http://example.com second] last", "first second last")
+
+    def test_format_templates(self):
+        # Templates are ignored
+        self.assertFormatEqual(
+            "{{tmpl|arg=12345}}", "")
+        self.assertFormatEqual(
+            "{{tmpl2|foo=12345|bar=abcdefg}} test", "test")
+        self.assertFormatEqual(
+            "{{outer|{{inner test}}}}", "")
+        # mwparserfromhell usage example
+        self.assertFormatEqual(
+            "{{cleanup}} '''Foo''' is a [[bar]]. {{uncategorized}}",
+            "Foo is a bar.")
+
+    # multiline
+    def test_multiline(self):
+        self.assertFormatEqual(
+            "Hello world.\n\nThis is the second line.",
+            "Hello world.\n\nThis is the second line.")
+        self.assertFormatEqual(
+            "Hello world.\n\nThis is the second line.",
+            "Hello world.", summary=True)
+        self.assertFormatEqual(
+            "This sentence is on one\nline.\n\n2nd line",
+            "This sentence is on one\nline.", summary=True)
+
+        self.assertFormatEqual(
+            "\n\n\n    Leading spaces are dropped.\n\nThis is the second line.",
+            "Leading spaces are dropped.\n\nThis is the second line.")
+        self.assertFormatEqual(
+            "\n\n\n    Leading spaces are dropped.\n\nThis is the second line.",
+            "Leading spaces are dropped.", summary=True)
+
+    def test_multiline_drop_empty_lines(self):
+        # drop lines that are empty after filtering
+        # e.g. Arch Linux Wiki pages with cross-language links
+        self.assertFormatEqual(
+            "[[Category:abcd]]\n[[de:Test]]\n[[en:Test]]\n[[zh:Test]]\n{{Related articles start}}\n"
+            "Now the actual content starts\n1 2 3 4 5 6",
+            "Now the actual content starts\n1 2 3 4 5 6", summary=True)
+        self.assertFormatEqual(
+            "[[Category:abcd]]\n\n {{Related articles start}} \n\n[[Help:abcdef]]\n\n"
+            "Now the actual content starts\n\n1 2 3 4 5 6",
+            "Now the actual content starts", summary=True)
+
+    def test_cleanup(self):
+        # drop lines that are empty after filtering
+        # e.g. Arch Linux Wiki pages with cross-language links
+        empty_parens_after_filtering = """'''Vancouver''' ({{IPAc-en|audio=EN-Vancouver.ogg|v|æ|n|ˈ|k|uː|v|ər}}
+        {{respell|van|KOO|vər}}) is a major city in [[western Canada]],"""
+        self.assertFormatEqual(
+            empty_parens_after_filtering,
+            "Vancouver is a major city in western Canada,", summary=True)
 
 if network:
     class Wikipedia(PluginTestCase):

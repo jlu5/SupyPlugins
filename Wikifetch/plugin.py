@@ -44,8 +44,9 @@ except:
     _ = lambda x:x
     internationalizeDocstring = lambda x:x
 
+from . import formatter
+
 from bs4 import BeautifulSoup
-import mwparserfromhell
 
 HEADERS = {
     'User-agent': 'Mozilla/5.0 (compatible; Supybot/Limnoria %s; Wikifetch plugin)' % conf.version
@@ -61,7 +62,10 @@ class Wikifetch(callbacks.Plugin):
 
         self.log.debug('Wikifetch: fetching link %s', url)
         with utils.web.getUrlFd(url, headers=HEADERS) as fd:
-            api_data = json.load(fd)
+            try:
+                api_data = json.load(fd)
+            except json.JSONDecodeError as e:
+                raise callbacks.Error(f"JSON Decode Error on {url}: {e} - is this API URL correct?") from e
 
         if isinstance(api_data, dict):
             if error := api_data.get('error'):
@@ -86,26 +90,20 @@ class Wikifetch(callbacks.Plugin):
         page_title = api_data['parse']['title']
         content = api_data['parse']['wikitext']
         html_head = api_data['parse']['headhtml']
-        mw = mwparserfromhell.parse(content)
-        for line in mw.strip_code().splitlines():
-            # Ignore stray image references that strip_code leaves behind
-            if re.search(r'\|?thumb\|', line):
-                continue
-            elif len(line) < 10:
-                continue
-            text = utils.str.normalizeWhitespace(line)
-            break
-        else:
-            raise callbacks.Error(f"No text paragraph found for page {page_title!r}")
+        text = formatter.fmt(content, summary=True)
 
         soup = BeautifulSoup(html_head, features="lxml")
-        url = ''
         if canonical_link := soup.find('link', rel='canonical'):
             # Wikipedia
             url = canonical_link.attrs['href']
         elif og_url := soup.find('meta', property='og:url'):
             # Fandom
             url = og_url.attrs['content']
+        else:
+            # Use generic MediaWiki link as fallback (this doesn't look as nice)
+            url = baseurl.replace('api.php', 'index.php?' + urllib.parse.urlencode({
+                'title': page_title
+            }))
 
         return (text, url)
 
