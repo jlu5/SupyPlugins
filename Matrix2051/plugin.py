@@ -1,5 +1,5 @@
 ###
-# Copyright (c) 2022, James Lu <james@overdrivenetworks.com>
+# Copyright (c) 2022-2023, James Lu <james@overdrivenetworks.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -89,14 +89,26 @@ class Matrix2051(callbacks.Plugin):
                 self.log.debug("Matrix2051: dropping replayed %s from before initial connect (%s < %s)",
                                msg.command, msg.time, irc.startedAt)
                 return
+            target = msg.args[0]
+            text = msg.args[-1]
             if room_map := getattr(irc.state, '_dmroom_map', None):
                 account = msg.server_tags.get('account')
                 dmroom = room_map.get(account)
                 if account and dmroom == msg.args[0]:
                     self.log.debug("Matrix2051: rewriting incoming %s from %s -> %s",
                                    msg.command, dmroom, account)
-                    new_msg = ircmsgs.IrcMsg(args=(irc.nick, *msg.args[1:]), msg=msg)
-                    return new_msg
+                    target = irc.nick
+            new_msg = ircmsgs.IrcMsg(args=(target, text), msg=msg)
+
+            # Allow edited messages (with default Matrix fallback prefix) to trigger commands
+            # However, keep the message text as is for other plugins by not rewriting it permanently
+            if text.startswith('* '):
+                self.log.debug("Matrix2051: stripping edit prefix from message from %s", msg.nick)
+                if not callbacks.addressed(irc, new_msg):
+                    maybe_command_msg = ircmsgs.IrcMsg(args=(target, text[2:]), msg=msg)
+                    payload = callbacks.addressed(irc, maybe_command_msg)
+                    new_msg.tag('addressed', payload)
+            return new_msg
         return msg
 
     def outFilter(self, irc, msg):

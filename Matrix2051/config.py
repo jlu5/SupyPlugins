@@ -50,7 +50,7 @@ def configure(advanced):
 Matrix2051 = conf.registerPlugin('Matrix2051')
 # This is where your configuration variables (if any) should go.  For example:
 conf.registerNetworkValue(Matrix2051, 'enabled',
-    registry.Boolean(False, _("""Whether to enable DM room rerouting on this network.""")))
+    registry.Boolean(False, _("""Whether to enable Matrix2051 tweaks on this network.""")))
 
 
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:
