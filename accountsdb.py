@@ -90,7 +90,7 @@ class AccountsDB():
         try:
             with open(tmp_filename, 'wb') as f:
                 pickle.dump(self.db, f, 2)
-            os.rename(tmp_filename, self.filename)
+            shutil.move(tmp_filename, self.filename)
         except Exception as e:
             log.exception('%s: Unable to write database: %s', self._plugin_name, e)
 
