@@ -32,7 +32,7 @@ accountsdb: Provides storage for user-specific data via Supybot accounts, ident@
 """
 
 import pickle
-import os
+import shutil
 
 from supybot import ircdb, log, conf, registry
 
