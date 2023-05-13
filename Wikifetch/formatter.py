@@ -28,7 +28,8 @@ def fmt_node(w, summary=False):
             if len(lines) > 1:
                 s = lines[0]
                 break
-    return s.strip()
+    # replace \n with commas, it's often used inside bulleted lists
+    return s.strip().replace('\n', ', ')
 
 _RE_EMPTY_PARENTHESES = re.compile(r' ?\(\s+\)')
 def _cleanup(text):
