@@ -29,6 +29,7 @@
 import json
 import os
 import string
+import urllib.error
 
 from supybot import utils, plugins, ircutils, callbacks, world, conf, log
 from supybot.commands import *
@@ -82,18 +83,32 @@ class NuWeather(callbacks.Plugin):
         self._flush_geocode_db()
         super().die()
 
+    @staticmethod
+    def _fetch_json(url, get_error=None):
+        try:
+            data = utils.web.getUrl(url, headers=HEADERS).decode('utf-8')
+        except utils.web.Error as e:
+            log.debug('NuWeather: error fetching %s', url, exc_info=True)
+            backend = utils.web.urlparse(url).netloc
+            reason = f'{e} from {backend}'
+            if isinstance(e.__cause__, urllib.error.HTTPError):
+                # When receiving an HTTP error, try reading and showing the API response anyways
+                # This requires a Limnoria version > 2021-08-01
+                data = e.__cause__.read().decode("utf-8")
+                json_response = json.loads(data, strict=False)
+                if get_error:
+                    if extended_reason := get_error(json_response):
+                        reason = f'{reason} - {extended_reason}'
+            raise callbacks.Error(reason)
+        return json.loads(data, strict=False)
+
     def _nominatim_geocode(self, location):
         location = location.lower()
 
         url = 'https://nominatim.openstreetmap.org/search/%s?format=jsonv2' % utils.web.urlquote(location)
         self.log.debug('NuWeather: using url %s (geocoding)', url)
         # Custom User agent & caching are required for Nominatim per https://operations.osmfoundation.org/policies/nominatim/
-        try:
-            f = utils.web.getUrl(url, headers=HEADERS).decode('utf-8')
-            data = json.loads(f)
-        except utils.web.Error:
-            log.debug('NuWeather: error searching for %r from Nominatim backend:', location, exc_info=True)
-            data = None
+        data = self._fetch_json(url)
         if not data:
             raise callbacks.Error("Unknown location %r from OSM/Nominatim" % location)
 
@@ -123,9 +138,7 @@ class NuWeather(callbacks.Plugin):
         url = "https://maps.googleapis.com/maps/api/geocode/json?address={0}&key={1}".format(utils.web.urlquote(location), apikey)
         self.log.debug('NuWeather: using url %s (geocoding)', url)
 
-        f = utils.web.getUrl(url, headers=HEADERS).decode('utf-8')
-
-        data = json.loads(f)
+        data = self._fetch_json(url)
         if data['status'] != "OK":
             raise callbacks.Error("{0} from Google Maps for location {1}".format(data['status'], location))
 
@@ -148,9 +161,7 @@ class NuWeather(callbacks.Plugin):
         url = "https://api.opencagedata.com/geocode/v1/json?q={0}&key={1}&abbrv=1&limit=1".format(utils.web.urlquote(location), apikey)
         self.log.debug('NuWeather: using url %s (geocoding)', url)
 
-        f = utils.web.getUrl(url, headers=HEADERS).decode('utf-8')
-
-        data = json.loads(f)
+        data = self._fetch_json(url)
         if data['status']['message'] != "OK":
             raise callbacks.Error("{0} from OpenCage for location {1}".format(data['status']['message'], location))
         elif not data['results']:
@@ -175,9 +186,7 @@ class NuWeather(callbacks.Plugin):
         url = "http://api.weatherstack.com/current?access_key={0}&query={1}".format(apikey, utils.web.urlquote(location))
         self.log.debug('NuWeather: using url %s (geocoding)', url)
 
-        f = utils.web.getUrl(url, headers=HEADERS).decode('utf-8')
-
-        data = json.loads(f)
+        data = self._fetch_json(url)
         if data.get('error'):
             raise callbacks.Error("{0} From weatherstack for location {1}".format(data['error']['info'], location))
 
@@ -239,8 +248,7 @@ class NuWeather(callbacks.Plugin):
         })
         self.log.debug('NuWeather: using url %s', url)
 
-        f = utils.web.getUrl(url, headers=HEADERS).decode('utf-8')
-        data = json.loads(f)
+        data = self._fetch_json(url)
 
         currentdata = data['current']
 
@@ -321,8 +329,7 @@ class NuWeather(callbacks.Plugin):
         # I don't bother caching these because they're unique to every city
         city_url = f'https://worldweather.wmo.int/en/json/{cityid}_en.json'
         log.debug('NuWeather: fetching city info & forecasts for %r from %s', location, city_url)
-        city_data = utils.web.getUrl(city_url, headers=HEADERS).decode('utf-8')
-        city_data = json.loads(city_data)
+        city_data = self._fetch_json(city_url)
         city_data = city_data['city']
 
         # Load current conditions (wind, humidity, ...)
@@ -385,13 +392,11 @@ class NuWeather(callbacks.Plugin):
 
         lat, lon, display_name, geocodeid, geocode_backend = latlon
 
-        # We don't use minutely or hourly data; alerts are not supported yet
+        # We don't use minutely or hourly data; alerts are not supported
         url = 'https://api.pirateweather.net/forecast/%s/%s,%s?units=us&exclude=minutely,hourly,alerts' % (apikey, lat, lon)
         self.log.debug('NuWeather: using url %s', url)
 
-        f = utils.web.getUrl(url, headers=HEADERS).decode('utf-8')
-        data = json.loads(f, strict=False)
-
+        data = self._fetch_json(url, get_error=lambda resp: resp.get('message'))
         currentdata = data['currently']
 
         # N.B. Dark Sky docs tell to not expect any values to exist except the timestamp attached to the response
@@ -437,8 +442,7 @@ class NuWeather(callbacks.Plugin):
         })
         self.log.debug('NuWeather: using url %s (current data)', url)
 
-        f = utils.web.getUrl(url, headers=HEADERS).decode('utf-8')
-        data = json.loads(f, strict=False)
+        data = self._fetch_json(url, get_error=lambda resp: resp.get('message'))
 
         output = {
             'location': '%s, %s' % (data['name'], data['sys']['country']),
@@ -472,8 +476,7 @@ class NuWeather(callbacks.Plugin):
             'units': 'imperial',
         })
         self.log.debug('NuWeather: using url %s (extended forecast)', url)
-        f = utils.web.getUrl(url, headers=HEADERS).decode('utf-8')
-        data = json.loads(f, strict=False)
+        data = self._fetch_json(url)
 
         # OWM's 5 day forecast gives data by 3 hour intervals. The actual daily forecast
         # requires a subscription.
