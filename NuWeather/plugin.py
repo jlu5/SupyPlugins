@@ -105,7 +105,7 @@ class NuWeather(callbacks.Plugin):
     def _nominatim_geocode(self, location):
         location = location.lower()
 
-        url = 'https://nominatim.openstreetmap.org/search/%s?format=jsonv2' % utils.web.urlquote(location)
+        url = 'https://nominatim.openstreetmap.org/search?q=%s&format=jsonv2' % utils.web.urlquote(location)
         self.log.debug('NuWeather: using url %s (geocoding)', url)
         # Custom User agent & caching are required for Nominatim per https://operations.osmfoundation.org/policies/nominatim/
         data = self._fetch_json(url)
