@@ -34,7 +34,7 @@ NuWeather: a weather plugin for Limnoria
 
 import sys
 
-if sys.version_info[0] < (3, 8):
+if sys.version_info < (3, 8):
     raise RuntimeError("This plugin requires Python 3.8 or newer.")
 
 import supybot
