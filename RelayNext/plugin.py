@@ -292,10 +292,10 @@ class RelayNext(callbacks.Plugin):
         return True
 
     def relay(self, irc, msg, channel, isAnnouncement=False):
-        channel = channel.lower()
         self.log.debug("RelayNext (%s): got channel %s", irc.network, channel)
         if not channel in irc.state.channels:
             return
+        channel = channel.lower()
 
         # Check for ignored events first. Checking for "'.' not in msg.nick" is for skipping
         # ignore checks from servers.
