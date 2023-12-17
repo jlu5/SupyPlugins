@@ -62,7 +62,7 @@ RelayNext supports relaying the following non-PRIVMSG events: joins, kicks, mode
 Note: Topic relaying will only show topic *changes* in a channel. **It does not yet sync topics between channels!**
 
 ### Ignoring users
-RelayNext uses Supybot's built in ignore system. However, you can set which messages you want to ignore (from ignored users) using `config plugins.RelayNext.events.userignored`.
+RelayNext uses Supybot's built in ignore system. However, you can set which messages you want to ignore (from ignored users) using `config plugins.RelayNext.events.userignored`. This is NOT a list of users to ignore, which is defined with Limnoria's global ignore system (eg. with the command `admin ignore add *!*@spammer.example`).
 
 This key takes a space separated list, and defaults to ignoring `PRIVMSG` and `MODE`. **If you want to disable the ignore feature entirely, simply set this value blank: `config plugins.RelayNext.events.userignored ""`**
 
