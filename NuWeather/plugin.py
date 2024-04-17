@@ -456,7 +456,7 @@ class NuWeather(callbacks.Plugin):
             'current': {
                 'condition': data['weather'][0]['description'],
                 'temperature': self._format_tmpl_temp(f=data['main']['temp']),
-                'feels_like': 'N/A',
+                'feels_like': self._format_tmpl_temp(f=data['main']['feels_like']),
                 'humidity': formatter.format_percentage(data['main']['humidity']),
                 'precip': 'N/A',
                 'wind': self._format_tmpl_distance(mi=data['wind']['speed'], speed=True),
